@@ -1,0 +1,78 @@
+services:
+  mongo:
+    # Server requires MongoDB 4.4 — do not upgrade to 5.x/6.x/7.x
+    image: mongo:4.4
+    pull_policy: if_not_present
+    command: ["mongod", "--wiredTigerCacheSizeGB", "0.25"]
+    container_name: FullMinent_mongo
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  app:
+    build:
+      context: .
+      args:
+        INSTALL_TWILIO: "${INSTALL_TWILIO:-1}"
+    container_name: FullMinent_app
+    # Stable hostname so the persisted Chromium profile lock (SingletonLock in
+    # .wwebjs_auth) is always seen as "this machine" across recreates. Without a
+    # fixed hostname, Docker assigns the container ID, and after a rebuild the old
+    # lock looks like it belongs to "another computer", blocking the WhatsApp
+    # client from launching ("profile appears to be in use ... on another computer").
+    hostname: FullMinent_app
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://mongo:27017/FullMinent
+    volumes:
+      - ./public:/app/public
+      - ./controllers:/app/controllers
+      - ./services:/app/services
+      - ./models:/app/models
+      - ./middleware:/app/middleware
+      - ./utils:/app/utils
+      - ./config:/app/config
+      - ./server.js:/app/server.js
+      # Mount certs so certExpiry.js can read them (used only in admin login warning)
+      - ./certbot/conf:/app/certbot/conf:ro
+      # Persist the WhatsApp Web auth/session across container rebuilds &
+      # recreates so the QR login is not lost. Code writes to
+      # <cwd>/.wwebjs_auth/session-platform, and cwd is /app (WORKDIR).
+      - wwebjs_auth:/app/.wwebjs_auth
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:alpine
+    container_name: FullMinent_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./certbot/conf/live:/etc/nginx/certs-live:ro
+      # Certbot stores real PEMs in archive/; live/*.pem are symlinks (../../archive/...).
+      - ./certbot/conf/archive:/etc/nginx/archive:ro
+      # Certbot HTTP-01 webroot. nginx serves /.well-known/acme-challenge/ from
+      # here (read-only); certbot writes challenge files here when issuing certs.
+      # Host dir is created by the runbook (mkdir -p certbot/www) before deploy.
+      - ./certbot/www:/var/www/certbot:ro
+    depends_on:
+      - app
+
+volumes:
+  mongo_data:
+    name: FullMinent_mongo_data
+  wwebjs_auth:
+    name: FullMinent_wwebjs_auth

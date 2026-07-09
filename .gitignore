@@ -1,0 +1,11 @@
+node_modules/
+.env
+.env.local
+.telegram-session/
+.wwebjs_auth/
+.wwebjs_cache/
+.cache/
+public/uploads/photos/
+Thumbs.db
+*.tar.gz
+*.tar.gz.enc

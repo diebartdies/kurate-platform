@@ -1,0 +1,834 @@
+/* FullMinent - Mobile & tablet responsive layer (v8.13) */
+
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    scroll-padding-top: calc(55px + env(safe-area-inset-top, 0px) + 8px);
+}
+
+:root {
+    --global-topbar-height: 55px;
+}
+
+#globalTopBar {
+    top: 0 !important;
+    padding-top: env(safe-area-inset-top, 0px) !important;
+    height: calc(var(--global-topbar-height) + env(safe-area-inset-top, 0px)) !important;
+    min-height: var(--global-topbar-height);
+    padding-left: max(12px, env(safe-area-inset-left)) !important;
+    padding-right: max(12px, env(safe-area-inset-right)) !important;
+    box-sizing: border-box !important;
+}
+
+body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+}
+
+/* Logo sizing — overrides large inline heights on page headers */
+.page-logo,
+.logo img,
+header img[src*="FullMinent_logo"],
+header .logo img {
+    height: auto !important;
+    max-height: clamp(64px, 18vw, 120px);
+    width: auto;
+    max-width: min(85vw, 280px);
+    object-fit: contain;
+}
+
+.landing-page .landing-logo {
+    max-height: min(50vh, 360px);
+}
+
+/* Page headers & navigation */
+.page-header,
+header {
+    padding: 20px 0 24px;
+    margin-bottom: 30px;
+}
+
+.page-nav,
+header nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 12px;
+    margin-top: 12px !important;
+}
+
+.page-nav a,
+header nav a {
+    margin: 0 !important;
+    padding: 10px 14px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.container {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+}
+
+button,
+a.landing-btn,
+.landing-btn,
+input[type="submit"],
+.admin-nav-btn {
+    min-height: 44px;
+}
+
+.admin-prof-card .admin-icon-btn,
+.admin-verification-btn {
+    min-height: 32px;
+}
+
+.payment-modal-close,
+.reg-country-btn,
+.reg-date-picker-btn {
+    min-height: unset;
+}
+
+.admin-modal-close-btn,
+.modal-close-external {
+    min-height: 44px;
+    min-width: 44px;
+}
+
+/* Admin shell (dashboard.html + admin.js) */
+.admin-shell,
+.admin-grid-layout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.admin-sidebar,
+.admin-grid-sidebar,
+#adminPanelSection {
+    width: 100%;
+    max-width: 320px;
+}
+
+.admin-main,
+.admin-grid-main,
+#adminGridContainer {
+    flex: 1 1 300px;
+    min-width: 0;
+}
+
+/* Page load shell — no ghost content from HTML or bfcache */
+html.page-pending #dashboardContent,
+html.page-pending #profDashboardLayout,
+html.page-pending #profDashboardContent,
+html.page-pending #treasureGrid,
+html.page-pending #treasureContent {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+html.page-pending #loader,
+html.page-pending #pageLoader {
+    display: block !important;
+}
+
+#pageLoader {
+    text-align: center;
+    padding: 50px;
+    color: var(--primary-gold, #B8922E);
+}
+
+#pageLoader.hidden,
+#loader.hidden {
+    display: none !important;
+}
+
+/* Admin Professionals Directory — keep cards inside decorative frame */
+#adminGridContent .admin-prof-category {
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+#adminGridContent .admin-prof-grid {
+    grid-template-columns: repeat(auto-fit, minmax(clamp(120px, 42cqi, 280px), 1fr));
+    gap: clamp(8px, 2cqi, 16px);
+    width: 100%;
+    max-width: 100%;
+    align-items: start;
+}
+
+#adminGridContent .admin-prof-card {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+#adminGridContent .admin-prof-actions {
+    width: 100%;
+}
+
+#adminGridContent .admin-prof-thumb {
+    max-width: 100%;
+}
+
+#adminGridContent .admin-prof-thumb-img {
+    max-width: 100%;
+}
+
+#adminGridContent,
+#adminPanelSection,
+.admin-leads-panel,
+.admin-pending-panel {
+    container-type: inline-size;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.admin-overlay-modal,
+.admin-leads-modal {
+    box-sizing: border-box;
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+}
+
+.admin-leads-panel .admin-leads-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(8px, 2vw, 10px);
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.admin-leads-panel .admin-leads-toolbar button,
+.admin-leads-panel .admin-leads-toolbar a {
+    max-width: 100%;
+}
+
+@container (max-width: 640px) {
+    .admin-leads-table .col-date-added {
+        display: none;
+    }
+}
+
+@media (max-width: 720px) {
+    .admin-leads-table .col-date-added,
+    .admin-pending-table .col-submitted {
+        display: none;
+    }
+}
+
+@media (max-width: 560px) {
+    .admin-leads-table .col-source,
+    .admin-pending-table .col-docs {
+        display: none;
+    }
+
+    .lead-status-cell {
+        min-width: 72px;
+        max-width: 110px;
+    }
+
+    .admin-leads-table {
+        min-width: 360px;
+    }
+
+    .admin-pending-table {
+        min-width: 320px;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-prof-category .category-section-header > div {
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .admin-leads-panel,
+    .admin-pending-panel {
+        padding: 14px !important;
+    }
+}
+
+@media (max-width: 768px) {
+    #adminGridContent .admin-prof-category {
+        padding: 16px 18px !important;
+    }
+}
+
+/* Professional dashboard */
+.prof-dashboard-page {
+    max-width: 1280px !important;
+}
+
+.prof-dashboard-layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+    width: 100%;
+}
+
+.prof-payment-sidebar {
+    flex: 0 0 280px;
+    width: 280px;
+    max-width: 100%;
+    position: sticky;
+    top: 80px;
+}
+
+.prof-payment-panel {
+    border: 1px solid var(--primary-gold);
+    margin: 0;
+}
+
+.prof-payment-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.prof-payment-actions button {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    border: none;
+}
+
+.prof-payment-actions button:first-child {
+    background: var(--primary-gold);
+    color: var(--dark-bg);
+}
+
+.prof-payment-secondary {
+    background: transparent !important;
+    border: 1px solid var(--primary-gold) !important;
+    color: var(--primary-gold) !important;
+}
+
+.prof-dashboard-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.prof-dash-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+#photoGrid {
+    width: 100%;
+}
+
+.table-scroll-wrap,
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+table {
+    max-width: 100%;
+}
+
+#regCategoryTable {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.landing-login-card,
+.password-recovery-page {
+    max-width: 100% !important;
+}
+
+.reg-page {
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+}
+
+#privacyShield {
+    left: max(12px, env(safe-area-inset-left));
+    bottom: max(12px, env(safe-area-inset-bottom));
+    max-width: calc(100vw - 24px - env(safe-area-inset-left) - env(safe-area-inset-right));
+}
+
+/* Reserve space so fixed privacy badge does not cover primary actions */
+body.register-page .reg-page,
+body.register-page main .container {
+    padding-bottom: max(148px, calc(112px + env(safe-area-inset-bottom))) !important;
+}
+
+body.password-recovery-page main,
+body.password-recovery-page .container {
+    padding-bottom: max(120px, calc(88px + env(safe-area-inset-bottom)));
+}
+
+body.landing-page .landing-frame-auth {
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
+}
+
+body.landing-page .landing-pro-links {
+    margin-bottom: max(72px, calc(56px + env(safe-area-inset-bottom)));
+}
+
+/* Landing index — global top bar + privacy shield must not clip content */
+body.landing-page.has-global-topbar {
+    padding-top: calc(var(--global-topbar-height, 55px) + env(safe-area-inset-top, 0px));
+}
+
+body.landing-page .landing-container {
+    padding-bottom: max(88px, calc(72px + env(safe-area-inset-bottom)));
+    box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    body.landing-page .landing-dual,
+    body.landing-page .landing-triple,
+    body.landing-page .landing-frame {
+        min-height: auto !important;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    body.landing-page .landing-logo {
+        max-height: min(38vh, 260px);
+    }
+
+    body.landing-page .landing-brand-row {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    body.landing-page .landing-pro-links {
+        margin-bottom: max(96px, calc(76px + env(safe-area-inset-bottom)));
+    }
+}
+
+/* Registration — instructions + Google above email on mobile */
+@media (max-width: 768px) {
+    body.register-page #regNoPaymentNote {
+        display: none;
+    }
+
+    body.register-page .reg-logo-block {
+        margin-bottom: 12px !important;
+    }
+
+    body.register-page .reg-logo-block img {
+        height: 52px !important;
+    }
+
+    body.register-page .brand-services-tagline {
+        font-size: 0.78rem;
+        line-height: 1.35;
+    }
+
+    #regInstructions.reg-instructions-panel {
+        padding: 14px 12px;
+        margin-bottom: 16px;
+    }
+
+    #regInstructions.reg-instructions-panel h3 {
+        font-size: 1.05rem;
+    }
+
+    #regInstructions.reg-instructions-panel ol {
+        margin-left: 18px;
+        padding-left: 0;
+    }
+
+    #regInstructions.reg-instructions-panel li {
+        margin-bottom: 6px;
+    }
+
+    .google-signin-mount,
+    .google-signin-block {
+        margin-bottom: 12px;
+    }
+
+    .google-signin-label {
+        font-size: 0.82rem;
+    }
+
+    .google-signin-divider {
+        margin: 12px 0 14px;
+        font-size: 0.82rem;
+    }
+}
+
+body:not(.landing-page) {
+    padding-top: calc(var(--global-topbar-height, 55px) + env(safe-area-inset-top, 0px));
+}
+
+body.has-global-topbar {
+    padding-top: calc(var(--global-topbar-height, 55px) + env(safe-area-inset-top, 0px)) !important;
+}
+
+body.register-page #registerMain {
+    scroll-margin-top: calc(var(--global-topbar-height, 55px) + env(safe-area-inset-top, 0px) + 12px);
+}
+
+.landing-page {
+    padding-top: calc(var(--global-topbar-height, 55px) + env(safe-area-inset-top, 0px));
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+#treasureContent h2.gold-text {
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+@media (max-width: 480px) {
+    #treasureContent h2.gold-text {
+        font-size: 1.25rem;
+        padding-right: 70px;
+    }
+
+    #treasureContent .card > button[style*="position: absolute"] {
+        top: 12px !important;
+        right: 12px !important;
+        padding: 8px 10px !important;
+    }
+
+    #treasureContent .card {
+        padding: 16px !important;
+    }
+
+    #treasurePhotoGrid.photo-carousel {
+        gap: clamp(8px, 2.5vw, 12px);
+        margin-bottom: 24px;
+    }
+}
+
+.admin-modal-panel {
+    width: 100%;
+    max-width: min(1000px, calc(100vw - 24px));
+    max-height: min(90vh, calc(100dvh - 24px));
+    overflow-x: hidden;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+#treasureDetail .container {
+    padding-top: 80px;
+    padding-bottom: max(80px, env(safe-area-inset-bottom));
+}
+
+@media (max-width: 900px) {
+    .admin-sidebar,
+    .admin-grid-sidebar,
+    #adminPanelSection {
+        position: static !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    .admin-shell,
+    .admin-grid-layout {
+        flex-direction: column;
+    }
+
+    .admin-grid-main,
+    #adminGridContent {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .admin-nav-btn {
+        padding: 12px 15px;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 24px;
+    }
+
+    #sponsors .grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    header {
+        padding: 16px 0 20px;
+        margin-bottom: 24px;
+    }
+
+    h2.gold-text {
+        font-size: 1.35rem;
+    }
+
+    .hero h1 {
+        font-size: 2.2rem;
+    }
+
+    .admin-potentials-wrap {
+        padding: 12px !important;
+    }
+
+    .admin-potentials-wrap .container {
+        padding: 16px !important;
+    }
+}
+
+@media (max-width: 640px) {
+    .prof-dashboard-layout {
+        flex-direction: column;
+    }
+
+    .prof-payment-sidebar {
+        flex: 1 1 auto;
+        width: 100%;
+        position: static;
+    }
+
+    .prof-dash-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .prof-dash-header h2 {
+        font-size: 1.25rem;
+        text-align: center;
+    }
+
+    .prof-dash-header button {
+        width: 100%;
+    }
+
+    .admin-modal-panel {
+        max-width: 100%;
+        padding: 16px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .grid {
+        gap: 10px;
+    }
+
+    .container {
+        padding-left: max(12px, env(safe-area-inset-left));
+        padding-right: max(12px, env(safe-area-inset-right));
+    }
+
+    header {
+        margin-bottom: 20px;
+    }
+
+    .card:hover {
+        transform: none;
+    }
+
+    #privacyShield {
+        padding: 8px 12px;
+    }
+
+    #privacyShield strong {
+        font-size: 0.8rem;
+    }
+
+    #privacyShield.privacy-shield--form-page {
+        left: auto !important;
+        right: max(10px, env(safe-area-inset-right)) !important;
+        max-width: min(188px, calc(46vw - 8px)) !important;
+    }
+
+    #privacyShield.privacy-shield--expanded {
+        max-width: min(280px, calc(100vw - 20px - env(safe-area-inset-left) - env(safe-area-inset-right))) !important;
+        max-height: min(36vh, 220px);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    body.register-page .reg-page,
+    body.register-page main .container {
+        padding-bottom: max(168px, calc(128px + env(safe-area-inset-bottom))) !important;
+    }
+
+    body.landing-page .landing-pro-links {
+        margin-bottom: max(88px, calc(64px + env(safe-area-inset-bottom)));
+    }
+
+    .five-column-grid:not(.admin-prof-grid) {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 400px) {
+    .five-column-grid:not(.admin-prof-grid) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) and (orientation: landscape) {
+    .page-logo,
+    .logo img,
+    header img[src*="FullMinent_logo"] {
+        max-height: 72px;
+    }
+
+    header {
+        padding: 12px 0;
+        margin-bottom: 16px;
+    }
+}
+
+/* Categories three-frame layout — tablet/mobile */
+@media (max-width: 1024px) {
+    .categories-shell {
+        grid-template-columns: minmax(48px, 8%) minmax(0, 1fr) minmax(48px, 8%);
+        gap: 10px;
+    }
+
+    body.blueprint-theme .categories-shell {
+        gap: 10px;
+    }
+}
+
+@media (max-width: 768px) {
+    body.categories-page .categories-container {
+        padding-left: max(8px, env(safe-area-inset-left));
+        padding-right: max(8px, env(safe-area-inset-right));
+    }
+
+    .categories-shell {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        min-height: auto;
+        gap: 12px;
+    }
+
+    .categories-frame-left {
+        position: static;
+        flex-direction: row;
+        justify-content: center;
+        min-height: auto;
+        height: auto;
+        padding: 14px 16px;
+        max-height: none;
+    }
+
+    .categories-frame-left .categories-brand-logo {
+        flex: none;
+    }
+
+    .categories-frame-left .categories-brand-logo .page-logo {
+        max-width: min(240px, 60vw);
+        max-height: 100px;
+    }
+
+    .categories-frame-right {
+        display: none;
+    }
+
+    .categories-frame-center {
+        padding: 10px 8px 20px;
+    }
+
+    body.categories-page .treasure-grid-slot {
+        padding-bottom: 48px;
+    }
+
+    body.launch-curtain-active:not(.categories-page) .treasure-grid-slot .launch-curtain-stage {
+        margin-top: 24px;
+    }
+
+    .launch-curtain-stage {
+        min-height: clamp(260px, 40vh, 420px);
+    }
+
+    .launch-curtain-panel {
+        width: 30%;
+    }
+
+    .launch-curtain-center {
+        padding: max(108px, calc(clamp(56px, 12vh, 104px) + 32px)) 12px 28px;
+    }
+
+    .launch-curtain-kicker {
+        font-size: 0.68rem;
+        letter-spacing: 0.22em;
+    }
+
+    .launch-curtain-title {
+        font-size: clamp(1.2rem, 5.5vw, 1.75rem);
+        line-height: 1.2;
+    }
+
+    .launch-curtain-subtitle {
+        font-size: 0.86rem;
+        margin-bottom: 18px;
+        padding: 0 6px;
+    }
+
+    .launch-curtain-countdown {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        width: 100%;
+        max-width: min(100%, 280px);
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .launch-curtain-unit {
+        min-width: 0;
+        width: 100%;
+        padding: 8px 6px;
+    }
+
+    .launch-curtain-value {
+        font-size: clamp(1.2rem, 5.5vw, 1.55rem);
+    }
+
+    .launch-curtain-label {
+        font-size: 0.62rem;
+        margin-top: 4px;
+    }
+
+    .launch-curtain-footnote {
+        font-size: 0.78rem;
+        padding: 0 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .launch-curtain-panel {
+        width: 24%;
+    }
+
+    .launch-curtain-center {
+        padding: max(96px, calc(18vw + 68px)) 8px 22px;
+    }
+
+    .launch-curtain-countdown {
+        max-width: min(100%, 240px);
+        gap: 6px;
+    }
+
+    .launch-curtain-unit {
+        padding: 6px 4px;
+    }
+
+    .launch-curtain-value {
+        font-size: 1.15rem;
+    }
+
+    .launch-curtain-label {
+        font-size: 0.56rem;
+        letter-spacing: 0.08em;
+    }
+}

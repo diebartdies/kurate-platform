@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="alternate icon" href="/favicon.ico">
+    <title>FullMinent - Verification</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css?v=8.25">
+    <link rel="stylesheet" href="/css/blueprint.css?v=2">
+    <link rel="stylesheet" href="/css/responsive.css?v=8.6">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#B8922E">
+    <meta name="color-scheme" content="dark">
+    <!-- SEO & Open Graph Tags -->
+    <meta name="description" content="FullMinent - Directorio de profesionales verificados.">
+    <meta property="og:title" content="FullMinent Platform">
+    <meta property="og:description" content="la plataforma definitiva para conectar profesionales de confianza con clientes.">
+    <meta property="og:image" content="https://FullMinent.drsrv.net.ar/FullMinent_logo_black.png">
+    <meta property="og:url" content="https://FullMinent.drsrv.net.ar">
+    <meta property="og:type" content="website">
+    <meta name="theme-color" content="#D4AF37">
+</head>
+<body class="blueprint-theme blueprint-auth-page">
+    <div class="container">
+        <header class="page-header">
+            <a href="index.html" class="logo"><img src="/FullMinent_logo_black.png" alt="FullMinent Logo" class="page-logo"></a>
+        </header>
+
+        <section style="display: flex; justify-content: center; padding-bottom: 100px;">
+            <div class="card" style="width: 100%; max-width: 400px; text-align: center;">
+                <h2 class="gold-text" style="margin-bottom: 30px;">Verify Your Email</h2>
+                <p style="margin-bottom: 20px;">Please enter the 6-digit code sent to your email. Check spam/junk if you do not see it.</p>
+                <div style="text-align: center; margin-bottom: 25px;">
+        <img src="/FullMinent_logo_black.png" alt="FullMinent Logo" style="height: 70px; width: auto; background-color: #000; border-radius: 8px; padding: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.5);">
+    </div>
+    <form id="verifyForm">
+                    <div id="verifyAlert" class="alert hidden"></div>
+                    <input type="hidden" id="verifyEmail">
+                    <div class="form-group">
+                        <label for="verifyCode">6-Digit Code</label>
+                        <input type="text" placeholder="6-Digit Code" required id="verifyCode" maxlength="6" style="text-align: center; font-size: 1.5rem; letter-spacing: 5px;">
+                    </div>
+                    <button type="submit" class="sa-btn sa-btn--solid" style="width: 100%; margin-top: 20px;">Verify</button>
+                    <p class="recovery-resend-row">
+                        <button type="button" id="verifyResendBtn" class="recovery-resend-link">Send new code</button>
+                    </p>
+                </form>
+            </div>
+        </section>
+    </div>
+
+    <script src="/js/app.js?v=8.20" type="module"></script>
+    <script src="/js/adminHome.js?v=1" defer></script>
+    <script>
+        // Pre-fill email from URL if available
+        const urlParams = new URLSearchParams(window.location.search);
+        const email = urlParams.get('email');
+        if (email) {
+            document.getElementById('verifyEmail').value = email;
+        }
+    </script>
+</body>
+</html>

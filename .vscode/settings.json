@@ -1,0 +1,6 @@
+{
+  "terminal.integrated.cwd": "${workspaceFolder}",
+  "claudeCode.usePythonEnvironment": false,
+  "claudeCode.preferredLocation": "sidebar",
+  "claudeCode.disableLoginPrompt": true
+}

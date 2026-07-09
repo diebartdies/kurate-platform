@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="alternate icon" href="/favicon.ico">
+    <title>FullMinent - Professional Registration</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css?v=8.25">
+    <link rel="stylesheet" href="/css/blueprint.css?v=2">
+    <link rel="stylesheet" href="/css/responsive.css?v=8.12">
+    <style>
+        .reg-page { max-width: 520px; margin: 0 auto; padding-bottom: max(120px, calc(96px + env(safe-area-inset-bottom))); }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 6px; font-size: 0.9rem; color: #ccc; }
+        .required-star { color: var(--accent-red); }
+        .reg-input, .reg-page input {
+            width: 100%; box-sizing: border-box; padding: 12px;
+            background: #111; border: 1px solid rgba(212,175,55,0.45); color: #fff; border-radius: 4px;
+        }
+        .reg-page .password-wrapper { margin-bottom: 0; }
+        .reg-page .password-wrapper input { padding-right: 44px; }
+        .reg-field-error { border-color: var(--accent-red) !important; box-shadow: 0 0 0 2px rgba(139,0,0,0.35); }
+        .reg-check-label { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; cursor: pointer; color: #ddd; }
+        .reg-check-label input { width: auto; margin-top: 4px; }
+        #regInstructions { background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.35); border-radius: 8px; padding: 18px; margin-bottom: 20px; }
+        #regInstructions.hidden { display: none !important; }
+        body.register-page .reg-page { padding-top: 12px; scroll-margin-top: calc(55px + env(safe-area-inset-top, 0px) + 12px); }
+        .reg-back-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            margin-bottom: 18px; padding: 8px 14px;
+            background: transparent; border: 1px solid rgba(212,175,55,0.55);
+            color: var(--primary-gold); border-radius: 4px; cursor: pointer;
+            font-size: 0.9rem; font-weight: bold;
+            box-sizing: border-box;
+            min-height: 44px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .reg-back-btn:hover { background: rgba(212,175,55,0.12); }
+        .reg-inline-link {
+            background: none; border: none; padding: 0; cursor: pointer;
+            font: inherit; color: var(--primary-gold);
+        }
+        .reg-inline-link.muted { color: #888; }
+        .reg-inline-link:hover { text-decoration: underline; }
+        .reg-hint { color: #888; font-size: 0.82rem; margin: 4px 0 0; line-height: 1.4; }
+        .reg-phone-row { display: flex; align-items: stretch; width: 100%; }
+        .reg-country-select { position: relative; flex: 0 0 96px; width: 96px; }
+        .reg-country-btn {
+            position: relative;
+            width: 100%; height: 46px; min-height: 46px; max-height: 46px;
+            box-sizing: border-box;
+            display: flex; align-items: center; justify-content: flex-end;
+            background: #222;
+            border: 1px solid rgba(212,175,55,0.45); border-right: none;
+            border-radius: 4px 0 0 4px; cursor: pointer; padding: 0 8px 0 40px;
+            white-space: nowrap;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .reg-country-btn:hover,
+        .reg-country-btn:focus-visible {
+            border-color: rgba(212,175,55,0.75);
+            outline: none;
+        }
+        .reg-country-flag-img {
+            position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
+            width: 28px; height: 21px; object-fit: cover; border-radius: 2px;
+            pointer-events: none;
+        }
+        .reg-country-code {
+            font-size: 0.82rem; font-weight: 700; color: #111;
+            background: rgba(255,255,255,0.92); padding: 2px 5px; border-radius: 3px;
+            line-height: 1.2; pointer-events: none;
+        }
+        .reg-phone-input {
+            flex: 1 1 auto; min-width: 0; border-radius: 0 4px 4px 0 !important;
+            height: 46px; min-height: 46px; max-height: 46px;
+        }
+        .reg-country-menu {
+            position: absolute; top: calc(100% + 4px); left: 0; z-index: 50;
+            min-width: 260px; width: max(100%, 260px); max-height: 240px; overflow-y: auto;
+            margin: 0; padding: 4px 0; list-style: none;
+            background: #151515; border: 1px solid rgba(212,175,55,0.55);
+            border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.65);
+        }
+        .reg-country-menu.hidden { display: none; }
+        .reg-country-option {
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+            padding: 8px 12px; cursor: pointer; color: #eee; font-size: 0.88rem;
+        }
+        .reg-country-option:hover, .reg-country-option[aria-selected="true"] {
+            background: rgba(212,175,55,0.12);
+        }
+        .reg-country-option-dial {
+            flex-shrink: 0; font-weight: 700; color: var(--primary-gold); min-width: 3.2rem;
+        }
+        .reg-country-option-name {
+            flex: 1; text-align: right; color: #ddd;
+        }
+        .reg-date-field {
+            position: relative; display: flex; align-items: stretch;
+            height: 46px; min-height: 46px; max-height: 46px;
+        }
+        .reg-date-text {
+            flex: 1 1 auto; min-width: 0;
+            height: 46px; min-height: 46px; max-height: 46px;
+            padding-right: 12px !important; border-radius: 4px 0 0 4px !important;
+        }
+        .reg-date-picker-slot {
+            position: relative;
+            flex: 0 0 46px; width: 46px; min-width: 46px;
+            height: 46px; min-height: 46px; max-height: 46px;
+        }
+        .reg-date-picker-btn {
+            position: relative; z-index: 2;
+            display: flex; align-items: center; justify-content: center;
+            width: 100%; height: 100%;
+            box-sizing: border-box;
+            border: 1px solid rgba(212,175,55,0.45);
+            border-left: none; border-radius: 0 4px 4px 0;
+            background: #1a1a1a; color: var(--primary-gold);
+            cursor: pointer; padding: 0; margin: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .reg-date-picker-btn:hover,
+        .reg-date-picker-btn:focus-visible {
+            background: rgba(212,175,55,0.12);
+            outline: none;
+        }
+        .reg-date-picker-btn svg {
+            width: 18px; height: 18px; fill: currentColor; display: block;
+            pointer-events: none;
+        }
+        .reg-date-native {
+            position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+            overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap;
+            border: 0; opacity: 0; pointer-events: none;
+        }
+        .register-page .reg-country-btn,
+        .register-page .reg-phone-input,
+        .register-page .reg-date-text,
+        .register-page .reg-date-picker-slot,
+        .register-page .reg-date-picker-btn,
+        .register-page #registerForm button[type="submit"] {
+            min-height: 46px;
+            height: 46px;
+            max-height: 46px;
+            box-sizing: border-box;
+        }
+        .reg-type-picker.hidden, .reg-form-panel.hidden, .reg-pro-only.hidden, .reg-guest-only.hidden { display: none !important; }
+        /* Post-Google mini-form — inline so mobile cache cannot keep old style.css */
+        #registerForm[data-google-complete="1"] .reg-google-email-fields,
+        #registerForm[data-google-complete="1"] #regGoogleMount,
+        #registerForm[data-google-complete="1"] .google-signin-divider,
+        #registerForm[data-google-complete="1"] .reg-guest-only,
+        #registerForm[data-google-complete="1"] #regInstructions {
+            display: none !important;
+        }
+        body.register-google-complete #regNoPaymentNote,
+        body.register-google-complete #regInstructions {
+            display: none !important;
+        }
+        #registerForm[data-google-complete="1"] .reg-google-profile-fields {
+            display: block !important;
+        }
+        .reg-inapp-browser-tip {
+            margin: 0 0 16px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 193, 7, 0.55);
+            background: rgba(255, 193, 7, 0.12);
+            color: #ffe082;
+            font-size: 0.86rem;
+            line-height: 1.45;
+        }
+        .reg-inapp-browser-tip.hidden { display: none !important; }
+    </style>
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#B8922E">
+    <meta name="color-scheme" content="dark">
+    <!-- SEO & Open Graph Tags -->
+    <meta name="description" content="FullMinent - Directorio de profesionales verificados.">
+    <meta property="og:title" content="FullMinent Platform">
+    <meta property="og:description" content="la plataforma definitiva para conectar profesionales de confianza con clientes.">
+    <meta property="og:image" content="https://FullMinent.drsrv.net.ar/FullMinent_logo_black.png">
+    <meta property="og:url" content="https://FullMinent.drsrv.net.ar">
+    <meta property="og:type" content="website">
+    <meta name="theme-color" content="#D4AF37">
+</head>
+<body class="register-page blueprint-theme blueprint-auth-page">
+    <main id="registerMain" class="container reg-page">
+        <div id="regFormPanel" class="reg-form-panel">
+        <h1 id="regFormTitle" class="gold-text" style="text-align:center;font-size:1.6rem;margin:0 0 8px;">Professional Registration</h1>
+        <p id="regFormIntro" style="text-align:center;color:#aaa;font-size:0.95rem;margin:0 0 8px;line-height:1.5;">
+            Quick signup — only what you need to get started. We will help you complete your profile and photos.
+        </p>
+        <p id="regNoPaymentNote" class="reg-pro-only" style="text-align:center;color:#25D366;font-size:0.88rem;margin:0 0 20px;line-height:1.5;padding:10px 14px;background:rgba(37,211,102,0.08);border:1px solid rgba(37,211,102,0.25);border-radius:6px;">
+            We never ask you to register a payment method — no card, no automatic debit.
+        </p>
+
+        <section>
+            <div class="card">
+                <div style="text-align: center; margin-bottom: 20px;" class="reg-logo-block brand-logo-block">
+                    <img src="/FullMinent_logo_black.png" alt="FullMinent Logo" style="height: 70px; width: auto; background-color: #000; border-radius: 8px; padding: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.5);">
+                    <p class="brand-services-tagline">¿Qué necesitás?, </p>
+                </div>
+
+                <form id="registerForm" novalidate>
+                    <input type="hidden" id="regRole" value="professional">
+                    <input type="hidden" id="regRegistrationMode" value="express">
+                    <button type="button" id="regBackToEntrance" class="reg-back-btn">&#8592; Back</button>
+                    <div id="registerAlert" class="alert hidden"></div>
+
+                    <div id="regInstructions" class="reg-instructions-panel" aria-live="polite"></div>
+
+                    <div id="regInAppBrowserTip" class="reg-inapp-browser-tip hidden" role="status"></div>
+
+                    <div id="regGoogleCompleteIntro" class="reg-google-complete-intro hidden" role="status">
+                        <h3 class="gold-text" style="margin:0 0 8px;font-size:1.05rem;">Almost done</h3>
+                        <p style="margin:0;font-size:0.92rem;line-height:1.5;color:#ccc;">Google sign-in complete. Add your WhatsApp number and birth date to finish your Professional Registration.</p>
+                    </div>
+
+                    <div id="regGoogleMount" class="google-signin-mount" aria-label="Google sign-in"></div>
+
+                    <div class="form-group reg-google-email-fields">
+                        <label for="regEmail">Email <span class="required-star">*</span></label>
+                        <input type="email" id="regEmail" class="reg-input" required autocomplete="email">
+                    </div>
+
+                    <div class="form-group reg-guest-only reg-google-email-fields hidden">
+                        <label for="regGuestAlias">Display name (alias) <span style="color:#888;font-weight:normal;">(optional)</span></label>
+                        <input type="text" id="regGuestAlias" class="reg-input" maxlength="50" autocomplete="nickname" placeholder="How you want to appear">
+                        <p class="reg-hint">Optional — how you appear as a guest. Leave blank to use your email name.</p>
+                    </div>
+
+                    <div class="form-group reg-pro-only reg-google-profile-fields">
+                        <label for="regMobilePhone">Mobile phone <span class="required-star">*</span></label>
+                        <div class="reg-phone-row">
+                            <div class="reg-country-select" id="regCountrySelect">
+                                <button type="button" class="reg-country-btn" id="regCountryBtn" aria-haspopup="listbox" aria-expanded="false" aria-label="Country code">
+                                    <img class="reg-country-flag-img preserve-brand-colors" id="regCountryFlagImg" src="https://flagcdn.com/w40/ar.png" width="28" height="21" alt="">
+                                    <span class="reg-country-code" id="regCountryCode">+54</span>
+                                </button>
+                                <ul class="reg-country-menu hidden" id="regCountryMenu" role="listbox" aria-label="Country code"></ul>
+                            </div>
+                            <input type="tel" id="regMobilePhone" class="reg-input reg-phone-input" required autocomplete="tel-national" placeholder="11 2345 6789">
+                        </div>
+                        <input type="hidden" id="regPhoneDial" value="+54">
+                        <p class="reg-hint">WhatsApp number — we will contact you here to finish your profile.</p>
+                    </div>
+
+                    <div class="form-group reg-pro-only reg-google-profile-fields">
+                        <label for="regBirthDate">Birth date <span class="required-star">*</span></label>
+                        <div class="reg-date-field date-wrap">
+                            <input type="text" id="regBirthDate" class="reg-input reg-date-text" required autocomplete="bday" inputmode="text" placeholder="dd/mm/aaaa">
+                            <div class="reg-date-picker-slot">
+                                <button type="button" id="regBirthDatePickerBtn" class="reg-date-picker-btn" aria-label="Open calendar">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 16H5V10h14v10zM5 8V6h14v2H5z"/></svg>
+                                </button>
+                                <input type="date" id="regBirthDateNative" class="reg-date-native" tabindex="-1" aria-hidden="true">
+                            </div>
+                        </div>
+                        <p class="reg-hint" id="regBirthDateHint">We calculate your age automatically — you must be 18 or older.</p>
+                    </div>
+
+                    <div class="form-group reg-pro-only reg-google-email-fields">
+                        <label for="regPassword">Password (min 6) <span class="required-star">*</span></label>
+                        <input type="password" id="regPassword" class="reg-input" required minlength="6" autocomplete="new-password">
+                        <p class="reg-hint">To sign in to your panel after email verification.</p>
+                    </div>
+
+                    <div class="form-group reg-pro-only reg-google-email-fields">
+                        <label for="regPasswordConfirm">Confirm password <span class="required-star">*</span></label>
+                        <input type="password" id="regPasswordConfirm" class="reg-input" required minlength="6" autocomplete="new-password">
+                    </div>
+
+                    <button type="submit" class="sa-btn sa-btn--solid" style="width:100%;margin-top:24px;padding:14px;">Submit Registration</button>
+                </form>
+
+                <p style="margin-top:20px;text-align:center;" data-skip-nav-return="1">
+                    Already registered? <button type="button" id="regLoginLink" class="reg-inline-link">Login here</button>
+                    &nbsp;|&nbsp;
+                    <button type="button" id="regBackOrigin" class="reg-inline-link muted">Back</button>
+                </p>
+            </div>
+        </section>
+        </div>
+    </main>
+    <script src="/js/app.js?v=8.28-debug" type="module"></script>
+    <script src="/js/adminHome.js?v=1" defer></script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="alternate icon" href="/favicon.ico">
+    <title>FullMinent - Model Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css?v=8.30">
+    <link rel="stylesheet" href="/css/blueprint.css?v=4">
+    <link rel="stylesheet" href="/css/responsive.css?v=8.8">
+    <meta name="description" content="FullMinent - Directorio de profesionales verificados.">
+    <meta property="og:title" content="FullMinent Platform">
+    <meta property="og:description" content="la plataforma definitiva para conectar profesionales de confianza con clientes.">
+    <meta property="og:image" content="https://FullMinent.drsrv.net.ar/FullMinent_logo_black.png">
+    <meta property="og:url" content="https://FullMinent.drsrv.net.ar">
+    <meta property="og:type" content="website">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#B8922E">
+    <meta name="color-scheme" content="dark">
+    <script>document.documentElement.classList.add('page-pending');</script>
+    <!-- SEO & Open Graph Tags -->
+    <meta name="description" content="FullMinent - Directorio de profesionales verificados.">
+    <meta property="og:title" content="FullMinent Platform">
+    <meta property="og:description" content="la plataforma definitiva para conectar profesionales de confianza con clientes.">
+    <meta property="og:image" content="https://FullMinent.drsrv.net.ar/FullMinent_logo_black.png">
+    <meta property="og:url" content="https://FullMinent.drsrv.net.ar">
+    <meta property="og:type" content="website">
+    <meta name="theme-color" content="#D4AF37">
+</head>
+<body class="blueprint-theme blueprint-prof-page">
+    <div class="container prof-dashboard-page">
+        <div id="loader"><p>Loading dashboard...</p></div>
+
+        <div id="profDashboardLayout" class="prof-dashboard-layout hidden">
+            <aside id="profPaymentSidebar" class="prof-payment-sidebar">
+                <div class="card prof-payment-panel hidden" id="paymentSection">
+                    <h3 class="gold-text" style="margin-bottom: 12px;">Monthly payment</h3>
+                    <p style="color: #ccc; font-size: 0.9rem; margin-bottom: 16px;">When you receive your invoice, upload your bank transfer or Mercado Pago receipt.</p>
+                    <div class="prof-payment-actions">
+                        <button type="button" id="btnOpenPaymentModal">Monthly payment</button>
+                        <button type="button" id="btnHowToPay" class="prof-payment-secondary">How to pay</button>
+                    </div>
+                </div>
+            </aside>
+
+            <div id="profDashboardMain" class="prof-dashboard-main">
+                <div id="rateAlert" class="card hidden" style="border-color: var(--accent-red); background: rgba(139, 0, 0, 0.1); margin-bottom: 20px;">
+                    <h3 style="color: var(--accent-red);">Action Required: Rate Change</h3>
+                    <p>The platform price rates have been updated. You must acknowledge this change to continue with transactions.</p>
+                    <button id="ackRateBtn" style="margin-top: 15px;">Acknowledge Change</button>
+                </div>
+
+                <div id="profDashboardContent">
+                    <form id="updateProfileForm"></form>
+                </div>
+            </div>
+        </div>
+
+        <div id="dashboardOverlays" class="hidden">
+            <div id="paymentModalOverlay" class="hidden payment-modal-overlay" aria-hidden="true">
+                <div class="card payment-modal-panel" data-modal-panel>
+                    <button type="button" id="closePaymentModal" class="payment-modal-close" aria-label="Close">&times;</button>
+                    <h3 id="paymentModalTitle" class="gold-text" style="margin-bottom: 20px;">Register payment receipt</h3>
+                    <form id="receiptForm" style="display: flex; flex-direction: column; gap: 15px;">
+                        <div id="receiptAlert" class="alert hidden" style="padding: 10px; border-radius: 4px; border: 1px solid transparent;"></div>
+                        <label>Upload photo or PDF of receipt</label>
+                        <input type="file" id="receiptFile" accept="image/*,.pdf,application/pdf" style="padding: 10px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;">
+                        <button type="submit" id="btnUploadReceipt">Submit receipt</button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="howToPayOverlay" class="hidden payment-modal-overlay" aria-hidden="true">
+                <div class="card payment-modal-panel" data-modal-panel style="max-width: 720px;">
+                    <button type="button" id="closeHowToPayModal" class="payment-modal-close" aria-label="Close">&times;</button>
+                    <h3 id="howToPayModalTitle" class="gold-text" style="margin-bottom: 16px;">How to pay</h3>
+                    <div id="howToPayContent" style="color: #ccc; line-height: 1.7; font-size: 0.95rem;"></div>
+                    <button type="button" id="btnCloseHowToPayFooter" style="margin-top: 20px; width: 100%; background: transparent; border: 1px solid var(--primary-gold); color: var(--primary-gold);">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="deleteProfileOverlay" class="hidden payment-modal-overlay" aria-hidden="true">
+            <div class="card payment-modal-panel" data-modal-panel style="border-color: var(--accent-red); max-width: 480px;">
+                <button type="button" id="closeDeleteProfileModal" class="payment-modal-close" aria-label="Close">&times;</button>
+                <h3 id="deleteProfileModalTitle" style="color: var(--accent-red); margin-bottom: 12px;">Delete profile</h3>
+                <p style="color: #ccc; font-size: 0.9rem; line-height: 1.6; margin-bottom: 16px;">
+                    This permanently removes your account, photos, statistics, and public profile. This action cannot be undone.
+                </p>
+                <label style="display: block; margin-bottom: 8px; color: #ccc; font-size: 0.9rem;">Enter your password to confirm</label>
+                <input type="password" id="deleteProfilePassword" autocomplete="current-password" placeholder="Your password" style="width: 100%; padding: 10px; background: #222; color: white; border: 1px solid #444; border-radius: 4px; box-sizing: border-box; margin-bottom: 12px;">
+                <label style="display: flex; align-items: flex-start; gap: 8px; color: #ccc; font-size: 0.85rem; margin-bottom: 16px; cursor: pointer;">
+                    <input type="checkbox" id="deleteProfileConfirm" style="margin-top: 3px;">
+                    <span>I understand my profile will be permanently deleted and I will lose access to this account.</span>
+                </label>
+                <div id="deleteProfileAlert" class="alert hidden" style="padding: 10px; border-radius: 4px; border: 1px solid transparent; margin-bottom: 12px;"></div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button type="button" id="confirmDeleteProfileBtn" style="flex: 1; min-width: 140px; background: var(--accent-red); color: white; font-weight: bold;">Delete permanently</button>
+                    <button type="button" id="cancelDeleteProfileBtn" style="flex: 1; min-width: 140px; background: transparent; border: 1px solid var(--primary-gold); color: var(--primary-gold);">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/js/app.js?v=8.11" type="module"></script>
+    <script src="/js/adminHome.js?v=2" defer></script>
+</body>
+</html>
