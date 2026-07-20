@@ -35,7 +35,7 @@ exports.uploadReceipt = async (req, res, next) => {
     try {
       await sendEmail({
         email: config.payment.adminEmail,
-        subject: 'FullMinent - New Payment Receipt Upload',
+        subject: 'KuraTe - New Payment Receipt Upload',
         message: message
       });
     } catch (err) {

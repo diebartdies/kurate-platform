@@ -351,7 +351,7 @@ function applyRegistrationPageLabels(type = currentRegistrationType || 'professi
     if (!main) return;
 
     const isGuest = type === 'guest';
-    document.title = `FullMinent - ${t(isGuest ? 'Guest registration' : 'Professional Registration')}`;
+    document.title = `KuraTe - ${t(isGuest ? 'Guest registration' : 'Professional Registration')}`;
 
     const h1 = document.getElementById('regFormTitle') || main.querySelector('#regFormPanel > h1');
     if (h1) h1.textContent = t(isGuest ? 'Guest registration' : 'Professional Registration');

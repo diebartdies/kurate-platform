@@ -2,7 +2,7 @@
 # Run on Moldova prod: bash scripts/ensure-twilio-whatsapp-env.sh [E164_digits]
 set -euo pipefail
 
-ROOT="${1:-/root/FullMinent-platform}"
+ROOT="${1:-/root/KuraTe-platform}"
 NUMBER="${2:-15559340276}"
 ENV_FILE="$ROOT/.env"
 
@@ -31,7 +31,7 @@ fi
 docker compose up -d --force-recreate app
 
 echo "Checking Twilio WhatsApp API mode inside container..."
-docker exec FullMinent_app node -e "
+docker exec KuraTe_app node -e "
 const tw = require('./services/twilioWhatsAppService');
 console.log('isApiModeEnabled:', tw.isApiModeEnabled());
 console.log('getConfigError:', tw.getConfigError() || '(none)');

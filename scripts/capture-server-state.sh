@@ -3,22 +3,22 @@
 # Run once on the VPS and scp the tarball off-server for safe keeping.
 #
 # Usage:
-#   bash scripts/capture-server-state.sh [/root/FullMinent-platform]
+#   bash scripts/capture-server-state.sh [/root/KuraTe-platform]
 #
-# Output: /root/FullMinent_server_state_<date>.tar.gz.enc
+# Output: /root/KuraTe_server_state_<date>.tar.gz.enc
 #   (encrypted with a passphrase you provide)
 set -euo pipefail
 
-DEPLOY_DIR="${1:-/root/FullMinent-platform}"
-SNAPSHOT_DIR="/tmp/FullMinent-snapshot-$$"
+DEPLOY_DIR="${1:-/root/KuraTe-platform}"
+SNAPSHOT_DIR="/tmp/KuraTe-snapshot-$$"
 STAGING="$SNAPSHOT_DIR/staging"
 DATE=$(date -u '+%Y-%m-%d_%H%M%S')
-OUTFILE="/root/FullMinent_server_state_${DATE}.tar.gz"
+OUTFILE="/root/KuraTe_server_state_${DATE}.tar.gz"
 
 mkdir -p "$STAGING"
 
 echo "==================================================="
-echo " FullMinent — Full Server State Capture"
+echo " KuraTe — Full Server State Capture"
 echo " Date: $DATE"
 echo " Host: $(hostname)"
 echo " IP:   $(curl -s ifconfig.me || echo 'unknown')"
@@ -124,7 +124,7 @@ fi
 
 # ── 13. Latest MongoDB dump (SKIPPED — daily backup exists; use that for restore) ──
 echo "[13/14] MongoDB backup... SKIPPED (daily backup covers this)"
-BACKUP_DIR="/root/FullMinent_backups"
+BACKUP_DIR="/root/KuraTe_backups"
 
 # ── 14. Certbot config & certs (live PEMs + renewal hooks) ──
 echo "[14/14] Certbot state..."
@@ -185,9 +185,9 @@ echo "   scp root@91.208.206.35:$FINAL ./"
 echo ""
 echo " To restore (on a fresh server):"
 echo "   1. openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 \\"
-echo "        -in FullMinent_server_state_${DATE}.tar.gz.enc \\"
-echo "        -out FullMinent_server_state_${DATE}.tar.gz"
-echo "   2. tar xzf FullMinent_server_state_${DATE}.tar.gz"
+echo "        -in KuraTe_server_state_${DATE}.tar.gz.enc \\"
+echo "        -out KuraTe_server_state_${DATE}.tar.gz"
+echo "   2. tar xzf KuraTe_server_state_${DATE}.tar.gz"
 echo "   3. Follow ansible/deploy.yml to provision base OS"
 echo "   4. Restore .env from env-file.txt"
 echo "   5. Restore certs from certs/"

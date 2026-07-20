@@ -1,10 +1,10 @@
-# Sync FullMinent TLS files into certbot layout for nginx (fullchain.pem + privkey.pem).
-# Default source: D:\Certs-Selfapeal (override with FullMinent_CERTS_DIR).
+# Sync KuraTe TLS files into certbot layout for nginx (fullchain.pem + privkey.pem).
+# Default source: D:\Certs-Selfapeal (override with KuraTe_CERTS_DIR).
 
 $ErrorActionPreference = 'Stop'
 
-$SourceDir = if ($env:FullMinent_CERTS_DIR) { $env:FullMinent_CERTS_DIR } else { 'D:\Certs-Selfapeal' }
-$TargetDir = Join-Path $PSScriptRoot '..\certbot\conf\live\FullMinent.drsrv.net.ar'
+$SourceDir = if ($env:KuraTe_CERTS_DIR) { $env:KuraTe_CERTS_DIR } else { 'D:\Certs-Selfapeal' }
+$TargetDir = Join-Path $PSScriptRoot '..\certbot\conf\live\KuraTe.drsrv.net.ar'
 New-Item -ItemType Directory -Force -Path $TargetDir | Out-Null
 $TargetDir = (Resolve-Path $TargetDir).Path
 
@@ -16,7 +16,7 @@ $fullchain = Join-Path $TargetDir 'fullchain.pem'
 $privkey = Join-Path $TargetDir 'privkey.pem'
 
 if (-not (Test-Path $keySrc)) {
-    Write-Error "Missing $keySrc - set FullMinent_CERTS_DIR or place selfa.key in D:\Certs-Selfapeal"
+    Write-Error "Missing $keySrc - set KuraTe_CERTS_DIR or place selfa.key in D:\Certs-Selfapeal"
 }
 
 if (Test-Path $chainSrc) {
@@ -43,11 +43,11 @@ if (Get-Command openssl -ErrorAction SilentlyContinue) {
     if ($dates) { Write-Host $dates }
     $san = & openssl x509 -in $fullchain -noout -ext subjectAltName 2>$null
     if ($san) { Write-Host $san }
-    $hostOk = ($subject -match 'FullMinent') -or ($san -match 'FullMinent')
+    $hostOk = ($subject -match 'KuraTe') -or ($san -match 'KuraTe')
     if (-not $hostOk) {
-        Write-Warning 'Certificate is not issued for FullMinent.drsrv.net.ar - renew with certbot for that hostname.'
+        Write-Warning 'Certificate is not issued for KuraTe.drsrv.net.ar - renew with certbot for that hostname.'
     } else {
-        Write-Host 'OK: certificate matches FullMinent.drsrv.net.ar'
+        Write-Host 'OK: certificate matches KuraTe.drsrv.net.ar'
     }
 }
 

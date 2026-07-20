@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="500" viewBox="0 0 400 500">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#0f0f1a"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="500" fill="url(#bg)"/>
+  <g transform="translate(200 230)" stroke="#B8922E" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- crossed screwdriver + wrench -->
+    <g transform="rotate(45)">
+      <line x1="-90" y1="0" x2="60" y2="0"/>
+      <rect x="-120" y="-14" width="34" height="28" rx="4" fill="#B8922E" stroke="none"/>
+      <rect x="60" y="-12" width="22" height="24" rx="3" fill="#B8922E" stroke="none"/>
+    </g>
+    <g transform="rotate(-45)">
+      <line x1="-90" y1="0" x2="50" y2="0"/>
+      <path d="M50 -18 q40 0 40 18 q0 18 -40 18 q-14 0 -14 -18 q0 -18 14 -18 z" fill="#B8922E" stroke="none"/>
+      <circle cx="-90" cy="0" r="16" fill="#0f0f1a" stroke="#B8922E" stroke-width="10"/>
+    </g>
+  </g>
+  <text x="50%" y="430" font-family="Arial, sans-serif" font-size="22" fill="#B8922E" text-anchor="middle" font-weight="600">Sin foto</text>
+</svg>

@@ -10,8 +10,8 @@ const {
 } = require('../utils/seoMeta');
 const {
   resolveRequestBaseUrl,
-  isFullMinentHost,
-  buildFullMinentRobotsTxt,
+  isKuraTeHost,
+  buildKuraTeRobotsTxt,
   baseUrlForNamedSite,
   buildSitemapForBase,
   buildRobotsTxt
@@ -41,10 +41,10 @@ function sendSitemapXml(res, xml) {
 }
 
 exports.robotsTxt = (req, res) => {
-  if (isFullMinentHost(req)) {
+  if (isKuraTeHost(req)) {
     res.type('text/plain');
     res.setHeader('Cache-Control', 'public, max-age=3600');
-    return res.send(buildFullMinentRobotsTxt());
+    return res.send(buildKuraTeRobotsTxt());
   }
   const baseUrl = resolveRequestBaseUrl(req);
   res.type('text/plain');
@@ -54,8 +54,8 @@ exports.robotsTxt = (req, res) => {
 
 exports.sitemapXml = async (req, res, next) => {
   try {
-    const baseUrl = isFullMinentHost(req)
-      ? baseUrlForNamedSite('FullMinent')
+    const baseUrl = isKuraTeHost(req)
+      ? baseUrlForNamedSite('KuraTe')
       : resolveRequestBaseUrl(req);
     const { xml } = await buildSitemapForBase(baseUrl);
     sendSitemapXml(res, xml);
@@ -64,18 +64,18 @@ exports.sitemapXml = async (req, res, next) => {
   }
 };
 
-exports.sitemapFullMinentXml = async (req, res, next) => {
+exports.sitemapKuraTeXml = async (req, res, next) => {
   try {
-    const { xml } = await buildSitemapForBase(baseUrlForNamedSite('FullMinent'));
+    const { xml } = await buildSitemapForBase(baseUrlForNamedSite('KuraTe'));
     sendSitemapXml(res, xml);
   } catch (error) {
     next(error);
   }
 };
 
-exports.sitemapFullMinentXml = async (req, res, next) => {
+exports.sitemapKuraTeXml = async (req, res, next) => {
   try {
-    const { xml } = await buildSitemapForBase(baseUrlForNamedSite('FullMinent'));
+    const { xml } = await buildSitemapForBase(baseUrlForNamedSite('KuraTe'));
     sendSitemapXml(res, xml);
   } catch (error) {
     next(error);
@@ -91,14 +91,14 @@ exports.renderLocationPage = async (req, res, next) => {
     if (!page) {
       res.status(404);
       res.type('html');
-      return res.send(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="robots" content="noindex, nofollow"><title>Ubicacion no encontrada | FullMinent</title></head><body><h1>Ubicacion no encontrada</h1><p><a href="/categories.html">Volver al directorio</a></p></body></html>`);
+      return res.send(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="robots" content="noindex, nofollow"><title>Ubicacion no encontrada | KuraTe</title></head><body><h1>Ubicacion no encontrada</h1><p><a href="/categories.html">Volver al directorio</a></p></body></html>`);
     }
 
     const professionals = await fetchProfessionalsForPage(page);
     if (!professionals.length) {
       res.status(404);
       res.type('html');
-      return res.send(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="robots" content="noindex, nofollow"><title>Sin perfiles en esta zona | FullMinent</title></head><body><h1>Sin perfiles en esta zona</h1><p><a href="/categories.html">Volver al directorio</a></p></body></html>`);
+      return res.send(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="robots" content="noindex, nofollow"><title>Sin perfiles en esta zona | KuraTe</title></head><body><h1>Sin perfiles en esta zona</h1><p><a href="/categories.html">Volver al directorio</a></p></body></html>`);
     }
 
     const seo = buildLocationSeo(page, professionals);
@@ -138,8 +138,8 @@ exports.renderProfilePage = async (req, res, next) => {
     if (!professional || !isProfileIndexable(professional)) {
       res.status(404);
       const html = applySeoToHtml(template, {
-        title: 'Perfil no encontrado | FullMinent',
-        description: 'El perfil solicitado no está disponible en FullMinent.',
+        title: 'Perfil no encontrado | KuraTe',
+        description: 'El perfil solicitado no está disponible en KuraTe.',
         url: absoluteUrl(`/perfil/${encodeURIComponent(aliasParam)}`),
         robots: 'noindex, nofollow'
       });

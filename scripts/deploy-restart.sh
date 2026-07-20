@@ -2,7 +2,7 @@
 # Rebuild app container and restart nginx (called from upload_to_server.bat)
 set -eu
 
-DEPLOY_DIR="${1:-/root/FullMinent-platform}"
+DEPLOY_DIR="${1:-/root/KuraTe-platform}"
 cd "$DEPLOY_DIR"
 
 ensure_docker() {
@@ -23,17 +23,17 @@ ensure_docker() {
 }
 
 app_resolves_mongo() {
-  docker exec FullMinent_app getent hosts mongo >/dev/null 2>&1
+  docker exec KuraTe_app getent hosts mongo >/dev/null 2>&1
 }
 
 wait_for_mongo_healthy() {
-  until docker inspect -f '{{.State.Health.Status}}' FullMinent_mongo 2>/dev/null | grep -qx healthy; do
+  until docker inspect -f '{{.State.Health.Status}}' KuraTe_mongo 2>/dev/null | grep -qx healthy; do
     echo "Waiting for mongo 4.4 to become healthy..."
     sleep 3
   done
 }
 
-# Recreate all containers on one compose network (named volume FullMinent_mongo_data is kept).
+# Recreate all containers on one compose network (named volume KuraTe_mongo_data is kept).
 reconcile_stack_network() {
   echo "WARN: app cannot resolve hostname 'mongo' — reconciling stack (DB volume preserved)..."
   $DC down
@@ -45,13 +45,13 @@ reconcile_stack_network() {
 
 ensure_docker
 
-bash "$DEPLOY_DIR/scripts/nginx-write-FullMinent-conf.sh" "$DEPLOY_DIR"
+bash "$DEPLOY_DIR/scripts/nginx-write-selfappeal-conf.sh" "$DEPLOY_DIR"
 
 nginx_config_test() {
   echo "Testing nginx configuration..."
   local net=""
-  if docker inspect FullMinent_app >/dev/null 2>&1; then
-    net=$(docker inspect -f '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' FullMinent_app 2>/dev/null | head -1)
+  if docker inspect KuraTe_app >/dev/null 2>&1; then
+    net=$(docker inspect -f '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' KuraTe_app 2>/dev/null | head -1)
   fi
   local net_args=()
   if [ -n "$net" ]; then
@@ -66,9 +66,9 @@ nginx_config_test() {
     -v "$DEPLOY_DIR/certbot/conf/archive:/etc/nginx/archive:ro" \
     nginx:alpine nginx -t 2>&1; then
     echo "ERROR: nginx -t failed. Common fixes:"
-    echo "  - grep certs-FullMinent nginx.conf (must be empty; redeploy latest nginx.conf)"
-    echo "  - ls certbot/conf/live/FullMinent.drsrv.net.ar/fullchain.pem privkey.pem"
-    echo "  - ls certbot/conf/live/FullMinent.drsrv.net.ar/fullchain.pem privkey.pem"
+    echo "  - grep certs-KuraTe nginx.conf (must be empty; redeploy latest nginx.conf)"
+    echo "  - ls certbot/conf/live/KuraTe.drsrv.net.ar/fullchain.pem privkey.pem"
+    echo "  - ls certbot/conf/live/KuraTe.drsrv.net.ar/fullchain.pem privkey.pem"
     return 1
   fi
 }
@@ -88,13 +88,13 @@ else
 fi
 
 replace_app_container() {
-  echo "Replacing FullMinent_app container..."
-  docker kill FullMinent_app 2>/dev/null || true
-  if ! docker rm -f FullMinent_app 2>/dev/null; then
+  echo "Replacing KuraTe_app container..."
+  docker kill KuraTe_app 2>/dev/null || true
+  if ! docker rm -f KuraTe_app 2>/dev/null; then
     echo "WARN: docker rm failed (permission denied?) — restarting Docker daemon..."
     systemctl restart docker.socket docker 2>/dev/null || systemctl restart docker
     sleep 5
-    docker rm -f FullMinent_app 2>/dev/null || true
+    docker rm -f KuraTe_app 2>/dev/null || true
   fi
   # Do not use --no-deps: app must join the compose network to resolve "mongo".
   $DC up -d --pull never app
@@ -136,10 +136,10 @@ fi
 
 if ! app_resolves_mongo; then
   reconcile_stack_network
-elif ! docker logs FullMinent_app 2>&1 | tail -20 | grep -q 'MongoDB Connected'; then
+elif ! docker logs KuraTe_app 2>&1 | tail -20 | grep -q 'MongoDB Connected'; then
   echo "Waiting for app to connect to mongo..."
   sleep 15
-  if ! docker logs FullMinent_app 2>&1 | tail -30 | grep -q 'MongoDB Connected'; then
+  if ! docker logs KuraTe_app 2>&1 | tail -30 | grep -q 'MongoDB Connected'; then
     reconcile_stack_network
   fi
 fi
@@ -147,11 +147,11 @@ fi
 recreate_nginx() {
   echo "Recreating nginx container (required after cert/config mount changes)..."
   nginx_config_test || return 1
-  docker rm -f FullMinent_nginx 2>/dev/null || true
+  docker rm -f KuraTe_nginx 2>/dev/null || true
   $DC up -d --force-recreate --pull never nginx
 }
 
-if docker ps -a --format '{{.Names}}' | grep -qx FullMinent_nginx; then
+if docker ps -a --format '{{.Names}}' | grep -qx KuraTe_nginx; then
   recreate_nginx || exit 1
 else
   echo "Starting nginx..."
@@ -161,8 +161,8 @@ fi
 echo "Containers:"
 $DC ps
 
-if app_resolves_mongo && docker logs FullMinent_app 2>&1 | tail -10 | grep -q 'MongoDB Connected'; then
+if app_resolves_mongo && docker logs KuraTe_app 2>&1 | tail -10 | grep -q 'MongoDB Connected'; then
   echo "OK: app resolves mongo and database is connected."
 else
-  echo "WARN: verify mongo connectivity: docker logs FullMinent_app --tail 20"
+  echo "WARN: verify mongo connectivity: docker logs KuraTe_app --tail 20"
 fi

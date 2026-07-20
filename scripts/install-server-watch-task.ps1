@@ -7,7 +7,7 @@ $ErrorActionPreference = 'Stop'
 $RepoRoot = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 $NodeExe = (Get-Command node -ErrorAction Stop).Source
 $ScriptPath = Join-Path $RepoRoot 'scripts\server-watch.js'
-$TaskName = 'FullMinent-ServerWatch'
+$TaskName = 'KuraTe-ServerWatch'
 
 if (-not (Test-Path $ScriptPath)) {
     Write-Error "Missing $ScriptPath"

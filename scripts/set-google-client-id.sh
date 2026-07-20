@@ -3,10 +3,10 @@
 # Usage (on server):
 #   bash scripts/set-google-client-id.sh YOUR_ID.apps.googleusercontent.com
 # Or from Windows after SSH:
-#   cd /root/FullMinent-platform && bash scripts/set-google-client-id.sh "123...apps.googleusercontent.com"
+#   cd /root/KuraTe-platform && bash scripts/set-google-client-id.sh "123...apps.googleusercontent.com"
 set -euo pipefail
 
-ROOT="${2:-/root/FullMinent-platform}"
+ROOT="${2:-/root/KuraTe-platform}"
 CLIENT_ID="${1:-}"
 
 if [[ -z "$CLIENT_ID" ]]; then
@@ -41,10 +41,10 @@ fi
 docker compose up -d --force-recreate app
 
 echo "Verifying inside container..."
-docker exec FullMinent_app node -e "
+docker exec KuraTe_app node -e "
 const id = process.env.GOOGLE_CLIENT_ID || '';
 console.log('GOOGLE_CLIENT_ID:', id ? id.slice(0, 12) + '...' + id.slice(-20) : '(empty)');
 if (!id) process.exit(1);
 "
 
-echo "OK — open https://FullMinent.drsrv.net.ar/api/v1/public/client-config and confirm googleClientId is set."
+echo "OK — open https://KuraTe.drsrv.net.ar/api/v1/public/client-config and confirm googleClientId is set."

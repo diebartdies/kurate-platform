@@ -3,8 +3,8 @@ const fs = require('fs');
 const path = require('path');
 const connectDB = require('../config/database');
 const {
-  FullMinent_BASE,
-  FullMinent_BASE,
+  KuraTe_BASE,
+  KuraTe_BASE,
   buildSitemapForBase,
   buildRobotsTxt
 } = require('../utils/seoSitemap');
@@ -20,7 +20,7 @@ async function writeSiteBundle(label, baseUrl) {
   fs.writeFileSync(sitemapPath, xml, 'utf8');
   fs.writeFileSync(robotsPath, buildRobotsTxt(baseUrl), 'utf8');
 
-  if (label === 'FullMinent') {
+  if (label === 'KuraTe') {
     const publicSitemap = path.join(PUBLIC_DIR, 'sitemap.xml');
     fs.writeFileSync(publicSitemap, xml, 'utf8');
     const publicRobots = path.join(PUBLIC_DIR, 'robots.txt');
@@ -37,27 +37,27 @@ async function writeSiteBundle(label, baseUrl) {
   await connectDB();
   fs.mkdirSync(EXPORT_DIR, { recursive: true });
 
-  const FullMinent = await writeSiteBundle('FullMinent', FullMinent_BASE);
-  const FullMinent = await writeSiteBundle('FullMinent', FullMinent_BASE);
+  const KuraTe = await writeSiteBundle('KuraTe', KuraTe_BASE);
+  const KuraTe = await writeSiteBundle('KuraTe', KuraTe_BASE);
 
   console.log('--------------------------------------------------');
   console.log('Google sitemap export');
   console.log('--------------------------------------------------');
-  console.log(`FullMinent base:   ${FullMinent.baseUrl}`);
-  console.log(`  URLs:           ${FullMinent.urlCount}`);
-  console.log(`  Sitemap:        ${FullMinent.sitemapPath}`);
+  console.log(`KuraTe base:   ${KuraTe.baseUrl}`);
+  console.log(`  URLs:           ${KuraTe.urlCount}`);
+  console.log(`  Sitemap:        ${KuraTe.sitemapPath}`);
   console.log(`  Public (static): ${path.join(PUBLIC_DIR, 'sitemap.xml')}`);
-  console.log(`  Robots:         ${FullMinent.robotsPath}`);
-  console.log(`FullMinent base:  ${FullMinent.baseUrl}`);
-  console.log(`  URLs:           ${FullMinent.urlCount}`);
-  console.log(`  Sitemap:        ${FullMinent.sitemapPath}`);
-  console.log(`  Robots:         ${FullMinent.robotsPath}`);
+  console.log(`  Robots:         ${KuraTe.robotsPath}`);
+  console.log(`KuraTe base:  ${KuraTe.baseUrl}`);
+  console.log(`  URLs:           ${KuraTe.urlCount}`);
+  console.log(`  Sitemap:        ${KuraTe.sitemapPath}`);
+  console.log(`  Robots:         ${KuraTe.robotsPath}`);
   console.log('--------------------------------------------------');
   console.log('Google Search Console — submit:');
-  console.log(`  FullMinent property: ${FullMinent_BASE}`);
-  console.log(`  FullMinent sitemap:  ${FullMinent_BASE}/sitemap.xml`);
-  console.log(`  FullMinent property (model landing only): ${FullMinent_BASE}`);
-  console.log(`  FullMinent sitemap: ${FullMinent_BASE}/sitemap.xml`);
+  console.log(`  KuraTe property: ${KuraTe_BASE}`);
+  console.log(`  KuraTe sitemap:  ${KuraTe_BASE}/sitemap.xml`);
+  console.log(`  KuraTe property (model landing only): ${KuraTe_BASE}`);
+  console.log(`  KuraTe sitemap: ${KuraTe_BASE}/sitemap.xml`);
   console.log('--------------------------------------------------');
 
   process.exit(0);

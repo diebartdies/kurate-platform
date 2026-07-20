@@ -2,9 +2,9 @@
 # Install twice-daily GitHub backup cron (06:00 and 18:00 UTC).
 set -eu
 
-DEPLOY_DIR="${1:-/root/FullMinent-platform}"
+DEPLOY_DIR="${1:-/root/KuraTe-platform}"
 SCRIPT="$DEPLOY_DIR/scripts/git-backup-push.sh"
-LOG="/var/log/FullMinent_git_backup.log"
+LOG="/var/log/KuraTe_git_backup.log"
 CRON_LINE="0 6,18 * * * root bash $SCRIPT $DEPLOY_DIR >> $LOG 2>&1"
 
 if [ ! -f "$SCRIPT" ]; then
@@ -14,8 +14,8 @@ fi
 
 chmod +x "$SCRIPT"
 
-MARKER="# FullMinent-git-backup"
-CRON_FILE="/etc/cron.d/FullMinent-git-backup"
+MARKER="# KuraTe-git-backup"
+CRON_FILE="/etc/cron.d/KuraTe-git-backup"
 
 {
   echo "$MARKER"

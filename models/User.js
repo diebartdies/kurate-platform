@@ -27,6 +27,11 @@ const UserSchema = new mongoose.Schema({
     enum: ['user', 'professional', 'admin'],
     default: 'user'
   },
+  professionalType: {
+    type: String,
+    enum: ['companion', 'hogar'],
+    default: 'companion'
+  },
   isEmailVerified: {
     type: Boolean,
     default: false
@@ -278,6 +283,68 @@ const UserSchema = new mongoose.Schema({
       endDate: Date,
       requestedAt: Date
     }
+  },
+  hogarProfile: {
+    // Identity (persona física o empresa)
+    firstName: String,
+    lastName: String,
+    companyName: String,
+    taxId: String, // DNI o CUIT
+    birthDate: Date,
+    activityStartDate: Date,
+    address: {
+      street: String,
+      number: String,
+      floor: String,
+      apartment: String,
+      neighborhood: String,
+      city: String,
+      province: String,
+      postalCode: String,
+      country: String
+    },
+    // Contact
+    contact: {
+      email: String,
+      mobilePhone: String,
+      whatsapp: { type: Boolean, default: false },
+      telegram: { type: Boolean, default: false }
+    },
+    // Category / maturity of the professional
+    category: {
+      type: String,
+      enum: ['profesional_matriculado', 'tecnico_matriculado', 'tecnico_no_matriculado', 'idoneo'],
+      default: 'tecnico_no_matriculado'
+    },
+    // Ad: single action + single area
+    action: String,
+    actionDetails: String,
+    area: {
+      type: String,
+      enum: ['hogar', 'oficina', 'pime', 'industria']
+    },
+    // Selected services (multiple nodes, multiple brands each) within the chosen area
+    services: [{
+      path: { type: String, required: true },
+      name: { type: String, required: true },
+      brands: [String]
+    }],
+    photos: [String],
+    specialty: String,
+    availability: {
+      type: String,
+      enum: ['inmediata', 'rapida', 'puedo_esperar', 'sin_apuro'],
+      default: 'rapida'
+    },
+    description: String,
+    // Legacy fields retained for backward compat
+    scope: {
+      type: String,
+      enum: ['domicilio', 'barrio', 'ciudad', 'provincia', 'pais'],
+      default: 'domicilio'
+    },
+    experience: String,
+    certifications: [String]
   },
   resetPasswordToken: String,
   resetPasswordExpire: Date,

@@ -195,18 +195,18 @@ async function fetchProfessionalsForPage(page) {
 function buildLocationTitle(page) {
   if (page.areaName) {
     if (isCabaProvince(page.provinceName)) {
-      return `Acompañantes en ${page.areaName}, CABA | FullMinent`;
+      return `Acompañantes en ${page.areaName}, CABA | KuraTe`;
     }
-    return `Acompañantes en ${page.areaName}, ${page.provinceName} | FullMinent`;
+    return `Acompañantes en ${page.areaName}, ${page.provinceName} | KuraTe`;
   }
-  return `Acompañantes en ${page.provinceName} | FullMinent`;
+  return `Acompañantes en ${page.provinceName} | KuraTe`;
 }
 
 function buildLocationDescription(page, count) {
   const place = page.areaName
     ? (isCabaProvince(page.provinceName) ? `${page.areaName}, CABA` : `${page.areaName}, ${page.provinceName}`)
     : page.provinceName;
-  return `Directorio FullMinent: ${count} Living Treasures verificadas en ${place}. Perfiles exclusivos de acompañantes en Argentina.`;
+  return `Directorio KuraTe: ${count} Living Treasures verificadas en ${place}. Perfiles exclusivos de acompañantes en Argentina.`;
 }
 
 function buildCategoriesFilterUrl(page) {
@@ -323,7 +323,7 @@ function buildLocationHtml(page, professionals, seo, subAreas = []) {
 <body>
   <div class="container">
     <header class="page-header">
-      <a href="/index.html" class="logo"><img src="/FullMinent_logo_black.png" alt="FullMinent Logo" class="page-logo"></a>
+      <a href="/index.html" class="logo"><img src="/KuraTe_logo_black.png" alt="KuraTe Logo" class="page-logo"></a>
     </header>
     <section class="card">
       <h1 class="gold-text">Living Treasures en ${escapeHtml(placeLabel)}</h1>

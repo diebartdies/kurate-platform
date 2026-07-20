@@ -39,7 +39,7 @@ async function parseAdminApiResponse(res) {
             data = JSON.parse(text);
         } catch {
             const hint = res.status === 502 || res.status === 504
-                ? 'Gateway error — the app container may be down or restarting. Check: docker logs FullMinent_app --tail 50'
+                ? 'Gateway error — the app container may be down or restarting. Check: docker logs KuraTe_app --tail 50'
                 : res.status === 429
                     ? 'Too many requests — wait a minute and refresh the page.'
                     : res.status === 401

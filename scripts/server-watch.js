@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Virtual server reachability watch (TCP only — not the FullMinent app).
+ * Virtual server reachability watch (TCP only — not the KuraTe app).
  * MUST run from OUTSIDE 91.208.206.35 (your Windows admin PC), never on the server itself.
  *
  * Usage:

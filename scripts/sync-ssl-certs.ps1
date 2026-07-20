@@ -1,11 +1,11 @@
 # Sync Let's Encrypt source files into the names nginx/docker expect.
-# Run before upload or after renewing FullMinent.cer / FullMinent.chain on the server.
+# Run before upload or after renewing KuraTe.cer / KuraTe.chain on the server.
 
 $ErrorActionPreference = 'Stop'
-$CertDir = Join-Path $PSScriptRoot '..\certbot\conf\live\FullMinent.drsrv.net.ar' | Resolve-Path
+$CertDir = Join-Path $PSScriptRoot '..\certbot\conf\live\KuraTe.drsrv.net.ar' | Resolve-Path
 
-$chainSrc = Join-Path $CertDir 'FullMinent.chain'
-$keySrc = Join-Path $CertDir 'FullMinent.key'
+$chainSrc = Join-Path $CertDir 'KuraTe.chain'
+$keySrc = Join-Path $CertDir 'KuraTe.key'
 $fullchain = Join-Path $CertDir 'fullchain.pem'
 $privkey = Join-Path $CertDir 'privkey.pem'
 

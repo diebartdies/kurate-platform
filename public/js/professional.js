@@ -252,7 +252,7 @@ export function injectProfessionalDashboardGuides(content, data, insertRef) {
         }
 
         if (isApproved && (!prof.photos || prof.photos.length === 0)) {
-            alertsHtml += `<div style="background: rgba(212,175,55,0.1); border-left: 4px solid var(--primary-gold); padding: 15px; margin-bottom: 10px; line-height: 1.5;">🎉 <strong style="color: var(--primary-gold);">${t('Welcome to FullMinent!')}</strong><br>${t('You are now approved and ready to upload your personal photos. Note: The first photo will be treated as your profile Thumbnail. You can drag and drop photos below to change their order at any time.')}</div>`;
+            alertsHtml += `<div style="background: rgba(212,175,55,0.1); border-left: 4px solid var(--primary-gold); padding: 15px; margin-bottom: 10px; line-height: 1.5;">🎉 <strong style="color: var(--primary-gold);">${t('Welcome to KuraTe!')}</strong><br>${t('You are now approved and ready to upload your personal photos. Note: The first photo will be treated as your profile Thumbnail. You can drag and drop photos below to change their order at any time.')}</div>`;
         }
 
         if (!data.isReadyForTransactions && isApproved) {
@@ -1368,7 +1368,7 @@ export async function loadProfDashboard() {
 
             const firstApprovedBannerHtml = user.firstApprovedLogin ? `
                 <div class="card fileteado-section" style="margin-bottom: 20px; border: 2px solid var(--primary-gold); background: rgba(212,175,55,0.12);">
-                    <h3 class="gold-text" style="margin-top: 0;">${t('Welcome to FullMinent!')}</h3>
+                    <h3 class="gold-text" style="margin-top: 0;">${t('Welcome to KuraTe!')}</h3>
                     <p style="color: #eee; line-height: 1.55; margin-bottom: 0;">${t('Your account has been approved. Complete your profile below — choose a category, add specialties, write your bio, and upload photos. Once you save, your public profile will be visible on the directory.')}</p>
                 </div>
             ` : '';
@@ -1552,7 +1552,7 @@ export async function loadProfDashboard() {
 
                 <div class="card fileteado-section" style="margin-top: 20px; margin-bottom: 20px; border: 1px solid var(--accent-red);">
                     <h3 style="color: var(--accent-red); margin-bottom: 10px;">${t('Leave the platform')}</h3>
-                    <p style="color: #ccc; font-size: 0.9rem; margin-bottom: 16px;">${t('If you no longer wish to remain on FullMinent, you can permanently delete your profile and all associated data.')}</p>
+                    <p style="color: #ccc; font-size: 0.9rem; margin-bottom: 16px;">${t('If you no longer wish to remain on KuraTe, you can permanently delete your profile and all associated data.')}</p>
                     <button type="button" id="btnOpenDeleteProfile" style="width: 100%; padding: 12px; background: transparent; border: 1px solid var(--accent-red); color: var(--accent-red); font-weight: bold; border-radius: 4px; cursor: pointer;">${t('Delete my profile')}</button>
                 </div>
 

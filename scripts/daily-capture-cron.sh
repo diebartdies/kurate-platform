@@ -3,10 +3,10 @@
 # Keeps last 7 encrypted archives, deletes older ones.
 set -euo pipefail
 
-CAPTURE_SCRIPT="/root/FullMinent-platform/scripts/capture-server-state.sh"
+CAPTURE_SCRIPT="/root/KuraTe-platform/scripts/capture-server-state.sh"
 ARCHIVE_DIR="/root"
 RETENTION_DAYS=7
-LOGFILE="/var/log/FullMinent-daily-capture.log"
+LOGFILE="/var/log/KuraTe-daily-capture.log"
 
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting daily capture..." >> "$LOGFILE"
 
@@ -23,11 +23,11 @@ PASSPHRASE=$(cat /root/.capture-passphrase)
 # We need to run the capture script non-interactively.
 # The capture script's openssl prompt is interactive.
 # Let's run the steps directly instead of calling the script.
-DEPLOY_DIR="/root/FullMinent-platform"
+DEPLOY_DIR="/root/KuraTe-platform"
 SNAPSHOT_DIR=$(mktemp -d)
 STAGING="$SNAPSHOT_DIR/staging"
 DATE=$(date -u '+%Y-%m-%d_%H%M%S')
-OUTFILE="/root/FullMinent_server_state_${DATE}.tar.gz"
+OUTFILE="/root/KuraTe_server_state_${DATE}.tar.gz"
 ENC_OUTFILE="${OUTFILE}.enc"
 
 mkdir -p "$STAGING"
@@ -114,7 +114,7 @@ rm -f "$OUTFILE"
 rm -rf "$SNAPSHOT_DIR"
 
 # Retention: delete captures older than 7 days
-find /root -maxdepth 1 -name "FullMinent_server_state_*.tar.gz.enc" -mtime +$RETENTION_DAYS -delete
+find /root -maxdepth 1 -name "KuraTe_server_state_*.tar.gz.enc" -mtime +$RETENTION_DAYS -delete
 
 SIZE=$(stat -c%s "$ENC_OUTFILE" 2>/dev/null || stat -f%z "$ENC_OUTFILE" 2>/dev/null)
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Done: $(basename "$ENC_OUTFILE") ($(( SIZE / 1024 / 1024 )) MB)" >> "$LOGFILE"

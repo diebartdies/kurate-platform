@@ -1,4 +1,4 @@
-/* FullMinent - Mobile & tablet responsive layer (v8.13) */
+/* KuraTe - Mobile & tablet responsive layer (v8.13) */
 
 html {
     -webkit-text-size-adjust: 100%;
@@ -28,7 +28,7 @@ body {
 /* Logo sizing — overrides large inline heights on page headers */
 .page-logo,
 .logo img,
-header img[src*="FullMinent_logo"],
+header img[src*="KuraTe_logo"],
 header .logo img {
     height: auto !important;
     max-height: clamp(64px, 18vw, 120px);
@@ -676,7 +676,7 @@ body.register-page #registerMain {
 @media (max-width: 900px) and (orientation: landscape) {
     .page-logo,
     .logo img,
-    header img[src*="FullMinent_logo"] {
+    header img[src*="KuraTe_logo"] {
         max-height: 72px;
     }
 

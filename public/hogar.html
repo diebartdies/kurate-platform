@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="alternate icon" href="/favicon.ico">
+  <title>Técnicos Hogar / Oficina</title>
+  <meta name="theme-color" content="#B8922E">
+  <meta name="color-scheme" content="dark">
+  <meta name="robots" content="noindex, nofollow">
+  <style>
+    :root {
+      --gold-highlight: #F0E4C3;
+      --gold-light: #D9BC6A;
+      --primary-gold: #B8922E;
+      --gold-mid: #967018;
+      --gold-dark: #7A5A14;
+      --gold-rgb: 184, 146, 46;
+    }
+    * { box-sizing: border-box; }
+    .fm-top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; gap: 0.5rem; }
+    .fm-back { display: inline-flex; align-items: center; gap: 6px; padding: 0.5rem 1rem; background: transparent; color: #888; border: 1px solid #333; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-decoration: none; }
+    .fm-back:hover { color: var(--primary-gold); border-color: var(--primary-gold); }
+    .fm-top-right { display: flex; align-items: center; gap: 0.5rem; }
+    .fm-lang-btn { background: transparent; border: none; border-bottom: 2px solid transparent; padding: 4px 4px 2px; cursor: pointer; line-height: 0; transition: opacity 0.2s, border-color 0.2s; }
+    .fm-lang-btn.active { border-bottom-color: var(--primary-gold); opacity: 1; }
+    .fm-lang-btn.inactive { opacity: 0.4; }
+    .fm-lang-btn:hover { opacity: 1; }
+    .fm-lang-btn img { border-radius: 2px; display: block; width: 28px; height: 21px; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f0f1a; color: #e0e0e0; margin: 0;
+    }
+    .container { max-width: min(1720px, 100%); margin: 0 auto; padding: 12px 14px 40px; }
+    .categories-shell {
+      display: grid; grid-template-columns: minmax(88px, 11%) minmax(0, 1fr) minmax(88px, 11%);
+      gap: 14px; align-items: stretch; min-height: calc(100vh - 100px);
+    }
+    .categories-frame {
+      border: 1px solid rgba(var(--gold-rgb), 0.38); border-radius: 6px; background: #1a1a2e;
+      box-shadow: inset 0 0 0 1px rgba(var(--gold-rgb), 0.08);
+    }
+    .categories-frame-side {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: clamp(12px, 1.4vw, 22px) clamp(8px, 0.9vw, 14px); min-height: 320px;
+    }
+    .categories-frame-left { justify-content: flex-start; }
+    .categories-frame-right { justify-content: flex-start; }
+    .categories-brand-logo { display: flex; align-items: center; justify-content: center; width: 100%; text-decoration: none; }
+    .categories-brand-logo .page-logo { width: 100%; max-width: 120px; height: auto; max-height: min(42vh, 220px); object-fit: contain; }
+    .categories-frame-left .categories-brand-logo .page-logo { max-width: 100%; max-height: 100%; }
+    .card { background: rgba(255,255,255,0.06); border: 1px solid rgba(var(--gold-rgb), 0.32); padding: 15px; border-radius: 4px; margin-bottom: 15px; }
+    h2.main-title { display: flex; align-items: center; gap: 12px; color: var(--primary-gold); font-weight: 700; letter-spacing: 0.5px; font-size: 1.5rem; margin: 0 0 14px; line-height: 1.2; }
+    h3.sub-title { font-size: 1rem; margin-bottom: 12px; color: var(--gold-light); font-weight: 600; }
+    .filter-group { margin-bottom: 12px; }
+    .filter-group label { display: block; margin-bottom: 5px; color: var(--gold-light); font-weight: 600; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .filter-group select, .filter-group input {
+      width: 100%; height: 44px; padding: 0 0.8rem; font-size: 0.92rem;
+      border: 1px solid rgba(var(--gold-rgb), 0.4); border-radius: 8px; background: #0f0f1a; color: #e0e0e0; font-family: inherit;
+    }
+    .filter-group select:focus, .filter-group input:focus { border-color: var(--primary-gold); outline: none; }
+    .filter-group select option { background: #1a1a2e; color: #e0e0e0; }
+    .sa-btn {
+      display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 1.4rem;
+      background: var(--primary-gold); color: #0f0f1a; border: none; border-radius: 8px; font-size: 0.92rem;
+      font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; font-family: inherit;
+    }
+    .sa-btn:hover { background: var(--gold-light); }
+    .sa-btn--ghost { background: transparent; color: var(--primary-gold); border: 1px solid var(--primary-gold); }
+    .sa-btn--ghost:hover { background: rgba(var(--gold-rgb), 0.12); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+    @media (max-width: 768px) { #hogarGrid.grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } }
+    @media (max-width: 420px) { #hogarGrid.grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } }
+    .hidden { display: none !important; }
+
+    .area-chips { display: flex; flex-direction: column; gap: clamp(6px, 0.8vw, 10px); width: 100%; }
+    .area-chip {
+      width: 100%; padding: clamp(7px, 0.9vw, 11px) clamp(8px, 0.9vw, 12px); border-radius: 8px;
+      border: 1px solid rgba(var(--gold-rgb), 0.4); background: transparent; color: #aaa; cursor: pointer;
+      font-size: clamp(0.78rem, 0.9vw, 0.95rem); text-align: left; transition: background 0.2s, color 0.2s, border-color 0.2s; font-family: inherit;
+    }
+    .area-chip:hover { border-color: var(--primary-gold); color: var(--primary-gold); }
+    .area-chip.is-active { background: rgba(var(--gold-rgb), 0.15); color: var(--primary-gold); border-color: var(--primary-gold); }
+    hr.gold-rule { border: none; border-top: 1px solid rgba(var(--gold-rgb), 0.2); margin: 16px 0; }
+    .contact-note { font-size: 0.85rem; color: #aaa; line-height: 1.6; }
+    .contact-note img { width: 18px; height: 18px; vertical-align: middle; margin-right: 6px; border-radius: 50%; background: rgba(15,15,26,0.85); padding: 2px; }
+
+    /* ===== CARD (Enmarcado: violet card, inset image, gold frame, overlay caption) ===== */
+    .treasure-img-container { position: relative; width: 100%; aspect-ratio: 3/4; background: #111; overflow: hidden; }
+    .treasure-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .treasure-caption { padding: 10px 12px 12px; text-align: left; font-style: normal; display: flex; flex-direction: column; gap: 1px; }
+    .treasure-caption-alias { font-weight: 700; font-size: 0.95rem; color: #fff; line-height: 1.2; }
+    .treasure-caption-location, .treasure-caption-specialty { font-size: 0.78rem; color: #cfcfcf; line-height: 1.2; }
+    .contact-badge { position: absolute; top: 8px; right: 8px; display: flex; gap: 6px; z-index: 2; }
+    .contact-badge img { width: 26px; height: 26px; border-radius: 50%; background: rgba(15,15,26,0.85); padding: 3px; box-sizing: border-box; box-shadow: 0 1px 4px rgba(0,0,0,0.5); object-fit: contain; }
+
+    .hogar-card { background: #1a1a2e; border-radius: 14px; overflow: hidden; border: 1px solid rgba(var(--gold-rgb), 0.35); box-shadow: 0 4px 14px rgba(0,0,0,0.4); transition: transform 0.25s, border-color 0.2s, box-shadow 0.2s; }
+    .hogar-card:hover { transform: translateY(-3px); border-color: var(--primary-gold); box-shadow: 0 6px 20px rgba(var(--gold-rgb), 0.18); }
+    .hogar-card .treasure-img-container { border-radius: 10px; margin: 8px; width: calc(100% - 16px); }
+    .hogar-card .treasure-caption {
+      position: absolute; left: 8px; right: 8px; bottom: 8px;
+      background: linear-gradient(to top, rgba(0,0,0,0.82), rgba(0,0,0,0.0)); border-radius: 10px; padding: 18px 10px 8px;
+    }
+
+    .loader { text-align: center; padding: 40px 16px; color: #aaa; }
+    .empty { grid-column: 1/-1; text-align: center; }
+    .empty h3 { color: var(--gold-light); font-weight: 600; }
+    .empty p { color: #aaa; }
+
+    #hogarFilterDrawer { position: fixed; top: 0; left: -100%; width: 320px; max-width: 88vw; height: 100vh; background: rgba(15,15,26,0.98); backdrop-filter: blur(15px); border-right: 1px solid var(--primary-gold); z-index: 10000; transition: left 0.3s cubic-bezier(0.4,0,0.2,1); overflow-y: auto; padding: 20px; padding-top: 70px; }
+    #hogarFilterDrawer h3 { color: var(--gold-light); margin: 0 0 14px; font-size: 1.2rem; font-weight: 600; }
+    .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: none; opacity: 0; transition: opacity 0.3s ease; }
+    .burger { background: transparent; border: 1px solid var(--primary-gold); color: var(--primary-gold); border-radius: 6px; font-size: 1.1rem; cursor: pointer; margin-right: 12px; padding: 4px 10px; }
+
+    @media (max-width: 1100px) { .categories-shell { grid-template-columns: minmax(72px, 9%) minmax(0, 1fr) minmax(72px, 9%); gap: 10px; } }
+    @media (max-width: 768px) {
+      .categories-shell { grid-template-columns: 1fr; min-height: 0; }
+      .categories-frame-side { min-height: 0; width: 100%; }
+      .area-chips { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+      .area-chip { width: auto; flex: 1 1 calc(50% - 8px); text-align: center; }
+    }
+    @media (max-width: 480px) { .area-chip { flex: 1 1 100%; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="fm-top-bar">
+      <a href="/index.html" class="fm-back">← <span class="fm-back-text">Volver</span></a>
+      <div class="fm-top-right">
+        <button class="fm-lang-btn active" id="langEs" title="Español"><img src="https://flagcdn.com/w40/ar.png" alt="ES"></button>
+        <button class="fm-lang-btn inactive" id="langEn" title="English"><img src="https://flagcdn.com/w40/us.png" alt="EN"></button>
+      </div>
+    </div>
+    <div class="categories-shell" role="main" id="main-content">
+      <aside class="categories-frame categories-frame-side categories-frame-left" aria-label="Filtros">
+        <a href="index.html" class="categories-brand-logo"><img src="/KuraTe_logo_black.png" alt="KuraTe Logo" class="page-logo"></a>
+        <div class="card" id="hogarFilters" style="margin-top:18px; width:100%;">
+          <h3 class="sub-title" data-i18n="Filtros">Filtros</h3>
+          <div class="filter-group"><label data-i18n="Área">Área</label><select id="fArea"><option value="" data-i18n="Todas">Todas</option><option value="hogar" data-i18n="Hogar">Hogar</option><option value="oficina" data-i18n="Oficina">Oficina</option><option value="pime" data-i18n="PIME">PIME</option><option value="industria" data-i18n="Industria">Industria</option></select></div>
+          <div class="filter-group"><label data-i18n="Acción">Acción</label><select id="fAction"><option value="" data-i18n="Todas">Todas</option><option value="Reparo">Reparo</option><option value="Instalo">Instalo</option><option value="Hago mantenimiento">Hago mantenimiento</option><option value="Vendo repuestos">Vendo repuestos</option><option value="Asesoro">Asesoro</option></select></div>
+          <div class="filter-group"><label data-i18n="Categoría">Categoría</label><select id="fCategory"><option value="" data-i18n="Todas">Todas</option><option value="profesional_matriculado">Profesional matriculado</option><option value="tecnico_matriculado">Técnico matriculado</option><option value="tecnico_no_matriculado">Técnico no matriculado</option><option value="idoneo">Idóneo</option></select></div>
+          <div class="filter-group"><label data-i18n="Disponibilidad">Disponibilidad</label><select id="fAvailability"><option value="" data-i18n="Todas">Todas</option><option value="inmediata">Inmediata</option><option value="rapida">Rápida (&lt;2 días)</option><option value="puedo_esperar">2–4 días</option><option value="sin_apuro">&gt;4 días</option></select></div>
+          <div class="filter-group"><label data-i18n="Provincia">Provincia</label><select id="fProvince"><option value="" data-i18n="Todas">Todas</option><option value="CABA">CABA</option><option value="Buenos Aires">Buenos Aires</option><option value="Catamarca">Catamarca</option><option value="Chaco">Chaco</option><option value="Chubut">Chubut</option><option value="Córdoba">Córdoba</option><option value="Corrientes">Corrientes</option><option value="Entre Ríos">Entre Ríos</option><option value="Formosa">Formosa</option><option value="Jujuy">Jujuy</option><option value="La Pampa">La Pampa</option><option value="La Rioja">La Rioja</option><option value="Mendoza">Mendoza</option><option value="Misiones">Misiones</option><option value="Neuquén">Neuquén</option><option value="Río Negro">Río Negro</option><option value="Salta">Salta</option><option value="San Juan">San Juan</option><option value="San Luis">San Luis</option><option value="Santa Cruz">Santa Cruz</option><option value="Santa Fe">Santa Fe</option><option value="Santiago del Estero">Santiago del Estero</option><option value="Tierra del Fuego">Tierra del Fuego</option><option value="Tucumán">Tucumán</option></select></div>
+          <div class="filter-group"><label data-i18n="Localidad">Localidad</label><input type="text" id="fCity" placeholder="Localidad"></div>
+          <div class="filter-group"><label data-i18n="Servicio / Equipo">Servicio / Equipo</label><input type="text" id="fService" placeholder="Ej: lavarropas, aire, impresoras"></div>
+          <div class="filter-group"><label data-i18n="Marca">Marca</label><input type="text" id="fBrand" placeholder="Ej: Samsung, HP, LG"></div>
+          <div style="display:flex; gap:10px; margin-top:14px;">
+            <button id="btnApply" class="sa-btn" style="flex:1;" data-i18n="Aplicar">Aplicar</button>
+            <button id="btnClear" class="sa-btn sa-btn--ghost" style="flex:1;" data-i18n="Limpiar">Limpiar</button>
+          </div>
+        </div>
+      </aside>
+
+      <section class="categories-frame categories-frame-center" data-module="DIR-01" style="padding:14px 12px 24px; min-width:0; background:rgba(8,8,8,0.72); border-color:rgba(var(--gold-rgb),0.55);">
+        <h2 class="main-title">Técnicos disponibles</h2>
+        <div class="treasure-grid-slot">
+          <div id="hogarLoader" class="loader">Preparando el directorio...</div>
+          <div id="hogarGrid" class="grid hidden"></div>
+        </div>
+      </section>
+
+      <aside class="categories-frame categories-frame-side categories-frame-right" aria-label="Áreas">
+        <div class="card" style="margin-top:18px; width:100%; position:sticky; top:18px;">
+          <h3 class="sub-title">Áreas</h3>
+          <div id="areaChips" class="area-chips"></div>
+          <hr class="gold-rule">
+          <h3 class="sub-title">Contacto</h3>
+          <p class="contact-note">
+            <img src="/images/whatsapp.png" alt="WhatsApp"> WhatsApp disponible<br>
+            <img src="/images/Telegram.png" alt="Telegram"> Telegram disponible<br>
+            Si no muestra ninguno, usá email o teléfono.
+          </p>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = (window.API_URL || '').replace(/\/$/, '') || '';
+    function apiBase() { return API_URL ? API_URL : window.location.origin + '/api/v1'; }
+    function resolvePhotoSrc(url) { return (!url || typeof url !== 'string') ? '/images/no-photo.svg' : url; }
+    const NO_PHOTO = '/images/no-photo.svg';
+    function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+
+    function renderHogarCard(grid, tech) {
+      const card = el('div', 'hogar-card');
+      card.style.position = 'relative';
+      card.style.cursor = 'pointer';
+      if (tech._id) {
+        card.addEventListener('click', () => { window.location.href = '/hogar-detail.html?id=' + encodeURIComponent(tech._id); });
+      }
+      const imgContainer = el('div', 'treasure-img-container');
+      imgContainer.style.cursor = 'pointer';
+      const img = el('img', 'treasure-img');
+      img.src = tech.photoUrl ? resolvePhotoSrc(tech.photoUrl) : NO_PHOTO;
+      img.alt = tech.name || 'Técnico'; img.loading = 'lazy';
+      img.onerror = () => { img.onerror = null; img.src = NO_PHOTO; };
+      imgContainer.appendChild(img);
+
+      const btnRow = el('div', 'contact-badge');
+      function badge(src, title) { const i = el('img'); i.src = src; i.alt = title; i.title = title; i.onerror = () => { i.style.display = 'none'; }; return i; }
+      const c = tech.contact || {};
+      if (tech.whatsapp) btnRow.appendChild(badge('/images/whatsapp.png', 'WhatsApp'));
+      if (tech.telegram) btnRow.appendChild(badge('/images/Telegram.png', 'Telegram'));
+      if (btnRow.childElementCount) imgContainer.appendChild(btnRow);
+
+      const caption = el('div', 'treasure-caption');
+      caption.appendChild(el('span', 'treasure-caption-alias', tech.name || 'Técnico'));
+      const sub = [tech.action, tech.serviceName].filter(Boolean).join(' · ');
+      if (tech.location) caption.appendChild(el('span', 'treasure-caption-location', tech.location));
+      if (sub) caption.appendChild(el('span', 'treasure-caption-specialty', sub));
+      imgContainer.appendChild(caption);
+
+      card.appendChild(imgContainer);
+      grid.appendChild(card);
+    }
+
+    let currentPage = 1, currentParams = {}, hasMoreResults = false;
+    const PAGE_LIMIT = 12;
+
+    async function loadHogar(params = {}, append = false) {
+      const grid = document.getElementById('hogarGrid');
+      const loader = document.getElementById('hogarLoader');
+      if (!grid) return;
+      if (!append) { currentPage = 1; currentParams = params; grid.classList.add('hidden'); if (loader) { loader.style.display = 'block'; loader.textContent = 'Preparando el directorio...'; } }
+      else { const mb = document.getElementById('loadMoreBtn'); if (mb) mb.disabled = true; }
+      const url = new URL(apiBase() + '/hogar/professionals');
+      Object.entries(Object.assign({}, currentParams, params)).forEach(([k, v]) => { if (v) url.searchParams.set(k, v); });
+      url.searchParams.set('page', String(currentPage));
+      url.searchParams.set('limit', String(PAGE_LIMIT));
+      url.searchParams.set('_', String(Date.now()));
+      try {
+        const res = await fetch(url); const data = await res.json();
+        const techs = (data.success && data.data) ? data.data : [];
+        hasMoreResults = !!(data.pagination && data.pagination.hasMore);
+        if (loader) loader.style.display = 'none';
+        grid.classList.remove('hidden');
+        if (!append) grid.innerHTML = '';
+        if (techs.length === 0 && !append) grid.innerHTML = '<div class="empty"><h3>Sin resultados</h3><p>Probá ampliar los filtros.</p></div>';
+        else techs.forEach(t => renderHogarCard(grid, t));
+        renderLoadMore(grid);
+      } catch (err) {
+        if (loader) loader.style.display = 'none'; grid.classList.remove('hidden');
+        if (!append) grid.innerHTML = '<div class="empty" style="color:#c66;">Error al conectar: ' + err.message + '</div>';
+      }
+    }
+
+    function renderLoadMore(grid) {
+      let moreBtn = document.getElementById('loadMoreBtn');
+      if (moreBtn) moreBtn.remove();
+      if (!hasMoreResults) return;
+      moreBtn = el('button', 'sa-btn sa-btn--ghost', 'Cargar más');
+      moreBtn.id = 'loadMoreBtn'; moreBtn.type = 'button';
+      Object.assign(moreBtn.style, { display: 'block', margin: '20px auto', gridColumn: '1/-1' });
+      moreBtn.addEventListener('click', () => { currentPage += 1; loadHogar({}, true); });
+      grid.appendChild(moreBtn);
+    }
+
+    function readFilters() {
+      return {
+        area: document.getElementById('fArea').value, action: document.getElementById('fAction').value,
+        category: document.getElementById('fCategory').value, availability: document.getElementById('fAvailability').value,
+        province: document.getElementById('fProvince').value, city: document.getElementById('fCity').value.trim(),
+        service: document.getElementById('fService').value.trim(), brand: document.getElementById('fBrand').value.trim()
+      };
+    }
+
+    function initFilterDrawer() {
+      const filterCard = document.getElementById('hogarFilters');
+      if (!filterCard || document.getElementById('hogarFilterDrawer')) return;
+      const drawer = document.createElement('div'); drawer.id = 'hogarFilterDrawer'; drawer.setAttribute('aria-hidden', 'true');
+      const header = document.createElement('div'); header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;';
+      header.innerHTML = '<h3>Filtros</h3>';
+      const closeBtn = document.createElement('button'); closeBtn.type = 'button'; closeBtn.textContent = '×'; closeBtn.setAttribute('aria-label', 'Cerrar');
+      Object.assign(closeBtn.style, { background: 'transparent', color: 'var(--primary-gold)', border: 'none', fontSize: '32px', cursor: 'pointer', padding: '0', lineHeight: '1' });
+      header.appendChild(closeBtn); drawer.appendChild(header); drawer.appendChild(filterCard); document.body.appendChild(drawer);
+      const overlay = document.createElement('div'); overlay.className = 'drawer-overlay'; document.body.appendChild(overlay);
+      const open = () => { drawer.style.left = '0'; overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10); document.body.style.overflow = 'hidden'; };
+      const close = () => { drawer.style.left = '-100%'; overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300); document.body.style.overflow = ''; };
+      closeBtn.onclick = close; overlay.onclick = close;
+      const title = document.querySelector('.categories-frame-center h2');
+      if (title) { const burger = document.createElement('button'); burger.type = 'button'; burger.textContent = '☰'; burger.setAttribute('aria-label', 'Filtros'); burger.className = 'burger'; burger.onclick = open; title.insertBefore(burger, title.firstChild); }
+    }
+
+    // Language switch (shared with landing page) — persists preference, translates labels
+    (function () {
+      const dict = {
+        'Volver': 'Back',
+        'Filtros': 'Filters',
+        'Área': 'Area',
+        'Acción': 'Action',
+        'Categoría': 'Category',
+        'Disponibilidad': 'Availability',
+        'Provincia': 'Province',
+        'Localidad': 'Locality',
+        'Servicio / Equipo': 'Service / Equipment',
+        'Marca': 'Brand',
+        'Aplicar': 'Apply',
+        'Limpiar': 'Clear',
+        'Áreas': 'Areas',
+        'Contacto': 'Contact',
+        'Técnicos disponibles': 'Available technicians',
+        'Sin resultados': 'No results',
+        'Probá ampliar los filtros.': 'Try broadening the filters.',
+        'Cargar más': 'Load more',
+        'Preparando el directorio...': 'Preparing the directory...',
+        'WhatsApp disponible': 'WhatsApp available',
+        'Telegram disponible': 'Telegram available',
+        'Si no muestra ninguno, usá email o teléfono.': 'If none shown, use email or phone.',
+        'Hogar': 'Home', 'Oficina': 'Office', 'PIME': 'SME', 'Industria': 'Industry',
+        'Todas': 'All'
+      };
+      const lang = localStorage.getItem('platform_lang') || 'es';
+      const esBtn = document.getElementById('langEs');
+      const enBtn = document.getElementById('langEn');
+      if (esBtn && enBtn) {
+        esBtn.className = 'fm-lang-btn ' + (lang === 'es' ? 'active' : 'inactive');
+        enBtn.className = 'fm-lang-btn ' + (lang === 'en' ? 'active' : 'inactive');
+      }
+      function translate(l) {
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+          const key = el.getAttribute('data-i18n');
+          el.textContent = (l === 'en' && dict[key]) ? dict[key] : key;
+        });
+        document.querySelectorAll('.fm-back-text').forEach(el => { el.textContent = (l === 'en') ? 'Back' : 'Volver'; });
+      }
+      window.addEventListener('load', () => {
+        translate(lang);
+        if (esBtn) esBtn.addEventListener('click', () => { localStorage.setItem('platform_lang', 'es'); location.reload(); });
+        if (enBtn) enBtn.addEventListener('click', () => { localStorage.setItem('platform_lang', 'en'); location.reload(); });
+      });
+    })();
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initFilterDrawer();
+      document.getElementById('btnApply').addEventListener('click', () => loadHogar(readFilters()));
+      document.getElementById('btnClear').addEventListener('click', () => {
+        ['fArea','fAction','fCategory','fAvailability','fProvince','fCity','fService','fBrand'].forEach(id => { document.getElementById(id).value = ''; });
+        loadHogar({});
+      });
+      const AREAS = [{ value: '', label: 'Todas' }, { value: 'hogar', label: 'Hogar' }, { value: 'oficina', label: 'Oficina' }, { value: 'pime', label: 'PIME' }, { value: 'industria', label: 'Industria' }];
+      const chipWrap = document.getElementById('areaChips'); const fArea = document.getElementById('fArea');
+      AREAS.forEach(a => {
+        const chip = document.createElement('button'); chip.type = 'button';
+        chip.className = 'area-chip' + (a.value === '' ? ' is-active' : ''); chip.textContent = a.label;
+        chip.addEventListener('click', () => { fArea.value = a.value; [...chipWrap.children].forEach(c => c.classList.remove('is-active')); chip.classList.add('is-active'); loadHogar(readFilters()); });
+        chipWrap.appendChild(chip);
+      });
+      loadHogar({});
+    });
+  </script>
+</body>
+</html>

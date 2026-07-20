@@ -3,7 +3,7 @@
 # Run on prod: bash scripts/enable-webjs-outreach.sh
 set -euo pipefail
 
-ROOT="${1:-/root/FullMinent-platform}"
+ROOT="${1:-/root/KuraTe-platform}"
 ENV_FILE="$ROOT/.env"
 
 cd "$ROOT"
@@ -32,7 +32,7 @@ echo "  1. WhatsApp config → Register number on WhatsApp → scan QR on the or
 echo "  2. Invitations → select leads or Apply to all pending"
 echo ""
 echo "Checking container..."
-docker exec FullMinent_app node -e "
+docker exec KuraTe_app node -e "
 const tw = require('./services/twilioWhatsAppService');
 const ps = require('./services/whatsappPlatformService');
 console.log('WHATSAPP_USE_WEBJS:', process.env.WHATSAPP_USE_WEBJS || '(unset)');

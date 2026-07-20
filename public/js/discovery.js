@@ -611,8 +611,8 @@ export function initTreasureGridControls(onOpenFilters = null) {
         bar.style.transform = 'translateX(-50%)';
     };
 
-    if (!window.__FullMinentFloatingMenuScrollBound) {
-        window.__FullMinentFloatingMenuScrollBound = true;
+    if (!window.__KuraTeFloatingMenuScrollBound) {
+        window.__KuraTeFloatingMenuScrollBound = true;
         window.addEventListener('scroll', updateFloatingMenuPosition, { passive: true });
         window.addEventListener('resize', updateFloatingMenuPosition, { passive: true });
     }

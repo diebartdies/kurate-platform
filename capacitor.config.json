@@ -1,0 +1,17 @@
+{
+  "appId": "com.kurate.app",
+  "appName": "KuraTe",
+  "webDir": "public",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://181.91.83.196:8443",
+    "androidScheme": "https",
+    "hostname": "localhost"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#0f0f1a"
+    }
+  }
+}

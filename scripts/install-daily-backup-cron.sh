@@ -2,9 +2,9 @@
 # Install daily MongoDB backup cron (03:00 UTC).
 set -eu
 
-DEPLOY_DIR="${1:-/root/FullMinent-platform}"
+DEPLOY_DIR="${1:-/root/KuraTe-platform}"
 SCRIPT="$DEPLOY_DIR/daily_backup.sh"
-LOG="/var/log/FullMinent_daily_backup.log"
+LOG="/var/log/KuraTe_daily_backup.log"
 CRON_LINE="0 3 * * * root bash $SCRIPT >> $LOG 2>&1"
 
 if [ ! -f "$SCRIPT" ]; then
@@ -15,8 +15,8 @@ fi
 sed -i 's/\r$//' "$SCRIPT" 2>/dev/null || true
 chmod +x "$SCRIPT"
 
-MARKER="# FullMinent-daily-backup"
-CRON_FILE="/etc/cron.d/FullMinent-daily-backup"
+MARKER="# KuraTe-daily-backup"
+CRON_FILE="/etc/cron.d/KuraTe-daily-backup"
 
 {
   echo "$MARKER"

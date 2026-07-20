@@ -18,20 +18,20 @@ function recipient(alias) {
 // Visibility/active-state change, e.g. "tu perfil ahora figura como activo".
 function visibilityChangeSms({ alias, newState } = {}) {
   const estado = (newState && String(newState).trim()) || 'actualizado';
-  return `FullMinent: ${recipient(alias)}, tu perfil ahora figura como ${estado}. Ingresa a tu panel para mas detalles: ${REGISTER_URL}`;
+  return `KuraTe: ${recipient(alias)}, tu perfil ahora figura como ${estado}. Ingresa a tu panel para mas detalles: ${REGISTER_URL}`;
 }
 
 // Payment due / vencimiento reminder. `dueInfo` is a short, already-formatted
 // snippet (e.g. "$15000 ARS vence el 07/07").
 function dueDateSms({ alias, dueInfo } = {}) {
   const info = (dueInfo && String(dueInfo).trim()) || 'tienes un pago pendiente';
-  return `FullMinent: ${recipient(alias)}, recordatorio de pago: ${info}. Sube tu comprobante en el panel para mantener tu perfil activo.`;
+  return `KuraTe: ${recipient(alias)}, recordatorio de pago: ${info}. Sube tu comprobante en el panel para mantener tu perfil activo.`;
 }
 
 // Tariff/category change, e.g. "tu tarifa vigente cambio a Gold ($30000 ARS)".
 function tariffChangeSms({ alias, info } = {}) {
   const detail = (info && String(info).trim()) || 'tu tarifa vigente fue actualizada';
-  return `FullMinent: ${recipient(alias)}, ${detail}. Ingresa a tu panel para revisar el detalle.`;
+  return `KuraTe: ${recipient(alias)}, ${detail}. Ingresa a tu panel para revisar el detalle.`;
 }
 
 module.exports = {

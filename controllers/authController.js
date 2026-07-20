@@ -94,7 +94,7 @@ async function notifyProfessionalRegistered(user, email, { upgradedFromGuest = f
     const prefix = upgradedFromGuest ? 'Guest upgraded to professional' : (viaGoogle ? 'Express registration via Google' : 'Express registration verified');
     await sendEmail({
       email: adminEmail,
-      subject: 'FullMinent - New Professional Registration',
+      subject: 'KuraTe - New Professional Registration',
       message: express
         ? `${prefix}: ${email}\nPhone: ${prof.mobilePhone || '—'}\nAlias (temp): ${prof.alias || '—'}\n\nComplete profile and upload gallery photos in Admin before approving.`
         : `A new professional registered: ${email}\nVerification Status: ${user.verificationStatus}`
@@ -364,15 +364,15 @@ exports.register = async (req, res, next) => {
     // Sync specialties after email is verified (see verifyEmail)
 
     // Verification email must succeed — otherwise rollback pending account
-    let emailSubject = 'FullMinent Platform - Email Verification Code';
-    let emailMessage = `Welcome to the FullMinent Platform!\n\nYour verification code is: ${verificationCode}\n\nThis code will expire in ${config.verificationCodeExpireMinutes} minutes.`;
+    let emailSubject = 'KuraTe Platform - Email Verification Code';
+    let emailMessage = `Welcome to the KuraTe Platform!\n\nYour verification code is: ${verificationCode}\n\nThis code will expire in ${config.verificationCodeExpireMinutes} minutes.`;
 
     if (role === 'professional') {
       if (isExpressRegistration) {
-        emailSubject = 'Bienvenida a FullMinent — confirmá tu email';
+        emailSubject = 'Bienvenida a KuraTe — confirmá tu email';
         emailMessage = `Hola,
 
-Bienvenida a FullMinent.
+Bienvenida a KuraTe.
 
 Tu código de verificación es: ${verificationCode}
 (Este código vence en ${config.verificationCodeExpireMinutes} minutos)
@@ -382,12 +382,12 @@ Registraste solo lo esencial. Nuestro equipo te contactará por WhatsApp para co
 Cuando verifiques tu email podés entrar a tu panel con la contraseña que elegiste.
 
 Saludos,
-Equipo FullMinent`;
+Equipo KuraTe`;
       } else {
-        emailSubject = 'Bienvenida a FullMinent — Tu mes de evaluación comienza';
+        emailSubject = 'Bienvenida a KuraTe — Tu mes de evaluación comienza';
         emailMessage = `Hola,
 
-Bienvenida a FullMinent — la plataforma que conecta profesionales con clientes.
+Bienvenida a KuraTe — la plataforma que conecta profesionales con clientes.
 
 Tu código de verificación es: ${verificationCode}
 (Este código vence en ${config.verificationCodeExpireMinutes} minutos)
@@ -401,13 +401,13 @@ Durante la evaluación tu perfil aparece en el directorio general. Al abonar tu 
 🔒 VERIFICACIÓN
 Revisaremos tus documentos con absoluta profesionalidad. El proceso puede demorar al menos 48 horas. Te avisaremos por email cuando tu perfil esté aprobado. Revisá también tu carpeta de Spam.
 
-— Equipo FullMinent`;
+— Equipo KuraTe`;
       }
     } else if (isGuestRegistration) {
-      emailSubject = 'FullMinent — confirm your email';
+      emailSubject = 'KuraTe — confirm your email';
       emailMessage = `Hello ${alias},
 
-Welcome to FullMinent.
+Welcome to KuraTe.
 
 Your verification code is: ${verificationCode}
 (This code expires in ${config.verificationCodeExpireMinutes} minutes.)`;
@@ -421,7 +421,7 @@ Use it to sign in after you verify your email. You can change it anytime via pas
 
 After verification you can browse the collection and participate as a guest.
 
-— FullMinent Team`;
+— KuraTe Team`;
     }
 
     try {
@@ -578,8 +578,8 @@ exports.resendVerificationCode = async (req, res) => {
     await user.save({ validateBeforeSave: false });
 
     const subject = user.role === 'professional'
-      ? 'FullMinent — nuevo código de verificación'
-      : 'FullMinent — verification code';
+      ? 'KuraTe — nuevo código de verificación'
+      : 'KuraTe — verification code';
     const message = `Your verification code is: ${verificationCode}
 
 This code expires in ${config.verificationCodeExpireMinutes} minutes.
@@ -801,7 +801,7 @@ exports.forgotPassword = async (req, res, next) => {
     try {
       await sendEmail({
         email: user.email,
-        subject: 'FullMinent Platform - Password Reset Code',
+        subject: 'KuraTe Platform - Password Reset Code',
         message: `You requested a password reset.\n\nYour reset code is: ${resetCode}\n\nThis code will expire in ${config.verificationCodeExpireMinutes} minutes.`
       });
 
@@ -969,7 +969,7 @@ exports.googleAuth = async (req, res) => {
         const adminEmail = config.payment?.adminEmail || 'admin@drsrv.net.ar';
         await sendEmail({
           email: adminEmail,
-          subject: 'FullMinent - New Professional Registration (Google)',
+          subject: 'KuraTe - New Professional Registration (Google)',
           message: `Express registration via Google: ${email}\nAlias (temp): ${alias}\n\nComplete profile and upload gallery photos in Admin before approving.`
         });
       } catch (err) {

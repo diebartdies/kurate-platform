@@ -166,8 +166,8 @@ app.use((req, res, next) => {
 const seoController = require('./controllers/seoController');
 app.get('/robots.txt', seoController.robotsTxt);
 app.get('/sitemap.xml', seoController.sitemapXml);
-app.get('/sitemap-FullMinent.xml', seoController.sitemapFullMinentXml);
-app.get('/sitemap-FullMinent.xml', seoController.sitemapFullMinentXml);
+app.get('/sitemap-KuraTe.xml', seoController.sitemapKuraTeXml);
+app.get('/sitemap-KuraTe.xml', seoController.sitemapKuraTeXml);
 app.get('/acompanantes/:provinceSlug/:areaSlug', seoController.renderLocationPage);
 app.get('/acompanantes/:provinceSlug', seoController.renderLocationPage);
 app.get('/perfil/:alias', seoController.renderProfilePage);
@@ -274,11 +274,14 @@ app.post('/api/v1/auth/guest-login', authController.guestLogin);
 app.post('/api/v1/auth/forgotpassword', authController.forgotPassword);
 app.put('/api/v1/auth/resetpassword', authController.resetPassword);
 
-// Feedback Route (Enforcing Respect Agreement)
-app.post('/api/v1/feedback', protect, feedbackController.submitFeedback);
+// Feedback Routes
+app.post('/api/v1/feedback/request', feedbackController.requestFeedback);
+app.post('/api/v1/feedback/submit', feedbackController.submitFeedback);
+app.get('/api/v1/feedback/rating/:professionalId', feedbackController.getProfessionalRating);
 
 // Location Routes (Public)
 app.get('/api/v1/locations/provinces', locationController.getProvinces);
+app.get('/api/v1/locations/provinces/name/:provinceName/cities', locationController.getCitiesByProvinceName);
 app.get('/api/v1/locations/provinces/:provinceId/sublocations', locationController.getSublocations);
 
 app.get('/api/v1/public/category-pricing', async (req, res) => {
@@ -350,6 +353,11 @@ app.get('/api/v1/professionals/me', protect, authorize('professional', 'admin'),
     } catch (err) { next(err); }
 });
 app.put('/api/v1/professionals/updateprofile', protect, authorize('professional'), upload.array('photos', 10), professionalController.updateProfile);
+// Service Tree Routes (Hogar)
+app.get('/api/v1/service-tree', professionalController.getServiceTree);
+app.put('/api/v1/professionals/hogar/services', protect, authorize('professional'), professionalController.updateHogarServices);
+app.get('/api/v1/hogar/professionals', professionalController.getHogarProfessionals);
+app.get('/api/v1/hogar/professionals/:id', professionalController.getHogarProfessionalById);
 app.delete('/api/v1/professionals/me', protect, authorize('professional'), professionalController.deleteMyProfile);
 app.post('/api/v1/professionals/resubmit-verification', protect, authorize('professional'), upload.array('verificationDocuments', 3), professionalController.resubmitVerification);
 app.put('/api/v1/professionals/acknowledge-rate', protect, authorize('professional'), professionalController.acknowledgeRateChange);
@@ -361,6 +369,7 @@ app.get('/api/v1/professionals/phone-code-status', protect, authorize('professio
 
 // Professional Public Routes
 app.get('/api/v1/professionals', professionalController.getProfessionals);
+app.get('/api/v1/professionals/search', professionalController.searchProfessionals);
 app.get('/api/v1/professionals/specialties', professionalController.getSpecialties);
 app.get('/api/v1/professionals/:alias', professionalController.getProfessionalByAlias);
 app.get('/api/v1/specialties/users', specialtyController.getUsersBySpecialty);
@@ -402,6 +411,7 @@ const whatsappController = require('./controllers/whatsappController');
 const twilioWebhookController = require('./controllers/twilioWebhookController');
 const launchCurtainController = require('./controllers/launchCurtainController');
 const supportController = require('./controllers/supportController');
+const preRegistrationController = require('./controllers/preRegistrationController');
 const interestNoteController = require('./controllers/interestNoteController');
 
 app.get('/api/v1/public/launch-curtain', launchCurtainController.getPublicLaunchCurtainStatus);
@@ -426,6 +436,15 @@ app.post('/api/v1/public/registration-track', registrationTrackController.trackR
 app.post('/api/v1/support', protect, authorize('professional'), supportController.createSupportMessage);
 app.get('/api/v1/admin/support', protect, authorize('admin'), supportController.getSupportMessages);
 app.put('/api/v1/admin/support/:id', protect, authorize('admin'), supportController.updateSupportMessage);
+
+// Pre-registration flow (public ad posting)
+app.post('/api/v1/public/pre-register', preRegistrationController.startPreRegistration);
+app.post('/api/v1/public/pre-register/verify-phone', preRegistrationController.verifyPhone);
+app.post('/api/v1/public/pre-register/verify-email', preRegistrationController.verifyEmail);
+app.post('/api/v1/public/pre-register/verify-email-google', preRegistrationController.verifyEmailViaGoogle);
+app.post('/api/v1/public/pre-register/resend-code', preRegistrationController.resendCode);
+app.post('/api/v1/public/pre-register/validate-dni', preRegistrationController.validateDniPhoto);
+app.get('/api/v1/public/pre-register/status/:id', preRegistrationController.getStatus);
 
 app.get('/api/v1/interest-notes', protect, authorize('professional', 'admin'), interestNoteController.listInterestNotes);
 app.get('/api/v1/interest-notes/:id', protect, authorize('professional', 'admin'), interestNoteController.getInterestNote);
@@ -528,8 +547,8 @@ setInterval(async () => {
     for (const user of expiringUsers) {
       await sendEmail({
         email: user.email,
-        subject: 'FullMinent Platform - Your Free Trial is Expiring Soon',
-        message: `Hello ${user.professionalProfile?.alias || 'Professional'},\n\nWe hope you are enjoying your welcome period on the FullMinent Platform!\n\nThis is a reminder that your 2-month free trial will expire in 3 days. To maintain your "Revealed" status and keep your profile visible to clients, please ensure your subscription payment is completed.\n\nThank you for being a Professional!`
+        subject: 'KuraTe Platform - Your Free Trial is Expiring Soon',
+        message: `Hello ${user.professionalProfile?.alias || 'Professional'},\n\nWe hope you are enjoying your welcome period on the KuraTe Platform!\n\nThis is a reminder that your 2-month free trial will expire in 3 days. To maintain your "Revealed" status and keep your profile visible to clients, please ensure your subscription payment is completed.\n\nThank you for being a Professional!`
       });
       console.log(`[Reminder] Sent trial expiration email to ${user.email}`);
     }
@@ -602,7 +621,7 @@ setInterval(async () => {
         if (today.getTime() === dayAfterVacation.getTime()) {
           await sendEmail({
             email: user.email,
-            subject: 'FullMinent Platform - Vacation Period Ended',
+            subject: 'KuraTe Platform - Vacation Period Ended',
             message: `Hello ${user.professionalProfile?.alias || 'Professional'},\n\nYour vacation period has concluded. Welcome back! All your profile counters and activities have resumed.`
           });
           const notifyNumber = resolveWhatsappNumber(user.professionalProfile);
@@ -661,7 +680,7 @@ setInterval(async () => {
           user.professionalProfile.invoices.push({ billingMonth: yyyyMm, amount: amountToBill, dueDate: new Date(today.getFullYear(), today.getMonth() + 1, 7), status: 'pending', lateFeeApplied: false });
           await user.save();
           
-          await sendEmail({ email: user.email, subject: `FullMinent Platform - Invoice for ${yyyyMm}`, message: `Hello ${user.professionalProfile?.alias || 'Professional'},\n\nYour subscription fee for ${yyyyMm} is $${amountToBill} ARS.\n\nPlease upload your receipt within the first 5 business days of next month to avoid a late fee and suspension.\n\nThank you!` });
+          await sendEmail({ email: user.email, subject: `KuraTe Platform - Invoice for ${yyyyMm}`, message: `Hello ${user.professionalProfile?.alias || 'Professional'},\n\nYour subscription fee for ${yyyyMm} is $${amountToBill} ARS.\n\nPlease upload your receipt within the first 5 business days of next month to avoid a late fee and suspension.\n\nThank you!` });
           const notifyNumber = resolveWhatsappNumber(user.professionalProfile);
           if (notifyNumber) sendWhatsappNotification(notifyNumber, `Hello ${user.professionalProfile?.alias || 'Professional'}! 💎\n\nYour invoice for ${yyyyMm} is ready. The amount due is $${amountToBill} ARS. Please upload your receipt in the dashboard within the first 5 business days to keep your profile active.\n\nThank you!`);
           const dueDate7 = new Date(today.getFullYear(), today.getMonth() + 1, 7);
@@ -693,7 +712,7 @@ setInterval(async () => {
           
           await sendEmail({
             email: user.email,
-            subject: 'FullMinent Platform - Account Suspended (Late Payment)',
+            subject: 'KuraTe Platform - Account Suspended (Late Payment)',
             message: `Hello ${user.professionalProfile?.alias || 'Professional'},\n\nYour profile has been temporarily removed from the public directory because we have not received your payment receipt within the first 5 active business days.\n\nA 2% late fee has been applied. Your new total balance for ${prevYyyyMm} is $${prevInvoice.amount} ARS.\n\nPlease upload your payment receipt to be reactivated.\n\nThank you.`
           });
           await smsNotifications.notifyDueDate(
@@ -725,7 +744,7 @@ setInterval(async () => {
       await user.save();
       await sendEmail({
         email: user.email,
-        subject: 'FullMinent Platform - Yearly Photo Update Required',
+        subject: 'KuraTe Platform - Yearly Photo Update Required',
         message: `Hello ${user.professionalProfile?.alias || 'Professional'},\n\nIt has been over a year since you updated your photos on the platform. To maintain our standard of quality and ensure profiles are accurate, we require all professionals to update their pictures annually.\n\nYour profile has been temporarily hidden. Please log in to your dashboard and upload new photos to reactivate your profile.\n\nThank you for understanding!`
       });
       console.log(`[Yearly Photo Update] Suspended ${user.email} due to outdated photos.`);
@@ -734,3 +753,13 @@ setInterval(async () => {
     console.error('[Yearly Photo Update Error]', err.message);
   }
 }, 24 * 60 * 60 * 1000);
+
+// Background Task: Send feedback poll emails 7 days after contact
+setInterval(async () => {
+  try {
+    const count = await feedbackController.processPendingFeedback();
+    if (count > 0) console.log(`[Feedback] Sent ${count} poll email(s).`);
+  } catch (err) {
+    console.error('[Feedback Error]', err.message);
+  }
+}, 60 * 60 * 1000);

@@ -65,7 +65,7 @@ const config = {
   experience: {
     statusHidden: 'New',
     statusRevealed: 'Active',
-    discoveryText: 'A new professional has joined FullMinent.',
+    discoveryText: 'A new professional has joined KuraTe.',
   },
   respectAgreement: {
     adminEmail: 'admin@drsrv.net.ar',
@@ -88,8 +88,8 @@ const config = {
   },
 
   platform: {
-    publicUrl: process.env.PLATFORM_URL || 'https://FullMinent.drsrv.net.ar',
-    registerUrl: process.env.PLATFORM_REGISTER_URL || 'https://FullMinent.drsrv.net.ar/register.html'
+    publicUrl: process.env.PLATFORM_URL || 'https://KuraTe.drsrv.net.ar',
+    registerUrl: process.env.PLATFORM_REGISTER_URL || 'https://KuraTe.drsrv.net.ar/register.html'
   },
 
   google: {
@@ -160,7 +160,7 @@ const config = {
     // Env: WHATSAPP_DRIP_INTER_DELAY_MS (default 0).
     interMessageDelayMs: parseInt(process.env.WHATSAPP_DRIP_INTER_DELAY_MS, 10) || 0,
 
-    // Outreach drip image (PNG/JPG). Default is outreach-logo.png ("FullMinent"
+    // Outreach drip image (PNG/JPG). Default is outreach-logo.png ("KuraTe"
     // wordmark — no "sex" substring for OCR). Site UI keeps brand-logo.png.
     // Env: WHATSAPP_DRIP_IMAGE (override path).
     brandImagePath: process.env.WHATSAPP_DRIP_IMAGE
@@ -168,10 +168,10 @@ const config = {
 
     // Neutral outreach alias (same app, no "sex" in hostname). Used for WhatsApp
     // step-2 register links (manual reply), NOT in the cold drip caption.
-    // Env: WHATSAPP_DRIP_ALIAS_DOMAIN (unset = FullMinent.drsrv.net.ar; "" = off).
+    // Env: WHATSAPP_DRIP_ALIAS_DOMAIN (unset = KuraTe.drsrv.net.ar; "" = off).
     aliasDomain: process.env.WHATSAPP_DRIP_ALIAS_DOMAIN !== undefined
       ? process.env.WHATSAPP_DRIP_ALIAS_DOMAIN
-      : 'FullMinent.drsrv.net.ar',
+      : 'KuraTe.drsrv.net.ar',
 
     // Hard ceiling (ms) for a single registration-check / send call so a hung
     // whatsapp-web.js call never stalls the scheduler.

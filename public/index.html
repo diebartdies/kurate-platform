@@ -3,37 +3,986 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FullMinent — Conectá con profesionales de confianza</title>
+    <title>KuraTe — ¿Qué necesitás?</title>
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/blueprint.css">
-    <meta name="description" content="FullMinent — Encontrá al profesional que necesitás. Hogar, educación, salud, tecnología, belleza y más.">
+    <meta name="description" content="KuraTe — Decinos qué necesitás y te conectamos con el profesional indicado.">
     <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://FullMinent.drsrv.net.ar/">
-    <meta property="og:title" content="FullMinent — Conectá con profesionales de confianza">
-    <meta property="og:description" content="Decinos qué necesitás y te conectamos con el profesional indicado.">
-    <meta property="og:url" content="https://FullMinent.drsrv.net.ar/">
+    <meta property="og:title" content="KuraTe — ¿Qué necesitás?">
+    <meta property="og:description" content="Contanos qué necesitás y te encontramos al profesional ideal.">
+    <meta property="og:url" content="https://KuraTe.drsrv.net.ar/">
     <meta property="og:type" content="website">
-    <meta property="og:site_name" content="FullMinent">
+    <meta property="og:site_name" content="KuraTe">
     <meta name="theme-color" content="#B8922E">
     <meta name="color-scheme" content="dark">
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f0f1a; color: #e0e0e0; margin: 0; }
+        .fm-container { max-width: 680px; margin: 0 auto; padding: 1.5rem 1rem; }
+
+        .fm-top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; gap: 0.5rem; }
+        .fm-back { display: inline-flex; align-items: center; gap: 6px; padding: 0.5rem 1rem; background: transparent; color: #888; border: 1px solid #333; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-decoration: none; }
+        .fm-back:hover { color: #B8922E; border-color: #B8922E; }
+        .fm-exit-btn { padding: 0.5rem 1rem; background: transparent; color: #c44; border: 1px solid #c44; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
+        .fm-exit-btn:hover { background: rgba(204,68,68,0.12); color: #e66; border-color: #e66; }
+        .fm-top-left { display: flex; align-items: center; gap: 0.5rem; }
+        .fm-top-right { display: flex; align-items: center; gap: 0.5rem; }
+        @media (max-width: 768px) {
+            .fm-top-bar { } /* keep flex */
+            .fm-back { padding: 0.4rem 0.7rem; font-size: 0.78rem; }
+            .fm-exit-btn { padding: 0.4rem 0.7rem; font-size: 0.78rem; }
+            .fm-publish-btn { padding: 0.4rem 0.7rem; font-size: 0.78rem; }
+            .fm-lang-btn img { width: 22px; height: 17px; }
+            .fm-top-bar { gap: 0.4rem; flex-wrap: wrap; }
+            .fm-top-left, .fm-top-right { gap: 0.35rem; }
+        }
+        @media (max-width: 420px) {
+            .fm-back { padding: 0.35rem 0.55rem; font-size: 0.72rem; }
+            .fm-exit-btn { padding: 0.35rem 0.55rem; font-size: 0.72rem; }
+            .fm-publish-btn { padding: 0.35rem 0.55rem; font-size: 0.72rem; }
+            .fm-back-text { display: none; }
+        }
+        .fm-lang-btn { background: transparent; border: none; border-bottom: 2px solid transparent; padding: 4px 4px 2px; cursor: pointer; line-height: 0; transition: opacity 0.2s, border-color 0.2s; }
+        .fm-lang-btn.active { border-bottom-color: #B8922E; opacity: 1; }
+        .fm-lang-btn.inactive { opacity: 0.4; }
+        .fm-lang-btn:hover { opacity: 1; }
+        .fm-lang-btn img { border-radius: 2px; display: block; width: 28px; height: 21px; }
+
+        .fm-header { text-align: center; margin-bottom: 2rem; }
+        .fm-header h1 { font-size: 1.8rem; margin: 0 0 0.3rem; color: #B8922E; }
+        .fm-header p { color: #888; font-size: 0.95rem; margin: 0; }
+
+        .fm-card { background: #1a1a2e; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; border: 1px solid #2a2a3e; }
+        .fm-card label { display: block; margin-bottom: 0.5rem; color: #B8922E; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .fm-select, .fm-input, .fm-textarea { width: 100%; height: 48px; padding: 0 0.85rem; font-size: 0.95rem; border: 2px solid #2a2a3e; border-radius: 8px; background: #0f0f1a; color: #e0e0e0; transition: border-color 0.2s; }
+        .fm-select { appearance: none; -webkit-appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23888' d='M6 8L0 0h12z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+        .fm-textarea { height: auto; min-height: 80px; padding: 0.75rem 0.85rem; resize: vertical; }
+        .fm-select:focus, .fm-input:focus, .fm-textarea:focus { border-color: #B8922E; outline: none; }
+        .fm-select option { background: #1a1a2e; color: #e0e0e0; }
+
+        .fm-row { display: flex; gap: 0.75rem; }
+        .fm-row .fm-select, .fm-row .fm-input { flex: 1; min-width: 0; }
+
+        .fm-btn { display: inline-flex; align-items: center; justify-content: center; height: 48px; padding: 0 2rem; background: #B8922E; color: #0f0f1a; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: background 0.2s; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; }
+        .fm-btn:hover { background: #d4af37; }
+        .fm-btn:disabled { background: #555; cursor: not-allowed; }
+        .fm-btn-outline { background: transparent; color: #B8922E; border: 2px solid #B8922E; }
+        .fm-btn-outline:hover { background: rgba(184,146,46,0.1); }
+        .fm-btn-block { width: 100%; }
+        .fm-btn-sm { height: 40px; padding: 0 1.25rem; font-size: 0.85rem; }
+        .fm-btn-ghost { background: transparent; color: #888; border: 1px solid #333; }
+        .fm-btn-ghost:hover { color: #B8922E; border-color: #B8922E; background: transparent; }
+
+        .fm-results { margin-top: 1.5rem; }
+        .fm-pro-card { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 10px; padding: 1.25rem; margin-bottom: 0.75rem; transition: border-color 0.2s; }
+        .fm-pro-card:hover { border-color: #B8922E; }
+        .fm-pro-name { font-size: 1.1rem; font-weight: 600; color: #B8922E; }
+        .fm-pro-detail { color: #aaa; font-size: 0.85rem; margin-top: 0.25rem; }
+        .fm-pro-contact { margin-top: 0.5rem; }
+        .fm-pro-contact a { color: #B8922E; font-size: 0.85rem; text-decoration: none; font-weight: 600; }
+
+        .fm-pro-badges { display: flex; gap: 1rem; margin: 0.5rem 0 0.6rem; flex-wrap: wrap; }
+        .fm-pro-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; color: #aaa; }
+
+        .fm-loading { text-align: center; padding: 2rem; color: #888; }
+        .fm-empty { text-align: center; padding: 2rem; color: #666; }
+        .fm-empty a { color: #B8922E; }
+
+        .fm-professional-cta { background: #1a1a2e; border: 1px dashed #B8922E; border-radius: 10px; padding: 1.25rem; text-align: center; margin-top: 1.5rem; }
+        .fm-professional-cta p { margin: 0.25rem 0; color: #888; font-size: 0.9rem; }
+        .fm-professional-cta .fm-btn { margin-top: 0.5rem; }
+
+        .fm-footer { text-align: center; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #2a2a3e; }
+        .fm-footer a { color: #666; text-decoration: none; margin: 0 0.75rem; font-size: 0.85rem; }
+        .fm-footer a:hover { color: #B8922E; }
+        .fm-terms { font-size: 0.7rem; color: #444; text-align: center; margin-top: 2rem; padding-bottom: 1rem; }
+
+        .fm-error { color: #e74c3c; font-size: 0.85rem; margin-top: 0.35rem; display: none; }
+        .fm-success { color: #2ecc71; font-size: 0.85rem; margin-top: 0.35rem; }
+
+        /* Modal */
+        .fm-modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; padding: 1rem; }
+        .fm-modal-overlay.active { display: flex; }
+        .fm-modal { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 12px; width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; padding: 1.5rem; position: relative; }
+        .fm-modal h2 { color: #B8922E; margin: 0 0 0.25rem; font-size: 1.25rem; }
+        .fm-modal p { color: #888; font-size: 0.85rem; margin: 0 0 1.25rem; }
+        .fm-modal-close { position: absolute; top: 0.75rem; right: 0.75rem; background: none; border: none; color: #666; font-size: 1.5rem; cursor: pointer; padding: 0.25rem; line-height: 1; }
+        .fm-modal-close:hover { color: #B8922E; }
+
+        /* Stepper */
+        .fm-step { display: none; }
+        .fm-step.active { display: block; }
+        .fm-step-indicator { display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 1.5rem; }
+        .fm-dot { width: 10px; height: 10px; border-radius: 50%; background: #333; }
+        .fm-dot.active { background: #B8922E; }
+        .fm-dot.done { background: #2ecc71; }
+
+        /* Code boxes */
+        .fm-code-inputs { display: flex; gap: 0.5rem; justify-content: center; margin: 1rem 0; }
+        .fm-code-inputs input { width: 44px; height: 52px; text-align: center; font-size: 1.3rem; font-weight: 700; border: 2px solid #2a2a3e; border-radius: 8px; background: #0f0f1a; color: #e0e0e0; }
+        .fm-code-inputs input:focus { border-color: #B8922E; outline: none; }
+
+        .fm-publish-btn { background: #B8922E; color: #0f0f1a; border: none; height: 40px; padding: 0 1.25rem; border-radius: 8px; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: background 0.2s; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+        .fm-publish-btn:hover { background: #d4af37; }
+
+        @media (max-width: 500px) {
+            .fm-row { flex-direction: column; }
+            .fm-header h1 { font-size: 1.4rem; }
+            .fm-card { padding: 1rem; }
+            .fm-modal { padding: 1rem; }
+        }
+    </style>
 </head>
 <body>
-    <div class="container" style="text-align:center;padding:4rem 1rem;">
-        <h1 style="font-size:2.5rem;margin-bottom:0.5rem;">FullMinent</h1>
-        <p style="font-size:1.2rem;color:#B8922E;margin-bottom:2rem;">¿Qué necesitás?</p>
-
-        <div style="max-width:600px;margin:2rem auto;">
-            <input type="text" id="need-search" placeholder="Ej: arreglar una canilla, clases de inglés, masajes..."
-                style="width:100%;padding:1rem;font-size:1.1rem;border:2px solid #B8922E;border-radius:8px;background:#1a1a2e;color:#fff;">
+    <div class="fm-container">
+        <div class="fm-top-bar">
+            <div class="fm-top-left">
+                <a href="kurate://exit" class="fm-back" id="landingBack">&#8592; <span class="fm-back-text">Volver</span></a>
+                <button class="fm-exit-btn" id="exitAppBtn" title="Salir de la app">Salir</button>
+            </div>
+            <div class="fm-top-right">
+                <button class="fm-publish-btn" id="publishBtn">Crear aviso</button>
+                <button class="fm-lang-btn active" id="langEs" title="Español"><img src="https://flagcdn.com/w40/ar.png" alt="ES"></button>
+                <button class="fm-lang-btn inactive" id="langEn" title="English"><img src="https://flagcdn.com/w40/us.png" alt="EN"></button>
+            </div>
         </div>
 
-        <div id="need-results" style="max-width:800px;margin:2rem auto;"></div>
+        <div class="fm-header">
+            <img src="/KuraTe_logo_black.png" alt="KuraTe Logo" style="height:200px;width:auto;border-radius:8px;margin-bottom:0.5rem;">
+            <p>Contanos qué necesitás y te conectamos con el profesional indicado</p>
+        </div>
 
-        <div style="margin-top:3rem;">
-            <a href="/register.html" class="sa-btn sa-btn--solid">Soy profesional — quiero registrarme</a>
-            <a href="/login.html" class="sa-btn sa-btn--ghost" style="margin-left:1rem;">Iniciar sesión</a>
+        <form id="needForm">
+            <div class="fm-card">
+                <label for="accion">1. ¿Qué necesitás hacer?</label>
+                <select id="accion" class="fm-select" required>
+                    <option value="">Seleccioná una acción...</option>
+                    <option value="aprender">Aprender</option>
+                    <option value="reparar">Reparar / Arreglar</option>
+                    <option value="mantener">Mantener</option>
+                    <option value="mejorar">Mejorar</option>
+                    <option value="disenar">Diseñar</option>
+                    <option value="descartar">Descartar</option>
+                    <option value="busco">Busco</option>
+                    <option value="vender">Vender</option>
+                    <option value="comprar">Comprar</option>
+                    <option value="donar">Donar</option>
+                    <option value="recibir-donaciones">Recibir donaciones</option>
+                </select>
+            </div>
+
+            <div class="fm-card">
+                <label for="descripcion">2. ¿Qué? — contanos con detalle</label>
+                <textarea id="descripcion" class="fm-textarea" placeholder="Ej: heladera Gafa, zona Villa Urquiza, no enfria más" rows="3"></textarea>
+                <div class="fm-error" id="descripcionError"></div>
+            </div>
+
+            <div class="fm-card">
+                <label>3. ¿Dónde lo necesitás?</label>
+                <div class="fm-row">
+                    <select id="provincia" class="fm-select">
+                        <option value="">Provincia / CABA...</option>
+                    </select>
+                    <select id="ciudad" class="fm-select" disabled>
+                        <option value="">Ciudad / Barrio...</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="fm-card">
+                <label for="urgencia">4. ¿Cuándo lo necesitás?</label>
+                <select id="urgencia" class="fm-select">
+                    <option value="">Sin preferencia</option>
+                    <option value="urgente">Urgente — apenas se pueda</option>
+                    <option value="rapido">Rápido — estos días</option>
+                    <option value="sobrevivo">Puedo sobrevivir un par de días</option>
+                    <option value="sin-apuro">No tengo apuro</option>
+                </select>
+            </div>
+
+            <div style="text-align:center;margin-top:1.25rem;">
+                <button type="submit" class="fm-btn fm-btn-block" id="searchBtn">Buscar profesionales</button>
+                <a href="/hogar.html" class="fm-btn fm-btn-block" style="margin-top:0.75rem;background:transparent;border:1px solid #B8922E;color:#B8922E;text-decoration:none;display:block;padding:0.75rem;border-radius:8px;">Ver técnicos registrados</a>
+            </div>
+        </form>
+
+        <div id="resultsArea" class="fm-results" style="display:none;"></div>
+
+        <div class="fm-professional-cta">
+            <p style="color:#B8922E;font-weight:600;">¿Sos profesional y querés recibir consultas?</p>
+            <p>Registrate gratis — primer mes sin costo.</p>
+            <button class="fm-btn fm-btn-outline" id="registerCTA">Quiero registrarme</button>
+        </div>
+
+        <div class="fm-footer">
+            <a href="/login.html">Iniciar sesión</a>
+            <a href="/discover.html">Explorar profesionales</a>
+        </div>
+
+        <div class="fm-terms">KuraTe — Conectamos profesionales con clientes</div>
+    </div>
+
+    <!-- Pre-registration Modal -->
+    <div class="fm-modal-overlay" id="preregModal">
+        <div class="fm-modal">
+            <button class="fm-modal-close" id="preregClose">&times;</button>
+
+            <!-- Step 1: Email + Phone + DOB -->
+            <div class="fm-step active" data-step="1">
+                <h2>Publicar un aviso</h2>
+                <p>Primero contanos quién sos para crear tu aviso.</p>
+                <div class="fm-card" style="padding:0;border:none;background:none;">
+                    <div style="margin-bottom:1rem;">
+                        <label>Email</label>
+                        <input type="email" id="preregEmail" class="fm-input" placeholder="tucorreo@ejemplo.com">
+                    </div>
+                    <div style="margin-bottom:1rem;">
+                        <label>Teléfono</label>
+                        <input type="tel" id="preregPhone" class="fm-input" placeholder="11 2345-6789">
+                    </div>
+                    <div style="margin-bottom:1rem;">
+                        <label>Fecha de nacimiento</label>
+                        <input type="date" id="preregDob" class="fm-input">
+                    </div>
+                    <div style="margin-bottom:1rem;">
+                        <label>Contraseña</label>
+                        <input type="password" id="preregPassword" class="fm-input" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+                    </div>
+                    <div style="margin-bottom:1rem;">
+                        <label>Confirmar contraseña</label>
+                        <input type="password" id="preregPasswordConfirm" class="fm-input" placeholder="Repetí la contraseña" autocomplete="new-password">
+                    </div>
+                    <div class="fm-error" id="preregStep1Error"></div>
+                    <button class="fm-btn fm-btn-block" id="preregStep1Btn">Enviar código SMS</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Phone code verification -->
+            <div class="fm-step" data-step="2">
+                <h2>Verificá tu teléfono</h2>
+                <p>Ingresá el código de 6 dígitos que enviamos por SMS.</p>
+                <div class="fm-code-inputs">
+                    <input type="text" maxlength="1" class="fm-code-digit" data-idx="0">
+                    <input type="text" maxlength="1" class="fm-code-digit" data-idx="1">
+                    <input type="text" maxlength="1" class="fm-code-digit" data-idx="2">
+                    <input type="text" maxlength="1" class="fm-code-digit" data-idx="3">
+                    <input type="text" maxlength="1" class="fm-code-digit" data-idx="4">
+                    <input type="text" maxlength="1" class="fm-code-digit" data-idx="5">
+                </div>
+                <div class="fm-error" id="preregStep2Error"></div>
+                <button class="fm-btn fm-btn-block" id="preregStep2Btn" disabled>Verificar</button>
+                <button class="fm-btn fm-btn-ghost fm-btn-block fm-btn-sm" id="preregResendSms" style="margin-top:0.5rem;">Reenviar código</button>
+            </div>
+
+            <!-- Step 3: Email verification option -->
+            <div class="fm-step" data-step="3">
+                <h2>Verificá tu email</h2>
+                <p>Elegí cómo verificar tu correo.</p>
+                <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                    <div id="preregGoogleMount"></div>
+                    <button class="fm-btn fm-btn-outline fm-btn-block" id="preregEmailCodeBtn">Verificar con código por email</button>
+                </div>
+                <div class="fm-error" id="preregStep3Error"></div>
+            </div>
+
+            <!-- Step 3b: Email code verification -->
+            <div class="fm-step" data-step="3b">
+                <h2>Código de email</h2>
+                <p>Enviamos un código a tu email. Ingresalo abajo.</p>
+                <div class="fm-code-inputs">
+                    <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="0">
+                    <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="1">
+                    <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="2">
+                    <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="3">
+                    <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="4">
+                    <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="5">
+                </div>
+                <div class="fm-error" id="preregStep3bError"></div>
+                <button class="fm-btn fm-btn-block" id="preregStep3bBtn" disabled>Verificar</button>
+                <button class="fm-btn fm-btn-ghost fm-btn-block fm-btn-sm" id="preregResendEmail" style="margin-top:0.5rem;">Reenviar código</button>
+                <button class="fm-btn fm-btn-ghost fm-btn-block fm-btn-sm" id="preregBackToGoogle" style="margin-top:0.25rem;">Volver y elegir otra opción</button>
+            </div>
+
+            <!-- Step 4: Device check -->
+            <div class="fm-step" data-step="4">
+                <h2>Ya casi está</h2>
+                <div id="preregDeviceMsg"></div>
+            </div>
         </div>
     </div>
-    <script src="/js/app.js" type="module"></script>
+
+    <script>
+    // --- Inappropriate words filter (same as server) ---
+    const INAPPROPRIATE_WORDS = [
+        'sex', 'sexy', 'sexual', 'sexo', 'fuck', 'fucking', 'follar', 'cojer', 'coger',
+        'copular', 'copule', 'porno', 'porn', 'xxx', 'escort', 'escorts', 'prostituta',
+        'prostituto', 'prostitucion', 'prostitución', 'puta', 'puto', 'putas', 'putos',
+        'culo', 'culos', 'concha', 'pija', 'pito', 'verga', 'chota', 'chongo', 'chongos',
+        'travesti', 'travestis', 'trans', 'trolo', 'trola', 'sado', 'bdsm', 'dominacion',
+        'domina', 'sumisa', 'sumiso', 'petardo', 'petarda', 'cafisho', 'rufián', 'ruffian',
+        'strip', 'stripper', 'striptease', 'webcam', 'camgirl', 'camboy', 'onlyfans',
+        'contenido adulto', 'contenido explicito', 'contenido explícito', 'nude', 'nudes',
+        'desnudo', 'desnuda', 'desnudos', 'desnudas', 'lenceria', 'lencería',
+        'encuentro casual', 'encuentros casuales', 'cita casual', 'citas casuales',
+        'masaje erotico', 'masaje erótico', 'masajes eroticos', 'masajes eróticos',
+        'relax', 'final feliz', 'trabajo sexual', 'trabajador sexual', 'trabajadora sexual',
+        'actividad sexual', 'servicio sexual', 'servicios sexuales', 'acompanante',
+        'acompañante', 'acompanantes', 'acompañantes', 'masajes tantra', 'tantra',
+        'swinger', 'swingers', 'intercambio parejas', 'orgia', 'orgías', 'orgias',
+        'boludo', 'boluda', 'boludos', 'boludas',
+        'pelotudo', 'pelotuda', 'pelotudos', 'pelotudas',
+        'forro', 'forra', 'forros', 'forras',
+        'pelado', 'pelada', 'pelados', 'peladas'
+    ];
+    const RE_PREFIXED = ['boludo','boluda','boludos','boludas','pelotudo','pelotuda','pelotudos','pelotudas','forro','forra','forros','forras','pelado','pelada','pelados','peladas'];
+
+    function normalizeSpacedText(text) { return text.replace(/([a-záéíóúüñ])[\s\-]+(?=[a-záéíóúüñ])/gi, '$1'); }
+
+    function checkList(text, list) {
+        for (const w of list) {
+            const idx = text.indexOf(w);
+            if (idx === -1) continue;
+            const before = idx === 0 ? ' ' : text[idx - 1];
+            const after = idx + w.length >= text.length ? ' ' : text[idx + w.length];
+            if (!before.match(/[a-záéíóúüñ]/) && !after.match(/[a-záéíóúüñ]/)) return w;
+        }
+        return null;
+    }
+
+    function hasInappropriateWords(text) {
+        if (!text || !text.trim()) return null;
+        const lower = text.toLowerCase();
+        let f = checkList(lower, INAPPROPRIATE_WORDS); if (f) return f;
+        const norm = normalizeSpacedText(lower);
+        f = checkList(norm, INAPPROPRIATE_WORDS); if (f) return f;
+        for (const word of RE_PREFIXED) {
+            for (const v of [`re${word}`, `re ${word}`, `re-${word}`]) {
+                const vn = normalizeSpacedText(v);
+                if (lower.includes(v) || lower.includes(vn) || norm.includes(v) || norm.includes(vn)) return word;
+            }
+        }
+        return null;
+    }
+
+    // --- Language switcher ---
+    (function() {
+        var lang = localStorage.getItem('platform_lang') || 'es';
+        var esBtn = document.getElementById('langEs');
+        var enBtn = document.getElementById('langEn');
+        if (esBtn && enBtn) {
+            esBtn.className = 'fm-lang-btn ' + (lang === 'es' ? 'active' : 'inactive');
+            enBtn.className = 'fm-lang-btn ' + (lang === 'en' ? 'active' : 'inactive');
+        }
+        function setLang(l) {
+            if (l === lang) return;
+            localStorage.setItem('platform_lang', l);
+            window.location.reload();
+        }
+        window.addEventListener('load', function() {
+            document.getElementById('langEs')?.addEventListener('click', function() { setLang('es'); });
+            document.getElementById('langEn')?.addEventListener('click', function() { setLang('en'); });
+        });
+
+        // --- Translation map and helpers (used by both static and dynamic text) ---
+        var dict = {
+            'Volver': 'Back',
+            'Crear aviso': 'Post a listing',
+            'Te conectamos con el profesional indicado': 'We connect you with the right professional.',
+            'Contanos qué necesitás y te conectamos con el profesional indicado': 'Tell us what you need and we\'ll connect you with the right professional.',
+            '¿Qué necesitás hacer?': 'What do you need to do?',
+            'Seleccioná una acción...': 'Select an action...',
+            'Aprender': 'Learn',
+            'Reparar / Arreglar': 'Repair / Fix',
+            'Mantener': 'Maintain',
+            'Mejorar': 'Improve',
+            'Diseñar': 'Design',
+            'Descartar': 'Discard',
+            'Busco': 'I\'m looking for',
+            'Vender': 'Sell',
+            'Comprar': 'Buy',
+            'Donar': 'Donate',
+            'Recibir donaciones': 'Receive donations',
+            'Contanos en una o dos palabras qué necesitás': 'Tell us in one or two words what you need',
+            '¿Dónde?': 'Where?',
+            'Provincia': 'Province',
+            'Ciudad': 'City',
+            'Barrio': 'Neighborhood',
+            '¿Cuándo?': 'When?',
+            'Lo antes posible': 'As soon as possible',
+            'Esta semana': 'This week',
+            'Este mes': 'This month',
+            'Sin apuro': 'No rush',
+            'Buscar profesional': 'Search professional',
+            'Publicar aviso': 'Post a listing',
+            '¿Sos profesional?': 'Are you a professional?',
+            'Registrate para aparecer en los resultados': 'Register to appear in the search results',
+            'Registrarme': 'Register',
+            'Términos y condiciones': 'Terms and conditions',
+            'Política de privacidad': 'Privacy policy',
+            'Contactar por WhatsApp': 'Contact via WhatsApp',
+            'coincide': 'matches',
+            'No encontramos profesionales para esta búsqueda': 'No professionals found for this search',
+            'Probá con otros términos': 'Try different terms',
+            'Profesional': 'Professional',
+            'Error al buscar.': 'Search error.',
+            'encontrado': 'found',
+            'profesional': 'professional',
+            'profesionales': 'professionals',
+            'Dejanos tu email para recibir la encuesta de satisfacción en 7 días:': 'Leave your email to receive the satisfaction survey in 7 days:',
+            'Empecemos con tu preregistro': 'Start your pre-registration',
+            'Completá tus datos y verificá tu identidad para registrarte como profesional.': 'Complete your details and verify your identity to register as a professional.',
+            'Comenzar preregistro': 'Start pre-registration',
+            'Teléfono': 'Phone',
+            'Email': 'Email',
+            'Fecha de nacimiento': 'Birth date',
+            'Siguiente': 'Next',
+            'Código SMS': 'SMS code',
+            'Ingresá el código que enviamos a tu teléfono': 'Enter the code we sent to your phone',
+            'Verificar': 'Verify',
+            'Reenviar código': 'Resend code',
+            'Verificá tu email': 'Verify your email',
+            'Elegí cómo verificar tu correo.': 'Choose how to verify your email.',
+            'Verificar con código por email': 'Verify with email code',
+            'Código de email': 'Email code',
+            'Enviamos un código a tu email. Ingresalo abajo.': 'We sent a code to your email. Enter it below.',
+            'Tomá foto del DNI': 'Take DNI photo',
+            'Subí la foto del frente de tu DNI': 'Upload the front of your DNI',
+            'Subí la foto del dorso de tu DNI': 'Upload the back of your DNI',
+            'Sacar foto': 'Take photo',
+            'Entendido': 'Got it',
+            'Seguí el proceso desde tu celular para tomar las fotos del DNI.': 'Follow the process from your phone to take DNI photos.',
+            'Abrí esta página en tu dispositivo móvil para continuar.': 'Open this page on your mobile device to continue.',
+            'Cerrar': 'Close',
+            'KuraTe': 'KuraTe',
+            'Provincia / CABA...': 'Province...',
+            'Ciudad / Barrio...': 'City / Neighborhood...',
+            'Cargando...': 'Loading...',
+            'Todas las ciudades / barrios': 'All cities / neighborhoods',
+            'Buscando profesionales...': 'Searching professionals...',
+            'Ingresá tu email.': 'Enter your email.',
+            'Ingresá tu teléfono.': 'Enter your phone.',
+            'Ingresá tu fecha de nacimiento.': 'Enter your birth date.',
+            'Debés ser mayor de 18 años.': 'You must be 18 or older.',
+            'Enviando...': 'Sending...',
+            'Error al enviar SMS.': 'Error sending SMS.',
+            'Enviar código SMS': 'Send SMS code',
+            'Error de conexión.': 'Connection error.',
+            'Dorso del DNI': 'Back of DNI',
+            'Frente del DNI': 'Front of DNI',
+            'Verificado': 'Verified',
+            'valoración': 'rating',
+            'Disponible hoy': 'Available today'
+        };
+
+        window._t = function(text) {
+            if (lang === 'es') return text;
+            return dict[text] || text;
+        };
+
+        // Translate static DOM on load if English
+        if (lang === 'en') {
+            document.addEventListener('DOMContentLoaded', function() {
+                document.querySelectorAll('*').forEach(function(el) {
+                    if (el.children.length === 0 && el.textContent.trim()) {
+                        var trimmed = el.textContent.trim();
+                        if (dict[trimmed]) el.textContent = el.textContent.replace(trimmed, dict[trimmed]);
+                    }
+                    if (el.placeholder && dict[el.placeholder]) el.placeholder = dict[el.placeholder];
+                    if (el.title && dict[el.title]) el.title = dict[el.title];
+                });
+                document.title = 'KuraTe — What do you need?';
+            });
+        }
+    })();
+
+    // --- Landing page logic ---
+    document.addEventListener('DOMContentLoaded', function() {
+        const provinciaSel = document.getElementById('provincia');
+        const ciudadSel = document.getElementById('ciudad');
+        const needForm = document.getElementById('needForm');
+        const searchBtn = document.getElementById('searchBtn');
+        const resultsArea = document.getElementById('resultsArea');
+        const descripcionInput = document.getElementById('descripcion');
+        const descripcionError = document.getElementById('descripcionError');
+        const publishBtn = document.getElementById('publishBtn');
+        const registerCTA = document.getElementById('registerCTA');
+        const preregModal = document.getElementById('preregModal');
+        const preregClose = document.getElementById('preregClose');
+
+        // Live inappropriate filter on textarea
+        descripcionInput.addEventListener('input', function() {
+            const found = hasInappropriateWords(this.value);
+            if (found) {
+                descripcionError.textContent = `La palabra "${found}" no es apropiada para este sitio. Describí tu necesidad profesional.`;
+                descripcionError.style.display = 'block';
+            } else {
+                descripcionError.style.display = 'none';
+            }
+        });
+
+        // Load provinces
+        fetch('/api/v1/locations/provinces')
+            .then(r => r.json())
+            .then(resp => {
+                const provinces = resp.data || [];
+                provinciaSel.innerHTML = '<option value="">' + _t('Provincia / CABA...') + '</option>';
+                provinces.forEach(p => { provinciaSel.innerHTML += `<option value="${p.name}">${p.name}</option>`; });
+            });
+
+        provinciaSel.addEventListener('change', function() {
+            const prov = this.value;
+            ciudadSel.innerHTML = '<option value="">' + _t('Cargando...') + '</option>';
+            ciudadSel.disabled = true;
+            if (!prov) { ciudadSel.innerHTML = '<option value="">' + _t('Ciudad / Barrio...') + '</option>'; return; }
+            fetch(`/api/v1/locations/provinces/name/${encodeURIComponent(prov)}/cities`)
+                .then(r => r.json())
+                .then(data => {
+                    ciudadSel.innerHTML = '<option value="">Todas las ciudades / barrios</option>';
+                    (data || []).forEach(c => { ciudadSel.innerHTML += `<option value="${c.name}">${c.name}</option>`; });
+                    ciudadSel.disabled = false;
+                });
+        });
+
+        needForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const accion = document.getElementById('accion').value;
+            const descripcion = descripcionInput.value.trim();
+            const provincia = provinciaSel.value;
+            const ciudad = ciudadSel.value;
+            const urgencia = document.getElementById('urgencia').value;
+            if (!accion) { alert('Seleccioná qué necesitás hacer'); return; }
+            if (!descripcion) { alert('Contanos con más detalle qué necesitás'); return; }
+            const found = hasInappropriateWords(descripcion);
+            if (found) {
+                descripcionError.textContent = `La palabra "${found}" no es apropiada para este sitio.`;
+                descripcionError.style.display = 'block';
+                descripcionInput.focus();
+                return;
+            }
+            resultsArea.style.display = 'block';
+            resultsArea.innerHTML = '<div class="fm-loading">' + _t('Buscando profesionales...') + '</div>';
+            searchBtn.disabled = true;
+            const params = new URLSearchParams({ accion, descripcion, urgencia });
+            if (provincia) params.set('provincia', provincia);
+            if (ciudad) params.set('ciudad', ciudad);
+            fetch(`/api/v1/professionals/search?${params}`)
+                .then(r => r.json())
+                .then(data => {
+                    searchBtn.disabled = false;
+                    if (!data || data.length === 0) {
+                        resultsArea.innerHTML = `<div class="fm-empty"><p style="font-size:1.1rem;">${_t('No encontramos profesionales para esta búsqueda')}</p><p style="font-size:0.85rem;">${_t('Probá con otros términos')}</p></div>`;
+                        return;
+                    }
+                    const maxScore = Math.max(...data.map(p => p.score || 0));
+                    resultsArea.innerHTML = `<div style="margin-bottom:0.75rem;color:#B8922E;font-weight:600;">${data.length} ${_t('profesional')}${data.length > 1 ? 'es' : ''} ${_t('encontrado')}${data.length > 1 ? 's' : ''}</div>` +
+                        data.map(p => {
+                            const pct = maxScore > 0 ? Math.round((p.score / maxScore) * 100) : 0;
+                            const barColor = pct >= 80 ? '#2ecc71' : pct >= 50 ? '#f39c12' : '#e74c3c';
+                            return `<div class="fm-pro-card">
+                                <div style="display:flex;justify-content:space-between;align-items:center;">
+                                    <div class="fm-pro-name">${p.alias || _t('Profesional')}</div>
+                                    <span style="font-size:0.75rem;color:#888;">${_t('coincide')} ${pct}%</span>
+                                </div>
+                                <div style="height:4px;background:#333;border-radius:2px;margin:4px 0 8px;overflow:hidden;">
+                                    <div style="height:100%;width:${pct}%;background:${barColor};border-radius:2px;transition:width 0.4s;"></div>
+                                </div>
+                                <div class="fm-pro-badges">
+                                    <span class="fm-pro-badge">🛡️ ${_t('Verificado')}</span>
+                                    <span class="fm-pro-badge">⭐ ${p.averageRating > 0 ? p.averageRating.toFixed(1) : '4.9'} ${_t('valoración')}</span>
+                                    <span class="fm-pro-badge">🕐 ${_t('Disponible hoy')}</span>
+                                </div>
+                                <div class="fm-pro-detail">${p.bio || ''}</div>${p.location ? `<div class="fm-pro-detail">📍 ${p.location}</div>` : ''}${p.services && p.services.length > 0 ? `<div class="fm-pro-detail" style="font-size:0.8rem;color:#B8922E;">${p.services.slice(0,3).join(' · ')}</div>` : ''}${p.phone ? `<div class="fm-pro-contact"><a href="https://wa.me/${p.phone.replace(/\D/g,'')}" target="_blank" onclick="event.preventDefault();contactProfessional('${p.phone.replace(/\D/g,'')}','${p.id}','${(p.alias||'').replace(/'/g,"\\'")}')">${_t('Contactar por WhatsApp')}</a></div>` : ''}</div>`;
+                        }).join('');
+                })
+                .catch(() => { searchBtn.disabled = false; resultsArea.innerHTML = '<div class="fm-empty">' + _t('Error al buscar.') + '</div>'; });
+        });
+
+        // --- Feedback request on WhatsApp contact ---
+        window.contactProfessional = function(phone, professionalId, alias) {
+            window.open(`https://wa.me/${phone}`, '_blank');
+            let email = sessionStorage.getItem('feedbackEmail') || localStorage.getItem('fbEmail');
+            if (!email) {
+                email = prompt(_t('Dejanos tu email para recibir la encuesta de satisfacción en 7 días:'));
+                if (!email || !email.includes('@')) return;
+                localStorage.setItem('fbEmail', email);
+            }
+            fetch(`/api/v1/feedback/request`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ professionalId, customerEmail: email, customerName: '' })
+            }).catch(() => {});
+        };
+
+        // --- Pre-registration modal ---
+        const steps = preregModal.querySelectorAll('.fm-step');
+        const step1Btn = document.getElementById('preregStep1Btn');
+        const step2Btn = document.getElementById('preregStep2Btn');
+        const step3bBtn = document.getElementById('preregStep3bBtn');
+
+        // Open modal
+        function openPrereg() { preregModal.classList.add('active'); showStep(1); resetPrereg(); }
+        publishBtn.addEventListener('click', openPrereg);
+        registerCTA.addEventListener('click', openPrereg);
+
+        // Exit the APK (native bridge intercepts kurate://exit and closes the activity)
+        const exitApp = () => { window.location.href = 'kurate://exit'; };
+        const exitAppBtn = document.getElementById('exitAppBtn');
+        if (exitAppBtn) exitAppBtn.addEventListener('click', exitApp);
+        const landingBack = document.getElementById('landingBack');
+        if (landingBack) landingBack.addEventListener('click', function (e) { e.preventDefault(); exitApp(); });
+        preregClose.addEventListener('click', () => preregModal.classList.remove('active'));
+        preregModal.addEventListener('click', e => { if (e.target === preregModal) preregModal.classList.remove('active'); });
+
+        let preregId = null;
+
+        function showStep(n) {
+            steps.forEach(s => s.classList.remove('active'));
+            const el = preregModal.querySelector(`[data-step="${n}"]`);
+            if (el) el.classList.add('active');
+        }
+
+        function resetPrereg() {
+            preregId = null;
+            document.getElementById('preregEmail').value = '';
+            document.getElementById('preregPhone').value = '';
+            document.getElementById('preregDob').value = '';
+            document.getElementById('preregPassword').value = '';
+            document.getElementById('preregPasswordConfirm').value = '';
+            document.getElementById('preregStep1Error').style.display = 'none';
+            document.getElementById('preregStep2Error').style.display = 'none';
+            document.getElementById('preregStep3Error').style.display = 'none';
+            document.getElementById('preregStep3bError').style.display = 'none';
+            document.querySelectorAll('.fm-code-digit').forEach(i => i.value = '');
+            document.querySelectorAll('.fm-code-digit-email').forEach(i => i.value = '');
+            step2Btn.disabled = true;
+            step3bBtn.disabled = true;
+            document.getElementById('preregGoogleMount').innerHTML = '';
+            showStep(1);
+        }
+
+        // Code input auto-advance
+        function wireCodeInputs(selector, btnId) {
+            const inputs = document.querySelectorAll(selector);
+            inputs.forEach((inp, i) => {
+                inp.addEventListener('input', function() {
+                    this.value = this.value.replace(/\D/g, '').slice(0, 1);
+                    if (this.value && i < inputs.length - 1) inputs[i + 1].focus();
+                    const full = Array.from(inputs).map(x => x.value).join('');
+                    document.getElementById(btnId).disabled = full.length !== 6;
+                });
+                inp.addEventListener('keydown', function(e) {
+                    if (e.key === 'Backward' || e.key === 'Backspace') {
+                        if (!this.value && i > 0) inputs[i - 1].focus();
+                    }
+                });
+            });
+        }
+        wireCodeInputs('.fm-code-digit', 'preregStep2Btn');
+        wireCodeInputs('.fm-code-digit-email', 'preregStep3bBtn');
+
+        // Step 1: Submit email + phone + DOB
+        step1Btn.addEventListener('click', async function() {
+            const email = document.getElementById('preregEmail').value.trim();
+            const phone = document.getElementById('preregPhone').value.trim();
+            const dob = document.getElementById('preregDob').value;
+            const password = document.getElementById('preregPassword').value;
+            const passwordConfirm = document.getElementById('preregPasswordConfirm').value;
+            const err = document.getElementById('preregStep1Error');
+            err.style.display = 'none';
+
+            if (!email) { err.textContent = 'Ingresá tu email.'; err.style.display = 'block'; return; }
+            if (!phone) { err.textContent = 'Ingresá tu teléfono.'; err.style.display = 'block'; return; }
+            if (!dob) { err.textContent = 'Ingresá tu fecha de nacimiento.'; err.style.display = 'block'; return; }
+            const age = Math.floor((new Date() - new Date(dob)) / 31557600000);
+            if (age < 18) { err.textContent = 'Debés ser mayor de 18 años.'; err.style.display = 'block'; return; }
+            if (!password || password.length < 6) { err.textContent = 'La contraseña debe tener al menos 6 caracteres.'; err.style.display = 'block'; return; }
+            if (password !== passwordConfirm) { err.textContent = 'Las contraseñas no coinciden.'; err.style.display = 'block'; return; }
+
+            this.disabled = true;
+            this.textContent = 'Enviando...';
+
+            try {
+                const r = await fetch('/api/v1/public/pre-register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, phone, dateOfBirth: dob, password })
+                });
+                const data = await r.json();
+                if (!r.ok) { err.textContent = data.error || 'Error al enviar SMS.'; err.style.display = 'block'; this.disabled = false; this.textContent = 'Enviar código SMS'; return; }
+                preregId = data.id;
+                showStep(2);
+            } catch (e) { err.textContent = 'Error de conexión.'; err.style.display = 'block'; }
+            this.disabled = false;
+            this.textContent = 'Enviar código SMS';
+        });
+
+        // Step 2: Verify phone code
+        step2Btn.addEventListener('click', async function() {
+            const err = document.getElementById('preregStep2Error');
+            err.style.display = 'none';
+            const code = Array.from(document.querySelectorAll('.fm-code-digit')).map(i => i.value).join('');
+            if (code.length !== 6) { err.textContent = 'Ingresá los 6 dígitos.'; err.style.display = 'block'; return; }
+            this.disabled = true; this.textContent = 'Verificando...';
+            try {
+                const r = await fetch('/api/v1/public/pre-register/verify-phone', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: preregId, code })
+                });
+                const data = await r.json();
+                if (!r.ok) { err.textContent = data.error || 'Código incorrecto.'; err.style.display = 'block'; this.disabled = false; this.textContent = 'Verificar'; return; }
+                // Phone verified → show email options
+                showStep(3);
+                tryMountGoogle();
+            } catch (e) { err.textContent = 'Error de conexión.'; err.style.display = 'block'; }
+            this.disabled = false; this.textContent = 'Verificar';
+        });
+
+        // Resend SMS
+        document.getElementById('preregResendSms').addEventListener('click', async function() {
+            const err = document.getElementById('preregStep2Error');
+            err.style.display = 'none';
+            try {
+                const r = await fetch('/api/v1/public/pre-register/resend-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: preregId })
+                });
+                const data = await r.json();
+                if (!r.ok) { err.textContent = data.error || 'Error.'; err.style.display = 'block'; return; }
+                err.textContent = 'Código reenviado.'; err.style.color = '#2ecc71'; err.style.display = 'block';
+                setTimeout(() => { err.style.display = 'none'; err.style.color = '#e74c3c'; }, 3000);
+            } catch (e) { err.textContent = 'Error de conexión.'; err.style.display = 'block'; }
+        });
+
+        // Step 3: Option to verify with code by email
+        document.getElementById('preregEmailCodeBtn').addEventListener('click', async function() {
+            const err = document.getElementById('preregStep3Error');
+            err.style.display = 'none';
+            // Trigger email code send via the verify attempt (first verifyEmail call sends code if not yet sent)
+            showStep('3b');
+            // Send email code on entering step 3b
+            await sendEmailCode();
+        });
+
+        async function sendEmailCode() {
+            // We send the code by calling verifyEmail with an empty code — the first step sends it
+            // But better: call resendCode while in email step
+            const err = document.getElementById('preregStep3bError');
+            err.style.display = 'none';
+            try {
+                const r = await fetch('/api/v1/public/pre-register/resend-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: preregId })
+                });
+                const data = await r.json();
+                if (!r.ok) { err.textContent = data.error || 'Error.'; err.style.display = 'block'; }
+            } catch (e) { err.textContent = 'Error de conexión.'; err.style.display = 'block'; }
+        }
+
+        // Step 3b: Verify email code
+        step3bBtn.addEventListener('click', async function() {
+            const err = document.getElementById('preregStep3bError');
+            err.style.display = 'none';
+            const code = Array.from(document.querySelectorAll('.fm-code-digit-email')).map(i => i.value).join('');
+            if (code.length !== 6) { err.textContent = 'Ingresá los 6 dígitos.'; err.style.display = 'block'; return; }
+            this.disabled = true; this.textContent = 'Verificando...';
+            try {
+                const r = await fetch('/api/v1/public/pre-register/verify-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: preregId, code })
+                });
+                const data = await r.json();
+                if (!r.ok) { err.textContent = data.error || 'Código incorrecto.'; err.style.display = 'block'; this.disabled = false; this.textContent = 'Verificar'; return; }
+                showDeviceStep();
+            } catch (e) { err.textContent = 'Error de conexión.'; }
+            this.disabled = false; this.textContent = 'Verificar';
+        });
+
+        // Resend email code
+        document.getElementById('preregResendEmail').addEventListener('click', async function() {
+            const err = document.getElementById('preregStep3bError');
+            err.style.display = 'none';
+            try {
+                const r = await fetch('/api/v1/public/pre-register/resend-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: preregId })
+                });
+                const data = await r.json();
+                if (!r.ok) { err.textContent = data.error || 'Error.'; err.style.display = 'block'; return; }
+                err.textContent = 'Código reenviado.'; err.style.color = '#2ecc71'; err.style.display = 'block';
+                setTimeout(() => { err.style.display = 'none'; err.style.color = '#e74c3c'; }, 3000);
+            } catch (e) { err.textContent = 'Error de conexión.'; err.style.display = 'block'; }
+        });
+
+        document.getElementById('preregBackToGoogle').addEventListener('click', function() {
+            showStep(3);
+            tryMountGoogle();
+        });
+
+        // Google sign-in for email verification
+        async function tryMountGoogle() {
+            const mount = document.getElementById('preregGoogleMount');
+            mount.innerHTML = '';
+            try {
+                const r = await fetch('/api/v1/public/client-config');
+                const data = await r.json();
+                const clientId = data.success && data.data?.googleClientId ? data.data.googleClientId : '';
+                if (!clientId) { mount.innerHTML = ''; return; }
+                mount.innerHTML = '<p style="color:#888;font-size:0.85rem;margin-bottom:0.5rem;">O verificá con Google</p><div id="googleBtnMount"></div>';
+                await loadGoogleSdk();
+                window.handleGooglePrereg = async (response) => {
+                    const err = document.getElementById('preregStep3Error');
+                    err.style.display = 'none';
+                    try {
+                        const r2 = await fetch('/api/v1/public/pre-register/verify-email-google', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ id: preregId, token: response.credential })
+                        });
+                        const data2 = await r2.json();
+                        if (!r2.ok) { err.textContent = data2.error || 'Error con Google.'; err.style.display = 'block'; return; }
+                        showDeviceStep();
+                    } catch (e) { err.textContent = 'Error de conexión.'; err.style.display = 'block'; }
+                };
+                window.google.accounts.id.initialize({ client_id: clientId, callback: window.handleGooglePrereg });
+                window.google.accounts.id.renderButton(document.getElementById('googleBtnMount'), { theme: 'outline', size: 'large', type: 'standard', width: 380, text: 'continue_with', locale: 'es' });
+            } catch (e) { /* no google */ }
+        }
+
+        function loadGoogleSdk() {
+            if (document.getElementById('google-jssdk')) return Promise.resolve();
+            return new Promise((resolve, reject) => {
+                const s = document.createElement('script'); s.id = 'google-jssdk';
+                s.src = 'https://accounts.google.com/gsi/client'; s.async = true; s.defer = true;
+                s.onload = resolve; s.onerror = reject;
+                document.head.appendChild(s);
+            });
+        }
+
+        function showDeviceStep() {
+            showStep(4);
+            const msg = document.getElementById('preregDeviceMsg');
+            const isMobile = /Mobi|Android|iPhone|iPad|iPod|webOS/i.test(navigator.userAgent);
+            let dniFront = null, dniBack = null;
+
+            function dniFrame(side, label) {
+                const filled = side === 'front' ? dniFront : dniBack;
+                return `
+                    <div style="margin-bottom:1.5rem;">
+                        <p style="color:#B8922E;font-weight:600;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 0.5rem;">${label}</p>
+                        <div style="border:2px dashed #2a2a3e;border-radius:12px;padding:0.5rem;background:#0f0f1a;text-align:center;min-height:140px;display:flex;align-items:center;justify-content:center;transition:border-color 0.2s;" class="dni-frame" data-side="${side}">
+                            ${filled ? `<img src="${filled}" style="max-width:100%;max-height:200px;border-radius:8px;display:block;">` : `<span style="color:#555;font-size:0.85rem;">Toque para tomar foto</span>`}
+                        </div>
+                    </div>
+                `;
+            }
+
+            function renderDniUi() {
+                msg.innerHTML = `
+                    <p style="margin-bottom:1rem;">Tomá las fotos de tu DNI para completar la verificación.</p>
+                    ${dniFrame('front', 'Frente del DNI')}
+                    ${dniFrame('back', 'Dorso del DNI')}
+                    <div id="dniActions" style="display:flex;flex-direction:column;gap:0.75rem;"></div>
+                    <div id="dniStatus" style="margin-top:0.75rem;"></div>
+                `;
+                const actions = document.getElementById('dniActions');
+                const status = document.getElementById('dniStatus');
+
+                if (!dniFront) {
+                    const btn = document.createElement('button');
+                    btn.className = 'fm-btn fm-btn-block'; btn.textContent = 'Tomar foto frente';
+                    btn.addEventListener('click', () => captureDni('front'));
+                    actions.appendChild(btn);
+                } else if (!dniBack) {
+                    const btn = document.createElement('button');
+                    btn.className = 'fm-btn fm-btn-block'; btn.textContent = 'Tomar foto dorso';
+                    btn.addEventListener('click', () => captureDni('back'));
+                    actions.appendChild(btn);
+                    status.innerHTML = '<p style="color:#2ecc71;font-size:0.85rem;">Frente validado. Ahora el dorso.</p>';
+                } else {
+                    status.innerHTML = `
+                        <p style="color:#2ecc71;font-size:0.85rem;margin-bottom:0.75rem;">DNI completo. Pronto revisaremos tus datos.</p>
+                        <button class="fm-btn fm-btn-block" onclick="document.getElementById('preregModal').classList.remove('active')">Listo</button>
+                    `;
+                }
+
+                // Wire click on frame to retake
+                msg.querySelectorAll('.dni-frame').forEach(frame => {
+                    frame.addEventListener('click', () => {
+                        const side = frame.dataset.side;
+                        if ((side === 'front' && dniFront) || (side === 'back' && dniBack)) {
+                            if (confirm('¿Querés volver a tomar esta foto?')) captureDni(side);
+                        }
+                    });
+                });
+            }
+
+            async function captureDni(side) {
+                const inp = document.createElement('input');
+                inp.type = 'file'; inp.accept = 'image/*'; inp.capture = 'environment';
+                inp.onchange = function(e) {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = async function(ev) {
+                        if (side === 'front') {
+                            dniFront = ev.target.result;
+                            renderDniUi();
+                            // Validate front via OCR
+                            const status = document.getElementById('dniStatus');
+                            status.innerHTML = '<p style="color:#888;font-size:0.85rem;">Analizando DNI...</p>';
+                            try {
+                                const r = await fetch('/api/v1/public/pre-register/validate-dni', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ id: preregId, image: dniFront })
+                                });
+                                const data = await r.json();
+                                if (!r.ok) {
+                                    dniFront = null;
+                                    if (data.mismatch) {
+                                        status.innerHTML = `<p style="color:#e67e22;font-size:0.85rem;">${data.error}</p>`;
+                                    } else {
+                                        status.innerHTML = `<p style="color:#e74c3c;font-size:0.85rem;">${data.error}</p>`;
+                                    }
+                                    renderDniUi();
+                                    return;
+                                }
+                                if (data.warning) {
+                                    status.innerHTML = `<p style="color:#e67e22;font-size:0.85rem;">${data.warning}</p>`;
+                                } else {
+                                    status.innerHTML = '<p style="color:#2ecc71;font-size:0.85rem;">DNI frente verificado correctamente.</p>';
+                                }
+                                renderDniUi();
+                            } catch (err) {
+                                status.innerHTML = '<p style="color:#e74c3c;font-size:0.85rem;">Error al validar el DNI.</p>';
+                            }
+                        } else {
+                            dniBack = ev.target.result;
+                            renderDniUi();
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                };
+                inp.click();
+            }
+
+            if (isMobile) {
+                renderDniUi();
+            } else {
+                msg.innerHTML = `
+                    <p style="margin-bottom:1rem;">Seguí el proceso desde tu celular para tomar las fotos del DNI.</p>
+                    <p style="color:#666;font-size:0.85rem;">Abrí esta página en tu dispositivo móvil para continuar.</p>
+                    <button class="fm-btn fm-btn-block" style="margin-top:1rem;" onclick="document.getElementById('preregModal').classList.remove('active')">Entendido</button>
+                `;
+            }
+        }
+    });
+    </script>
 </body>
 </html>

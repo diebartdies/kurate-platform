@@ -1,20 +1,20 @@
 #!/bin/bash
-# Disaster Recovery Restore — FullMinent Platform
+# Disaster Recovery Restore — KuraTe Platform
 # Usage: bash scripts/restore-disaster-recovery.sh <VM_IP> <encrypted_archive_path>
 #
 # Example:
-#   bash scripts/restore-disaster-recovery.sh 192.168.1.50 /tmp/FullMinent_server_state_2026-07-08_120000.tar.gz.enc
+#   bash scripts/restore-disaster-recovery.sh 192.168.1.50 /tmp/KuraTe_server_state_2026-07-08_120000.tar.gz.enc
 set -euo pipefail
 
 VM_IP="${1:-}"
 ARCHIVE="${2:-}"
-PROJECT_DIR="/opt/FullMinent-platform"
+PROJECT_DIR="/opt/KuraTe-platform"
 DATE=$(date -u '+%Y-%m-%d_%H%M%S')
-LOGFILE="/tmp/FullMinent-restore-${DATE}.log"
+LOGFILE="/tmp/KuraTe-restore-${DATE}.log"
 
 if [ -z "$VM_IP" ] || [ -z "$ARCHIVE" ]; then
     echo "Usage: $0 <VM_IP> <encrypted_archive_path>"
-    echo "  e.g. $0 192.168.1.50 /tmp/FullMinent_server_state_2026-07-08_120000.tar.gz.enc"
+    echo "  e.g. $0 192.168.1.50 /tmp/KuraTe_server_state_2026-07-08_120000.tar.gz.enc"
     exit 1
 fi
 
@@ -24,7 +24,7 @@ if [ ! -f "$ARCHIVE" ]; then
 fi
 
 echo "=============================================="
-echo " FullMinent — Disaster Recovery Restore"
+echo " KuraTe — Disaster Recovery Restore"
 echo " VM IP:     $VM_IP"
 echo " Archive:   $ARCHIVE"
 echo " Log:       $LOGFILE"
@@ -64,13 +64,13 @@ log "Connecting to VM to run restore..."
 ssh -o StrictHostKeyChecking=accept-new "root@${VM_IP}" <<'EOSSH'
     set -euo pipefail
     DATE=$(date -u '+%Y-%m-%d_%H%M%S')
-    LOGFILE="/tmp/FullMinent-restore-vm-${DATE}.log"
+    LOGFILE="/tmp/KuraTe-restore-vm-${DATE}.log"
 
     log() { echo "[$(date '+%H:%M:%S')] $*" | tee -a "$LOGFILE"; }
     run() { log ">>> $*"; "$@" 2>&1 | tee -a "$LOGFILE"; }
 
     # Find archive
-    ARCHIVE=$(ls ~/FullMinent_server_state_*.tar.gz.enc 2>/dev/null | head -1)
+    ARCHIVE=$(ls ~/KuraTe_server_state_*.tar.gz.enc 2>/dev/null | head -1)
     if [ -z "$ARCHIVE" ]; then
         echo "ERROR: No encrypted archive found in /root"
         exit 1
@@ -112,7 +112,7 @@ ssh -o StrictHostKeyChecking=accept-new "root@${VM_IP}" <<'EOSSH'
         git clone "$REPO_URL" "$PROJECT_DIR" 2>&1 | tee -a "$LOGFILE"
     fi
     # Use environment variable instead
-    export PROJECT_DIR="/opt/FullMinent-platform"
+    export PROJECT_DIR="/opt/KuraTe-platform"
 
     # ── 4e. Restore .env ──
     log "Restoring .env..."
@@ -179,13 +179,13 @@ ssh -o StrictHostKeyChecking=accept-new "root@${VM_IP}" <<'EOSSH'
         sleep 3
         # Wait for mongo to be ready
         for i in $(seq 1 10); do
-            docker exec FullMinent_mongo mongosh --eval "db.adminCommand('ping')" 2>/dev/null && break
+            docker exec KuraTe_mongo mongosh --eval "db.adminCommand('ping')" 2>/dev/null && break
             sleep 2
         done
         # Restore
         DUMP_SIZE=$(stat -c%s "$STAGING/latest-mongodb-dump.archive" 2>/dev/null || echo 0)
         log "  Dump size: $(( DUMP_SIZE / 1024 / 1024 )) MB"
-        docker exec -i FullMinent_mongo sh -c 'mongorestore --archive --gzip --db FullMinent --drop' \
+        docker exec -i KuraTe_mongo sh -c 'mongorestore --archive --gzip --db KuraTe --drop' \
             < "$STAGING/latest-mongodb-dump.archive" 2>&1 | tee -a "$LOGFILE" || \
             log "  WARN: mongorestore failed — check MongoDB version (4.4 required)"
     else
@@ -229,4 +229,4 @@ EOSSH
 
 echo ""
 log "Restore script finished. Check log on VM:"
-echo "  ssh root@${VM_IP} 'cat /tmp/FullMinent-restore-vm-*.log | tail -50'"
+echo "  ssh root@${VM_IP} 'cat /tmp/KuraTe-restore-vm-*.log | tail -50'"

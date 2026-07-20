@@ -431,8 +431,8 @@ exports.verifyProfessional = async (req, res, next) => {
     if (status === 'approved') {
       sendEmail({
         email: user.email,
-        subject: 'FullMinent - Your Profile Has Been Approved!',
-        message: `Hello ${user.professionalProfile?.alias || 'Professional'},\n\nGreat news! Your FullMinent profile has been approved by our team.\n\nYou can now edit your profile, upload gallery photos, and appear in the public directory.\n\nPlease log in to your Professional Dashboard to complete your profile.\n\nWelcome to `
+        subject: 'KuraTe - Your Profile Has Been Approved!',
+        message: `Hello ${user.professionalProfile?.alias || 'Professional'},\n\nGreat news! Your KuraTe profile has been approved by our team.\n\nYou can now edit your profile, upload gallery photos, and appear in the public directory.\n\nPlease log in to your Professional Dashboard to complete your profile.\n\nWelcome to `
       }).catch(err => console.error(`Failed to send approval email to ${user.email}:`, err.message));
     } else {
       const emailMessage = buildRejectionEmail({
@@ -442,7 +442,7 @@ exports.verifyProfessional = async (req, res, next) => {
       });
       sendEmail({
         email: user.email,
-        subject: 'FullMinent - Profile Verification Update',
+        subject: 'KuraTe - Profile Verification Update',
         message: emailMessage
       }).catch(err => console.error(`Failed to send rejection email to ${user.email}:`, err.message));
     }

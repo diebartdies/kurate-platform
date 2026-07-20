@@ -9,3 +9,16 @@ public/uploads/photos/
 Thumbs.db
 *.tar.gz
 *.tar.gz.enc
+
+# Capacitor / Android / iOS build outputs
+android/.gradle/
+android/build/
+android/app/build/
+android/captures/
+android/local.properties
+ios/App/Pods/
+ios/build/
+ios/*.xcworkspace
+*.apk
+*.aab
+*.ipa

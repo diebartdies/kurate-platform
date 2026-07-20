@@ -24,7 +24,7 @@ async function main() {
   }
 
   const ok = await notifyAlert({
-    subject: '[TEST] FullMinent server watch',
+    subject: '[TEST] KuraTe server watch',
     message: `Test alert from your Windows PC.\nTarget: ${process.env.WATCH_SERVER_IP || '91.208.206.35'}\nWhatsApp: +${target}`,
     emailTo: process.env.WATCH_ALERT_EMAIL
   });

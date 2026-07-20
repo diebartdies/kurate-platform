@@ -2,9 +2,9 @@
 # Install weekly disk housekeeping cron (Sundays 03:15 UTC).
 set -eu
 
-DEPLOY_DIR="${1:-/root/FullMinent-platform}"
+DEPLOY_DIR="${1:-/root/KuraTe-platform}"
 SCRIPT="$DEPLOY_DIR/scripts/disk-housekeeping.sh"
-LOG="/var/log/FullMinent_housekeeping.log"
+LOG="/var/log/KuraTe_housekeeping.log"
 CRON_LINE="15 3 * * 0 root bash $SCRIPT $DEPLOY_DIR >> $LOG 2>&1"
 
 if [ ! -f "$SCRIPT" ]; then
@@ -14,8 +14,8 @@ fi
 
 chmod +x "$SCRIPT"
 
-MARKER="# FullMinent-disk-housekeeping"
-CRON_FILE="/etc/cron.d/FullMinent-housekeeping"
+MARKER="# KuraTe-disk-housekeeping"
+CRON_FILE="/etc/cron.d/KuraTe-housekeeping"
 
 {
   echo "$MARKER"

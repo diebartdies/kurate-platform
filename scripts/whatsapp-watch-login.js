@@ -23,7 +23,7 @@ async function main() {
 
   await loginWatchWhatsAppSession();
 
-  const testMsg = `[TEST] FullMinent platform WhatsApp linked.\nAlerts for ${process.env.WATCH_SERVER_IP || '91.208.206.35'} will come to +${target}.`;
+  const testMsg = `[TEST] KuraTe platform WhatsApp linked.\nAlerts for ${process.env.WATCH_SERVER_IP || '91.208.206.35'} will come to +${target}.`;
   await sendWatchWhatsAppAlert(target, testMsg, { showQr: false, timeoutMs: 60000 });
 
   console.log('');

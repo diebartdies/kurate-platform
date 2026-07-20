@@ -1,5 +1,5 @@
 /**
- * Blueprint Grid design system — FullMinent
+ * Blueprint Grid design system — KuraTe
  * Option 3: technical grid, gold frames, uppercase UI, status-line banner
  */
 
@@ -1481,7 +1481,7 @@ body.blueprint-theme.blueprint-static-page .landing-advantages-cta-muted {
   color: #8fdfb0 !important;
 }
 
-/* FullMinent outreach landing */
+/* KuraTe outreach landing */
 body.blueprint-theme.blueprint-model-landing-page .model-landing-brand h1 {
   font-family: var(--blueprint-font-ui);
   font-size: 0.95rem !important;

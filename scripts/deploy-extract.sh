@@ -3,7 +3,7 @@
 set -eu
 
 EXPECTED="${1:-}"
-DEPLOY_DIR="${2:-/root/FullMinent-platform}"
+DEPLOY_DIR="${2:-/root/KuraTe-platform}"
 
 cd "$DEPLOY_DIR"
 

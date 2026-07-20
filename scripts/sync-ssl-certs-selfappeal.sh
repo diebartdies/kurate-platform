@@ -1,10 +1,10 @@
 #!/bin/bash
-# Sync FullMinent TLS files into certbot layout (Linux / server-side).
+# Sync KuraTe TLS files into certbot layout (Linux / server-side).
 set -euo pipefail
 
-SOURCE_DIR="${FullMinent_CERTS_DIR:-/root/Certs-Selfapeal}"
+SOURCE_DIR="${KuraTe_CERTS_DIR:-/root/Certs-Selfapeal}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TARGET_DIR="${1:-$SCRIPT_DIR/../certbot/conf/live/FullMinent.drsrv.net.ar}"
+TARGET_DIR="${1:-$SCRIPT_DIR/../certbot/conf/live/KuraTe.drsrv.net.ar}"
 
 mkdir -p "$TARGET_DIR"
 
@@ -39,8 +39,8 @@ if command -v openssl >/dev/null 2>&1; then
   SUBJECT=$(openssl x509 -in "$FULLCHAIN" -noout -subject 2>/dev/null || true)
   if [[ -n "$SUBJECT" ]]; then
     echo "$SUBJECT"
-    if [[ "$SUBJECT" != *FullMinent* ]]; then
-      echo "WARN: subject does not mention FullMinent — browser may warn on FullMinent.drsrv.net.ar" >&2
+    if [[ "$SUBJECT" != *KuraTe* ]]; then
+      echo "WARN: subject does not mention KuraTe — browser may warn on KuraTe.drsrv.net.ar" >&2
     fi
   fi
 fi

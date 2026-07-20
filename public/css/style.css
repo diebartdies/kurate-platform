@@ -1,7 +1,27 @@
 /* 
-  FullMinent Platform - Prototype Styles
+  KuraTe Platform - Prototype Styles
   Tone: Elegant, High-End, Trustworthy
 */
+
+/* Global back button — consistent across all pages */
+.fm-back-global {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.5rem 1rem;
+    background: transparent;
+    color: #888;
+    border: 1px solid #333;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    text-decoration: none;
+    transition: color 0.2s, border-color 0.2s;
+}
+.fm-back-global:hover {
+    color: var(--primary-gold);
+    border-color: var(--primary-gold);
+}
 
 :root {
     /* Rich metallic gold — warmer bronze undertone, less flat yellow */
@@ -58,7 +78,7 @@ img.landing-logo,
 img.preserve-brand-colors,
 .lang-switcher img,
 .how-to-pay-logo,
-img[src*="FullMinent_logo"],
+img[src*="KuraTe_logo"],
 img[src*="flagcdn.com"],
 img[src*="/images/mercadopago"],
 img[src*="/images/bbva"] {
@@ -72,7 +92,7 @@ img[src*="/images/bbva"] {
     img.preserve-brand-colors,
     .lang-switcher img,
     .how-to-pay-logo,
-    img[src*="FullMinent_logo"],
+    img[src*="KuraTe_logo"],
     img[src*="flagcdn.com"],
     img[src*="/images/mercadopago"],
     img[src*="/images/bbva"] {
@@ -390,6 +410,15 @@ textarea:focus:not(:focus-visible) {
     margin-top: 50px;
 }
 
+/* Hogar directory grid — 3 columns on mobile */
+#hogarGrid.grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 768px) {
+    #hogarGrid.grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 420px) {
+    #hogarGrid.grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+}
+
 /* Category mount — sections stack full width; photos live in inner .grid rows */
 #treasureGrid {
     display: flex;
@@ -509,6 +538,64 @@ textarea:focus:not(:focus-visible) {
     line-height: 1.2;
     color: #fff;
     opacity: 0.92;
+}
+
+/* ---- Hogar directory card variants (uniform rounded-rect cards) ---- */
+/* Base: every variant shares the same card surface so all cards match */
+.hogar-card {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(var(--gold-rgb), 0.35);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    transition: transform 0.25s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.hogar-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--primary-gold);
+    box-shadow: 0 6px 20px rgba(var(--gold-rgb), 0.18);
+}
+.hogar-card .treasure-img-container {
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+}
+.hogar-card .treasure-img {
+    border-radius: 0;
+}
+
+/* A. Filled violet card (matches the frames) — image top, caption below card */
+.hogar-card--violet {
+    background: #1a1a2e;
+}
+.hogar-card--violet .treasure-caption {
+    position: static;
+    background: #1a1a2e;
+    border-radius: 0;
+    padding: 10px 12px 12px;
+    font-style: normal;
+}
+
+/* B. Glass card — translucent light surface */
+.hogar-card--glass {
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(6px);
+}
+.hogar-card--glass .treasure-caption {
+    position: static;
+    background: transparent;
+    border-radius: 0;
+    padding: 10px 12px 12px;
+    font-style: normal;
+}
+
+/* C. Image with rounded gold frame — overlay caption kept, full card bg behind */
+.hogar-card--framed {
+    background: #1a1a2e;
+}
+.hogar-card--framed .treasure-img-container {
+    border-radius: 10px;
+    margin: 8px;
+    width: calc(100% - 16px);
 }
 
 /* Ornate gold frame around each category section (not around individual photos) */
@@ -2941,7 +3028,7 @@ body.categories-page header.page-header {
 .categories-frame {
     border: 1px solid rgba(var(--gold-rgb), 0.38);
     border-radius: 6px;
-    background: rgba(12, 12, 12, 0.55);
+    background: #1a1a2e;
     box-shadow: inset 0 0 0 1px rgba(var(--gold-rgb), 0.08);
 }
 
@@ -2950,7 +3037,7 @@ body.categories-page header.page-header {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 18px 10px;
+    padding: clamp(12px, 1.4vw, 22px) clamp(8px, 0.9vw, 14px);
     min-height: 320px;
 }
 
@@ -2988,6 +3075,74 @@ body.categories-page header.page-header {
 
 .categories-frame-right {
     justify-content: flex-start;
+}
+
+/* Area quick-filter chips — fluid sizing, responsive to window width */
+.area-chips {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(6px, 0.8vw, 10px);
+    width: 100%;
+}
+
+.area-chip {
+    width: 100%;
+    padding: clamp(7px, 0.9vw, 11px) clamp(8px, 0.9vw, 12px);
+    border-radius: 8px;
+    border: 1px solid rgba(var(--gold-rgb), 0.4);
+    background: transparent;
+    color: #aaa;
+    cursor: pointer;
+    font-size: clamp(0.78rem, 0.9vw, 0.95rem);
+    text-align: left;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    font-family: inherit;
+}
+
+.area-chip:hover {
+    border-color: var(--primary-gold);
+    color: var(--primary-gold);
+}
+
+.area-chip.is-active {
+    background: rgba(var(--gold-rgb), 0.15);
+    color: var(--primary-gold);
+    border-color: var(--primary-gold);
+}
+
+/* Responsive: scale frames and let area chips wrap on smaller windows */
+@media (max-width: 1100px) {
+    .categories-shell {
+        grid-template-columns: minmax(72px, 9%) minmax(0, 1fr) minmax(72px, 9%);
+        gap: 10px;
+    }
+}
+
+@media (max-width: 768px) {
+    .categories-shell {
+        grid-template-columns: 1fr;
+        min-height: 0;
+    }
+    .categories-frame-side {
+        min-height: 0;
+        width: 100%;
+    }
+    .area-chips {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .area-chip {
+        width: auto;
+        flex: 1 1 calc(50% - 8px);
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .area-chip {
+        flex: 1 1 100%;
+    }
 }
 
 .categories-frame-accent {

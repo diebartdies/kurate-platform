@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Apply Twilio WhatsApp content template for cold outreach (Meta-approved).
-# Run on prod: bash scripts/set-twilio-whatsapp-template.sh /root/FullMinent-platform [CONTENT_SID]
+# Run on prod: bash scripts/set-twilio-whatsapp-template.sh /root/KuraTe-platform [CONTENT_SID]
 set -euo pipefail
 
-ROOT="${1:-/root/FullMinent-platform}"
+ROOT="${1:-/root/KuraTe-platform}"
 # Active template (Meta approved): watext
 APPROVED_CONTENT_SID="HX92a57f64dfa083cb94b884da55a85cde"
 # Pending Meta approval — do NOT set in .env until approved:
@@ -71,14 +71,14 @@ echo "Register link: send in step-2 manual reply (not in Meta template — URLs 
 echo ""
 echo "If watext_updated failed Meta: create NEW template, TEXT ONLY (no image header), body = META-SAFE below."
 echo "--- FULL BODY (WebJS / preview — may not pass Meta) ---"
-docker exec FullMinent_app node -e "
+docker exec KuraTe_app node -e "
 const { getColdOutreachTemplateBodySample, getColdOutreachTemplateBodyMetaSample } = require('./utils/professionalInviteMessage');
 console.log(getColdOutreachTemplateBodySample());
 console.log('--- META-SAFE BODY (resubmit to Twilio) ---');
 console.log(getColdOutreachTemplateBodyMetaSample());
 "
 echo "---"
-docker exec FullMinent_app node -e "
+docker exec KuraTe_app node -e "
 const tw = require('./services/twilioWhatsAppService');
 const cfg = require('./config/appConfig');
 const vars = tw.buildContentVariables({ alias: tw.WATEXT_TEMPLATE_EXAMPLES['1'] });

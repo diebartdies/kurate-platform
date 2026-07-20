@@ -7,6 +7,7 @@ const sendEmail = require('../sendEmail');
 const Specialty = require('../models/Specialty');
 const Statistic = require('../models/Statistic');
 const Review = require('../models/Review');
+const Feedback = require('../models/Feedback');
 const Connection = require('../models/Connection');
 const ConnectionRequest = require('../models/ConnectionRequest');
 const { isUploadPath, resolvePhotoForClient, resolvePhotosForClient, normalizePhotosForStorage, resolveFirstPhotoForClient } = require('../utils/photoUtils');
@@ -15,6 +16,7 @@ const { recordCategoryChange, normalizeQuality } = require('../utils/categoryBil
 const smsNotifications = require('../services/smsNotifications');
 const { getClientIp } = require('../utils/clientIp');
 const { mergePublicListingFilter, isAccountDeleted } = require('../utils/professionalVisibility');
+const { hasInappropriateWords, matchCategories, extractKeywords } = require('../utils/needMatching');
 
 const ALIAS_LOOKUP_FILTER = { role: 'professional', accountDeletedAt: null };
 const DEFAULT_WORKING_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -185,6 +187,129 @@ exports.getProfessionals = async (req, res, next) => {
   }
 };
 
+// @desc    Search professionals by need (acción + descripción + location + urgencia)
+// @route   GET /api/v1/professionals/search
+// @access  Public
+exports.searchProfessionals = async (req, res, next) => {
+  try {
+    const { accion, descripcion, provincia, ciudad, urgencia } = req.query;
+
+    const badWord = hasInappropriateWords(descripcion);
+    if (badWord) {
+      return res.status(400).json([]);
+    }
+
+    const baseFilter = mergePublicListingFilter();
+    baseFilter['professionalProfile.alias'] = { $exists: true, $ne: '' };
+
+    const matchedCats = matchCategories(descripcion);
+    const keywords = extractKeywords(descripcion);
+
+    if (provincia && provincia.trim()) {
+      baseFilter['professionalProfile.location.province'] = { $regex: provincia.trim(), $options: 'i' };
+    }
+    if (ciudad && ciudad.trim()) {
+      baseFilter['professionalProfile.location.city'] = { $regex: ciudad.trim(), $options: 'i' };
+    }
+
+    // Collect unique search terms from taxonomy + keyword extraction
+    const searchTerms = new Set();
+    for (const c of matchedCats) {
+      if (c.service) searchTerms.add(c.service.toLowerCase());
+      if (c.subcategory) searchTerms.add(c.subcategory.toLowerCase());
+      if (c.category) searchTerms.add(c.category.toLowerCase());
+    }
+    for (const k of keywords) {
+      if (k.length > 2) searchTerms.add(k);
+    }
+    const patterns = [...searchTerms].map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+
+    // Fetch base results and score in JS for maintainability
+    let professionals = await User.find(baseFilter)
+      .select({
+        'professionalProfile.alias': 1,
+        'professionalProfile.bio': 1,
+        'professionalProfile.location': 1,
+        'professionalProfile.services': 1,
+        'professionalProfile.photos': 1,
+        'professionalProfile.whatsappNumber': 1,
+        email: 1
+      })
+      .lean()
+      .limit(200);
+
+    // Attach average rating from feedback
+    const profIds = professionals.map(p => p._id);
+    const ratingAgg = await Feedback.aggregate([
+      { $match: { professional: { $in: profIds }, status: 'completed' } },
+      { $group: { _id: '$professional', avg: { $avg: '$rating' } } }
+    ]);
+    const ratingMap = {};
+    for (const r of ratingAgg) ratingMap[r._id.toString()] = Math.round(r.avg * 10) / 10;
+    for (const p of professionals) p._averageRating = ratingMap[p._id.toString()] || 0;
+
+    // Score each professional
+    const scored = professionals.map(p => {
+      const pp = p.professionalProfile || {};
+      const svcs = Array.isArray(pp.services) ? pp.services.map(s => s.toLowerCase()) : [];
+      const bio = (pp.bio || '').toLowerCase();
+      let score = 0;
+
+      if (accion) score += 5;
+      if (urgencia) score += 10;
+
+      // Service matches (each matching service = +30)
+      for (const pat of patterns) {
+        for (const s of svcs) {
+          if (s.includes(pat) || pat.includes(s)) {
+            score += 30;
+          }
+        }
+      }
+
+      // Bio keyword matches (+10 per keyword)
+      for (const pat of patterns) {
+        if (bio.includes(pat)) score += 10;
+      }
+
+      // Location boost
+      if (provincia && pp.location?.province) {
+        if (pp.location.province.toLowerCase().includes(provincia.toLowerCase())) score += 15;
+      }
+      if (ciudad && pp.location?.city) {
+        if (pp.location.city.toLowerCase().includes(ciudad.toLowerCase())) score += 10;
+      }
+
+      const firstPhoto = Array.isArray(pp.photos) && pp.photos.length > 0 ? pp.photos[0] : null;
+      const avgRating = p._averageRating || 0;
+      score += Math.round(avgRating * 5);
+
+      return {
+        id: p._id,
+        score,
+        alias: pp.alias || 'Profesional',
+        bio: pp.bio || '',
+        location: [pp.location?.city, pp.location?.province].filter(Boolean).join(', '),
+        services: svcs,
+        photo: firstPhoto,
+        phone: pp.whatsappNumber || null,
+        email: p.email,
+        averageRating: avgRating
+      };
+    });
+
+    // Filter out zero-score, sort by score desc, limit
+    const results = scored
+      .filter(p => p.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 50);
+
+    res.status(200).json(results);
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+};
+
 // @desc    Get single professional by alias (Public)
 // @route   GET /api/v1/professionals/:alias
 // @access  Public
@@ -293,7 +418,7 @@ exports.contactWhatsApp = async (req, res, next) => {
     }
 
     const cleanNumber = contactNumber.replace(/\D/g, '');
-    const message = `Hello ${professional.professionalProfile.alias}, I saw your profile on FullMinent and I'm interested in your services.`;
+    const message = `Hello ${professional.professionalProfile.alias}, I saw your profile on KuraTe and I'm interested in your services.`;
     const waUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
 
     // Track the WhatsApp Click Activity
@@ -488,8 +613,8 @@ exports.notifyRateChange = async (req, res, next) => {
     const emailPromises = professionals.map(p => 
       sendEmail({
         email: p.email,
-        subject: 'FullMinent Platform - Price Rate Change',
-        message: `Hello ${p.professionalProfile.alias || 'Professional'},\n\nThere has been a change in monthly category pricing on FullMinent. Starting next month, your invoice will reflect the updated rate for your category (${p.professionalProfile.quality || 'Standard'}).\n\nPlease log in to your dashboard and acknowledge the new pricing before continuing with transactions.\n\nThank you!`
+        subject: 'KuraTe Platform - Price Rate Change',
+        message: `Hello ${p.professionalProfile.alias || 'Professional'},\n\nThere has been a change in monthly category pricing on KuraTe. Starting next month, your invoice will reflect the updated rate for your category (${p.professionalProfile.quality || 'Standard'}).\n\nPlease log in to your dashboard and acknowledge the new pricing before continuing with transactions.\n\nThank you!`
       }).catch(err => console.error(`Failed to send email to ${p.email}:`, err))
     );
 
@@ -550,7 +675,7 @@ exports.sendPhoneCode = async (req, res, next) => {
     const { sendSms } = require('../services/smsService');
     const result = await sendSms({
       to: phone,
-      body: `FullMinent: tu código de verificación es ${code}. Válido por ${config.verificationCodeExpireMinutes} minutos.`
+      body: `KuraTe: tu código de verificación es ${code}. Válido por ${config.verificationCodeExpireMinutes} minutos.`
     });
 
     if (!result.ok) {
@@ -863,7 +988,7 @@ exports.updateProfile = async (req, res, next) => {
         fieldsToUpdate.isVerified = false;
         try {
           const adminEmail = config.payment && config.payment.adminEmail ? config.payment.adminEmail : 'admin@drsrv.net.ar';
-          sendEmail({ email: adminEmail, subject: 'FullMinent - Re-Verification Required', message: `Professional "${oldProf.alias}" modified their sensitive contact/address details and has been moved back to pending verification.` });
+          sendEmail({ email: adminEmail, subject: 'KuraTe - Re-Verification Required', message: `Professional "${oldProf.alias}" modified their sensitive contact/address details and has been moved back to pending verification.` });
         } catch(e) {}
     }
 
@@ -912,7 +1037,7 @@ exports.updateProfile = async (req, res, next) => {
       const adminEmail = config.payment && config.payment.adminEmail ? config.payment.adminEmail : 'admin@drsrv.net.ar';
       await sendEmail({
         email: adminEmail,
-        subject: 'FullMinent - Professional Profile Updated',
+        subject: 'KuraTe - Professional Profile Updated',
         message: `The professional "${professionalProfile.alias}" (${user.email}) has updated their profile.`
       });
     } catch (err) { console.error('Failed to notify admin:', err.message); }
@@ -963,7 +1088,7 @@ exports.resubmitVerification = async (req, res, next) => {
       const adminEmail = config.payment && config.payment.adminEmail ? config.payment.adminEmail : 'admin@drsrv.net.ar';
       await sendEmail({
         email: adminEmail,
-        subject: 'FullMinent - Verification Documents Resubmitted',
+        subject: 'KuraTe - Verification Documents Resubmitted',
         message: `Professional "${user.professionalProfile?.alias || user.email}" has resubmitted verification documents after rejection (${user.rejectionReason || 'n/a'}).\n\nPlease review in Pending Approvals.`
       });
     } catch (err) {
@@ -1102,3 +1227,317 @@ exports.deleteMyProfile = async (req, res, next) => {
     next(error);
   }
 };
+
+
+exports.getServiceTree = async (req, res) => {
+  try {
+    const serviceTree = require('../data/serviceTree');
+    res.json({ success: true, data: serviceTree });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// @desc    Save hogar professional services
+// @route   PUT /api/v1/professionals/hogar/services
+// @access  Private/Professional
+exports.updateHogarServices = async (req, res) => {
+  try {
+    const {
+      services, scope, experience, certifications, photos,
+      firstName, lastName, companyName, taxId,
+      birthDate, activityStartDate,
+      address,
+      contact,
+      category, action, actionDetails, area, specialty, availability, description
+    } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user || user.role !== 'professional' || user.professionalType !== 'hogar') {
+      return res.status(400).json({ success: false, error: 'Hogar professional not found' });
+    }
+
+    const hp = user.hogarProfile || {};
+
+    if (firstName !== undefined) hp.firstName = firstName;
+    if (lastName !== undefined) hp.lastName = lastName;
+    if (companyName !== undefined) hp.companyName = companyName;
+    if (taxId !== undefined) hp.taxId = taxId;
+    if (birthDate !== undefined && birthDate) hp.birthDate = new Date(birthDate);
+    if (activityStartDate !== undefined && activityStartDate) hp.activityStartDate = new Date(activityStartDate);
+    if (address !== undefined) {
+      hp.address = {
+        street: address.street,
+        number: address.number,
+        floor: address.floor,
+        apartment: address.apartment,
+        neighborhood: address.neighborhood,
+        city: address.city,
+        province: address.province,
+        postalCode: address.postalCode,
+        country: address.country
+      };
+    }
+    if (contact !== undefined) {
+      hp.contact = {
+        email: contact.email,
+        mobilePhone: contact.mobilePhone,
+        whatsapp: Boolean(contact.whatsapp),
+        telegram: Boolean(contact.telegram)
+      };
+    }
+    if (category !== undefined) hp.category = category;
+    if (action !== undefined) hp.action = action;
+    if (actionDetails !== undefined) hp.actionDetails = actionDetails;
+    if (area !== undefined) hp.area = area;
+    if (specialty !== undefined) hp.specialty = specialty;
+    if (availability !== undefined) hp.availability = availability;
+    if (description !== undefined) hp.description = description;
+
+    if (services !== undefined) hp.services = services || [];
+    if (photos !== undefined) hp.photos = photos || [];
+    if (scope) hp.scope = scope;
+    if (experience !== undefined) hp.experience = experience;
+    if (certifications) hp.certifications = certifications;
+
+    user.hogarProfile = hp;
+    await user.save();
+    res.json({ success: true, data: user.hogarProfile });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+};
+
+function tryDeleteUploadFile(storedPath) {
+  if (!isUploadPath(storedPath)) return;
+  const absolutePath = path.join(config.root, 'public', storedPath.replace(/^\//, ''));
+  try {
+    if (fs.existsSync(absolutePath)) fs.unlinkSync(absolutePath);
+  } catch (err) {
+    console.error('Failed to delete upload file:', err.message);
+  }
+}
+
+// @desc    User-initiated profile deletion — hidden from public; data retained server-side
+// @route   DELETE /api/v1/professionals/me
+// @access  Private (Professional)
+exports.deleteMyProfile = async (req, res, next) => {
+  try {
+    const { password } = req.body || {};
+    if (!password || typeof password !== 'string') {
+      return res.status(400).json({ success: false, error: 'Please provide your password to confirm account deletion' });
+    }
+
+    const userId = req.user.id || req.user._id;
+    const user = await User.findById(userId).select('+password');
+    if (!user || user.role !== 'professional') {
+      return res.status(404).json({ success: false, error: 'Professional account not found' });
+    }
+
+    if (user.accountDeletedAt) {
+      return res.status(200).json({
+        success: true,
+        message: 'Your profile has been permanently deleted.'
+      });
+    }
+
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, error: 'Incorrect password. Please try again.' });
+    }
+
+    user.accountDeletedAt = new Date();
+    if (user.professionalProfile) {
+      user.professionalProfile.isExposed = false;
+      user.professionalProfile.subscriptionStatus = 'suspended';
+    }
+    await user.save();
+
+    try {
+      await ActivityLog.create({
+        professional: user._id,
+        action: 'account_soft_deleted',
+        actorType: 'professional',
+        ipAddress: getClientIp(req),
+        userAgent: req.headers['user-agent'] ? String(req.headers['user-agent']).slice(0, 500) : undefined,
+        details: { alias: user.professionalProfile?.alias || null }
+      });
+    } catch (err) {
+      console.error('Failed to log account soft delete:', err.message);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Your profile has been permanently deleted.'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Public directory of Hogar/Oficina technicians (search/filter engine)
+// @route   GET /api/v1/hogar/professionals
+// @access  Public
+exports.getHogarProfessionals = async (req, res, next) => {
+  try {
+    const b64 = (v) => (v ? Buffer.from(String(v)).toString('base64') : '');
+    const query = {
+      role: 'professional',
+      professionalType: 'hogar',
+      accountDeletedAt: null,
+      isVerified: true,
+      verificationStatus: 'approved'
+    };
+
+    if (req.query.area && req.query.area.trim()) {
+      query['hogarProfile.area'] = req.query.area.trim();
+    }
+    if (req.query.action && req.query.action.trim()) {
+      query['hogarProfile.action'] = req.query.action.trim();
+    }
+    if (req.query.category && req.query.category.trim()) {
+      query['hogarProfile.category'] = req.query.category.trim();
+    }
+    if (req.query.availability && req.query.availability.trim()) {
+      query['hogarProfile.availability'] = req.query.availability.trim();
+    }
+    if (req.query.province && req.query.province.trim()) {
+      query['hogarProfile.address.province'] = { $regex: req.query.province.trim(), $options: 'i' };
+    }
+    if (req.query.city && req.query.city.trim()) {
+      query['hogarProfile.address.city'] = { $regex: req.query.city.trim(), $options: 'i' };
+    }
+    if (req.query.neighborhood && req.query.neighborhood.trim()) {
+      query['hogarProfile.address.neighborhood'] = { $regex: req.query.neighborhood.trim(), $options: 'i' };
+    }
+    // service filter: matches any selected service node path (prefix match)
+    if (req.query.service && req.query.service.trim()) {
+      const svc = req.query.service.trim();
+      query['hogarProfile.services.path'] = { $regex: `^${svc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}` };
+    }
+    // brand filter: matches any service's brands array
+    if (req.query.brand && req.query.brand.trim()) {
+      query['hogarProfile.services.brands'] = { $regex: req.query.brand.trim(), $options: 'i' };
+    }
+
+    const page = parseInt(req.query.page, 10) || 1;
+    const parsedLimit = parseInt(req.query.limit, 10);
+    const limit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 12;
+    const skip = (page - 1) * limit;
+
+    const users = await User.find(query).select(
+      'name email hogarProfile.firstName hogarProfile.lastName hogarProfile.companyName ' +
+      'hogarProfile.action hogarProfile.area hogarProfile.category hogarProfile.specialty ' +
+      'hogarProfile.services hogarProfile.photos hogarProfile.availability hogarProfile.address ' +
+      'hogarProfile.contact'
+    ).skip(skip).limit(limit).lean();
+
+    const total = await User.countDocuments(query);
+    const hasMore = skip + users.length < total;
+
+    const data = users.map(u => {
+      const hp = u.hogarProfile || {};
+      const services = hp.services || [];
+      const primary = services[0] || {};
+      const photo = (hp.photos && hp.photos[0]) ? hp.photos[0] : null;
+      const loc = hp.address || {};
+      const locationLine = (loc.province || '').toLowerCase() === 'caba'
+        ? [loc.neighborhood, 'CABA'].filter(Boolean).join(', ')
+        : [loc.neighborhood, loc.city].filter(Boolean).join(', ');
+      const rawContact = hp.contact || {};
+      const contact = {
+        whatsapp: Boolean(rawContact.whatsapp),
+        telegram: Boolean(rawContact.telegram),
+        mobilePhone: b64(rawContact.mobilePhone),
+        email: b64(rawContact.email),
+        telegramId: b64(rawContact.telegram)
+      };
+      return {
+        _id: u._id,
+        name: hp.firstName ? `${hp.firstName} ${hp.lastName || ''}`.trim() : (u.name || 'Técnico'),
+        action: hp.action || '',
+        actionDetails: hp.actionDetails || '',
+        area: hp.area || '',
+        category: hp.category || '',
+        specialty: hp.specialty || '',
+        availability: hp.availability || '',
+        serviceName: primary.name || '',
+        brands: primary.brands || [],
+        photo,
+        photoUrl: photo,
+        location: locationLine,
+        whatsapp: Boolean(hp.contact && hp.contact.whatsapp),
+        telegram: Boolean(hp.contact && hp.contact.telegram),
+        contact,
+        services
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      count: data.length,
+      pagination: { total, page, limit, hasMore },
+      data
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get a single hogar professional by id (public)
+// @route   GET /api/v1/hogar/professionals/:id
+exports.getHogarProfessionalById = async (req, res, next) => {
+  try {
+    const b64 = (v) => (v ? Buffer.from(String(v)).toString('base64') : '');
+    const user = await User.findOne({
+      _id: req.params.id,
+      role: 'professional',
+      professionalType: 'hogar',
+      accountDeletedAt: null,
+      isVerified: true,
+      verificationStatus: 'approved'
+    }).select('name email hogarProfile').lean();
+
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'Técnico no encontrado' });
+    }
+
+    const hp = user.hogarProfile || {};
+    const rawContact = hp.contact || {};
+    const contact = {
+      whatsapp: Boolean(rawContact.whatsapp),
+      telegram: Boolean(rawContact.telegram),
+      mobilePhone: b64(rawContact.mobilePhone),
+      email: b64(rawContact.email),
+      telegramId: b64(rawContact.telegram)
+    };
+    const photos = (hp.photos && hp.photos.length) ? hp.photos : [];
+
+    try {
+      const clientIp = req.headers['x-forwarded-for']
+        ? req.headers['x-forwarded-for'].split(',')[0].trim()
+        : (req.socket ? req.socket.remoteAddress : req.ip);
+      await ActivityLog.create({
+        professional: user._id,
+        action: 'profile_view',
+        ipAddress: clientIp,
+        userAgent: req.headers['user-agent'],
+        isGuest: true
+      });
+    } catch (err) { console.error('Activity log error:', err.message); }
+
+    const { contact: _omit, ...hpClean } = hp;
+    res.status(200).json({
+      success: true,
+      data: {
+        _id: user._id,
+        name: hp.firstName ? `${hp.firstName} ${hp.lastName || ''}`.trim() : (user.name || 'Técnico'),
+        email: b64(user.email),
+        contact,
+        hogarProfile: { ...hpClean, photos }
+      }
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+};
+

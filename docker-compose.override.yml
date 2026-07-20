@@ -1,0 +1,11 @@
+services:
+  app:
+    ports:
+      - "5001:5000"
+    environment:
+      - PORT=5000
+  nginx:
+    ports: !override
+      - "8080:80"
+      - "8443:443"
+

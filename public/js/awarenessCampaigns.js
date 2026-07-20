@@ -70,9 +70,9 @@ function ribbonMarkup(campaignId) {
 }
 
 function ensureAwarenessStyles() {
-    if (document.getElementById('FullMinent-awareness-css')) return;
+    if (document.getElementById('KuraTe-awareness-css')) return;
     const link = document.createElement('link');
-    link.id = 'FullMinent-awareness-css';
+    link.id = 'KuraTe-awareness-css';
     link.rel = 'stylesheet';
     link.href = '/css/awareness-campaigns.css?v=3';
     document.head.appendChild(link);

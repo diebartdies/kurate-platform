@@ -2,7 +2,7 @@
 # Non-interactive git commit + push for scheduled GitHub backups.
 #
 # Usage:
-#   bash scripts/git-backup-push.sh [/root/FullMinent-platform]
+#   bash scripts/git-backup-push.sh [/root/KuraTe-platform]
 #
 # Environment:
 #   GIT_BACKUP_BRANCH=main          (default: main)
@@ -14,16 +14,16 @@
 
 set -eu
 
-DEPLOY_DIR="${1:-/root/FullMinent-platform}"
+DEPLOY_DIR="${1:-/root/KuraTe-platform}"
 BRANCH="${GIT_BACKUP_BRANCH:-main}"
 REMOTE="${GIT_BACKUP_REMOTE:-origin}"
 FORCE="${GIT_BACKUP_FORCE:-0}"
-REPO_URL="${GIT_BACKUP_REPO_URL:-https://github.com/diebartdies/FullMinent-platform.git}"
+REPO_URL="${GIT_BACKUP_REPO_URL:-https://github.com/diebartdies/KuraTe-platform.git}"
 
 cd "$DEPLOY_DIR"
 
 echo "==================================================="
-echo "FullMinent GitHub backup"
+echo "KuraTe GitHub backup"
 echo "Deploy dir: $DEPLOY_DIR"
 echo "Remote: $REMOTE / branch: $BRANCH"
 echo "==================================================="

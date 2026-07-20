@@ -3,10 +3,10 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CERT_DIR="$(cd "$SCRIPT_DIR/../certbot/conf/live/FullMinent.drsrv.net.ar" && pwd)"
+CERT_DIR="$(cd "$SCRIPT_DIR/../certbot/conf/live/KuraTe.drsrv.net.ar" && pwd)"
 
-CHAIN_SRC="$CERT_DIR/FullMinent.chain"
-KEY_SRC="$CERT_DIR/FullMinent.key"
+CHAIN_SRC="$CERT_DIR/KuraTe.chain"
+KEY_SRC="$CERT_DIR/KuraTe.key"
 FULLCHAIN="$CERT_DIR/fullchain.pem"
 PRIVKEY="$CERT_DIR/privkey.pem"
 
@@ -27,4 +27,4 @@ cp -f "$KEY_SRC" "$PRIVKEY"
 CERT_COUNT=$(grep -c 'BEGIN CERTIFICATE' "$FULLCHAIN" || true)
 echo "OK: $FULLCHAIN ($CERT_COUNT cert(s) in chain)"
 echo "OK: $PRIVKEY"
-echo "Run: docker restart FullMinent_nginx"
+echo "Run: docker restart KuraTe_nginx"

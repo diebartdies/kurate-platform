@@ -8,7 +8,7 @@
  *   docker compose build app --progress=plain 2>&1 | node scripts/parse-docker-build-timings.js
  *
  * On server after deploy:
- *   node scripts/parse-docker-build-timings.js /root/FullMinent-platform/.cache/docker-build.log
+ *   node scripts/parse-docker-build-timings.js /root/KuraTe-platform/.cache/docker-build.log
  */
 
 const fs = require('fs');
@@ -26,7 +26,7 @@ function readInput(path) {
   }
   const candidates = [
     '.cache/docker-build.log',
-    '/root/FullMinent-platform/.cache/docker-build.log'
+    '/root/KuraTe-platform/.cache/docker-build.log'
   ];
   for (const c of candidates) {
     if (fs.existsSync(c)) return fs.readFileSync(c, 'utf8');

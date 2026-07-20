@@ -1,21 +1,21 @@
 const path = require('path');
 const config = require('../config/appConfig');
 
-const PUBLIC_URL = config.platform?.publicUrl || 'https://FullMinent.drsrv.net.ar';
+const PUBLIC_URL = config.platform?.publicUrl || 'https://KuraTe.drsrv.net.ar';
 const REGISTER_URL = config.platform?.registerUrl || `${PUBLIC_URL}/register.html`;
 
 // WhatsApp contact (E.164 digits, no '+') leads can reply to. Contains no banned
 // words, so it is safe to keep in the message text.
 const WHATSAPP_CONTACT_URL = 'https://wa.me/5491178280156';
 
-// Outreach drip image (PNG/JPG). Default outreach-logo.png uses the FullMinent
+// Outreach drip image (PNG/JPG). Default outreach-logo.png uses the KuraTe
 // wordmark (no "sex" in OCR text). Site pages use brand-logo.png separately.
 // Overridable via WHATSAPP_DRIP_IMAGE.
 const BRAND_IMAGE_PATH = process.env.WHATSAPP_DRIP_IMAGE
   || path.resolve(__dirname, '..', 'public', 'images', 'outreach-logo.png');
 
-// Neutral outreach hostname (FullMinent alias — no "sex" substring). Same app as
-// FullMinent.drsrv.net.ar; used for WhatsApp step-2 register links only.
+// Neutral outreach hostname (KuraTe alias — no "sex" substring). Same app as
+// KuraTe.drsrv.net.ar; used for WhatsApp step-2 register links only.
 function getOutreachAliasDomain() {
   const raw = (config.whatsappDrip?.aliasDomain || '').trim();
   if (!raw) return '';
@@ -54,7 +54,7 @@ Si querés, contame un poco más (qué te preocupa o qué te gustaría ver). Cua
 Sin compromiso. 😊`;
 }
 
-// Step 2b (after interest or feedback): safe link on the FullMinent alias.
+// Step 2b (after interest or feedback): safe link on the KuraTe alias.
 function buildStep2OutreachReply(alias) {
   const name = (alias && String(alias).trim()) || '';
   const greeting = name ? `¡Genial ${name}!` : '¡Genial!';
@@ -109,9 +109,9 @@ function buildProfessionalInviteMessage(alias) {
 
   return `Hola ${name}
 
-Te damos la bienvenida a FullMinent, la plataforma que conecta profesionales con clientes directos.
+Te damos la bienvenida a KuraTe, la plataforma que conecta profesionales con clientes directos.
 
-FullMinent es tu perfil digital donde mostrar tus servicios, tu experiencia y tus datos de contacto. Sin comisiones ni intermediarios. Directo.
+KuraTe es tu perfil digital donde mostrar tus servicios, tu experiencia y tus datos de contacto. Sin comisiones ni intermediarios. Directo.
 
 ✅ Primer mes gratis · sin comisiones por contacto
 ✅ Perfiles verificados
@@ -125,18 +125,18 @@ ${REGISTER_URL}
 
 Cualquier duda, respondé este mensaje.
 
-— Equipo FullMinent`;
+— Equipo KuraTe`;
 }
 
 // Step 1 cold outreach (Twilio template watext_updated + web.js caption). {{1}} = alias in Meta template.
-// Register URL is static in the template body (FullMinent alias — no "sex" substring).
+// Register URL is static in the template body (KuraTe alias — no "sex" substring).
 function buildColdOutreachStep1Message(alias) {
   const name = (alias && String(alias).trim()) || 'hermosa';
-  const registerUrl = buildOutreachRegisterUrl() || 'https://FullMinent.drsrv.net.ar/register.html?type=professional';
+  const registerUrl = buildOutreachRegisterUrl() || 'https://KuraTe.drsrv.net.ar/register.html?type=professional';
 
   return `Hola ${name} ✨
 
-Estamos en el lanzamiento de FullMinent, un directorio nuevo para publicar tu perfil y servicios — distinto a los que ya conocés. Ofrecemos:
+Estamos en el lanzamiento de KuraTe, un directorio nuevo para publicar tu perfil y servicios — distinto a los que ya conocés. Ofrecemos:
 
 ✅ Primer mes gratis · sin comisiones por contacto
 ✅ Rotación justa: nadie paga extra para quedar primera
@@ -157,7 +157,7 @@ function buildColdOutreachStep1MessageMetaSafe(alias) {
 
   return `Hola ${name}
 
-Estamos lanzando FullMinent, un directorio nuevo para publicar tu perfil profesional.
+Estamos lanzando KuraTe, un directorio nuevo para publicar tu perfil profesional.
 
 Primer mes gratis, sin comisiones por contacto y sin pedir tarjeta ni débito automático.
 

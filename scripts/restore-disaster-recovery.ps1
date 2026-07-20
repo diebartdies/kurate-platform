@@ -8,16 +8,16 @@ param(
 
 $ErrorActionPreference = "Stop"
 $DATE = Get-Date -Format "yyyy-MM-dd_HHmmss"
-$LOGFILE = "$env:USERPROFILE\Desktop\FullMinent-restore-$DATE.log"
-$REMOTE_LOG = "/tmp/FullMinent-restore-vm-$DATE.log"
-$SCRIPT = "$env:TEMP\FullMinent-restore-remote.sh"
+$LOGFILE = "$env:USERPROFILE\Desktop\KuraTe-restore-$DATE.log"
+$REMOTE_LOG = "/tmp/KuraTe-restore-vm-$DATE.log"
+$SCRIPT = "$env:TEMP\KuraTe-restore-remote.sh"
 
 function log { param([string]$msg) $msg | Tee-Object -FilePath $LOGFILE -Append | Write-Host }
 
 if (-not (Test-Path $ArchivePath)) { Write-Host "ERROR: Archive not found: $ArchivePath"; exit 1 }
 
 Write-Host "=============================================="
-Write-Host " FullMinent — Disaster Recovery Restore"
+Write-Host " KuraTe — Disaster Recovery Restore"
 Write-Host " VM:        $VmIp"
 Write-Host " Archive:   $ArchivePath"
 Write-Host " Local log: $LOGFILE"
@@ -34,14 +34,14 @@ GITHUB_TOKEN="$2"
 REMOTE_LOG="$3"
 BACKUP_FILE="${4:-}"
 STAGING="/root/staging"
-PROJECT_DIR="/opt/FullMinent-platform"
-REPO_URL="https://${GITHUB_TOKEN}@github.com/diebartdies/FullMinent-platform.git"
+PROJECT_DIR="/opt/KuraTe-platform"
+REPO_URL="https://${GITHUB_TOKEN}@github.com/diebartdies/KuraTe-platform.git"
 GITHUB_TOKEN=""
 
 log() { echo "[$(date '+%H:%M:%S')] $*" | tee -a "$REMOTE_LOG"; }
 run() { log ">>> $*"; "$@" 2>&1 | tee -a "$REMOTE_LOG"; }
 
-log "=== FullMinent Disaster Recovery Restore ==="
+log "=== KuraTe Disaster Recovery Restore ==="
 log "Archive: $ARCHIVE"
 log "Log:     $REMOTE_LOG"
 log ""
@@ -110,10 +110,10 @@ if [ -n "$BACKUP_FILE" ] && [ -f "$BACKUP_FILE" ]; then
     docker compose up -d mongo 2>/dev/null || true
     sleep 3
     for i in $(seq 1 10); do
-        docker exec FullMinent_mongo mongo --eval "db.adminCommand('ping')" 2>/dev/null && break
+        docker exec KuraTe_mongo mongo --eval "db.adminCommand('ping')" 2>/dev/null && break
         sleep 2
     done
-    docker exec -i FullMinent_mongo sh -c 'mongorestore --archive --gzip --nsInclude=FullMinent.* --drop' \
+    docker exec -i KuraTe_mongo sh -c 'mongorestore --archive --gzip --nsInclude=KuraTe.* --drop' \
         < "$BACKUP_FILE" 2>&1 | tee -a "$REMOTE_LOG" || \
         log "  WARN: mongorestore failed"
 elif [ -f "$STAGING/latest-mongodb-dump.archive" ]; then
@@ -122,16 +122,16 @@ elif [ -f "$STAGING/latest-mongodb-dump.archive" ]; then
     docker compose up -d mongo 2>/dev/null || true
     sleep 3
     for i in $(seq 1 10); do
-        docker exec FullMinent_mongo mongo --eval "db.adminCommand('ping')" 2>/dev/null && break
+        docker exec KuraTe_mongo mongo --eval "db.adminCommand('ping')" 2>/dev/null && break
         sleep 2
     done
-    docker exec -i FullMinent_mongo sh -c 'mongorestore --archive --gzip --nsInclude=FullMinent.* --drop' \
+    docker exec -i KuraTe_mongo sh -c 'mongorestore --archive --gzip --nsInclude=KuraTe.* --drop' \
         < "$STAGING/latest-mongodb-dump.archive" 2>&1 | tee -a "$REMOTE_LOG" || \
         log "  WARN: mongorestore failed"
 else
     log "  No backup file provided — skipping MongoDB restore."
     log "  Restore manually: scp backup to VM then:"
-    log "    docker exec -i FullMinent_mongo sh -c 'mongorestore --archive --gzip --nsInclude=FullMinent.* --drop' < backup.archive"
+    log "    docker exec -i KuraTe_mongo sh -c 'mongorestore --archive --gzip --nsInclude=KuraTe.* --drop' < backup.archive"
 fi
 
 # 9. docker compose up
@@ -176,7 +176,7 @@ $githubToken = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr)
 [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr)
 
 # ── 4. Pick a MongoDB backup to restore ──
-$backupFiles = @(Get-ChildItem -Path "$PSScriptRoot\.." -Filter "FullMinent_backup_*.archive" | Sort-Object LastWriteTime -Descending)
+$backupFiles = @(Get-ChildItem -Path "$PSScriptRoot\.." -Filter "KuraTe_backup_*.archive" | Sort-Object LastWriteTime -Descending)
 $restoreBackup = ""
 
 if ($backupFiles.Count -gt 0) {

@@ -1,29 +1,29 @@
 #!/bin/bash
-# Writes nginx/conf.d/FullMinent.ssl.conf when alias TLS material exists on the host.
+# Writes nginx/conf.d/KuraTe.ssl.conf when alias TLS material exists on the host.
 set -eu
 
-DEPLOY_DIR="${1:-/root/FullMinent-platform}"
+DEPLOY_DIR="${1:-/root/KuraTe-platform}"
 CONF_D="$DEPLOY_DIR/nginx/conf.d"
-FullMinent_SSL="$CONF_D/FullMinent.ssl.conf"
-FullMinent_DIR="$DEPLOY_DIR/certbot/conf/live/FullMinent.drsrv.net.ar"
+KuraTe_SSL="$CONF_D/KuraTe.ssl.conf"
+KuraTe_DIR="$DEPLOY_DIR/certbot/conf/live/KuraTe.drsrv.net.ar"
 
 mkdir -p "$CONF_D"
-rm -f "$FullMinent_SSL"
+rm -f "$KuraTe_SSL"
 
-if [ ! -f "$FullMinent_DIR/fullchain.pem" ] || [ ! -f "$FullMinent_DIR/privkey.pem" ]; then
-  echo "INFO: FullMinent TLS missing in $FullMinent_DIR - alias HTTPS vhost omitted."
+if [ ! -f "$KuraTe_DIR/fullchain.pem" ] || [ ! -f "$KuraTe_DIR/privkey.pem" ]; then
+  echo "INFO: KuraTe TLS missing in $KuraTe_DIR - alias HTTPS vhost omitted."
   echo "      Run scripts/upload-ssl-certs-to-prod.bat from Windows (keeps both sex + self certs)."
   exit 0
 fi
 
-cat > "$FullMinent_SSL" <<'EOF'
-# Auto-generated — FullMinent.drsrv.net.ar (alias outreach domain)
+cat > "$KuraTe_SSL" <<'EOF'
+# Auto-generated — KuraTe.drsrv.net.ar (alias outreach domain)
 server {
     listen 443 ssl;
-    server_name FullMinent.drsrv.net.ar;
+    server_name KuraTe.drsrv.net.ar;
 
-    ssl_certificate /etc/nginx/certs-live/FullMinent.drsrv.net.ar/fullchain.pem;
-    ssl_certificate_key /etc/nginx/certs-live/FullMinent.drsrv.net.ar/privkey.pem;
+    ssl_certificate /etc/nginx/certs-live/KuraTe.drsrv.net.ar/fullchain.pem;
+    ssl_certificate_key /etc/nginx/certs-live/KuraTe.drsrv.net.ar/privkey.pem;
 
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_prefer_server_ciphers on;
@@ -57,4 +57,4 @@ server {
 }
 EOF
 
-echo "OK: wrote $FullMinent_SSL"
+echo "OK: wrote $KuraTe_SSL"

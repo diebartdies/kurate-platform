@@ -51,14 +51,14 @@ function getColdOutreachBlockReason() {
   if (!sid) {
     return 'WhatsApp cold outreach needs TWILIO_WHATSAPP_CONTENT_SID in server .env. '
       + `Approved template watext: ${APPROVED_WATEXT_SID}. `
-      + 'Run: bash scripts/set-twilio-whatsapp-template.sh /root/FullMinent-platform '
+      + 'Run: bash scripts/set-twilio-whatsapp-template.sh /root/KuraTe-platform '
       + 'Or set WHATSAPP_USE_WEBJS=true and link WhatsApp via QR (no template).';
   }
 
   if (sid === REJECTED_WATEXT_UPDATED_SID) {
     return 'Template watext_updated was rejected by Meta — do not use for cold sends. '
       + `Use approved watext: ${APPROVED_WATEXT_SID} `
-      + '(bash scripts/set-twilio-whatsapp-template.sh /root/FullMinent-platform '
+      + '(bash scripts/set-twilio-whatsapp-template.sh /root/KuraTe-platform '
       + `${APPROVED_WATEXT_SID}) `
       + 'or WHATSAPP_USE_WEBJS=true + QR. Resubmit a simpler text-only template (see getColdOutreachTemplateBodyMetaSample in code).';
   }

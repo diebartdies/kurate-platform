@@ -58,3 +58,27 @@ exports.getSublocations = async (req, res, next) => {
     });
   }
 };
+
+// @desc    Get cities/neighborhoods by province NAME (not ID)
+// @route   GET /api/v1/locations/provinces/name/:provinceName/cities
+// @access  Public
+exports.getCitiesByProvinceName = async (req, res, next) => {
+  try {
+    const provinceName = req.params.provinceName;
+    const province = await Province.findOne({ name: { $regex: `^${provinceName}$`, $options: 'i' } });
+
+    if (!province) {
+      return res.status(404).json([]);
+    }
+
+    if (province.name === 'CABA') {
+      const neighborhoods = await Neighborhood.find({ province: province._id }).sort('name');
+      return res.status(200).json(neighborhoods.map(n => ({ name: n.name, id: n._id })));
+    } else {
+      const cities = await City.find({ province: province._id }).sort('name');
+      return res.status(200).json(cities.map(c => ({ name: c.name, id: c._id })));
+    }
+  } catch (error) {
+    res.status(400).json([]);
+  }
+};

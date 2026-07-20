@@ -1,9 +1,9 @@
 #!/bin/bash
-# Server disk housekeeping for FullMinent production.
+# Server disk housekeeping for KuraTe production.
 # Safe defaults: never removes Docker volumes (mongo data preserved).
 #
 # Usage:
-#   bash scripts/disk-housekeeping.sh [/root/FullMinent-platform]
+#   bash scripts/disk-housekeeping.sh [/root/KuraTe-platform]
 #   AGGRESSIVE=1 bash scripts/disk-housekeeping.sh   # also prune unused images + build cache
 #   MIN_FREE_GB=5 bash scripts/disk-housekeeping.sh  # warn/abort thresholds
 #
@@ -11,7 +11,7 @@
 
 set -eu
 
-DEPLOY_DIR="${1:-/root/FullMinent-platform}"
+DEPLOY_DIR="${1:-/root/KuraTe-platform}"
 MIN_FREE_GB="${MIN_FREE_GB:-5}"
 CRITICAL_FREE_GB="${CRITICAL_FREE_GB:-2}"
 AGGRESSIVE="${AGGRESSIVE:-0}"
@@ -21,7 +21,7 @@ free_gb() {
 }
 
 echo "==================================================="
-echo "FullMinent disk housekeeping"
+echo "KuraTe disk housekeeping"
 echo "Deploy dir: $DEPLOY_DIR"
 echo "Mode: $([ "$AGGRESSIVE" = "1" ] && echo AGGRESSIVE || echo LIGHT)"
 echo "==================================================="
@@ -76,7 +76,7 @@ apt-get clean -y 2>/dev/null || apt clean 2>/dev/null || true
 if [ -d "$DEPLOY_DIR" ]; then
   echo "Removing stale deploy artifacts in project dir..."
   rm -f "$DEPLOY_DIR/upload_package.tar.gz" 2>/dev/null || true
-  find "$DEPLOY_DIR" -maxdepth 1 -name 'FullMinent_backup_*.archive' -mtime +14 -delete 2>/dev/null || true
+  find "$DEPLOY_DIR" -maxdepth 1 -name 'KuraTe_backup_*.archive' -mtime +14 -delete 2>/dev/null || true
 fi
 
 if [ -d /var/snap/docker ] && command -v snap >/dev/null 2>&1 && snap list docker >/dev/null 2>&1; then
