@@ -20,7 +20,7 @@ mkdir -p "$SERVICE_DROP_DIR"
 cat > "$SERVICE_DROP" <<EOF
 [Service]
 ExecStart=
-ExecStart=/usr/bin/certbot -q renew --no-random-sleep-on-renew \
+ExecStart=/usr/local/bin/certbot -q renew --no-random-sleep-on-renew \
   --config-dir $DEPLOY_DIR/certbot/conf \
   --work-dir $DEPLOY_DIR/certbot/work \
   --logs-dir $DEPLOY_DIR/certbot/logs \

@@ -36,7 +36,8 @@ fi
 rm -rf "$CONF_DIR/archive/$DOMAIN" "$CONF_DIR/renewal/$DOMAIN.conf" 2>/dev/null || true
 
 echo "Issuing cert for $DOMAIN (webroot: $WEBROOT)..."
-certbot certonly --webroot \
+CERTBOT_BIN=$(which certbot 2>/dev/null || echo /usr/local/bin/certbot)
+$CERTBOT_BIN certonly --webroot \
   -w "$WEBROOT" \
   -d "$DOMAIN" \
   --config-dir "$CONF_DIR" \
