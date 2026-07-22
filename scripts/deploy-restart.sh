@@ -62,13 +62,12 @@ nginx_config_test() {
   if ! docker run --rm "${net_args[@]}" \
     -v "$DEPLOY_DIR/nginx.conf:/etc/nginx/nginx.conf:ro" \
     -v "$DEPLOY_DIR/nginx/conf.d:/etc/nginx/conf.d:ro" \
+    -v "$DEPLOY_DIR/KurateCerts:/etc/nginx/certs:ro" \
     -v "$DEPLOY_DIR/certbot/conf/live:/etc/nginx/certs-live:ro" \
     -v "$DEPLOY_DIR/certbot/conf/archive:/etc/nginx/archive:ro" \
     nginx:alpine nginx -t 2>&1; then
     echo "ERROR: nginx -t failed. Common fixes:"
-    echo "  - grep certs-KuraTe nginx.conf (must be empty; redeploy latest nginx.conf)"
-    echo "  - ls certbot/conf/live/KuraTe.drsrv.net.ar/fullchain.pem privkey.pem"
-    echo "  - ls certbot/conf/live/KuraTe.drsrv.net.ar/fullchain.pem privkey.pem"
+    echo "  - ls KurateCerts/fullchain.pem KurateCerts/privkey.pem"
     return 1
   fi
 }
