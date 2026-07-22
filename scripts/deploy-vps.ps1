@@ -56,7 +56,7 @@ Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  KuraTe - Deploy to VPS" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Info "Target:     $User@$VpsIp:$SshPort"
+Write-Info "Target:     ${User}@${VpsIp}:${SshPort}"
 Write-Info "Deploy dir: $DeployDir"
 Write-Info "Project:    $Root"
 

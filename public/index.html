@@ -6,6 +6,7 @@
     <title>KuraTe — ¿Qué necesitás?</title>
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/blueprint.css">
+    <script src="/js/autoFill.js"></script>
     <meta name="description" content="KuraTe — Decinos qué necesitás y te conectamos con el profesional indicado.">
     <meta name="robots" content="index, follow">
     <meta property="og:title" content="KuraTe — ¿Qué necesitás?">
@@ -88,6 +89,12 @@
         .fm-loading { text-align: center; padding: 2rem; color: #888; }
         .fm-empty { text-align: center; padding: 2rem; color: #666; }
         .fm-empty a { color: #B8922E; }
+
+        /* Results grid */
+        .fm-results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem; margin-top: 0.75rem; }
+        .fm-results-grid .fm-pro-card { transition: transform 0.2s, box-shadow 0.2s; }
+        .fm-results-grid .fm-pro-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(184,146,46,0.15); }
+        @media (max-width: 600px) { .fm-results-grid { grid-template-columns: 1fr; } }
 
         .fm-professional-cta { background: #1a1a2e; border: 1px dashed #B8922E; border-radius: 10px; padding: 1.25rem; text-align: center; margin-top: 1.5rem; }
         .fm-professional-cta p { margin: 0.25rem 0; color: #888; font-size: 0.9rem; }
@@ -175,7 +182,8 @@
 
             <div class="fm-card">
                 <label for="descripcion">2. ¿Qué? — contanos con detalle</label>
-                <textarea id="descripcion" class="fm-textarea" placeholder="Ej: heladera Gafa, zona Villa Urquiza, no enfria más" rows="3"></textarea>
+                <p style="color:#666;font-size:0.75rem;margin:0 0 0.5rem;">Cuanto más completo, mejor el resultado. Mencioná la acción, el objeto, la marca y si sabés el modelo.</p>
+                <textarea id="descripcion" class="fm-textarea" placeholder="Ej: reparar heladera Gafa modelo GF-420, zona Villa Urquiza, urgente" rows="3"></textarea>
                 <div class="fm-error" id="descripcionError"></div>
             </div>
 
@@ -511,7 +519,7 @@
         const preregModal = document.getElementById('preregModal');
         const preregClose = document.getElementById('preregClose');
 
-        // Live inappropriate filter on textarea
+        // Live inappropriate filter + auto-fill on textarea input
         descripcionInput.addEventListener('input', function() {
             const found = hasInappropriateWords(this.value);
             if (found) {
@@ -519,6 +527,21 @@
                 descripcionError.style.display = 'block';
             } else {
                 descripcionError.style.display = 'none';
+            }
+            // Auto-fill from description
+            if (this.value.trim().length >= 4) {
+                const result = window.kurateAutoFill({
+                    descripcion: this.value,
+                    accionSel: document.getElementById('accion'),
+                    provinciaSel: provinciaSel,
+                    ciudadSel: ciudadSel,
+                    urgenciaSel: document.getElementById('urgencia')
+                });
+                // Show province prompt if needed
+                if (result.errors && result.errors.length > 0) {
+                    const provErr = result.errors.find(e => e.field === 'provincia');
+                    if (provErr) window.kurateShowProvincePrompt(provErr.message);
+                }
             }
         });
 
@@ -561,40 +584,50 @@
                 descripcionInput.focus();
                 return;
             }
+            const autoResult = window.kurateAutoFill({ descripcion, accionSel: document.getElementById('accion'), provinciaSel, ciudadSel, urgenciaSel: document.getElementById('urgencia') });
+            if (autoResult.errors && autoResult.errors.length > 0) {
+                const provErr = autoResult.errors.find(e => e.field === 'provincia');
+                if (provErr) { window.kurateShowProvincePrompt(provErr.message); return; }
+            }
+            const skipModel = needForm.getAttribute('data-skip-model');
+            needForm.removeAttribute('data-skip-model');
+            const objects = autoResult.objects || [];
+            if (objects.length > 0 && !autoResult.hasModel && !skipModel) {
+                window.kurateShowModelPrompt(objects[0]); return;
+            }
             resultsArea.style.display = 'block';
             resultsArea.innerHTML = '<div class="fm-loading">' + _t('Buscando profesionales...') + '</div>';
             searchBtn.disabled = true;
             const params = new URLSearchParams({ accion, descripcion, urgencia });
             if (provincia) params.set('provincia', provincia);
             if (ciudad) params.set('ciudad', ciudad);
-            fetch(`/api/v1/professionals/search?${params}`)
+            fetch('/api/v1/professionals/search?' + params)
                 .then(r => r.json())
                 .then(data => {
                     searchBtn.disabled = false;
                     if (!data || data.length === 0) {
-                        resultsArea.innerHTML = `<div class="fm-empty"><p style="font-size:1.1rem;">${_t('No encontramos profesionales para esta búsqueda')}</p><p style="font-size:0.85rem;">${_t('Probá con otros términos')}</p></div>`;
+                        resultsArea.innerHTML = '<div class="fm-empty"><p style="font-size:1.1rem;">' + _t('No encontramos profesionales para esta búsqueda') + '</p><p style="font-size:0.85rem;">' + _t('Probá con otros términos o completá más detalles') + '</p></div>';
                         return;
                     }
                     const maxScore = Math.max(...data.map(p => p.score || 0));
-                    resultsArea.innerHTML = `<div style="margin-bottom:0.75rem;color:#B8922E;font-weight:600;">${data.length} ${_t('profesional')}${data.length > 1 ? 'es' : ''} ${_t('encontrado')}${data.length > 1 ? 's' : ''}</div>` +
-                        data.map(p => {
-                            const pct = maxScore > 0 ? Math.round((p.score / maxScore) * 100) : 0;
-                            const barColor = pct >= 80 ? '#2ecc71' : pct >= 50 ? '#f39c12' : '#e74c3c';
-                            return `<div class="fm-pro-card">
-                                <div style="display:flex;justify-content:space-between;align-items:center;">
-                                    <div class="fm-pro-name">${p.alias || _t('Profesional')}</div>
-                                    <span style="font-size:0.75rem;color:#888;">${_t('coincide')} ${pct}%</span>
-                                </div>
-                                <div style="height:4px;background:#333;border-radius:2px;margin:4px 0 8px;overflow:hidden;">
-                                    <div style="height:100%;width:${pct}%;background:${barColor};border-radius:2px;transition:width 0.4s;"></div>
-                                </div>
-                                <div class="fm-pro-badges">
-                                    <span class="fm-pro-badge">🛡️ ${_t('Verificado')}</span>
-                                    <span class="fm-pro-badge">⭐ ${p.averageRating > 0 ? p.averageRating.toFixed(1) : '4.9'} ${_t('valoración')}</span>
-                                    <span class="fm-pro-badge">🕐 ${_t('Disponible hoy')}</span>
-                                </div>
-                                <div class="fm-pro-detail">${p.bio || ''}</div>${p.location ? `<div class="fm-pro-detail">📍 ${p.location}</div>` : ''}${p.services && p.services.length > 0 ? `<div class="fm-pro-detail" style="font-size:0.8rem;color:#B8922E;">${p.services.slice(0,3).join(' · ')}</div>` : ''}${p.phone ? `<div class="fm-pro-contact"><a href="https://wa.me/${p.phone.replace(/\D/g,'')}" target="_blank" onclick="event.preventDefault();contactProfessional('${p.phone.replace(/\D/g,'')}','${p.id}','${(p.alias||'').replace(/'/g,"\\'")}')">${_t('Contactar por WhatsApp')}</a></div>` : ''}</div>`;
-                        }).join('');
+                    let html = '<div style="margin-bottom:0.75rem;color:#B8922E;font-weight:600;">' + data.length + ' ' + _t('profesional') + (data.length > 1 ? 'es' : '') + ' ' + _t('encontrado') + (data.length > 1 ? 's' : '') + '</div><div class="fm-results-grid">';
+                    data.forEach(p => {
+                        const pct = maxScore > 0 ? Math.round((p.score / maxScore) * 100) : 0;
+                        const barColor = pct >= 80 ? '#2ecc71' : pct >= 50 ? '#f39c12' : '#e74c3c';
+                        const phoneClean = p.phone ? p.phone.replace(/\D/g, '') : '';
+                        const aliasEsc = (p.alias || '').replace(/'/g, "\\'");
+                        html += '<div class="fm-pro-card">';
+                        html += '<div style="display:flex;justify-content:space-between;align-items:center;"><div class="fm-pro-name">' + (p.alias || _t('Profesional')) + '</div><span style="font-size:0.75rem;color:#888;">' + _t('coincide') + ' ' + pct + '%</span></div>';
+                        html += '<div style="height:4px;background:#333;border-radius:2px;margin:4px 0 8px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:' + barColor + ';border-radius:2px;"></div></div>';
+                        html += '<div class="fm-pro-badges"><span class="fm-pro-badge">\uD83D\uDEE1\uFE0F ' + _t('Verificado') + '</span><span class="fm-pro-badge">\u2B50 ' + (p.averageRating > 0 ? p.averageRating.toFixed(1) : '4.9') + ' ' + _t('valoración') + '</span></div>';
+                        html += '<div class="fm-pro-detail">' + (p.bio || '') + '</div>';
+                        if (p.location) html += '<div class="fm-pro-detail">\uD83D\uDCCD ' + p.location + '</div>';
+                        if (p.services && p.services.length > 0) html += '<div class="fm-pro-detail" style="font-size:0.8rem;color:#B8922E;">' + p.services.slice(0,3).join(' · ') + '</div>';
+                        if (phoneClean) html += '<div class="fm-pro-contact"><a href="https://wa.me/' + phoneClean + '" target="_blank" onclick="event.preventDefault();contactProfessional(\'' + phoneClean + '\',\'' + p.id + '\',\'' + aliasEsc + '\')">' + _t('Contactar por WhatsApp') + '</a></div>';
+                        html += '</div>';
+                    });
+                    html += '</div>';
+                    resultsArea.innerHTML = html;
                 })
                 .catch(() => { searchBtn.disabled = false; resultsArea.innerHTML = '<div class="fm-empty">' + _t('Error al buscar.') + '</div>'; });
         });
