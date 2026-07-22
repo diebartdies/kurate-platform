@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+Allow: /index.html
+Allow: /home.html
+Allow: /hogar.html
+Allow: /hogar-detail.html
+Allow: /conciencia-vih.html
+Allow: /conciencia-cancer-mama.html
+Allow: /discover.html
+Allow: /feedback.html
+Disallow: /api/
+Disallow: /dashboard.html
+Disallow: /profDashboard.html
+Disallow: /login.html
+Disallow: /register.html
+Disallow: /recover.html
+Disallow: /verify.html
+Disallow: /admin.html
+
+Sitemap: https://kurate.drsrv.net.ar/sitemap.xml

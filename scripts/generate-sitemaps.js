@@ -3,8 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const connectDB = require('../config/database');
 const {
-  KuraTe_BASE,
-  KuraTe_BASE,
+  KURATE_BASE,
   buildSitemapForBase,
   buildRobotsTxt
 } = require('../utils/seoSitemap');
@@ -37,27 +36,19 @@ async function writeSiteBundle(label, baseUrl) {
   await connectDB();
   fs.mkdirSync(EXPORT_DIR, { recursive: true });
 
-  const KuraTe = await writeSiteBundle('KuraTe', KuraTe_BASE);
-  const KuraTe = await writeSiteBundle('KuraTe', KuraTe_BASE);
+  const kurate = await writeSiteBundle('KuraTe', KURATE_BASE);
 
   console.log('--------------------------------------------------');
   console.log('Google sitemap export');
   console.log('--------------------------------------------------');
-  console.log(`KuraTe base:   ${KuraTe.baseUrl}`);
-  console.log(`  URLs:           ${KuraTe.urlCount}`);
-  console.log(`  Sitemap:        ${KuraTe.sitemapPath}`);
-  console.log(`  Public (static): ${path.join(PUBLIC_DIR, 'sitemap.xml')}`);
-  console.log(`  Robots:         ${KuraTe.robotsPath}`);
-  console.log(`KuraTe base:  ${KuraTe.baseUrl}`);
-  console.log(`  URLs:           ${KuraTe.urlCount}`);
-  console.log(`  Sitemap:        ${KuraTe.sitemapPath}`);
-  console.log(`  Robots:         ${KuraTe.robotsPath}`);
+  console.log(`KuraTe base:   ${kurate.baseUrl}`);
+  console.log(`  URLs:           ${kurate.urlCount}`);
+  console.log(`  Sitemap:        ${kurate.sitemapPath}`);
+  console.log(`  Robots:         ${kurate.robotsPath}`);
   console.log('--------------------------------------------------');
   console.log('Google Search Console — submit:');
-  console.log(`  KuraTe property: ${KuraTe_BASE}`);
-  console.log(`  KuraTe sitemap:  ${KuraTe_BASE}/sitemap.xml`);
-  console.log(`  KuraTe property (model landing only): ${KuraTe_BASE}`);
-  console.log(`  KuraTe sitemap: ${KuraTe_BASE}/sitemap.xml`);
+  console.log(`  KuraTe property: ${KURATE_BASE}`);
+  console.log(`  KuraTe sitemap:  ${KURATE_BASE}/sitemap.xml`);
   console.log('--------------------------------------------------');
 
   process.exit(0);
