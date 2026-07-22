@@ -47,6 +47,16 @@ certbot certonly --webroot \
   --non-interactive
 
 echo "Cert issued for $DOMAIN."
+
+# Copy to KurateCerts so nginx can read them
+CERTBOT_LIVE="$CONF_DIR/live/$DOMAIN"
+KURATE_CERTS="$DEPLOY_DIR/KurateCerts"
+if [ -f "$CERTBOT_LIVE/fullchain.pem" ] && [ -f "$CERTBOT_LIVE/privkey.pem" ]; then
+  cp "$CERTBOT_LIVE/fullchain.pem" "$KURATE_CERTS/fullchain.pem"
+  cp "$CERTBOT_LIVE/privkey.pem"   "$KURATE_CERTS/privkey.pem"
+  echo "Copied cert to $KURATE_CERTS"
+fi
+
 echo "Reloading nginx..."
 cd "$DEPLOY_DIR" && docker compose exec nginx nginx -s reload || \
   docker compose up -d --force-recreate nginx

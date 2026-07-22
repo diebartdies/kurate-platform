@@ -2,7 +2,8 @@
 # KuraTe Platform — Install certbot auto-renewal via systemd timer
 # Purpose: Creates systemd drop-in overrides that make certbot renew certificates daily at 04:15 UTC.
 # The timer has a 30-minute random jitter and persistent=true (runs missed jobs on boot).
-# After renewal, the deploy hook (reload-nginx.sh) hot-reloads nginx to pick up the new cert.
+# After renewal, the deploy hook (reload-nginx.sh) copies the new cert to KurateCerts/
+# (which nginx reads from) and hot-reloads nginx to pick up the new SSL cert.
 # Project: KuraTe — Professional services marketplace (kurate.drsrv.net.ar)
 #
 # Usage: bash scripts/certbot/install-systemd.sh [/root/KuraTe-platform]

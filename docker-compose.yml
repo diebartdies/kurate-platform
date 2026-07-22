@@ -53,8 +53,6 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - ./KurateCerts:/etc/nginx/certs:ro
       - ./certbot/www:/var/www/certbot:ro
-      - ./certbot/conf/live:/etc/nginx/certs-live:ro
-      - ./certbot/conf/archive:/etc/nginx/archive:ro
     depends_on:
       - app
 
