@@ -17,6 +17,7 @@ const smsNotifications = require('../services/smsNotifications');
 const { getClientIp } = require('../utils/clientIp');
 const { mergePublicListingFilter, isAccountDeleted } = require('../utils/professionalVisibility');
 const { hasInappropriateWords, matchCategories, extractKeywords } = require('../utils/needMatching');
+const { analyzeQuery, buildSearchPlan } = require('../utils/aiSearch');
 
 const ALIAS_LOOKUP_FILTER = { role: 'professional', accountDeletedAt: null };
 const DEFAULT_WORKING_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -205,6 +206,10 @@ exports.searchProfessionals = async (req, res, next) => {
     const matchedCats = matchCategories(descripcion);
     const keywords = extractKeywords(descripcion);
 
+    // AI layer: optional, 2s timeout, falls back to taxonomy
+    const aiResult = await analyzeQuery(descripcion);
+    const plan = buildSearchPlan(aiResult, { accion, provincia, ciudad, urgencia });
+
     if (provincia && provincia.trim()) {
       baseFilter['professionalProfile.location.province'] = { $regex: provincia.trim(), $options: 'i' };
     }
@@ -212,7 +217,7 @@ exports.searchProfessionals = async (req, res, next) => {
       baseFilter['professionalProfile.location.city'] = { $regex: ciudad.trim(), $options: 'i' };
     }
 
-    // Collect unique search terms from taxonomy + keyword extraction
+    // Collect unique search terms: taxonomy + keywords + AI synonyms
     const searchTerms = new Set();
     for (const c of matchedCats) {
       if (c.service) searchTerms.add(c.service.toLowerCase());
@@ -221,6 +226,13 @@ exports.searchProfessionals = async (req, res, next) => {
     }
     for (const k of keywords) {
       if (k.length > 2) searchTerms.add(k);
+    }
+    // AI-enhanced terms
+    if (plan.keywords.length) {
+      for (const k of plan.keywords) searchTerms.add(k.toLowerCase());
+    }
+    if (plan.serviceCategory) {
+      searchTerms.add(plan.serviceCategory.toLowerCase());
     }
     const patterns = [...searchTerms].map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
 
@@ -271,6 +283,9 @@ exports.searchProfessionals = async (req, res, next) => {
       for (const pat of patterns) {
         if (bio.includes(pat)) score += 10;
       }
+
+      // AI-enhanced: brand match (+20)
+      if (plan.brand && bio.includes(plan.brand.toLowerCase())) score += 20;
 
       // Location boost
       if (provincia && pp.location?.province) {
