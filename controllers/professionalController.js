@@ -356,10 +356,30 @@ exports.searchProfessionals = async (req, res, next) => {
       .slice(0, 50);
 
     // Build relaxation suggestions when results are few
+    const CABA_BARRIOS = [
+      'palermo', 'belgrano', 'nunez', 'villa urquiza', 'villa crespo', 'chacarita',
+      'paternal', 'agronomia', 'caballito', 'flores', 'floresta', 'boedo',
+      'almagro', 'balvanera', 'san cristobal', 'congreso', 'monserrat',
+      'retiro', 'san telmo', 'la boca', 'barracas', 'parque patricios',
+      'puerto madero', 'san nicolas', 'constitucion', 'mataderos', 'liniers',
+      'parque avellaneda', 'versalles', 'villa luro', 'lugano', 'savoia',
+      'villa soldati', 'villa riachuelo', 'bajo flores', 'monte chingolo'
+    ];
+    const isCabaBarrio = ciudad && CABA_BARRIOS.includes(ciudad.toLowerCase().trim());
+    const isCabaProvince = provincia && (provincia.toLowerCase().includes('caba') || provincia.toLowerCase().includes('ciudad autonoma'));
+
     const suggestions = [];
     if (results.length === 0 || results.length <= 3) {
       // Suggestion 1: expand location
       if (ciudad) {
+        if (isCabaBarrio) {
+          // Searched a specific CABA barrio → suggest all CABA
+          suggestions.push({
+            type: 'location',
+            label: 'Buscar en CABA (todos los barrios)',
+            params: { ciudad: '', provincia: isCabaProvince ? provincia : 'Ciudad Autónoma de Buenos Aires' }
+          });
+        }
         suggestions.push({
           type: 'location',
           label: 'Buscar en toda la provincia',
