@@ -365,19 +365,48 @@ exports.searchProfessionals = async (req, res, next) => {
       'parque avellaneda', 'versalles', 'villa luro', 'lugano', 'savoia',
       'villa soldati', 'villa riachuelo', 'bajo flores', 'monte chingolo'
     ];
+
+    // Neighboring provinces for Argentina
+    const NEIGHBORS = {
+      'buenos aires': ['ciudad autónoma de buenos aires', 'entre ríos', 'santa fe', 'córdoba', 'la pampa', 'río negro'],
+      'ciudad autónoma de buenos aires': ['buenos aires'],
+      'caba': ['buenos aires'],
+      'córdoba': ['catamarca', 'santiago del estero', 'santa fe', 'buenos aires', 'la pampa', 'san luis', 'la rioja'],
+      'santa fe': ['chaco', 'corrientes', 'entre ríos', 'buenos aires', 'santiago del estero'],
+      'entre ríos': ['corrientes', 'santa fe', 'buenos aires'],
+      'corrientes': ['misiones', 'formosa', 'chaco', 'santa fe', 'entre ríos'],
+      'misiones': ['corrientes'],
+      'jujuy': ['salta'],
+      'salta': ['jujuy', 'formosa', 'chaco', 'santiago del estero', 'tucumán', 'catamarca'],
+      'formosa': ['salta', 'chaco', 'corrientes'],
+      'chaco': ['formosa', 'salta', 'santiago del estero', 'santa fe', 'corrientes'],
+      'tucumán': ['salta', 'santiago del estero', 'catamarca'],
+      'santiago del estero': ['salta', 'formosa', 'chaco', 'santa fe', 'córdoba', 'catamarca', 'tucumán'],
+      'catamarca': ['salta', 'tucumán', 'santiago del estero', 'córdoba', 'la rioja'],
+      'la rioja': ['catamarca', 'córdoba', 'san luis', 'san juan'],
+      'san juan': ['la rioja', 'san luis', 'mendoza'],
+      'san luis': ['la rioja', 'córdoba', 'la pampa', 'mendoza', 'san juan'],
+      'mendoza': ['san juan', 'san luis', 'la pampa', 'neuquén'],
+      'la pampa': ['córdoba', 'santa fe', 'buenos aires', 'río negro', 'neuquén', 'mendoza', 'san luis'],
+      'neuquén': ['mendoza', 'río negro'],
+      'río negro': ['neuquén', 'la pampa', 'buenos aires', 'chubut'],
+      'chubut': ['río negro', 'santa cruz'],
+      'santa cruz': ['chubut']
+    };
+
     const isCabaBarrio = ciudad && CABA_BARRIOS.includes(ciudad.toLowerCase().trim());
-    const isCabaProvince = provincia && (provincia.toLowerCase().includes('caba') || provincia.toLowerCase().includes('ciudad autonoma'));
+    const provLower = (provincia || '').toLowerCase().trim();
+    const neighbors = NEIGHBORS[provLower] || [];
 
     const suggestions = [];
     if (results.length === 0 || results.length <= 3) {
       // Suggestion 1: expand location
       if (ciudad) {
         if (isCabaBarrio) {
-          // Searched a specific CABA barrio → suggest all CABA
           suggestions.push({
             type: 'location',
             label: 'Buscar en CABA (todos los barrios)',
-            params: { ciudad: '', provincia: isCabaProvince ? provincia : 'Ciudad Autónoma de Buenos Aires' }
+            params: { ciudad: '', provincia: 'Ciudad Autónoma de Buenos Aires' }
           });
         }
         suggestions.push({
@@ -386,10 +415,12 @@ exports.searchProfessionals = async (req, res, next) => {
           params: { ciudad: '' }
         });
       }
-      if (provincia) {
+      // Suggestion 2: neighboring provinces (only for services, not for remote locations)
+      if (provLower && neighbors.length > 0) {
+        const neighborLabels = neighbors.slice(0, 3).map(n => n.charAt(0).toUpperCase() + n.slice(1));
         suggestions.push({
           type: 'location',
-          label: 'Buscar en todo el país',
+          label: 'Buscar en provincias vecinas (' + neighborLabels.join(', ') + (neighbors.length > 3 ? '...' : '') + ')',
           params: { provincia: '', ciudad: '' }
         });
       }
