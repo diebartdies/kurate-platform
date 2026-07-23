@@ -394,6 +394,12 @@ exports.searchProfessionals = async (req, res, next) => {
       'santa cruz': ['chubut']
     };
 
+    // Gran Buenos Aires: partidos limítrofes a CABA
+    const GBA_LIMITROFES = [
+      'vicente lópez', 'general san martín', 'tres de febrero',
+      'la matanza', 'lomas de zamora', 'lanús', 'avellaneda'
+    ];
+
     const isCabaBarrio = ciudad && CABA_BARRIOS.includes(ciudad.toLowerCase().trim());
     const provLower = (provincia || '').toLowerCase().trim();
     const neighbors = NEIGHBORS[provLower] || [];
@@ -407,6 +413,11 @@ exports.searchProfessionals = async (req, res, next) => {
             type: 'location',
             label: 'Buscar en CABA (todos los barrios)',
             params: { ciudad: '', provincia: 'Ciudad Autónoma de Buenos Aires' }
+          });
+          suggestions.push({
+            type: 'location',
+            label: 'Buscar en CABA + Gran Buenos Aires',
+            params: { ciudad: '', provincia: '' }
           });
         }
         suggestions.push({
