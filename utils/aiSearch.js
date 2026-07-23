@@ -15,6 +15,7 @@ Devolve SOLO el JSON (sin markdown, sin explicaciones) con esta estructura:
   "keywords": ["palabra1", "palabra2", ...],
   "synonyms": ["sinonimo1", "sinonimo2", ...],
   "brand": "marca mencionada o null",
+  "model": "modelo mencionado o null",
   "urgencyContext": "urgencia real inferida del texto",
   "searchTerms": ["termino1", "termino2", ...]
 }
@@ -23,7 +24,8 @@ Reglas:
 - serviceCategory debe ser generica (ej: "reparacion electrodomesticos", "pintura", "limpieza")
 - keywords: 3-5 palabras clave relevantes del texto original
 - synonyms: palabras equivalentes en español (ej: "heladera" -> "refrigerador", "frigider")
-- brand: si menciona una marca specifica, sino null
+- brand: si menciona una marca especifica, sino null
+- model: si menciona un modelo especifico (ej: "gf-123", "s24 ultra", "iphone 15"), sino null. Captura el modelo completo incluyendo numero/letra.
 - urgencyContext: "urgente" si el texto implica urgencia, "normal" si no
 - searchTerms: combinacion de keywords + synonyms para buscar en base de datos`;
 
@@ -71,6 +73,7 @@ function buildSearchPlan(aiResult, formFields) {
     serviceCategory: aiResult?.serviceCategory || null,
     keywords: [...(aiResult?.keywords || []), ...(aiResult?.searchTerms || [])],
     brand: aiResult?.brand || null,
+    model: aiResult?.model || null,
     province: formFields.provincia || null,
     city: formFields.ciudad || null,
     action: formFields.accion || null,

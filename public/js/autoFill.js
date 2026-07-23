@@ -237,6 +237,18 @@
     return errors;
   }
 
+  const KNOWN_BRANDS = [
+    'samsung', 'apple', 'iphone', 'ipad', 'macbook', 'xiaomi', 'huawei', 'motorola', 'moto',
+    'sony', 'lg', 'whirlpool', 'sblast', 'gafa', 'longvie', 'patrick', 'bgh',
+    'philips', 'bosch', 'siemens', 'electrolux', 'indurama', 'tcl',
+    'lenovo', 'dell', 'hp', 'asus', 'acer', 'msi', 'nvidia', 'amd', 'intel',
+    'toyota', 'ford', 'chevrolet', 'vw', 'volkswagen', 'fiat', 'peugeot', 'renault',
+    'citroen', 'bmw', 'mercedes', 'audi', 'honda', 'yamaha', 'kawasaki', 'suzuki',
+    'caterpillar', 'kubota', 'john deere', 'case', 'crown', 'genie', 'jlg',
+    'makita', 'dewalt', 'milwaukee', 'stanley', 'black+decker',
+    'ikea', 'meliconi', 'siam', 'diana', 'arrayan'
+  ];
+
   function extractObjectAndBrand(words) {
     const actionWords = Object.keys(ACTION_SYNONYMS);
     const urgencyWords = Object.keys(URGENCY_SYNONYMS);
@@ -250,8 +262,24 @@
     );
   }
 
+  function detectBrand(words) {
+    for (const w of words) {
+      for (const brand of KNOWN_BRANDS) {
+        if (w === brand || w.includes(brand) || brand.includes(w)) return brand;
+      }
+    }
+    return null;
+  }
+
   function checkModelMentioned(words) {
-    return words.some(w => /\d/.test(w) || /[a-z]-\d/.test(w));
+    return words.some(w => /\d/.test(w) || /[a-z]-\d/i.test(w));
+  }
+
+  function detectModel(words) {
+    for (const w of words) {
+      if (/\d/.test(w) || /[a-z]-\d/i.test(w)) return w;
+    }
+    return null;
   }
 
   // ─── Show fuzzy-match confirmation popup ─────────────────────────────
@@ -395,11 +423,13 @@
     const cityVal = ciudadSel?.value || '';
     const errors = validateConsistency(provinceVal, cityVal);
 
-    // 5. Extract objects for model check
+    // 5. Extract objects, brand, model for prompting
     const objects = extractObjectAndBrand(words);
     const hasModel = checkModelMentioned(words);
+    const detectedBrand = detectBrand(words);
+    const detectedModel = detectModel(words);
 
-    return { filled, errors, objects, hasModel, words, fuzzyQueue };
+    return { filled, errors, objects, hasModel, detectedBrand, detectedModel, words, fuzzyQueue };
   };
 
   // ─── Show province prompt if needed ──────────────────────────────────
@@ -420,21 +450,26 @@
   };
 
   // ─── Show model prompt popup ─────────────────────────────────────────
-  window.kurateShowModelPrompt = function (objectName) {
+  window.kurateShowModelPrompt = function (objectName, brandName) {
     const existing = document.getElementById('kurate-model-prompt');
     if (existing) existing.remove();
+
+    const brandText = brandName ? ` <strong style="color:#B8922E;">${brandName}</strong>` : '';
+    const hintText = brandName
+      ? `¿Cuál es el modelo de ${brandName} ${objectName}?`
+      : `¿Cuál es el modelo?`;
 
     const div = document.createElement('div');
     div.id = 'kurate-model-prompt';
     div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:1001;display:flex;align-items:center;justify-content:center;padding:1rem;';
     div.innerHTML = `
       <div style="background:#1a1a2e;border:1px solid #B8922E;border-radius:12px;padding:1.5rem;max-width:460px;width:100%;text-align:center;">
-        <h3 style="color:#B8922E;margin:0 0 0.5rem;">¿Cuál es el modelo?</h3>
+        <h3 style="color:#B8922E;margin:0 0 0.5rem;">${hintText}</h3>
         <p style="color:#888;font-size:0.85rem;margin:0 0 0.75rem;">
-          Para encontrar al profesional indicado, necesitamos saber el modelo de <strong style="color:#e0e0e0;">${objectName}</strong>.
+          Para encontrar al profesional indicado, necesitamos saber el modelo de${brandText} <strong style="color:#e0e0e0;">${objectName}</strong>.
         </p>
         <p style="color:#666;font-size:0.8rem;margin:0 0 1rem;">
-          ¿Dónde lo encontrás? Mirá la etiqueta trasera, el manual, o buscá en Google "modelo ${objectName} [marca]".
+          Mirá la etiqueta trasera, el manual, o buscá en Google "${objectName} [modelo]".
         </p>
         <div style="display:flex;gap:0.5rem;justify-content:center;">
           <button onclick="document.getElementById('kurate-model-prompt').remove();document.getElementById('descripcion').focus();" style="background:#B8922E;color:#0f0f1a;border:none;padding:0.6rem 1.2rem;border-radius:6px;font-weight:700;cursor:pointer;font-size:0.85rem;">Agregar modelo</button>

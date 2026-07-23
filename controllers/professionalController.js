@@ -260,48 +260,81 @@ exports.searchProfessionals = async (req, res, next) => {
     for (const r of ratingAgg) ratingMap[r._id.toString()] = Math.round(r.avg * 10) / 10;
     for (const p of professionals) p._averageRating = ratingMap[p._id.toString()] || 0;
 
-    // Score each professional
+    // Score each professional — calculate match percentage (0-100)
+    // Required: at least brand OR model must match (if user provided one)
     const scored = professionals.map(p => {
       const pp = p.professionalProfile || {};
       const svcs = Array.isArray(pp.services) ? pp.services.map(s => s.toLowerCase()) : [];
       const bio = (pp.bio || '').toLowerCase();
       let score = 0;
+      let maxPossible = 0;
 
-      if (accion) score += 5;
-      if (urgencia) score += 10;
+      // Weights for percentage calculation
+      const W_ACTION = 5, W_URGENCY = 5, W_SERVICE = 30, W_BIO = 10, W_BRAND = 25, W_MODEL = 25, W_LOCATION = 15;
+      maxPossible = W_ACTION + W_URGENCY + W_SERVICE + W_BIO + W_BRAND + W_MODEL + W_LOCATION;
 
-      // Service matches (each matching service = +30)
+      if (accion) score += W_ACTION;
+      if (urgencia) score += W_URGENCY;
+
+      // Service matches (each matching service = full service weight)
+      let serviceMatched = false;
       for (const pat of patterns) {
         for (const s of svcs) {
           if (s.includes(pat) || pat.includes(s)) {
-            score += 30;
+            if (!serviceMatched) { score += W_SERVICE; serviceMatched = true; }
           }
         }
       }
 
-      // Bio keyword matches (+10 per keyword)
+      // Bio keyword matches
+      let bioMatchCount = 0;
       for (const pat of patterns) {
-        if (bio.includes(pat)) score += 10;
+        if (bio.includes(pat)) bioMatchCount++;
+      }
+      if (bioMatchCount > 0) {
+        score += Math.min(W_BIO, bioMatchCount * 5);
       }
 
-      // AI-enhanced: brand match (+20)
-      if (plan.brand && bio.includes(plan.brand.toLowerCase())) score += 20;
+      // Brand match (exact or fuzzy in bio/services)
+      const brandQuery = (plan.brand || '').toLowerCase().trim();
+      let brandMatched = false;
+      if (brandQuery) {
+        const inBio = bio.includes(brandQuery);
+        const inServices = svcs.some(s => s.includes(brandQuery));
+        if (inBio || inServices) { score += W_BRAND; brandMatched = true; }
+      }
+
+      // Model match (exact or fuzzy in bio/services)
+      const modelQuery = (plan.model || '').toLowerCase().trim();
+      let modelMatched = false;
+      if (modelQuery) {
+        const inBio = bio.includes(modelQuery);
+        const inServices = svcs.some(s => s.includes(modelQuery));
+        if (inBio || inServices) { score += W_MODEL; modelMatched = true; }
+      }
 
       // Location boost
       if (provincia && pp.location?.province) {
-        if (pp.location.province.toLowerCase().includes(provincia.toLowerCase())) score += 15;
+        if (pp.location.province.toLowerCase().includes(provincia.toLowerCase())) score += W_LOCATION;
       }
       if (ciudad && pp.location?.city) {
-        if (pp.location.city.toLowerCase().includes(ciudad.toLowerCase())) score += 10;
+        if (pp.location.city.toLowerCase().includes(ciudad.toLowerCase())) score += Math.floor(W_LOCATION / 2);
       }
 
-      const firstPhoto = Array.isArray(pp.photos) && pp.photos.length > 0 ? pp.photos[0] : null;
       const avgRating = p._averageRating || 0;
-      score += Math.round(avgRating * 5);
+      score += Math.round(avgRating * 2);
+
+      // Calculate percentage
+      const pct = Math.round((score / maxPossible) * 100);
+
+      // If user provided brand or model, at least one must match
+      const hasBrandOrModelQuery = brandQuery || modelQuery;
+      const mustMatch = hasBrandOrModelQuery && !brandMatched && !modelMatched;
 
       return {
         id: p._id,
         score,
+        pct,
         alias: pp.alias || 'Profesional',
         bio: pp.bio || '',
         location: [pp.location?.city, pp.location?.province].filter(Boolean).join(', '),
@@ -309,14 +342,17 @@ exports.searchProfessionals = async (req, res, next) => {
         photo: firstPhoto,
         phone: pp.whatsappNumber || null,
         email: p.email,
-        averageRating: avgRating
+        averageRating: avgRating,
+        brandMatched,
+        modelMatched,
+        mustMatch // flag: user asked for brand/model but this pro didn't match
       };
     });
 
-    // Filter out zero-score, sort by score desc, limit
+    // Filter: remove zero-score, brand/model required match, and < 50% match
     const results = scored
-      .filter(p => p.score > 0)
-      .sort((a, b) => b.score - a.score)
+      .filter(p => p.score > 0 && !p.mustMatch && p.pct >= 50)
+      .sort((a, b) => b.pct - a.pct || b.score - a.score)
       .slice(0, 50);
 
     res.status(200).json(results);
