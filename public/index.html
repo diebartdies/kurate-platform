@@ -568,33 +568,78 @@
                 });
         });
 
+        function showNoResultsPopup(suggestions) {
+            var existing = document.getElementById('kurate-no-results');
+            if (existing) existing.remove();
+            var sugHtml = '';
+            if (suggestions && suggestions.length > 0) {
+                sugHtml = '<div style="margin-top:1rem;text-align:left;">' +
+                    '<p style="color:#888;font-size:0.85rem;margin:0 0 0.5rem;">Podés flexibilizar la búsqueda:</p>';
+                suggestions.forEach(function (s) {
+                    sugHtml += '<button class="kurate-sug-btn" data-type="' + s.type + '" style="display:block;width:100%;text-align:left;background:#0f0f1a;color:#e0e0e0;border:1px solid #333;padding:0.5rem 0.8rem;border-radius:6px;cursor:pointer;font-size:0.85rem;margin-bottom:0.4rem;transition:border 0.2s;" onmouseover="this.style.borderColor=\'#B8922E\'" onmouseout="this.style.borderColor=\'#333\'">\uD83D\uDD04 ' + s.label + '</button>';
+                });
+                sugHtml += '</div>';
+            }
+            var div = document.createElement('div');
+            div.id = 'kurate-no-results';
+            div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:1001;display:flex;align-items:center;justify-content:center;padding:1rem;';
+            div.innerHTML = '<div style="background:#1a1a2e;border:1px solid #B8922E;border-radius:12px;padding:1.5rem;max-width:460px;width:100%;text-align:center;">' +
+                '<h3 style="color:#B8922E;margin:0 0 0.5rem;">No encontramos resultados</h3>' +
+                '<p style="color:#888;font-size:0.85rem;margin:0 0 0.75rem;">No hay profesionales que coincidan exactamente con tu búsqueda.</p>' +
+                sugHtml +
+                '<button onclick="this.closest(\'#kurate-no-results\').remove()" style="margin-top:0.75rem;background:transparent;color:#666;border:1px solid #333;padding:0.5rem 1.2rem;border-radius:6px;cursor:pointer;font-size:0.8rem;">Cerrar</button>' +
+                '</div>';
+            document.body.appendChild(div);
+            div.querySelectorAll('.kurate-sug-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    div.remove();
+                    var type = this.getAttribute('data-type');
+                    var sug = suggestions.find(function (s) { return s.type === type; });
+                    if (!sug) return;
+                    if (sug.params) {
+                        if (sug.params.ciudad !== undefined) ciudadSel.value = sug.params.ciudad;
+                        if (sug.params.provincia !== undefined) { provinciaSel.value = sug.params.provincia; provinciaSel.dispatchEvent(new Event('change')); }
+                        if (sug.params.urgencia !== undefined) document.getElementById('urgencia').value = sug.params.urgencia;
+                        if (sug.params.relaxModel) needForm.setAttribute('data-relax-model', '1');
+                        if (sug.params.relaxBrand) needForm.setAttribute('data-relax-brand', '1');
+                    }
+                    setTimeout(executeSearch, 300);
+                });
+            });
+        }
+
         function executeSearch() {
-            const accion = document.getElementById('accion').value;
-            const descripcion = descripcionInput.value.trim();
-            const provincia = provinciaSel.value;
-            const ciudad = ciudadSel.value;
-            const urgencia = document.getElementById('urgencia').value;
+            var accion = document.getElementById('accion').value;
+            var descripcion = descripcionInput.value.trim();
+            var provincia = provinciaSel.value;
+            var ciudad = ciudadSel.value;
+            var urgencia = document.getElementById('urgencia').value;
             resultsArea.style.display = 'block';
             resultsArea.innerHTML = '<div class="fm-loading">' + _t('Buscando profesionales...') + '</div>';
             searchBtn.disabled = true;
-            const params = new URLSearchParams({ accion, descripcion, urgencia });
+            var params = new URLSearchParams({ accion: accion, descripcion: descripcion, urgencia: urgencia });
             if (provincia) params.set('provincia', provincia);
             if (ciudad) params.set('ciudad', ciudad);
+            if (needForm.getAttribute('data-relax-model')) { params.set('relaxModel', '1'); needForm.removeAttribute('data-relax-model'); }
+            if (needForm.getAttribute('data-relax-brand')) { params.set('relaxBrand', '1'); needForm.removeAttribute('data-relax-brand'); }
             fetch('/api/v1/professionals/search?' + params)
-                .then(r => r.json())
-                .then(data => {
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
                     searchBtn.disabled = false;
-                    if (!data || data.length === 0) {
-                        resultsArea.innerHTML = '<div class="fm-empty"><p style="font-size:1.1rem;">' + _t('No encontramos profesionales para esta búsqueda') + '</p><p style="font-size:0.85rem;">' + _t('Probá con otros términos o completá más detalles') + '</p></div>';
+                    var results = data.results || data;
+                    var suggestions = data.suggestions || [];
+                    if (!results || results.length === 0) {
+                        resultsArea.innerHTML = '<div class="fm-empty"><p style="font-size:1.1rem;">' + _t('No encontramos profesionales para esta búsqueda') + '</p></div>';
+                        if (suggestions.length > 0) showNoResultsPopup(suggestions);
                         return;
                     }
-                    const maxScore = Math.max(...data.map(p => p.score || 0));
-                    let html = '<div style="margin-bottom:0.75rem;color:#B8922E;font-weight:600;">' + data.length + ' ' + _t('profesional') + (data.length > 1 ? 'es' : '') + ' ' + _t('encontrado') + (data.length > 1 ? 's' : '') + '</div><div class="fm-results-grid">';
-                    data.forEach(p => {
-                        const pct = maxScore > 0 ? Math.round((p.score / maxScore) * 100) : 0;
-                        const barColor = pct >= 80 ? '#2ecc71' : pct >= 50 ? '#f39c12' : '#e74c3c';
-                        const phoneClean = p.phone ? p.phone.replace(/\D/g, '') : '';
-                        const aliasEsc = (p.alias || '').replace(/'/g, "\\'");
+                    var maxScore = Math.max.apply(null, results.map(function (p) { return p.score || 0; }));
+                    var html = '<div style="margin-bottom:0.75rem;color:#B8922E;font-weight:600;">' + results.length + ' ' + _t('profesional') + (results.length > 1 ? 'es' : '') + ' ' + _t('encontrado') + (results.length > 1 ? 's' : '') + '</div><div class="fm-results-grid">';
+                    results.forEach(function (p) {
+                        var pct = maxScore > 0 ? Math.round((p.score / maxScore) * 100) : 0;
+                        var barColor = pct >= 80 ? '#2ecc71' : pct >= 50 ? '#f39c12' : '#e74c3c';
+                        var phoneClean = p.phone ? p.phone.replace(/\D/g, '') : '';
+                        var aliasEsc = (p.alias || '').replace(/'/g, "\\'");
                         html += '<div class="fm-pro-card">';
                         html += '<div style="display:flex;justify-content:space-between;align-items:center;"><div class="fm-pro-name">' + (p.alias || _t('Profesional')) + '</div><span style="font-size:0.75rem;color:#888;">' + _t('coincide') + ' ' + pct + '%</span></div>';
                         html += '<div style="height:4px;background:#333;border-radius:2px;margin:4px 0 8px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:' + barColor + ';border-radius:2px;"></div></div>';
@@ -608,7 +653,7 @@
                     html += '</div>';
                     resultsArea.innerHTML = html;
                 })
-                .catch(() => { searchBtn.disabled = false; resultsArea.innerHTML = '<div class="fm-empty">' + _t('Error al buscar.') + '</div>'; });
+                .catch(function () { searchBtn.disabled = false; resultsArea.innerHTML = '<div class="fm-empty">' + _t('Error al buscar.') + '</div>'; });
         }
 
         function processFuzzyQueue(queue, idx, originalWord) {

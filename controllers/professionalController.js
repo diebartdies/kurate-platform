@@ -193,7 +193,7 @@ exports.getProfessionals = async (req, res, next) => {
 // @access  Public
 exports.searchProfessionals = async (req, res, next) => {
   try {
-    const { accion, descripcion, provincia, ciudad, urgencia } = req.query;
+    const { accion, descripcion, provincia, ciudad, urgencia, relaxBrand, relaxModel } = req.query;
 
     const badWord = hasInappropriateWords(descripcion);
     if (badWord) {
@@ -295,8 +295,8 @@ exports.searchProfessionals = async (req, res, next) => {
         score += Math.min(W_BIO, bioMatchCount * 5);
       }
 
-      // Brand match (exact or fuzzy in bio/services)
-      const brandQuery = (plan.brand || '').toLowerCase().trim();
+      // Brand match (exact or fuzzy in bio/services) — skipped if relaxBrand
+      const brandQuery = relaxBrand ? '' : (plan.brand || '').toLowerCase().trim();
       let brandMatched = false;
       if (brandQuery) {
         const inBio = bio.includes(brandQuery);
@@ -304,8 +304,8 @@ exports.searchProfessionals = async (req, res, next) => {
         if (inBio || inServices) { score += W_BRAND; brandMatched = true; }
       }
 
-      // Model match (exact or fuzzy in bio/services)
-      const modelQuery = (plan.model || '').toLowerCase().trim();
+      // Model match (exact or fuzzy in bio/services) — skipped if relaxModel
+      const modelQuery = relaxModel ? '' : (plan.model || '').toLowerCase().trim();
       let modelMatched = false;
       if (modelQuery) {
         const inBio = bio.includes(modelQuery);
@@ -327,8 +327,8 @@ exports.searchProfessionals = async (req, res, next) => {
       // Calculate percentage
       const pct = Math.round((score / maxPossible) * 100);
 
-      // If user provided brand or model, at least one must match
-      const hasBrandOrModelQuery = brandQuery || modelQuery;
+      // If user provided brand or model (and not relaxed), at least one must match
+      const hasBrandOrModelQuery = (brandQuery || modelQuery) && !relaxBrand && !relaxModel;
       const mustMatch = hasBrandOrModelQuery && !brandMatched && !modelMatched;
 
       return {
@@ -355,7 +355,59 @@ exports.searchProfessionals = async (req, res, next) => {
       .sort((a, b) => b.pct - a.pct || b.score - a.score)
       .slice(0, 50);
 
-    res.status(200).json(results);
+    // Build relaxation suggestions when results are few
+    const suggestions = [];
+    if (results.length === 0 || results.length <= 3) {
+      // Suggestion 1: expand location
+      if (ciudad) {
+        suggestions.push({
+          type: 'location',
+          label: 'Buscar en toda la provincia',
+          params: { ciudad: '' }
+        });
+      }
+      if (provincia) {
+        suggestions.push({
+          type: 'location',
+          label: 'Buscar en todo el país',
+          params: { provincia: '', ciudad: '' }
+        });
+      }
+      // Suggestion 2: relax urgency
+      if (urgencia && urgencia !== 'sin-apuro') {
+        suggestions.push({
+          type: 'urgency',
+          label: 'Incluir todos los plazos',
+          params: { urgencia: '' }
+        });
+      }
+      // Suggestion 3: broader service match (lower threshold)
+      if (patterns.length > 0) {
+        suggestions.push({
+          type: 'service',
+          label: 'Buscar servicios similares',
+          params: { descripcion: '' }
+        });
+      }
+      // Suggestion 4: relax model (search by brand only)
+      if (modelQuery && brandQuery) {
+        suggestions.push({
+          type: 'model',
+          label: 'Buscar solo por marca (' + brandQuery + ')',
+          params: { relaxModel: '1' }
+        });
+      }
+      // Suggestion 5: relax brand+model (search by service only)
+      if (brandQuery || modelQuery) {
+        suggestions.push({
+          type: 'brand',
+          label: 'Buscar sin marca/modelo',
+          params: { relaxBrand: '1', relaxModel: '1' }
+        });
+      }
+    }
+
+    res.status(200).json({ results, suggestions });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
   }

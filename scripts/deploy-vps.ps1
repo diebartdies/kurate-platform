@@ -45,7 +45,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
-$Pkg  = Join-Path $env:TEMP "kurate_upload_package.tar.gz"
+$Pkg  = Join-Path $Root "upload_package.tar.gz"
 
 function Write-Step($n, $msg) { Write-Host "`n[$n] $msg" -ForegroundColor Yellow }
 function Write-Ok($msg)       { Write-Host "      $msg" -ForegroundColor Green }
