@@ -125,8 +125,25 @@ $tarArgs = @("-czf", $Pkg)
 foreach ($e in $excludes) { $tarArgs += @("--exclude=$e") }
 $tarArgs += @("-C", $Root, ".")
 
-& tar @tarArgs
-if ($LASTEXITCODE -ne 0 -or -not (Test-Path $Pkg)) { Die "tar packaging failed." }
+& tar @tarArgs 2>$null
+if ($LASTEXITCODE -ne 0 -or -not (Test-Path $Pkg)) {
+  Write-Info "tar failed, trying PowerShell fallback..."
+  # Fallback: create tar.gz using PowerShell
+  $staging = Join-Path $Root ".deploy_staging"
+  if (Test-Path $staging) { Remove-Item $staging -Recurse -Force }
+  New-Item -ItemType Directory -Path $staging -Force | Out-Null
+  
+  # Copy files excluding unwanted dirs
+  $robocopyArgs = @($Root, $staging, "/E", "/XD", "node_modules", ".git", "android", "ios", ".cache", ".wwebjs_auth", "coverage", ".nyc_output", ".vscode", "/XF", "*.apk", "*.aab", "Thumbs.db", ".DS_Store", "*.log", (Split-Path $Pkg -Leaf))
+  & robocopy @robocopyArgs | Out-Null
+  
+  # Create tar.gz from staging
+  $tarArgs2 = @("-czf", $Pkg, "-C", $staging, ".")
+  & tar @tarArgs2 2>$null
+  Remove-Item $staging -Recurse -Force -ErrorAction SilentlyContinue
+  
+  if ($LASTEXITCODE -ne 0 -or -not (Test-Path $Pkg)) { Die "tar packaging failed (both tar and fallback)." }
+}
 $sizeMB = [math]::Round((Get-Item $Pkg).Length / 1MB, 1)
 Write-Ok "Package created: $Pkg ($sizeMB MB)"
 
