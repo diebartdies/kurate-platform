@@ -568,33 +568,12 @@
                 });
         });
 
-        needForm.addEventListener('submit', function(e) {
-            e.preventDefault();
+        function executeSearch() {
             const accion = document.getElementById('accion').value;
             const descripcion = descripcionInput.value.trim();
             const provincia = provinciaSel.value;
             const ciudad = ciudadSel.value;
             const urgencia = document.getElementById('urgencia').value;
-            if (!accion) { alert('Seleccioná qué necesitás hacer'); return; }
-            if (!descripcion) { alert('Contanos con más detalle qué necesitás'); return; }
-            const found = hasInappropriateWords(descripcion);
-            if (found) {
-                descripcionError.textContent = `La palabra "${found}" no es apropiada para este sitio.`;
-                descripcionError.style.display = 'block';
-                descripcionInput.focus();
-                return;
-            }
-            const autoResult = window.kurateAutoFill({ descripcion, accionSel: document.getElementById('accion'), provinciaSel, ciudadSel, urgenciaSel: document.getElementById('urgencia') });
-            if (autoResult.errors && autoResult.errors.length > 0) {
-                const provErr = autoResult.errors.find(e => e.field === 'provincia');
-                if (provErr) { window.kurateShowProvincePrompt(provErr.message); return; }
-            }
-            const skipModel = needForm.getAttribute('data-skip-model');
-            needForm.removeAttribute('data-skip-model');
-            const objects = autoResult.objects || [];
-            if (objects.length > 0 && !autoResult.hasModel && !skipModel) {
-                window.kurateShowModelPrompt(objects[0]); return;
-            }
             resultsArea.style.display = 'block';
             resultsArea.innerHTML = '<div class="fm-loading">' + _t('Buscando profesionales...') + '</div>';
             searchBtn.disabled = true;
@@ -630,6 +609,57 @@
                     resultsArea.innerHTML = html;
                 })
                 .catch(() => { searchBtn.disabled = false; resultsArea.innerHTML = '<div class="fm-empty">' + _t('Error al buscar.') + '</div>'; });
+        }
+
+        function processFuzzyQueue(queue, idx, originalWord) {
+            if (idx >= queue.length) { executeSearch(); return; }
+            var item = queue[idx];
+            window.kurateShowFuzzyConfirm(item.word, item.fieldLabel, item.candidates, function (selectedVal) {
+                var sel = document.getElementById(item.type === 'accion' ? 'accion' : item.type === 'urgencia' ? 'urgencia' : item.type);
+                if (sel) sel.value = selectedVal;
+                if (item.type === 'provincia') {
+                    provinciaSel.dispatchEvent(new Event('change'));
+                    setTimeout(function () { processFuzzyQueue(queue, idx + 1, originalWord); }, 600);
+                } else {
+                    processFuzzyQueue(queue, idx + 1, originalWord);
+                }
+            }, function () {
+                if (item.type === 'provincia') {
+                    setTimeout(function () { processFuzzyQueue(queue, idx + 1, originalWord); }, 600);
+                } else {
+                    processFuzzyQueue(queue, idx + 1, originalWord);
+                }
+            });
+        }
+
+        needForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const descripcion = descripcionInput.value.trim();
+            if (!document.getElementById('accion').value) { alert('Seleccioná qué necesitás hacer'); return; }
+            if (!descripcion) { alert('Contanos con más detalle qué necesitás'); return; }
+            const found = hasInappropriateWords(descripcion);
+            if (found) {
+                descripcionError.textContent = 'La palabra "' + found + '" no es apropiada para este sitio.';
+                descripcionError.style.display = 'block';
+                descripcionInput.focus();
+                return;
+            }
+            const autoResult = window.kurateAutoFill({ descripcion, accionSel: document.getElementById('accion'), provinciaSel, ciudadSel, urgenciaSel: document.getElementById('urgencia') });
+            if (autoResult.errors && autoResult.errors.length > 0) {
+                const provErr = autoResult.errors.find(e => e.field === 'provincia');
+                if (provErr) { window.kurateShowProvincePrompt(provErr.message); return; }
+            }
+            if (autoResult.fuzzyQueue && autoResult.fuzzyQueue.length > 0) {
+                processFuzzyQueue(autoResult.fuzzyQueue, 0, descripcion);
+                return;
+            }
+            const skipModel = needForm.getAttribute('data-skip-model');
+            needForm.removeAttribute('data-skip-model');
+            const objects = autoResult.objects || [];
+            if (objects.length > 0 && !autoResult.hasModel && !skipModel) {
+                window.kurateShowModelPrompt(objects[0]); return;
+            }
+            executeSearch();
         });
 
         // --- Feedback request on WhatsApp contact ---
