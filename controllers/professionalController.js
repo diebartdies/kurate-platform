@@ -396,7 +396,7 @@ exports.searchProfessionals = async (req, res, next) => {
 
     // Gran Buenos Aires: partidos limítrofes a CABA
     const GBA_LIMITROFES = [
-      'vicente lópez', 'general san martín', 'tres de febrero',
+      'vicente lópez', 'general san martín',
       'la matanza', 'lomas de zamora', 'lanús', 'avellaneda'
     ];
 
