@@ -450,26 +450,48 @@
   };
 
   // ─── Show model prompt popup ─────────────────────────────────────────
-  window.kurateShowModelPrompt = function (objectName, brandName) {
+  window.kurateShowBrandPrompt = function (objectName) {
     const existing = document.getElementById('kurate-model-prompt');
     if (existing) existing.remove();
-
-    const brandText = brandName ? ` <strong style="color:#B8922E;">${brandName}</strong>` : '';
-    const hintText = brandName
-      ? `¿Cuál es el modelo de ${brandName} ${objectName}?`
-      : `¿Cuál es el modelo?`;
 
     const div = document.createElement('div');
     div.id = 'kurate-model-prompt';
     div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:1001;display:flex;align-items:center;justify-content:center;padding:1rem;';
     div.innerHTML = `
       <div style="background:#1a1a2e;border:1px solid #B8922E;border-radius:12px;padding:1.5rem;max-width:460px;width:100%;text-align:center;">
-        <h3 style="color:#B8922E;margin:0 0 0.5rem;">${hintText}</h3>
+        <h3 style="color:#B8922E;margin:0 0 0.5rem;">¿Qué marca es?</h3>
         <p style="color:#888;font-size:0.85rem;margin:0 0 0.75rem;">
-          Para encontrar al profesional indicado, necesitamos saber el modelo de${brandText} <strong style="color:#e0e0e0;">${objectName}</strong>.
+          Para encontrar al profesional indicado, necesitamos saber la marca de <strong style="color:#e0e0e0;">${objectName}</strong>.
         </p>
         <p style="color:#666;font-size:0.8rem;margin:0 0 1rem;">
-          Mirá la etiqueta trasera, el manual, o buscá en Google "${objectName} [modelo]".
+          Mirá la etiqueta trasera, el manual, o buscá en Google "marca ${objectName}".
+        </p>
+        <div style="display:flex;gap:0.5rem;justify-content:center;">
+          <button onclick="document.getElementById('kurate-model-prompt').remove();document.getElementById('descripcion').focus();" style="background:#B8922E;color:#0f0f1a;border:none;padding:0.6rem 1.2rem;border-radius:6px;font-weight:700;cursor:pointer;font-size:0.85rem;">Agregar marca</button>
+          <button onclick="document.getElementById('kurate-model-prompt').remove();document.getElementById('needForm').setAttribute('data-skip-model','1');document.getElementById('needForm').dispatchEvent(new Event('submit'));" style="background:transparent;color:#888;border:1px solid #333;padding:0.6rem 1.2rem;border-radius:6px;cursor:pointer;font-size:0.85rem;">Buscar sin marca</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(div);
+  };
+
+  window.kurateShowModelPrompt = function (objectName, brandName) {
+    const existing = document.getElementById('kurate-model-prompt');
+    if (existing) existing.remove();
+
+    const brandText = brandName ? ` <strong style="color:#B8922E;">${brandName}</strong>` : '';
+
+    const div = document.createElement('div');
+    div.id = 'kurate-model-prompt';
+    div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:1001;display:flex;align-items:center;justify-content:center;padding:1rem;';
+    div.innerHTML = `
+      <div style="background:#1a1a2e;border:1px solid #B8922E;border-radius:12px;padding:1.5rem;max-width:460px;width:100%;text-align:center;">
+        <h3 style="color:#B8922E;margin:0 0 0.5rem;">¿Cuál es el modelo?</h3>
+        <p style="color:#888;font-size:0.85rem;margin:0 0 0.75rem;">
+          Sabemos que es ${brandText} <strong style="color:#e0e0e0;">${objectName}</strong>. ¿Cuál es el modelo exacto?
+        </p>
+        <p style="color:#666;font-size:0.8rem;margin:0 0 1rem;">
+          Mirá la etiqueta trasera, el manual, o buscá en Google "${brandName || ''} ${objectName} [modelo]".
         </p>
         <div style="display:flex;gap:0.5rem;justify-content:center;">
           <button onclick="document.getElementById('kurate-model-prompt').remove();document.getElementById('descripcion').focus();" style="background:#B8922E;color:#0f0f1a;border:none;padding:0.6rem 1.2rem;border-radius:6px;font-weight:700;cursor:pointer;font-size:0.85rem;">Agregar modelo</button>

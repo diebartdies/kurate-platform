@@ -656,9 +656,13 @@
             const skipModel = needForm.getAttribute('data-skip-model');
             needForm.removeAttribute('data-skip-model');
             const objects = autoResult.objects || [];
-            const hasBrandOrModel = autoResult.detectedBrand || autoResult.hasModel;
-            if (objects.length > 0 && !hasBrandOrModel && !skipModel) {
-                window.kurateShowModelPrompt(objects[0], autoResult.detectedBrand); return;
+            if (objects.length > 0 && !skipModel) {
+                if (!autoResult.detectedBrand) {
+                    window.kurateShowBrandPrompt(objects[0]); return;
+                }
+                if (!autoResult.hasModel) {
+                    window.kurateShowModelPrompt(objects[0], autoResult.detectedBrand); return;
+                }
             }
             executeSearch();
         });
