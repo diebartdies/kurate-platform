@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Import AMBA cities from CSV into MongoDB
+// Import AMBA cities from CSV into MongoDB (FIXED: uses Buenos Aires province)
 // Usage: node scripts/import-amba-cities.js
 
 const mongoose = require('mongoose');
@@ -34,41 +34,31 @@ async function main() {
   const entries = parseCSV(csv);
   console.log(`Found ${entries.length} cities in CSV`);
 
-  // Group by partido (used as province name)
-  const byProvincia = {};
-  for (const e of entries) {
-    if (!byProvincia[e.partido]) byProvincia[e.partido] = [];
-    byProvincia[e.partido].push(e.city);
+  // All AMBA cities belong to Buenos Aires province
+  let province = await Province.findOne({ name: 'Buenos Aires' });
+  if (!province) {
+    province = await Province.create({ name: 'Buenos Aires' });
+    console.log('Created "Buenos Aires" province');
+  } else {
+    console.log('Using existing "Buenos Aires" province');
   }
 
-  let createdProvinces = 0;
-  let createdCities = 0;
-  let skippedCities = 0;
+  let created = 0;
+  let skipped = 0;
 
-  for (const [provName, cities] of Object.entries(byProvincia)) {
-    // Find or create province
-    let province = await Province.findOne({ name: provName });
-    if (!province) {
-      province = await Province.create({ name: provName });
-      createdProvinces++;
-      console.log(`  Created province: ${provName}`);
+  for (const entry of entries) {
+    const exists = await City.findOne({ name: entry.city, province: province._id });
+    if (exists) {
+      skipped++;
+      continue;
     }
-
-    for (const cityName of cities) {
-      const exists = await City.findOne({ name: cityName, province: province._id });
-      if (exists) {
-        skippedCities++;
-        continue;
-      }
-      await City.create({ name: cityName, province: province._id });
-      createdCities++;
-    }
+    await City.create({ name: entry.city, province: province._id });
+    created++;
   }
 
   console.log(`\nDone!`);
-  console.log(`  Provinces created: ${createdProvinces}`);
-  console.log(`  Cities created: ${createdCities}`);
-  console.log(`  Cities skipped (already exist): ${skippedCities}`);
+  console.log(`  Cities created: ${created}`);
+  console.log(`  Cities skipped (already exist): ${skipped}`);
 
   await mongoose.disconnect();
 }
