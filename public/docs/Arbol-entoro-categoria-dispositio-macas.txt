@@ -1,0 +1,784 @@
+{
+  "infraestructura_hogar_argentina": {
+    "entorno": "Hogar",
+    "descripcion": "Consumo familiar, confort, entretenimiento, conectividad y equipamiento de baño residencial",
+    "categorias": [
+      {
+        "nombre": "Linea Blanca",
+        "dispositivos": [
+          {
+            "nombre": "Heladera con Freezer",
+            "marcas": [
+              "Ariston", "Bambi", "Bosch", "Briket", "Columbia", 
+              "Drean", "Electrolux", "Eslabón de Lujo", "Gafa", "Hisense", 
+              "Koh-i-noor", "LG", "Midea", "Patrick", "Philco", 
+              "Samsung", "Siam", "Smartlife", "Vondom", "Whirlpool"
+            ]
+          },
+          {
+            "nombre": "Lavarropas",
+            "marcas": [
+              "Alladio", "Ariston", "Aurora", "Beko", "Candy", 
+              "Codini", "Columbia", "Drean", "Electrolux", "Enova", 
+              "Eslabón de Lujo", "Koh-i-noor", "LG", "Longvie", "Midea", 
+              "Patrick", "Philco", "Samsung", "Siam", "Whirlpool"
+            ]
+          },
+          {
+            "nombre": "Microondas",
+            "marcas": [
+              "Atma", "BGH", "Candy", "Daewoo", "Jeluz", 
+              "Ken Brown", "LG", "Liliana", "Midea", "Noblex", 
+              "Oster", "Peabody", "Philco", "RICA", "Samsung", 
+              "Sansei", "Siam", "Smartlife", "Ultracomb", "Whirlpool"
+            ]
+          },
+          {
+            "nombre": "Cocina y Horno",
+            "marcas": [
+              "Ariston", "Balay", "Bertazzoni", "Bosch", "Candy", 
+              "Domec", "Drean", "Escorial", "Florencia", "Llanos", 
+              "Longvie", "Martiri", "Morelli", "Orbis", "Patrick", 
+              "Philco", "Siam", "Smeg", "TST", "Whirlpool"
+            ]
+          }
+        ]
+      },
+      {
+        "nombre": "Linea Marron",
+        "dispositivos": [
+          {
+            "nombre": "Smart TV",
+            "marcas": [
+              "Admiral", "BGH", "Enova", "Hisense", "Hitachi", 
+              "JVC", "LG", "Noblex", "Philco", "Philips", 
+              "Quint", "RCA", "Samsung", "Sansei", "Sanyo", 
+              "Skyworth", "Sony", "TCL", "Telefunken", "Xiaomi"
+            ]
+          },
+          {
+            "nombre": "Sistemas de Audio y Parlantes",
+            "marcas": [
+              "Aiwa", "Bose", "Daewoo", "Edifier", "JBL", 
+              "Ken Brown", "LG", "Logitech", "Noblex", "Panacom", 
+              "Philco", "Philips", "Pioneer", "Samsung", "Siam", 
+              "Sony", "Stromberg", "Suono", "Thonet and Vander", "Winco"
+            ]
+          },
+          {
+            "nombre": "Secarropa",
+            "marcas": [
+              "Ariete", "Atma", "Black and Decker", "Braun", "Cecotec", 
+              "Confort", "Daewoo", "Everest", "Imaco", "Keefe", 
+              "LG", "Liliana", "Midea", "Oster", "Panasonic", 
+              "Peabody", "Philco", "Philips", "Scarlett", "Tefal", 
+              "Ultracomb", "Winco", "Xiaomi"
+            ]
+          }
+        ]
+      },
+      {
+        "nombre": "Climatizacion",
+        "dispositivos": [
+          {
+            "nombre": "Aire Acondicionado",
+            "marcas": [
+              "BGH", "Carrier", "Coventry", "Daitsu", "Electra", 
+              "Fedders", "Hisense", "Hitachi", "LG", "Midea", 
+              "Noblex", "Philco", "Rheem", "Samsung", "Sansei", 
+              "Siam", "Surrey", "TCL", "Whirlpool", "York"
+            ]
+          },
+          {
+            "nombre": "Calefactores y Estufas",
+            "marcas": [
+              "Atma", "Axel", "BGH", "Calden", "Coppens", 
+              "DeLonghi", "Domec", "Emege", "Eskabe", "Klarstein", 
+              "Lepanto", "Liliana", "Longvie", "Magic Click", "Orbis", 
+              "Peabody", "Philco", "Rheem", "Tromen", "Volcan"
+            ]
+          }
+        ]
+      },
+      {
+        "nombre": "Calentamiento de Agua",
+        "dispositivos": [
+          {
+            "nombre": "Termotanque y Calefon",
+            "marcas": [
+              "Ariston", "BGH", "Coppens", "Domec", "Escorial", 
+              "Eskabe", "Fogata", "Gorenje", "Heineken", "Longvie", 
+              "Orbis", "Peabody", "Philco", "Rheem", "Rinnai", 
+              "Saiar", "Señorial", "Sherman", "Termonic", "Volcan"
+            ]
+          }
+        ]
+      },
+      {
+        "nombre": "Baño, Sanitarios y Cuidado Personal",
+        "dispositivos": [
+          {
+            "nombre": "Inodoros y Bidets",
+            "marcas": [
+              "Aqualia", "Ariel", "Ariston", "Bari", "Capea", 
+              "Deca", "Derpla", "Duravit", "Eskabe", "Ferrum", 
+              "Incepa", "Jacuzzi", "Laufen", "Peirano", "Piazza", 
+              "Pringles", "Roca", "Stone", "Toto", "Vasser"
+            ]
+          },
+          {
+            "nombre": "Duchas y Sistemas Termostaticos",
+            "marcas": [
+              "Aqualia", "Ariston", "Clever", "Decca", "Delta", 
+              "FV (Franz Viegener)", "Genebre", "Gheco", "Grohe", "Hansgrohe", 
+              "Hydra", "Hydro", "Kohler", "Moen", "Peirano", 
+              "Piazza", "Roca", "Stiebel Eltron", "Teka", "Vasser"
+            ]
+          },
+          {
+            "nombre": "Lavamanos y Bachas",
+            "marcas": [
+              "Aqualia", "Bari", "Capea", "Deca", "Derpla", 
+              "Duravit", "Ferrum", "FV", "Incepa", "Kohler", 
+              "Laufen", "Marmolina", "Peirano", "Piazza", "Pringles", 
+              "Roca", "Schneider", "Stone", "Toto", "Vasser"
+            ]
+          },
+          {
+            "nombre": "Extractores de Aire de Baño",
+            "marcas": [
+              "Axel", "Cata", "Gralf", "Hydra", "Janis", 
+              "KDK", "Liliana", "Maraldi", "Martin y Martin", "Panasonic", 
+              "Protalia", "S&P (Soler & Palau)", "Sodeca", "Spar", "TST", 
+              "Vents", "Ventrex", "Vornado", "Winco", "Yelmo"
+            ]
+          },
+          {
+            "nombre": "Secadores de Pelo y Estilizadores",
+            "marcas": [
+              "Atma", "Babyliss", "Bellissima", "Braun", "Conair", 
+              "Dyson", "GA.MA Italy", "Heineken", "Oster", "Panasonic", 
+              "Peabody", "Philco", "Philips", "Remington", "Revlon", 
+              "Smartlife", "Taiff", "Ultracomb", "Valera", "Yelmo"
+            ]
+          },
+          {
+            "nombre": "Balanzas Digitales (Smart / Bioimpedancia)",
+            "marcas": [
+              "Aspen", "Atma", "Beurer", "Braun", "Etekcity", 
+              "Fitbit", "Garmin", "Huawei", "Kretz", "Liliana", 
+              "Omron", "Oster", "Peabody", "Philco", "Philips", 
+              "Renpho", "San Up", "Silfab", "Smartlife", "Xiaomi"
+            ]
+          },
+          {
+            "nombre": "Hidromasajes y Jacuzzis",
+            "marcas": [
+              "Aquaglass", "Buckingham", "Calypso", "Duravit", "Ferrum", 
+              "Hydra", "Idro", "Intex", "Jacuzzi", "Kohler", 
+              "Laufen", "Motorarg", "Niza", "Plomyplas", "Roca", 
+              "Sanycer", "Schneider", "Toto", "Vulcano", "Zenith"
+            ]
+          }
+        ]
+      },
+      {
+        "nombre": "Linea Gris (Informatica y Conectividad)",
+        "dispositivos": [
+          {
+            "nombre": "PCs de Escritorio y Notebooks",
+            "marcas": [
+              "Acer", "Apple", "ASUS", "Bangho", "Corsair", 
+              "CX", "Dell", "Enova", "Exo", "Gigabyte", 
+              "HP", "Huawei", "Lenovo", "MSI", "Noblex", 
+              "Overtech", "Positivo BGH", "Razer", "Samsung", "Xiaomi"
+            ]
+          },
+          {
+            "nombre": "Consolas de Videojuegos y Streaming",
+            "marcas": [
+              "Amazon Fire", "Apple TV", "Asus ROG", "Atari", "Dynacom", 
+              "Google Chromecast", "Lenovo Legion", "Microsoft Xbox", "MSI Claw", "Nintendo", 
+              "Nvidia Shield", "PC Engine", "Razer", "Realme", "Roku", 
+              "Sega", "Sony PlayStation", "Steam Valve", "Xiaomi Mi Box"
+            ]
+          },
+          {
+            "nombre": "Impresoras Domesticas y Multifuncion",
+            "marcas": [
+              "Anycubic", "Brother", "Canon", "Creality", "Dremel", 
+              "Epson", "FlashForge", "Fujifilm", "Hellbot", "HP", 
+              "Instax", "Kodak", "Lexmark", "Pantun", "Polaroid", 
+              "Prusa", "Ricoh", "Samsung", "Trilab", "Xerox"
+            ]
+          },
+          {
+            "nombre": "Servidores Domesticos y Almacenamiento NAS",
+            "marcas": [
+              "Adata", "Asustor", "Buffalo", "Crucial", "Dell", 
+              "Drobo", "HP", "Kingston", "Lenovo", "Netgear", 
+              "Pny", "QNAP", "Samsung", "SanDisk", "Seagate", 
+              "Synology", "Verbatim", "Western Digital"
+            ]
+          },
+          {
+            "nombre": "Dispositivos de Red y Routers Wi-Fi",
+            "marcas": [
+              "Arris", "Asus", "Belkin", "Cisco Small Business", "D-Link", 
+              "Eero", "Google Nest", "Huawei", "Kozumi", "Linksys", 
+              "Mercusys", "MikroTik", "Motorola", "Nisuta", "Tenda", 
+              "TP-Link", "Ubiquiti", "Xiaomi", "Zyxel"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+{
+  "infraestructura_oficina_argentina": {
+    "entorno": "Oficina",
+    "descripcion": "Productividad corporativa, infraestructura IT, conectividad, climatización y sanidad en espacios de trabajo",
+    "categorias": [
+      {
+        "nombre": "Linea Blanca de Oficina",
+        "dispositivos": [
+          {
+            "nombre": "Frigobar y Exhibidoras",
+            "marcas": [
+              "Atma", "Bambi", "Briket", "Drean", "Gafa", 
+              "Hisense", "Inelro", "Klimatic", "Koh-i-noor", "LG", 
+              "Midea", "Nebba", "Patrick", "Philco", "Samsung", 
+              "Siam", "Smartlife", "Teora", "Vondom", "Whirlpool"
+            ]
+          },
+          {
+            "nombre": "Cafeteras Profesionales y de Capsula",
+            "marcas": [
+              "Atma", "Bialetti", "Black and Decker", "DeLonghi", "Dolce Gusto", 
+              "Electrolux", "Gaggia", "Hamilton Beach", "Krups", "Liliana", 
+              "Moulinex", "Nespresso", "Oster", "Peabody", "Philips", 
+              "Saeco", "Sanremo", "Smartlife", "Ultracomb", "Winco"
+            ]
+          }
+        ]
+      },
+      {
+        "nombre": "Linea Marron de Oficina",
+        "dispositivos": [
+          {
+            "nombre": "Monitores y Pantallas de Proyeccion",
+            "marcas": [
+              "Acer", "AOC", "ASUS", "Bangho", "BenQ", 
+              "Dell", "Enova", "Epson", "Gigabyte", "HP", 
+              "Hisense", "Lenovo", "LG", "MSI", "Noblex", 
+              "Philips", "Samsung", "Sony", "TCL", "ViewSonic"
+            ]
+          },
+          {
+            "nombre": "Sistemas de Videoconferencia y Audio",
+            "marcas": [
+              "Anker", "Aver", "Bose", "Cisco", "Jabra", 
+              "JBL", "Logitech", "Microsoft", "Owl Labs", "Panacom", 
+              "Philips", "Poly", "Redragon", "Sennheiser", "Shure", 
+              "Sony", "Stromberg", "Thonet and Vander", "Yamaha", "Yealink"
+            ]
+          }
+        ]
+      },
+      {
+        "nombre": "Climatizacion de Oficina",
+        "dispositivos": [
+          {
+            "nombre": "Aire Acondicionado (Cassette y Baja Silueta)",
+            "marcas": [
+              "BGH", "Carrier", "Coventry", "Daikin", "Electra", 
+              "Fedders", "Fujitsu VRF", "Hisense", "Hitachi", "LG", 
+              "Midea", "Mitsubishi Electric", "Noblex", "Philco", "Samsung", 
+              "Sansei", "Siam", "Surrey", "TCL", "York"
+            ]
+          },
+          {
+            "nombre": "Calefaccion Corporativa y Paneles",
+            "marcas": [
+              "Atma", "Axel", "BGH", "Calden", "Coppens", 
+              "DeLonghi", "Domec", "EcoLogic", "Emege", "Eskabe", 
+              "Klarstein", "Liliana", "Longvie", "Magic Click", "Orbis", 
+              "Peabody", "Philco", "Rheem", "Tromen", "Volcan"
+            ]
+          }
+        ]
+      },
+      {
+        "nombre": "Calentamiento de Agua de Oficina",
+        "dispositivos": [
+          {
+            "nombre": "Dispensers de Agua y Termotanques",
+            "marcas": [
+              "Ariston", "Atma", "BGH", "Columbia", "Domec", 
+              "Escorial", "Eskabe", "Humma", "Longvie", "Orbis", 
+              "Peabody", "Philco", "Rheem", "Saiar", "Señorial", 
+              "Sherman", "Spar", "Tabureto", "Volcan", "Waterplast"
+            ]
+          }
+        ]
+      },
+      {
+        "nombre": "Baño y Sanidad de Oficina",
+        "dispositivos": [
+          {
+            "nombre": "Secadores de Manos por Aire (Soplado de Alta Velocidad)",
+            "marcas": [
+              "Axel", "Cata", "Dyson", "Excel Dryer", "Hydra", 
+              "In拋部", "Jofel", "Klarstein", "Liliana", "Maraldi", 
+              "Mediclinics", "Oster", "Panasonic", "Peabody", "San Up", 
+              "Smartlife", "Spar", "Valera", "Vents", "Winco"
+            ]
+          },
+          {
+            "nombre": "Dispensers Automaticos (Jabón y Sanitizante con Sensor)",
+            "marcas": [
+              "Biork", "Care", "Dany", "Elite", "Gojo", 
+              "Gralf", "Humma", "Jofel", "Kimberly-Clark", "Kretz", 
+              "Mediclinics", "Nisuta", "Peabody", "Philco", "Purell", 
+              "Rubbermaid", "Smartlife", "Tork", "Vasser", "Xiaomi"
+            ]
+          },
+          {
+            "nombre": "Inodoros, Mingitorios y Fluxometros con Sensor",
+            "marcas": [
+              "Aqualia", "Bari", "Capea", "Deca", "Derpla", 
+              "Duravit", "Ferrum", "FV (Fluxómetros)", "Incepa", "Jacuzzi", 
+              "Laufen", "Peirano", "Piazza", "Pringles", "Roca", 
+              "Sloan", "Stone", "Toto", "Vasser", "Zenith"
+            ]
+          },
+          {
+            "nombre": "Griferias Electronicas con Sensor de Presencia",
+            "marcas": [
+              "Aqualia", "Clever", "Decca", "Delta", "FV (Franz Viegener)", 
+              "Genebre", "Gheco", "Grohe", "Hansgrohe", "Hydra", 
+              "Hydro", "Kohler", "Moen", "Peirano", "Piazza", 
+              "Roca", "Sloan", "Teka", "Toto", "Vasser"
+            ]
+          },
+          {
+            "nombre": "Extractores de Aire Industriales y Forzadores",
+            "marcas": [
+              "Axel Industrial", "Cata", "Gralf", "Hydra", "KDK", 
+              "Maraldi", "Martin y Martin", "Panasonic Industry", "Protalia", "S&P (Soler & Palau)", 
+              "Sodeca", "Spar", "Systemair", "TST", "Ventrex", 
+              "Vents", "Vornado", "Winco", "Yelmo", "Zilmet"
+            ]
+          }
+        ]
+      },
+      {
+        "nombre": "Linea Gris (Informatica y Conectividad)",
+        "dispositivos": [
+          {
+            "nombre": "PCs Corporativas y Thin Clients",
+            "marcas": [
+              "Acer TravelMate", "Aopen", "Apple Mac", "ASUS ExpertBook", "Bangho Professional", 
+              "CX Corp", "Dell Latitude", "Elo Touch", "Exo Corporate", "Fujitsu", 
+              "Gigabyte Brix", "HP ProDesk", "Huawei MateBook", "Intel NUC", "Lenovo ThinkPad", 
+              "Microsoft Surface", "MSI Pro", "Positivo BGH Pro", "Samsung Galaxy Book", "Toshiba Dynabook"
+            ]
+          },
+          {
+            "nombre": "Impresoras Corporativas y Fotocopiadoras",
+            "marcas": [
+              "Bixolon", "Brother", "Canon ImageRunner", "Citizen", "Epson EcoTank", 
+              "Fujitsu Scanners", "Honeywell", "HP LaserJet", "Kodak Alaris", "Konica Minolta", 
+              "Kyocera", "Lexmark", "Pantun Pro", "Ricoh", "Sato", 
+              "Sharp", "Star Micronics", "Toshiba", "Xerox", "Zebra"
+            ]
+          },
+          {
+            "nombre": "Servidores Empresariales y Racks",
+            "marcas": [
+              "APC (Schneider Electric)", "Asustor Lockerstor", "Bangho ProServer", "Cisco UCS", "Dell PowerEdge", 
+              "Eaton", "Exo Server", "Fujitsu Primergy", "Furukawa", "HPE (Hewlett Packard Enterprise)", 
+              "Huawei FusionServer", "IBM", "Inspur", "Lenovo ThinkSystem", "Oracle", 
+              "QNAP Enterprise", "Supermicro", "Synology RackStation", "Tripp Lite", "Vertiv"
+            ]
+          },
+          {
+            "nombre": "Dispositivos de Red y Switches Administrables",
+            "marcas": [
+              "Allied Telesis", "Aruba (HPE)", "Check Point", "Cisco Systems", "D-Link Business", 
+              "Extreme Networks", "Fortinet", "Huawei Enterprise", "Juniper Networks", "Linksys Business", 
+              "MikroTik", "Netgear Insight", "Palo Alto Networks", "Ruckus (CommScope)", "SonicWall", 
+              "Sophos", "TP-Link Omada", "Ubiquiti UniFi", "WatchGuard", "Zyxel Networks"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+{
+  "infraestructura_casa_campo_argentina": {
+    "entorno": "Casa de Campo",
+    "descripcion": "Equipamiento optimizado para entornos rurales, alta capacidad, gas envasado, sistemas solares/12V, conectividad de largo alcance y sanidad rural",
+    "categorias": [
+      {
+        "nombre": "Linea Blanca de Campo",
+        "dispositivos": [
+          {
+            "nombre": "Freezer Horizontal y Heladeras Duales/12V",
+            "marcas": [
+              "Bambi", "Briket", "Columbia", "Drean", "Eslabón de Lujo", 
+              "Frare", "Gafa", "Hisense", "Inelro", "Koh-i-noor", 
+              "Lacar", "LG", "Midea", "Patrick", "Philco", 
+              "Samsung", "Siam", "Teora", "Vondom", "Whirlpool"
+            ]
+          },
+          {
+            "nombre": "Cocinas Multi-gas y Semi-Industriales",
+            "marcas": [
+              "Bosch", "Domec", "Drean", "Escorial", "Florencia", 
+              "Forza", "Llanos", "Longvie", "Macom", "Martiri", 
+              "Morelli", "Orbis", "Patrick", "Philco", "Siam", 
+              "Smeg", "Sol Real", "Signo de Oro", "Volcan", "Whirlpool"
+            ]
+          }
+        ]
+      },
+      {
+        "nombre": "Linea Marron de Campo",
+        "dispositivos": [
+          {
+            "nombre": "Smart TV y Receptores Satelitales",
+            "marcas": [
+              "Admiral", "BGH", "Enova", "Hisense", "Hitachi", 
+              "JVC", "LG", "Noblex", "Philco", "Philips", 
+              "Quint", "RCA", "Samsung", "Sansei", "Sanyo", 
+              "Skyworth", "Sony", "TCL", "Telefunken", "Xiaomi"
+            ]
+          },
+          {
+            "nombre": "Radios Multibanda y Audio a Bateria",
+            "marcas": [
+              "Aiwa", "Bose", "Daewoo", "Edifier", "JBL", 
+              "Ken Brown", "LG", "Logitech", "Noblex", "Panacom", 
+              "Philco", "Philips", "Pioneer", "Siam", "Sony", 
+              "Stromberg", "Suono", "Thonet and Vander", "Winco", "Xiaomi"
+            ]
+          }
+        ]
+      },
+      {
+        "nombre": "Climatizacion de Campo",
+        "dispositivos": [
+          {
+            "nombre": "Estufas a Leña y Salamandras Eficientes",
+            "marcas": [
+              "Amesti", "Axel", "Bosca", "Calden", "Coppens", 
+              "Domec", "Emege", "Eskabe", "Filfer", "Herom", 
+              "Istilart", "Lepanto", "Liliana", "Longvie", "Ñuke", 
+              "Orbis", "Peabody", "Qutral", "Tromen", "Volcan"
+            ]
+          },
+          {
+            "nombre": "Aires Inverter y Ventiladores de Techo",
+            "marcas": [
+              "Atma", "Axel", "BGH", "Carrier", "Hisense", 
+              "Hitachi", "LG", "Martin y Martin", "Midea", "Noblex", 
+              "Philco", "Protalia", "Samsung", "Sansei", "Siam", 
+              "Surrey", "TCL", "Whirlpool", "Yelmo", "York"
+            ]
+          }
+        ]
+      },
+      {
+        "nombre": "Calentamiento de Agua de Campo",
+        "dispositivos": [
+          {
+            "nombre": "Termotanques Solares y Multi-gas",
+            "marcas": [
+              "Ariston", "Ciroc", "Coppens", "Domec", "Enertik", 
+              "Escorial", "Eskabe", "Eter Sol", "Goodenergy", "Heliotropo", 
+              "Longvie", "Orbis", "Rheem", "Saiar", "Señorial", 
+              "Sherman", "Soleventus", "Splendid", "Termonic", "Volcan"
+            ]
+          }
+        ]
+      },
+      {
+        "nombre": "Baño y Sanidad de Campo",
+        "dispositivos": [
+          {
+            "nombre": "Inodoros y Bidets (Bajo Consumo Hidrico / Aptos Pozo)",
+            "marcas": [
+              "Aqualia", "Ariel", "Ariston", "Bari", "Capea", 
+              "Deca", "Derpla", "Duravit", "Eskabe", "Ferrum", 
+              "Incepa", "Jacuzzi", "Laufen", "Peirano", "Piazza", 
+              "Pringles", "Roca", "Stone", "Toto", "Vasser"
+            ]
+          },
+          {
+            "nombre": "Duchas y Sistemas Termostaticos (Aptos Baja Presion)",
+            "marcas": [
+              "Aqualia", "Ariston", "Clever", "Decca", "Delta", 
+              "FV (Franz Viegener)", "Genebre", "Gheco", "Grohe", "Hansgrohe", 
+              "Hydra", "Hydro", "Kohler", "Moen", "Peirano", 
+              "Piazza", "Roca", "Stiebel Eltron", "Teka", "Vasser"
+            ]
+          },
+          {
+            "nombre": "Bombas Presurizadoras y Elevadoras de Agua",
+            "marcas": [
+              "Czerweny", "Ebara", "Flotec", "Grundfos", "Ksb", 
+              "Leo", "L घटा", "Lowara", "Motorarg", "Pedrollo", 
+              "Pluvius", "Rowa", "Salmson", "Shurflo", "Speroni", 
+              "Tromen", "Turbion", "Udaondo", "Vulcano", "Zenit"
+            ]
+          },
+          {
+            "nombre": "Extractores de Aire de Baño (Bajo Consumo / 12V)",
+            "marcas": [
+              "Axel", "Cata", "Gralf", "Hydra", "Janis", 
+              "KDK", "Liliana", "Maraldi", "Martin y Martin", "Panasonic", 
+              "Protalia", "S&P (Soler & Palau)", "Sodeca", "Spar", "TST", 
+              "Vents", "Ventrex", "Vornado", "Winco", "Yelmo"
+            ]
+          },
+          {
+            "nombre": "Balanzas Digitales y Secadores (Eficiencia Energetica A+)",
+            "marcas": [
+              "Aspen", "Atma", "Babyliss", "Bellissima", "Beurer", 
+              "Braun", "GA.MA Italy", "Huawei", "Liliana", "Omron", 
+              "Oster", "Peabody", "Philco", "Philips", "Remington", 
+              "Revlon", "Silfab", "Smartlife", "Ultracomb", "Xiaomi"
+            ]
+          }
+        ]
+      },
+      {
+        "nombre": "Linea Gris (Informatica y Conectividad)",
+        "dispositivos": [
+          {
+            "nombre": "Notebooks Robustas y Equipos Bajo Consumo",
+            "marcas": [
+              "Acer Enduro", "Apple MacBook Air", "ASUS TUF", "Bangho Robust", "CX Advance", 
+              "Dell Rugged", "Enova Notebooks", "Exo Mobile", "Getac", "Gigabyte", 
+              "HP EliteBook", "Intel NUC", "Lenovo ThinkPad", "Microsoft Surface Go", "Panasonic Toughbook", 
+              "Positivo BGH", "Raspberry Pi", "Samsung Galaxy Tab", "Xiaomi Pad", "Lenovo Yoga"
+            ]
+          },
+          {
+            "nombre": "Impresoras de Sistema Continuo",
+            "marcas": [
+              "Anycubic", "Bixolon", "Brother InkBenefit", "Canon MegaTank", "Canon Selphy", 
+              "Creality", "Epson EcoTank", "Fujifilm", "Hellbot", "Honeywell", 
+              "HP Smart Tank", "HP Sprocket", "Kodak", "Lexmark", "Pantun", 
+              "Polaroid", "Ricoh", "Samsung", "Xerox", "Zebra"
+            ]
+          },
+          {
+            "nombre": "Micro-Servers y Almacenamiento Local",
+            "marcas": [
+              "Adata Durapro", "Asustor", "Buffalo", "Crucial", "Dell PowerEdge", 
+              "HPE MicroServer", "Kingston Rugged", "LaCie", "Lenovo ThinkSystem", "Netgear", 
+              "QNAP", "Samsung T-Series", "SanDisk Pro", "Seagate Expansion", "Silicon Power", 
+              "Synology", "TerraMaster", "Toshiba Canvio", "Verbatim", "Western Digital"
+            ]
+          },
+          {
+            "nombre": "Antenas Satelitales y Routers 4G Rurales",
+            "marcas": [
+              "Alcatel", "Amphenol", "Asus Rogue", "Cisco Small Business", "D-Link", 
+              "Elsys", "Huawei Rural", "Kozumi", "LigoWave", "Linksys", 
+              "Mercusys", "MikroTik LTE", "Netgear Nighthawk", "Nisuta", "Starlink SpaceX", 
+              "Tenda High Power", "TP-Link 4G", "Ubiquiti AirMax", "ZTE", "Zyxel"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+{
+  "infraestructura_industrial_argentina": {
+    "entorno": "Industria",
+    "descripcion": "Equipamiento pesado Heavy Duty, uso continuo 24/7, conexiones trifásicas, normas de seguridad biológica e infraestructura de planta",
+    "categorias": [
+      {
+        "nombre": "Linea Blanca Industrial / Gastronomia",
+        "dispositivos": [
+          {
+            "nombre": "Refrigeracion Comercial y Camaras Frigorificas",
+            "marcas": [
+              "Arneg", "Blaybar", "Bonano", "Briket", "Carrier Transicold", 
+              "Costan", "Criotec", "Fogel", "Frare", "Frimont", 
+              "Friomax", "Inelro", "Koxka", "Metalfrio", "Midea Commercial", 
+              "Nebba", "Refriworld", "Teora", "Thermo King", "Zilmet"
+            ]
+          },
+          {
+            "nombre": "Cocinas Industriales y Hornos Convectores",
+            "marcas": [
+              "Anvil", "Bari", "Blodgett", "Fineschi", "Forza", 
+              "Gapan", "Garland", "Frymaster", "Hobart", "Ingenieria Gastronomica", 
+              "L gastronomic", "Macom", "Marva", "Morelli", "Pauna", 
+              "Rational", "Santini", "Sol Real", "Tecno calor", "UnoX"
+            ]
+          }
+        ]
+      },
+      {
+        "nombre": "Linea Marron Industrial / Señalizacion",
+        "dispositivos": [
+          {
+            "nombre": "Pantallas de Carteleria y Monitores Industriales",
+            "marcas": [
+              "Acer Pro", "Advantech", "AOC Professional", "Asus ProArt", "Barco", 
+              "BenQ Pro", "Christie", "Dell Commercial", "Elo Touch", "HP Enterprise", 
+              "LG Information Display", "Lenovo ThinkVision", "NEC Display", "Panasonic Industry", "Philips Signage", 
+              "Planar", "Samsung Business", "Sharp Pro", "Sony Professional", "TCL Commercial"
+            ]
+          },
+          {
+            "nombre": "Sistemas de Audio Evacuacion y Megafonia IP",
+            "marcas": [
+              "Audac", "Axis Communications", "B&S Audio", "Behringer Pro", "Biamp", 
+              "Bose Professional", "Bosch Security", "Crown", "Electro-Voice", "Harman Pro", 
+              "Inter-M", "JBL Commercial", "Mackie", "Peavey Commercial", "QSC", 
+              "RCF", "Sennheiser Business", "Shure Pro", "TOA Electronics", "Yamaha Commercial"
+            ]
+          }
+        ]
+      },
+      {
+        "nombre": "Climatizacion Industrial (HVAC)",
+        "dispositivos": [
+          {
+            "nombre": "Sistemas VRF, Chillers y Roof-Tops",
+            "marcas": [
+              "BGH Eco Smart", "Carrier", "Clivet", "Daikin", "Dunham-Bush", 
+              "Fujitsu VRF", "Gree Commercial", "Haier HVAC", "Hitachi Industrial", "Lennox", 
+              "LG Chiller", "McQuay", "Midea Commercial", "Mitsubishi Electric", "Rhoss", 
+              "Samsung DVM", "Surrey Industrial", "Toshiba HVAC", "Trane", "York"
+            ]
+          },
+          {
+            "nombre": "Cortinas de Aire y Ventilacion Axial",
+            "marcas": [
+              "Axel Industrial", "Blauberg", "Casals", "Cata", "Dynair", 
+              "Eurovent", "FlaktGroup", "Gralf", "Kruger", "Maico", 
+              "Martin y Martin", "Ostberg", "Protalia", "S&P (Soler & Palau)", "Sodeca", 
+              "Systemair", "Ventrex", "Vents", "Zilmet"
+            ]
+          }
+        ]
+      },
+      {
+        "nombre": "Calentamiento de Agua / Vapor Industrial",
+        "dispositivos": [
+          {
+            "nombre": "Calderas Humotubulares y Termotanques Alta Potencia",
+            "marcas": [
+              "A.O. Smith Pro", "Ariston High Power", "Baxi Industrial", "Bosch Thermotechnology", "Bradford White", 
+              "Caldaia", "Eskabe Max", "Fimaco", "Fontanet", "Lochinvar", 
+              "Longvie Comercial", "Navien Industrial", "Orbis Pro", "Rheem Commercial", "Rinnai Commercial", 
+              "Salcor Cavi", "Spiro", "Vaillant Group", "Viessmann", "Zilmet"
+            ]
+          }
+        ]
+      },
+      {
+        "nombre": "Sanidad, Vestuarios y Seguridad de Planta",
+        "dispositivos": [
+          {
+            "nombre": "Lavamanos de Accionamiento Mecanico (Pedal / Rodilla) y Bachas de Inox",
+            "marcas": [
+              "Abrasivos Argentinos", "Bari", "Blaybar", "Briket", "Escorial", 
+              "Ferrum", "Fineschi", "Forza", "FV", "Ingenieria Gastronomica", 
+              "L gastronomic", "Macom", "Morelli", "Piazza", "Pringles", 
+              "Roca", "Sol Real", "Tecno calor", "Vasser", "Zenith"
+            ]
+          },
+          {
+            "nombre": "Duchas de Emergencia y Estaciones Lavaojos de Seguridad",
+            "marcas": [
+              "Aero", "Aqualia", "Ariston", "Clever", "Delta", 
+              "Encon", "FV", "Haws", "Hughes Safety", "Hydra", 
+              "Hydro", "Kohler", "Melisam", "Moen", "Piazza", 
+              "Roca", "Sloan", "Speakman", "Vasser", "Zenith"
+            ]
+          },
+          {
+            "nombre": "Secadores de Manos Antivandalicos (Uso Intensivo)",
+            "marcas": [
+              "Axel Industrial", "Cata", "Dyson", "Excel Dryer", "Hydra", 
+              "Inelro", "Jofel", "Klarstein", "Liliana", "Maraldi", 
+              "Mediclinics", "Oster", "Panasonic", "Peabody", "San Up", 
+              "Smartlife", "Spar", "Valera", "Vents", "Winco"
+            ]
+          },
+          {
+            "nombre": "Inodoros, Mingitorios y Fluxometros Pesados (Aptos Alto Transito)",
+            "marcas": [
+              "Aqualia", "Bari", "Capea", "Deca", "Derpla", 
+              "Duravit", "Ferrum", "FV (Fluxómetros)", "Incepa", "Jacuzzi", 
+              "Laufen", "Peirano", "Piazza", "Pringles", "Roca", 
+              "Sloan", "Stone", "Toto", "Vasser", "Zenith"
+            ]
+          },
+          {
+            "nombre": "Estaciones de Sanitizacion y Dispensers Industriales IP",
+            "marcas": [
+              "Biork", "Care", "Dany", "Elite", "Gojo", 
+              "Gralf", "Humma", "Jofel", "Kimberly-Clark", "Kretz", 
+              "Mediclinics", "Nisuta", "Peabody", "Philco", "Purell", 
+              "Rubbermaid", "Smartlife", "Tork", "Vasser", "Xiaomi"
+            ]
+          }
+        ]
+      },
+      {
+        "nombre": "Linea Gris (Informatica y Conectividad Industrial)",
+        "dispositivos": [
+          {
+            "nombre": "Computadoras Industriales (IPC) y Paneles Tactiles IP65",
+            "marcas": [
+              "Aaeon (Asus)", "Advantech", "Axiomtek", "B&R Industrial", "Beckhoff", 
+              "Dell Rugged", "Elo Touch Industrial", "Getac", "Honeywell Industrial", "IEI Integration", 
+              "Kontron", "Moxa", "Nexcom", "Omron", "Pepperl+Fuchs", 
+              "Rockwell Automation", "Schneider Electric Magelis", "Siemens Simatic IPC", "Winmate", "Yokogawa"
+            ]
+          },
+          {
+            "nombre": "Impresoras Industriales de Codigo de Barras",
+            "marcas": [
+              "Brady", "Brother Industrial", "Canon Production", "Citizen Systems", "Dominó", 
+              "Dymo Industrial", "Epson LabelWorks", "Fujitsu Industrial", "Honeywell Datamax", "Konica Minolta Accurio", 
+              "Kyocera TaskAlfa", "Lexmark Enterprise", "Printronix", "Ricoh Industrial", "Sato", 
+              "Toshiba TEC", "TSC Auto ID", "Xerox Production", "Zebra Technologies"
+            ]
+          },
+          {
+            "nombre": "Servidores de Planta Rugerizados y Racks IP",
+            "marcas": [
+              "APC NetShelter IP", "Advantech Server", "Cisco UCS Industrial", "Dell PowerEdge XR", "Eaton Industrial", 
+              "Furukawa Industrial", "HPE Edgeline", "Hirschmann", "IBM Power Systems", "Lenovo ThinkSystem SE350", 
+              "Moxa Industrial Server", "Oracle Engineered", "QNAP Industrial NAS", "Rittal Racks", "Schneider Electric", 
+              "Siemens Simatic Server", "Supermicro IoT", "Synology RackStation", "Tripp Lite Industrial", "Vertiv Knurr"
+            ]
+          },
+          {
+            "nombre": "Switches Industriales DIN-Rail y Firewalls OT",
+            "marcas": [
+              "Antaira Technologies", "Check Point Quantum Rugged", "Cisco Industrial IE", "Claroty", "Fortinet FortiGate Rugged", 
+              "Hirschmann Belden", "MikroTik Industrial", "Moxa", "Nozomi Networks", "Omron Industrial", 
+              "Phoenix Contact", "Red Lion Controls", "Rockwell Allen-Bradley", "Schneider ConneXium", "Siemens Scalance", 
+              "Trend Micro TXOne", "Ubiquiti EdgeMax", "Weidmüller", "Westermo", "Yokogawa"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+

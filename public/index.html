@@ -130,6 +130,14 @@
         .fm-code-inputs input { width: 44px; height: 52px; text-align: center; font-size: 1.3rem; font-weight: 700; border: 2px solid #2a2a3e; border-radius: 8px; background: #0f0f1a; color: #e0e0e0; }
         .fm-code-inputs input:focus { border-color: #B8922E; outline: none; }
 
+        .fm-flow-row { display: flex; gap: 0.75rem; margin-bottom: 0; }
+        .fm-flow-row .fm-select { flex: 1; min-width: 0; }
+        .fm-field-step { display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 6px; font-size: 0.72rem; color: #d4af37; font-weight: 600; letter-spacing: 0.3px; }
+        .fm-field-step .fm-step-num { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; background: #B8922E; color: #0f0f1a; font-size: 0.7rem; font-weight: 800; box-shadow: 0 0 8px rgba(184,146,46,0.5); }
+        .fm-field-step svg { opacity: 0.5; }
+        .fm-flow-arrow { display: flex; align-items: center; justify-content: center; margin: 0.2rem 0; }
+        .fm-flow-arrow svg { color: #B8922E; opacity: 0.4; }
+
         .fm-publish-btn { background: #B8922E; color: #0f0f1a; border: none; height: 40px; padding: 0 1.25rem; border-radius: 8px; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: background 0.2s; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
         .fm-publish-btn:hover { background: #d4af37; }
 
@@ -168,6 +176,7 @@
                     <option value="">Seleccioná una acción...</option>
                     <option value="aprender">Aprender</option>
                     <option value="reparar">Reparar / Arreglar</option>
+                    <option value="instalar">Instalar</option>
                     <option value="mantener">Mantener</option>
                     <option value="mejorar">Mejorar</option>
                     <option value="disenar">Diseñar</option>
@@ -181,14 +190,43 @@
             </div>
 
             <div class="fm-card">
-                <label for="descripcion">2. ¿Qué? — contanos con detalle</label>
-                <p style="color:#666;font-size:0.75rem;margin:0 0 0.5rem;">Cuanto más completo, mejor el resultado. Mencioná la acción, el objeto, la marca y si sabés el modelo.</p>
-                <textarea id="descripcion" class="fm-textarea" placeholder="Ej: reparar heladera Gafa modelo GF-420, zona Villa Urquiza, urgente" rows="3"></textarea>
-                <div class="fm-error" id="descripcionError"></div>
+                <label>2. ¿Qué artefacto o equipo?</label>
+                <div class="fm-row" style="margin-bottom:0;">
+                    <div style="flex:1;min-width:0;">
+                        <select id="fAreaDevice" class="fm-select" required>
+                            <option value="">Entorno...</option>
+                        </select>
+                        <div class="fm-field-step"><span class="fm-step-num">1</span> Elegí entorno<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                        <select id="fCategoryDevice" class="fm-select" disabled>
+                            <option value="">Categoría...</option>
+                        </select>
+                        <div class="fm-field-step"><span class="fm-step-num">2</span> Elegí categoría<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+                    </div>
+                </div>
+                <div class="fm-row" style="margin-top:0.5rem;margin-bottom:0;">
+                    <div style="flex:1;min-width:0;">
+                        <select id="fDevice" class="fm-select" disabled>
+                            <option value="">Equipo...</option>
+                        </select>
+                        <div class="fm-field-step"><span class="fm-step-num">3</span> Elegí equipo<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                        <select id="fModel" class="fm-select" disabled>
+                            <option value="">Marca...</option>
+                        </select>
+                        <div class="fm-field-step"><span class="fm-step-num">4</span> Elegí marca ✓</div>
+                    </div>
+                </div>
             </div>
 
             <div class="fm-card">
-                <label>3. ¿Dónde lo necesitás?</label>
+                <label for="provincia">3. ¿Dónde lo necesitás?</label>
+                <button type="button" id="useMyLocation" class="fm-btn fm-btn-block" style="height:38px;font-size:0.8rem;text-transform:none;letter-spacing:0;margin-bottom:0.5rem;background:#1a1a2e;border:1px solid #B8922E;color:#B8922E;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg>
+                    Usar ubicación del dispositivo
+                </button>
                 <div class="fm-row">
                     <select id="provincia" class="fm-select">
                         <option value="">Provincia / CABA...</option>
@@ -243,23 +281,23 @@
                 <p>Primero contanos quién sos para crear tu aviso.</p>
                 <div class="fm-card" style="padding:0;border:none;background:none;">
                     <div style="margin-bottom:1rem;">
-                        <label>Email</label>
+                        <label for="preregEmail">Email</label>
                         <input type="email" id="preregEmail" class="fm-input" placeholder="tucorreo@ejemplo.com">
                     </div>
                     <div style="margin-bottom:1rem;">
-                        <label>Teléfono</label>
+                        <label for="preregPhone">Teléfono</label>
                         <input type="tel" id="preregPhone" class="fm-input" placeholder="11 2345-6789">
                     </div>
                     <div style="margin-bottom:1rem;">
-                        <label>Fecha de nacimiento</label>
+                        <label for="preregDob">Fecha de nacimiento</label>
                         <input type="date" id="preregDob" class="fm-input">
                     </div>
                     <div style="margin-bottom:1rem;">
-                        <label>Contraseña</label>
+                        <label for="preregPassword">Contraseña</label>
                         <input type="password" id="preregPassword" class="fm-input" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
                     </div>
                     <div style="margin-bottom:1rem;">
-                        <label>Confirmar contraseña</label>
+                        <label for="preregPasswordConfirm">Confirmar contraseña</label>
                         <input type="password" id="preregPasswordConfirm" class="fm-input" placeholder="Repetí la contraseña" autocomplete="new-password">
                     </div>
                     <div class="fm-error" id="preregStep1Error"></div>
@@ -272,12 +310,12 @@
                 <h2>Verificá tu teléfono</h2>
                 <p>Ingresá el código de 6 dígitos que enviamos por SMS.</p>
                 <div class="fm-code-inputs">
-                    <input type="text" maxlength="1" class="fm-code-digit" data-idx="0">
-                    <input type="text" maxlength="1" class="fm-code-digit" data-idx="1">
-                    <input type="text" maxlength="1" class="fm-code-digit" data-idx="2">
-                    <input type="text" maxlength="1" class="fm-code-digit" data-idx="3">
-                    <input type="text" maxlength="1" class="fm-code-digit" data-idx="4">
-                    <input type="text" maxlength="1" class="fm-code-digit" data-idx="5">
+                    <input type="text" maxlength="1" class="fm-code-digit" data-idx="0" id="smsCode0" name="smsCode0">
+                    <input type="text" maxlength="1" class="fm-code-digit" data-idx="1" id="smsCode1" name="smsCode1">
+                    <input type="text" maxlength="1" class="fm-code-digit" data-idx="2" id="smsCode2" name="smsCode2">
+                    <input type="text" maxlength="1" class="fm-code-digit" data-idx="3" id="smsCode3" name="smsCode3">
+                    <input type="text" maxlength="1" class="fm-code-digit" data-idx="4" id="smsCode4" name="smsCode4">
+                    <input type="text" maxlength="1" class="fm-code-digit" data-idx="5" id="smsCode5" name="smsCode5">
                 </div>
                 <div class="fm-error" id="preregStep2Error"></div>
                 <button class="fm-btn fm-btn-block" id="preregStep2Btn" disabled>Verificar</button>
@@ -300,12 +338,12 @@
                 <h2>Código de email</h2>
                 <p>Enviamos un código a tu email. Ingresalo abajo.</p>
                 <div class="fm-code-inputs">
-                    <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="0">
-                    <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="1">
-                    <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="2">
-                    <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="3">
-                    <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="4">
-                    <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="5">
+                    <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="0" id="emailCode0" name="emailCode0">
+                    <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="1" id="emailCode1" name="emailCode1">
+                    <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="2" id="emailCode2" name="emailCode2">
+                    <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="3" id="emailCode3" name="emailCode3">
+                    <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="4" id="emailCode4" name="emailCode4">
+                    <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="5" id="emailCode5" name="emailCode5">
                 </div>
                 <div class="fm-error" id="preregStep3bError"></div>
                 <button class="fm-btn fm-btn-block" id="preregStep3bBtn" disabled>Verificar</button>
@@ -512,37 +550,77 @@
         const needForm = document.getElementById('needForm');
         const searchBtn = document.getElementById('searchBtn');
         const resultsArea = document.getElementById('resultsArea');
-        const descripcionInput = document.getElementById('descripcion');
-        const descripcionError = document.getElementById('descripcionError');
         const publishBtn = document.getElementById('publishBtn');
         const registerCTA = document.getElementById('registerCTA');
         const preregModal = document.getElementById('preregModal');
         const preregClose = document.getElementById('preregClose');
 
-        // Live inappropriate filter + auto-fill on textarea input
-        descripcionInput.addEventListener('input', function() {
-            const found = hasInappropriateWords(this.value);
-            if (found) {
-                descripcionError.textContent = `La palabra "${found}" no es apropiada para este sitio. Describí tu necesidad profesional.`;
-                descripcionError.style.display = 'block';
-            } else {
-                descripcionError.style.display = 'none';
-            }
-            // Auto-fill from description
-            if (this.value.trim().length >= 4) {
-                const result = window.kurateAutoFill({
-                    descripcion: this.value,
-                    accionSel: document.getElementById('accion'),
-                    provinciaSel: provinciaSel,
-                    ciudadSel: ciudadSel,
-                    urgenciaSel: document.getElementById('urgencia')
-                });
-                // Show province prompt if needed
-                if (result.errors && result.errors.length > 0) {
-                    const provErr = result.errors.find(e => e.field === 'provincia');
-                    if (provErr) window.kurateShowProvincePrompt(provErr.message);
-                }
-            }
+        // --- Device cascading dropdowns ---
+        const fAreaDevice = document.getElementById('fAreaDevice');
+        const fCategoryDevice = document.getElementById('fCategoryDevice');
+        const fDevice = document.getElementById('fDevice');
+        const fModel = document.getElementById('fModel');
+        let servicesTree = {};
+
+        fetch('/api/v1/services').then(r => r.json()).then(resp => {
+            servicesTree = resp.data || {};
+            const areas = Object.keys(servicesTree);
+            areas.forEach(a => {
+                const opt = document.createElement('option');
+                opt.value = a; opt.textContent = a;
+                fAreaDevice.appendChild(opt);
+            });
+        });
+
+        fAreaDevice.addEventListener('change', function() {
+            const area = this.value;
+            fCategoryDevice.innerHTML = '<option value="">Categoría...</option>';
+            fDevice.innerHTML = '<option value="">Equipo...</option>';
+            fDevice.disabled = true;
+            if (!area) { fCategoryDevice.disabled = true; return; }
+            const cats = Object.keys(servicesTree[area] || {});
+            cats.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c; opt.textContent = c;
+                fCategoryDevice.appendChild(opt);
+            });
+            fCategoryDevice.disabled = false;
+        });
+
+        fCategoryDevice.addEventListener('change', function() {
+            const area = fAreaDevice.value;
+            const cat = this.value;
+            fDevice.innerHTML = '<option value="">Equipo...</option>';
+            fModel.innerHTML = '<option value="">Marca...</option>';
+            fModel.disabled = true;
+            if (!cat) { fDevice.disabled = true; return; }
+            const devices = (servicesTree[area] && servicesTree[area][cat]) || [];
+            devices.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.path; opt.textContent = d.device;
+                fDevice.appendChild(opt);
+            });
+            fDevice.disabled = false;
+        });
+
+        fDevice.addEventListener('change', function() {
+            const path = this.value;
+            fModel.innerHTML = '<option value="">Cargando marcas...</option>';
+            fModel.disabled = true;
+            if (!path) { fModel.innerHTML = '<option value="">Marca...</option>'; return; }
+            fetch('/api/v1/services/brands?path=' + encodeURIComponent(path))
+                .then(r => r.json())
+                .then(resp => {
+                    const brands = resp.data || [];
+                    fModel.innerHTML = '<option value="">Marca (opcional)...</option>';
+                    brands.forEach(b => {
+                        const opt = document.createElement('option');
+                        opt.value = b; opt.textContent = b;
+                        fModel.appendChild(opt);
+                    });
+                    fModel.disabled = false;
+                })
+                .catch(() => { fModel.innerHTML = '<option value="">Marca...</option>'; fModel.disabled = true; });
         });
 
         // Load provinces
@@ -566,6 +644,66 @@
                     (data || []).forEach(c => { ciudadSel.innerHTML += `<option value="${c.name}">${c.name}</option>`; });
                     ciudadSel.disabled = false;
                 });
+        });
+
+        // --- Geolocation button ---
+        document.getElementById('useMyLocation').addEventListener('click', function() {
+            var btn = this;
+            if (!navigator.geolocation) { alert('Tu navegador no soporta geolocalización.'); return; }
+            btn.disabled = true;
+            btn.textContent = 'Obteniendo ubicación...';
+            navigator.geolocation.getCurrentPosition(function(pos) {
+                var lat = pos.coords.latitude;
+                var lng = pos.coords.longitude;
+                fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&accept-language=es')
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        var addr = data.address || {};
+                        // Map Nominatim results to our province names
+                        var state = (addr.state || '').trim();
+                        var city = (addr.city || addr.town || addr.village || addr.suburb || addr.neighbourhood || '').trim();
+                        // Map common Nominatim state names to our dropdown values
+                        var provMap = {
+                            'Ciudad Autónoma de Buenos Aires': 'CABA',
+                            'Buenos Aires': 'Buenos Aires',
+                            'Provincia de Buenos Aires': 'Buenos Aires'
+                        };
+                        var provName = provMap[state] || state;
+                        // Find matching province option
+                        var provOpts = Array.from(provinciaSel.options);
+                        var matchProv = provOpts.find(function(o) {
+                            return o.value.toLowerCase() === provName.toLowerCase();
+                        });
+                        if (matchProv) {
+                            provinciaSel.value = matchProv.value;
+                            provinciaSel.dispatchEvent(new Event('change'));
+                            // Wait for cities to load, then select city
+                            setTimeout(function() {
+                                if (city) {
+                                    var cityOpts = Array.from(ciudadSel.options);
+                                    var matchCity = cityOpts.find(function(o) {
+                                        return o.value.toLowerCase() === city.toLowerCase();
+                                    });
+                                    if (matchCity) {
+                                        ciudadSel.value = matchCity.value;
+                                    }
+                                }
+                                btn.textContent = 'Ubicación cargada ✓';
+                                setTimeout(function() { btn.disabled = false; btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg> Usar ubicación del dispositivo'; }, 2000);
+                            }, 1500);
+                        } else {
+                            btn.textContent = 'No se pudo ubicar';
+                            setTimeout(function() { btn.disabled = false; btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg> Usar ubicación del dispositivo'; }, 2000);
+                        }
+                    })
+                    .catch(function() {
+                        btn.textContent = 'Error al obtener ubicación';
+                        setTimeout(function() { btn.disabled = false; btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg> Usar ubicación del dispositivo'; }, 2000);
+                    });
+            }, function() {
+                btn.textContent = 'Permiso denegado';
+                setTimeout(function() { btn.disabled = false; btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg> Usar ubicación del dispositivo'; }, 2000);
+            }, { enableHighAccuracy: false, timeout: 10000 });
         });
 
         function showNoResultsPopup(suggestions) {
@@ -610,16 +748,18 @@
 
         function executeSearch() {
             var accion = document.getElementById('accion').value;
-            var descripcion = descripcionInput.value.trim();
-            var provincia = provinciaSel.value;
-            var ciudad = ciudadSel.value;
+            var servicePath = fDevice.value || '';
+            var brand = fModel.value || '';
+            var province = provinciaSel.value;
+            var city = ciudadSel.value;
             var urgencia = document.getElementById('urgencia').value;
             resultsArea.style.display = 'block';
             resultsArea.innerHTML = '<div class="fm-loading">' + _t('Buscando profesionales...') + '</div>';
             searchBtn.disabled = true;
-            var params = new URLSearchParams({ accion: accion, descripcion: descripcion, urgencia: urgencia });
-            if (provincia) params.set('provincia', provincia);
-            if (ciudad) params.set('ciudad', ciudad);
+            var params = new URLSearchParams({ accion: accion, service: servicePath, urgencia: urgencia });
+            if (brand) params.set('brand', brand);
+            if (province) params.set('provincia', province);
+            if (city) params.set('ciudad', city);
             if (needForm.getAttribute('data-relax-model')) { params.set('relaxModel', '1'); needForm.removeAttribute('data-relax-model'); }
             if (needForm.getAttribute('data-relax-brand')) { params.set('relaxBrand', '1'); needForm.removeAttribute('data-relax-brand'); }
             fetch('/api/v1/professionals/search?' + params)
@@ -679,36 +819,8 @@
 
         needForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            const descripcion = descripcionInput.value.trim();
             if (!document.getElementById('accion').value) { alert('Seleccioná qué necesitás hacer'); return; }
-            if (!descripcion) { alert('Contanos con más detalle qué necesitás'); return; }
-            const found = hasInappropriateWords(descripcion);
-            if (found) {
-                descripcionError.textContent = 'La palabra "' + found + '" no es apropiada para este sitio.';
-                descripcionError.style.display = 'block';
-                descripcionInput.focus();
-                return;
-            }
-            const autoResult = window.kurateAutoFill({ descripcion, accionSel: document.getElementById('accion'), provinciaSel, ciudadSel, urgenciaSel: document.getElementById('urgencia') });
-            if (autoResult.errors && autoResult.errors.length > 0) {
-                const provErr = autoResult.errors.find(e => e.field === 'provincia');
-                if (provErr) { window.kurateShowProvincePrompt(provErr.message); return; }
-            }
-            if (autoResult.fuzzyQueue && autoResult.fuzzyQueue.length > 0) {
-                processFuzzyQueue(autoResult.fuzzyQueue, 0, descripcion);
-                return;
-            }
-            const skipModel = needForm.getAttribute('data-skip-model');
-            needForm.removeAttribute('data-skip-model');
-            const objects = autoResult.objects || [];
-            if (objects.length > 0 && !skipModel) {
-                if (!autoResult.detectedBrand) {
-                    window.kurateShowBrandPrompt(objects[0]); return;
-                }
-                if (!autoResult.hasModel) {
-                    window.kurateShowModelPrompt(objects[0], autoResult.detectedBrand); return;
-                }
-            }
+            if (!fDevice.value) { alert('Seleccioná un equipo o artefacto'); return; }
             executeSearch();
         });
 

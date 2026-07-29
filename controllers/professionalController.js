@@ -193,48 +193,84 @@ exports.getProfessionals = async (req, res, next) => {
 // @access  Public
 exports.searchProfessionals = async (req, res, next) => {
   try {
-    const { accion, descripcion, provincia, ciudad, urgencia, relaxBrand, relaxModel } = req.query;
-
-    const badWord = hasInappropriateWords(descripcion);
-    if (badWord) {
-      return res.status(400).json([]);
-    }
+    const { accion, descripcion, service, model, brand, provincia, ciudad, urgencia, relaxBrand, relaxModel } = req.query;
 
     const baseFilter = mergePublicListingFilter();
-    baseFilter['professionalProfile.alias'] = { $exists: true, $ne: '' };
-
-    const matchedCats = matchCategories(descripcion);
-    const keywords = extractKeywords(descripcion);
-
-    // AI layer: optional, 2s timeout, falls back to taxonomy
-    const aiResult = await analyzeQuery(descripcion);
-    const plan = buildSearchPlan(aiResult, { accion, provincia, ciudad, urgencia });
+    // Match professionals with either professionalProfile or hogarProfile
+    delete baseFilter['professionalProfile.isExposed'];
+    baseFilter.$or = [
+      { 'professionalProfile.alias': { $exists: true, $ne: '' } },
+      { 'hogarProfile.firstName': { $exists: true, $ne: '' } }
+    ];
 
     if (provincia && provincia.trim()) {
-      baseFilter['professionalProfile.location.province'] = { $regex: provincia.trim(), $options: 'i' };
+      baseFilter.$and = baseFilter.$and || [];
+      baseFilter.$and.push({
+        $or: [
+          { 'professionalProfile.location.province': { $regex: provincia.trim(), $options: 'i' } },
+          { 'hogarProfile.address.province': { $regex: provincia.trim(), $options: 'i' } }
+        ]
+      });
     }
     if (ciudad && ciudad.trim()) {
-      baseFilter['professionalProfile.location.city'] = { $regex: ciudad.trim(), $options: 'i' };
+      baseFilter.$and = baseFilter.$and || [];
+      baseFilter.$and.push({
+        $or: [
+          { 'professionalProfile.location.city': { $regex: ciudad.trim(), $options: 'i' } },
+          { 'hogarProfile.address.city': { $regex: ciudad.trim(), $options: 'i' } }
+        ]
+      });
     }
 
-    // Collect unique search terms: taxonomy + keywords + AI synonyms
+    // New: structured service search from dropdowns
     const searchTerms = new Set();
-    for (const c of matchedCats) {
-      if (c.service) searchTerms.add(c.service.toLowerCase());
-      if (c.subcategory) searchTerms.add(c.subcategory.toLowerCase());
-      if (c.category) searchTerms.add(c.category.toLowerCase());
+    let patterns = [];
+    let plan = { brand: '', model: '', keywords: [], serviceCategory: '' };
+
+    if (service && service.trim()) {
+      // service path like "hogar/linea-blanca/heladera-con-freezer"
+      const parts = service.split('/');
+      parts.forEach(p => { if (p) searchTerms.add(p.replace(/-/g, ' ')); });
+      patterns = [...searchTerms].map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+
+      // Match services in either professionalProfile or hogarProfile
+      const svcRegex = service.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const nameRegex = parts[parts.length - 1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      baseFilter.$and = baseFilter.$and || [];
+      baseFilter.$and.push({
+        $or: [
+          { 'professionalProfile.services': { $elemMatch: { $or: [
+            { path: { $regex: `^${svcRegex}` } },
+            { name: { $regex: nameRegex, $options: 'i' } }
+          ]}}},
+          { 'hogarProfile.services': { $elemMatch: { $or: [
+            { path: { $regex: `^${svcRegex}` } },
+            { name: { $regex: nameRegex, $options: 'i' } }
+          ]}}}
+        ]
+      });
     }
-    for (const k of keywords) {
-      if (k.length > 2) searchTerms.add(k);
+
+    // Legacy: still support descripcion if provided
+    if (descripcion && descripcion.trim() && !service) {
+      const badWord = hasInappropriateWords(descripcion);
+      if (badWord) return res.status(400).json([]);
+
+      const matchedCats = matchCategories(descripcion);
+      const keywords = extractKeywords(descripcion);
+      const aiResult = await analyzeQuery(descripcion);
+      plan = buildSearchPlan(aiResult, { accion, provincia, ciudad, urgencia });
+
+      for (const c of matchedCats) {
+        if (c.service) searchTerms.add(c.service.toLowerCase());
+        if (c.subcategory) searchTerms.add(c.subcategory.toLowerCase());
+        if (c.category) searchTerms.add(c.category.toLowerCase());
+      }
+      for (const k of keywords) { if (k.length > 2) searchTerms.add(k); }
+      if (plan.keywords.length) { for (const k of plan.keywords) searchTerms.add(k.toLowerCase()); }
+      if (plan.serviceCategory) searchTerms.add(plan.serviceCategory.toLowerCase());
+      patterns = [...searchTerms].map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
     }
-    // AI-enhanced terms
-    if (plan.keywords.length) {
-      for (const k of plan.keywords) searchTerms.add(k.toLowerCase());
-    }
-    if (plan.serviceCategory) {
-      searchTerms.add(plan.serviceCategory.toLowerCase());
-    }
-    const patterns = [...searchTerms].map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
 
     // Fetch base results and score in JS for maintainability
     let professionals = await User.find(baseFilter)
@@ -245,6 +281,17 @@ exports.searchProfessionals = async (req, res, next) => {
         'professionalProfile.services': 1,
         'professionalProfile.photos': 1,
         'professionalProfile.whatsappNumber': 1,
+        'hogarProfile.firstName': 1,
+        'hogarProfile.lastName': 1,
+        'hogarProfile.bio': 1,
+        'hogarProfile.area': 1,
+        'hogarProfile.action': 1,
+        'hogarProfile.services': 1,
+        'hogarProfile.photos': 1,
+        'hogarProfile.availability': 1,
+        'hogarProfile.address': 1,
+        'hogarProfile.contact': 1,
+        name: 1,
         email: 1
       })
       .lean()
@@ -260,18 +307,32 @@ exports.searchProfessionals = async (req, res, next) => {
     for (const r of ratingAgg) ratingMap[r._id.toString()] = Math.round(r.avg * 10) / 10;
     for (const p of professionals) p._averageRating = ratingMap[p._id.toString()] || 0;
 
+    // Global brand/model queries (used in scoring + suggestions)
+    const brandQuery = (relaxBrand ? '' : (brand || plan.brand || '')).toLowerCase().trim();
+    const modelQuery = (relaxModel ? '' : (model || plan.model || '')).toLowerCase().trim();
+
     // Score each professional — calculate match percentage (0-100)
     // Required: at least brand OR model must match (if user provided one)
     const scored = professionals.map(p => {
-      const pp = p.professionalProfile || {};
-      const svcs = Array.isArray(pp.services) ? pp.services.map(s => s.toLowerCase()) : [];
+      // Support both professionalProfile and hogarProfile — prefer one with services
+      let pp = p.professionalProfile || p.hogarProfile || {};
+      const ppHasServices = Array.isArray(pp.services) && pp.services.length > 0;
+      if (!ppHasServices && p.hogarProfile && Array.isArray(p.hogarProfile.services) && p.hogarProfile.services.length > 0) {
+        pp = p.hogarProfile;
+      }
+      const svcs = Array.isArray(pp.services) ? pp.services.map(s => typeof s === 'string' ? s.toLowerCase() : (s.name || s.path || '').toLowerCase()) : [];
       const bio = (pp.bio || '').toLowerCase();
+      const photos = Array.isArray(pp.photos) ? pp.photos : [];
+      const firstPhoto = photos.length ? photos[0] : null;
+      const avgRating = p._averageRating || 0;
       let score = 0;
       let maxPossible = 0;
 
-      // Weights for percentage calculation
+      // Weights for percentage calculation — only count relevant weights
       const W_ACTION = 5, W_URGENCY = 5, W_SERVICE = 30, W_BIO = 10, W_BRAND = 25, W_MODEL = 25, W_LOCATION = 15;
-      maxPossible = W_ACTION + W_URGENCY + W_SERVICE + W_BIO + W_BRAND + W_MODEL + W_LOCATION;
+      const usedBrand = !!brandQuery;
+      const usedModel = !!modelQuery;
+      maxPossible = W_ACTION + W_URGENCY + W_SERVICE + W_BIO + W_LOCATION + (usedBrand ? W_BRAND : 0) + (usedModel ? W_MODEL : 0);
 
       if (accion) score += W_ACTION;
       if (urgencia) score += W_URGENCY;
@@ -296,7 +357,6 @@ exports.searchProfessionals = async (req, res, next) => {
       }
 
       // Brand match (exact or fuzzy in bio/services) — skipped if relaxBrand
-      const brandQuery = relaxBrand ? '' : (plan.brand || '').toLowerCase().trim();
       let brandMatched = false;
       if (brandQuery) {
         const inBio = bio.includes(brandQuery);
@@ -305,7 +365,6 @@ exports.searchProfessionals = async (req, res, next) => {
       }
 
       // Model match (exact or fuzzy in bio/services) — skipped if relaxModel
-      const modelQuery = relaxModel ? '' : (plan.model || '').toLowerCase().trim();
       let modelMatched = false;
       if (modelQuery) {
         const inBio = bio.includes(modelQuery);
@@ -313,15 +372,14 @@ exports.searchProfessionals = async (req, res, next) => {
         if (inBio || inServices) { score += W_MODEL; modelMatched = true; }
       }
 
-      // Location boost
+      // Location boost — binary: 100% match or 0%
       if (provincia && pp.location?.province) {
-        if (pp.location.province.toLowerCase().includes(provincia.toLowerCase())) score += W_LOCATION;
+        if (pp.location.province.toLowerCase() === provincia.toLowerCase()) score += W_LOCATION;
       }
       if (ciudad && pp.location?.city) {
-        if (pp.location.city.toLowerCase().includes(ciudad.toLowerCase())) score += Math.floor(W_LOCATION / 2);
+        if (pp.location.city.toLowerCase() === ciudad.toLowerCase()) score += Math.floor(W_LOCATION / 2);
       }
 
-      const avgRating = p._averageRating || 0;
       score += Math.round(avgRating * 2);
 
       // Calculate percentage
@@ -335,12 +393,12 @@ exports.searchProfessionals = async (req, res, next) => {
         id: p._id,
         score,
         pct,
-        alias: pp.alias || 'Profesional',
+        alias: pp.alias || [pp.firstName, pp.lastName].filter(Boolean).join(' ') || 'Profesional',
         bio: pp.bio || '',
-        location: [pp.location?.city, pp.location?.province].filter(Boolean).join(', '),
+        location: [pp.location?.city || pp.address?.city, pp.location?.province || pp.address?.province].filter(Boolean).join(', '),
         services: svcs,
         photo: firstPhoto,
-        phone: pp.whatsappNumber || null,
+        phone: pp.whatsappNumber || pp.contact?.phone || null,
         email: p.email,
         averageRating: avgRating,
         brandMatched,

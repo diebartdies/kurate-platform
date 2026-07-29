@@ -142,6 +142,22 @@
     return results;
   }
 
+  // Returns first exact match (case-insensitive) from dropdown, or null
+  function findExactDropdownMatch(words, selectEl) {
+    if (!selectEl || selectEl.disabled) return null;
+    const options = Array.from(selectEl.options).slice(1);
+    for (const w of words) {
+      for (const opt of options) {
+        const val = opt.value.toLowerCase();
+        const txt = opt.textContent.toLowerCase();
+        if (w === val || w === txt) {
+          return { value: opt.value, label: opt.textContent.trim() };
+        }
+      }
+    }
+    return null;
+  }
+
   function parseWords(text) {
     if (!text) return [];
     return text
@@ -333,87 +349,96 @@
     const filled = {};
     const fuzzyQueue = [];
 
-    // 1. Auto-fill action (exact first, then fuzzy)
-    let actionMatch = matchAction(words);
-    if (actionMatch && accionSel) {
-      accionSel.value = actionMatch;
-      filled.accion = actionMatch;
-    } else {
-      const fAction = fuzzyMatchAction(words);
-      if (fAction && accionSel) {
-        const label = accionSel.options[accionSel.selectedIndex]?.textContent?.trim() || fAction.value;
-        fuzzyQueue.push({
-          type: 'accion',
-          word: fAction.word,
-          candidates: [{ label: fAction.value, value: fAction.value }],
-          fieldLabel: 'acción'
-        });
+    // 1. Auto-fill action — only if dropdown is empty
+    if (accionSel && !accionSel.value) {
+      let actionMatch = matchAction(words);
+      if (actionMatch) {
+        accionSel.value = actionMatch;
+        filled.accion = actionMatch;
+      } else {
+        const fAction = fuzzyMatchAction(words);
+        if (fAction) {
+          fuzzyQueue.push({
+            type: 'accion',
+            word: fAction.word,
+            candidates: [{ label: fAction.value, value: fAction.value }],
+            fieldLabel: 'acción'
+          });
+        }
       }
     }
 
-    // 2. Auto-fill urgency (exact first, then fuzzy)
-    let urgencyMatch = matchUrgency(words);
-    if (urgencyMatch && urgenciaSel) {
-      urgenciaSel.value = urgencyMatch;
-      filled.urgencia = urgencyMatch;
-    } else {
-      const fUrgency = fuzzyMatchUrgency(words);
-      if (fUrgency && urgenciaSel) {
-        fuzzyQueue.push({
-          type: 'urgencia',
-          word: fUrgency.word,
-          candidates: [{ label: fUrgency.value.replace('-', ' '), value: fUrgency.value }],
-          fieldLabel: 'urgencia'
-        });
+    // 2. Auto-fill urgency — only if dropdown is empty
+    if (urgenciaSel && !urgenciaSel.value) {
+      let urgencyMatch = matchUrgency(words);
+      if (urgencyMatch) {
+        urgenciaSel.value = urgencyMatch;
+        filled.urgencia = urgencyMatch;
+      } else {
+        const fUrgency = fuzzyMatchUrgency(words);
+        if (fUrgency) {
+          fuzzyQueue.push({
+            type: 'urgencia',
+            word: fUrgency.word,
+            candidates: [{ label: fUrgency.value.replace('-', ' '), value: fUrgency.value }],
+            fieldLabel: 'urgencia'
+          });
+        }
       }
     }
 
-    // 3. Auto-fill province (exact first, then fuzzy)
-    let provMatch = matchDropdown(words, provinciaSel);
-    if (provMatch && provinciaSel) {
-      provinciaSel.value = provMatch;
-      filled.provincia = provMatch;
-      provinciaSel.dispatchEvent(new Event('change'));
-    } else {
-      // Collect all fuzzy matches across all words
-      const allProvMatches = [];
-      for (const w of words) {
-        const matches = fuzzyMatchDropdownAll(w, provinciaSel, 2);
-        matches.forEach(m => {
-          if (!allProvMatches.find(e => e.value === m.value)) allProvMatches.push(m);
-        });
-      }
-      if (allProvMatches.length > 0 && provinciaSel) {
-        fuzzyQueue.push({
-          type: 'provincia',
-          word: allProvMatches[0].label,
-          candidates: allProvMatches.slice(0, 3),
-          fieldLabel: 'provincia'
-        });
+    // 3. Auto-fill province — only if dropdown is empty
+    if (provinciaSel && !provinciaSel.value) {
+      let provMatch = matchDropdown(words, provinciaSel);
+      let provExact = findExactDropdownMatch(words, provinciaSel);
+      if (!provMatch && provExact) provMatch = provExact.value;
+      if (provMatch) {
+        provinciaSel.value = typeof provMatch === 'string' ? provMatch : provMatch.value;
+        filled.provincia = typeof provMatch === 'string' ? provMatch : provMatch.value;
+        provinciaSel.dispatchEvent(new Event('change'));
+      } else {
+        const allProvMatches = [];
+        for (const w of words) {
+          const matches = fuzzyMatchDropdownAll(w, provinciaSel, 2);
+          matches.forEach(m => {
+            if (!allProvMatches.find(e => e.value === m.value)) allProvMatches.push(m);
+          });
+        }
+        if (allProvMatches.length > 0) {
+          fuzzyQueue.push({
+            type: 'provincia',
+            word: allProvMatches[0].label,
+            candidates: allProvMatches.slice(0, 3),
+            fieldLabel: 'provincia'
+          });
+        }
       }
     }
 
     // Delay city match to let dropdown populate
     setTimeout(() => {
-      let cityMatch = matchDropdown(words, ciudadSel);
-      if (cityMatch && ciudadSel && !ciudadSel.disabled) {
-        ciudadSel.value = cityMatch;
-        filled.ciudad = cityMatch;
-      } else if (!ciudadSel.disabled) {
-        const allCityMatches = [];
-        for (const w of words) {
-          const matches = fuzzyMatchDropdownAll(w, ciudadSel, 2);
-          matches.forEach(m => {
-            if (!allCityMatches.find(e => e.value === m.value)) allCityMatches.push(m);
-          });
-        }
-        if (allCityMatches.length > 0) {
-          fuzzyQueue.push({
-            type: 'ciudad',
-            word: allCityMatches[0].label,
-            candidates: allCityMatches.slice(0, 3),
-            fieldLabel: 'ciudad'
-          });
+      if (ciudadSel && !ciudadSel.value && !ciudadSel.disabled) {
+        let cityMatch = matchDropdown(words, ciudadSel);
+        if (!cityMatch) cityMatch = findExactDropdownMatch(words, ciudadSel);
+        if (cityMatch) {
+          ciudadSel.value = typeof cityMatch === 'string' ? cityMatch : cityMatch.value;
+          filled.ciudad = typeof cityMatch === 'string' ? cityMatch : cityMatch.value;
+        } else {
+          const allCityMatches = [];
+          for (const w of words) {
+            const matches = fuzzyMatchDropdownAll(w, ciudadSel, 2);
+            matches.forEach(m => {
+              if (!allCityMatches.find(e => e.value === m.value)) allCityMatches.push(m);
+            });
+          }
+          if (allCityMatches.length > 0) {
+            fuzzyQueue.push({
+              type: 'ciudad',
+              word: allCityMatches[0].label,
+              candidates: allCityMatches.slice(0, 3),
+              fieldLabel: 'ciudad'
+            });
+          }
         }
       }
     }, 500);

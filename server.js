@@ -284,6 +284,37 @@ app.get('/api/v1/locations/provinces', locationController.getProvinces);
 app.get('/api/v1/locations/provinces/name/:provinceName/cities', locationController.getCitiesByProvinceName);
 app.get('/api/v1/locations/provinces/:provinceId/sublocations', locationController.getSublocations);
 
+// Services tree routes (Public)
+const Service = require('./models/Service');
+app.get('/api/v1/services', async (req, res) => {
+  try {
+    const { area } = req.query;
+    const filter = {};
+    if (area && area.trim()) filter.area = area.trim();
+    const services = await Service.find(filter).sort({ area: 1, category: 1, device: 1 }).lean();
+    const tree = {};
+    for (const s of services) {
+      if (!tree[s.area]) tree[s.area] = {};
+      if (!tree[s.area][s.category]) tree[s.area][s.category] = [];
+      tree[s.area][s.category].push({ device: s.device, brands: s.brands, path: s.path });
+    }
+    res.status(200).json({ success: true, data: tree });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.get('/api/v1/services/brands', async (req, res) => {
+  try {
+    const { path } = req.query;
+    if (!path) return res.status(400).json({ success: false, error: 'path required' });
+    const service = await Service.findOne({ path }).lean();
+    res.status(200).json({ success: true, data: service ? service.brands : [] });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 app.get('/api/v1/public/category-pricing', async (req, res) => {
   try {
     const adminUser = await User.findOne({ role: 'admin' });
