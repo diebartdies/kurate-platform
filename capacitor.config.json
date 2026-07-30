@@ -1,7 +1,7 @@
 {
   "appId": "com.kurate.app",
   "appName": "KuraTe",
-  "webDir": "public",
+  "webDir": "kurate-app/dist",
   "bundledWebRuntime": false,
   "server": {
     "url": "https://kurate.drsrv.net.ar",
