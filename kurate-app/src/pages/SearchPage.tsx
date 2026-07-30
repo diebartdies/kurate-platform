@@ -80,24 +80,24 @@ export default function SearchPage() {
   }, [area, category, device, brand, provincia, ciudad, doSearch]);
 
   return (
-    <div className="min-h-screen bg-[#fafafa]">
+    <div className="min-h-screen bg-[#0f0f1a]">
       {/* Header */}
-      <header className="bg-[#0f0f1a] text-white p-4 sticky top-0 z-50">
+      <header className="bg-[#1a1a2e] border-b border-[rgba(184,146,46,0.3)] p-4 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto flex items-center gap-4">
-          <h1 className="text-xl font-bold">KuraTe</h1>
+          <h1 className="text-xl font-bold text-[#B8922E]">KuraTe</h1>
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#B8922E]/60" />
             <input
               type="text"
               placeholder="Buscar técnico..."
-              className="w-full bg-white/10 border border-white/20 rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-[#e94560] transition-colors"
+              className="w-full bg-[#0f0f1a] border border-[rgba(184,146,46,0.3)] rounded-xl pl-10 pr-4 py-2 text-sm text-[#e0e0e0] focus:outline-none focus:border-[#B8922E] transition-colors"
               value={provincia}
               onChange={(e) => setProvincia(e.target.value)}
             />
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="p-2 hover:bg-white/10 rounded-xl transition-colors"
+            className="p-2 hover:bg-[rgba(184,146,46,0.1)] rounded-xl transition-colors text-[#B8922E]"
           >
             <SlidersHorizontal className="w-5 h-5" />
           </button>
@@ -113,8 +113,8 @@ export default function SearchPage() {
               onClick={() => setArea(area === a ? "" : a)}
               className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors ${
                 area === a
-                  ? "bg-[#e94560] text-white"
-                  : "bg-white text-[#0f0f1a] border border-[rgba(15,15,26,0.1)] hover:border-[#e94560]/40"
+                  ? "bg-[#B8922E] text-[#0f0f1a]"
+                  : "bg-[#1a1a2e] text-[#e0e0e0] border border-[rgba(184,146,46,0.3)] hover:border-[#B8922E]"
               }`}
             >
               {a}
@@ -124,22 +124,22 @@ export default function SearchPage() {
 
         {/* Filters Panel */}
         {showFilters && (
-          <div className="bg-white rounded-2xl p-4 mb-4 border border-[rgba(15,15,26,0.1)]">
+          <div className="bg-[#1a1a2e] rounded-2xl p-4 mb-4 border border-[rgba(184,146,46,0.3)]">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold flex items-center gap-2">
+              <h3 className="font-semibold flex items-center gap-2 text-[#D9BC6A]">
                 <SlidersHorizontal className="w-4 h-4" /> Filtros
               </h3>
-              <button onClick={() => setShowFilters(false)} className="p-1 hover:bg-gray-100 rounded-lg">
+              <button onClick={() => setShowFilters(false)} className="p-1 hover:bg-[rgba(184,146,46,0.1)] rounded-lg text-[#D9BC6A]">
                 <X className="w-4 h-4" />
               </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
-                <label className="text-xs text-[rgba(15,15,26,0.5)] mb-1 block">Categoría</label>
+                <label className="text-xs text-[#D9BC6A] mb-1 block">Categoría</label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full border border-[rgba(15,15,26,0.1)] rounded-xl px-3 py-2 text-sm"
+                  className="w-full border border-[rgba(184,146,46,0.3)] rounded-xl px-3 py-2 text-sm bg-[#0f0f1a] text-[#e0e0e0]"
                 >
                   <option value="">Todas</option>
                   {categories.map((c) => (
@@ -148,11 +148,11 @@ export default function SearchPage() {
                 </select>
               </div>
               <div>
-                <label className="text-xs text-[rgba(15,15,26,0.5)] mb-1 block">Equipo</label>
+                <label className="text-xs text-[#D9BC6A] mb-1 block">Equipo</label>
                 <select
                   value={device}
                   onChange={(e) => setDevice(e.target.value)}
-                  className="w-full border border-[rgba(15,15,26,0.1)] rounded-xl px-3 py-2 text-sm"
+                  className="w-full border border-[rgba(184,146,46,0.3)] rounded-xl px-3 py-2 text-sm bg-[#0f0f1a] text-[#e0e0e0]"
                 >
                   <option value="">Todos</option>
                   {devices.map((d) => (
@@ -161,11 +161,11 @@ export default function SearchPage() {
                 </select>
               </div>
               <div>
-                <label className="text-xs text-[rgba(15,15,26,0.5)] mb-1 block">Marca</label>
+                <label className="text-xs text-[#D9BC6A] mb-1 block">Marca</label>
                 <select
                   value={brand}
                   onChange={(e) => setBrand(e.target.value)}
-                  className="w-full border border-[rgba(15,15,26,0.1)] rounded-xl px-3 py-2 text-sm"
+                  className="w-full border border-[rgba(184,146,46,0.3)] rounded-xl px-3 py-2 text-sm bg-[#0f0f1a] text-[#e0e0e0]"
                 >
                   <option value="">Todas</option>
                   {brands.map((b) => (
@@ -180,33 +180,33 @@ export default function SearchPage() {
         {/* Quick Filters */}
         <div className="flex gap-2 mb-4 flex-wrap">
           {category && (
-            <span className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-[#e94560]/8 text-[#e94560]">
+            <span className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-[#B8922E]/15 text-[#B8922E]">
               <Wrench className="w-3 h-3" /> {category}
-              <button onClick={() => setCategory("")} className="ml-1 hover:text-[#e94560]/60">
+              <button onClick={() => setCategory("")} className="ml-1 hover:text-[#D9BC6A]">
                 <X className="w-3 h-3" />
               </button>
             </span>
           )}
           {device && (
-            <span className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-[#e94560]/8 text-[#e94560]">
+            <span className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-[#B8922E]/15 text-[#B8922E]">
               <Tag className="w-3 h-3" /> {device}
-              <button onClick={() => setDevice("")} className="ml-1 hover:text-[#e94560]/60">
+              <button onClick={() => setDevice("")} className="ml-1 hover:text-[#D9BC6A]">
                 <X className="w-3 h-3" />
               </button>
             </span>
           )}
           {brand && (
-            <span className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-[#e94560]/8 text-[#e94560]">
+            <span className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-[#B8922E]/15 text-[#B8922E]">
               <Tag className="w-3 h-3" /> {brand}
-              <button onClick={() => setBrand("")} className="ml-1 hover:text-[#e94560]/60">
+              <button onClick={() => setBrand("")} className="ml-1 hover:text-[#D9BC6A]">
                 <X className="w-3 h-3" />
               </button>
             </span>
           )}
           {provincia && (
-            <span className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-blue-50 text-blue-600">
+            <span className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-[#B8922E]/15 text-[#B8922E]">
               <MapPin className="w-3 h-3" /> {provincia}
-              <button onClick={() => setProvincia("")} className="ml-1 hover:text-blue-400">
+              <button onClick={() => setProvincia("")} className="ml-1 hover:text-[#D9BC6A]">
                 <X className="w-3 h-3" />
               </button>
             </span>
@@ -215,7 +215,7 @@ export default function SearchPage() {
 
         {/* Results */}
         {loading ? (
-          <div className="text-center py-12 text-[rgba(15,15,26,0.5)]">Buscando...</div>
+          <div className="text-center py-12 text-[#D9BC6A]">Buscando...</div>
         ) : results.length > 0 ? (
           <div className="grid gap-4">
             {results.map((r) => (

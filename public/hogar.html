@@ -216,10 +216,110 @@
       grid.appendChild(card);
     }
 
-    let currentPage = 1, currentParams = {}, hasMoreResults = false;
+    let currentPage = 1, currentParams = {}, hasMoreResults = false, isSearchMode = false;
     const PAGE_LIMIT = 12;
 
+    function getSearchParams() {
+      return new URLSearchParams(window.location.search);
+    }
+
+    function hasSearchParams() {
+      const p = getSearchParams();
+      return p.has('service') || p.has('brand') || p.has('accion') || p.has('provincia') || p.has('ciudad');
+    }
+
+    async function loadSearchResults() {
+      const grid = document.getElementById('hogarGrid');
+      const loader = document.getElementById('hogarLoader');
+      if (!grid) return;
+      isSearchMode = true;
+      grid.classList.add('hidden');
+      if (loader) { loader.style.display = 'block'; loader.textContent = 'Buscando profesionales...'; }
+      const params = getSearchParams();
+      const url = new URL(apiBase() + '/professionals/search');
+      for (const [k, v] of params.entries()) { if (v) url.searchParams.set(k, v); }
+      try {
+        const res = await fetch(url); const data = await res.json();
+        const results = data.results || data.data || [];
+        const suggestions = data.suggestions || [];
+        if (loader) loader.style.display = 'none';
+        grid.classList.remove('hidden');
+        if (results.length === 0) {
+          grid.innerHTML = '<div class="empty"><h3>Sin resultados</h3><p>Probá ampliar los filtros.</p></div>';
+          if (suggestions.length > 0) {
+            const sugHtml = suggestions.map(s => '<button class="sa-btn sa-btn--ghost" style="margin:4px;" onclick="applySuggestion(' + JSON.stringify(s.params).replace(/"/g, '&quot;') + ')">' + s.label + '</button>').join('');
+            grid.innerHTML += '<div style="grid-column:1/-1;text-align:center;margin-top:12px;"><p style="color:#aaa;margin-bottom:8px;">Sugerencias:</p>' + sugHtml + '</div>';
+          }
+          return;
+        }
+        grid.innerHTML = '';
+        var title = document.querySelector('.main-title');
+        if (title) title.textContent = results.length + ' profesional' + (results.length > 1 ? 'es' : '') + ' encontrado' + (results.length > 1 ? 's' : '');
+        results.forEach(p => renderSearchCard(grid, p));
+      } catch (err) {
+        if (loader) loader.style.display = 'none'; grid.classList.remove('hidden');
+        grid.innerHTML = '<div class="empty" style="color:#c66;">Error al buscar: ' + err.message + '</div>';
+      }
+    }
+
+    function renderSearchCard(grid, p) {
+      const card = el('div', 'hogar-card');
+      card.style.cursor = 'pointer';
+      if (p.id) card.addEventListener('click', () => { window.location.href = '/hogar-detail.html?id=' + encodeURIComponent(p.id); });
+      const imgContainer = el('div', 'treasure-img-container');
+      const img = el('img', 'treasure-img');
+      img.src = p.photo || NO_PHOTO;
+      img.alt = p.alias || 'Profesional';
+      img.loading = 'lazy';
+      img.onerror = () => { img.onerror = null; img.src = NO_PHOTO; };
+      imgContainer.appendChild(img);
+      const caption = el('div', 'treasure-caption');
+      caption.appendChild(el('span', 'treasure-caption-alias', p.alias || 'Profesional'));
+      if (p.location) caption.appendChild(el('span', 'treasure-caption-location', p.location));
+      var badges = [];
+      if (p.averageRating > 0) badges.push('★ ' + p.averageRating.toFixed(1));
+      if (p.pct != null) badges.push(p.pct + '%');
+      if (badges.length) caption.appendChild(el('span', 'treasure-caption-specialty', badges.join(' · ')));
+      imgContainer.appendChild(caption);
+      card.appendChild(imgContainer);
+      const info = el('div', '');
+      info.style.cssText = 'padding:10px 12px;';
+      if (p.brandMatched) {
+        const badge = el('span', '', 'Marca exacta');
+        badge.style.cssText = 'font-size:0.7rem;padding:2px 8px;border-radius:9999px;background:rgba(184,146,46,0.15);color:#B8922E;display:inline-block;margin-bottom:6px;';
+        info.appendChild(badge);
+      } else if (p.brandGeneric) {
+        const badge = el('span', '', 'Repara categoría');
+        badge.style.cssText = 'font-size:0.7rem;padding:2px 8px;border-radius:9999px;background:rgba(217,190,106,0.15);color:#D9BC6A;display:inline-block;margin-bottom:6px;';
+        info.appendChild(badge);
+      }
+      if (p.phone) {
+        var phoneClean = p.phone.replace(/\D/g, '');
+        var contactRow = el('div', '');
+        contactRow.style.cssText = 'display:flex;gap:8px;margin-top:6px;';
+        var waLink = el('a', '', 'WhatsApp');
+        waLink.href = 'https://wa.me/' + phoneClean;
+        waLink.target = '_blank';
+        waLink.style.cssText = 'font-size:0.75rem;color:#25D366;text-decoration:none;';
+        contactRow.appendChild(waLink);
+        var telLink = el('a', '', 'Llamar');
+        telLink.href = 'tel:' + p.phone;
+        telLink.style.cssText = 'font-size:0.75rem;color:#B8922E;text-decoration:none;';
+        contactRow.appendChild(telLink);
+        info.appendChild(contactRow);
+      }
+      card.appendChild(info);
+      grid.appendChild(card);
+    }
+
+    function applySuggestion(params) {
+      var url = new URL(window.location.href);
+      Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== '') url.searchParams.set(k, v); else url.searchParams.delete(k); });
+      window.location.href = url.toString();
+    }
+
     async function loadHogar(params = {}, append = false) {
+      if (hasSearchParams() && !append) { loadSearchResults(); return; }
       const grid = document.getElementById('hogarGrid');
       const loader = document.getElementById('hogarLoader');
       if (!grid) return;

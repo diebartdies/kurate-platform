@@ -753,47 +753,16 @@
             var province = provinciaSel.value;
             var city = ciudadSel.value;
             var urgencia = document.getElementById('urgencia').value;
-            resultsArea.style.display = 'block';
-            resultsArea.innerHTML = '<div class="fm-loading">' + _t('Buscando profesionales...') + '</div>';
-            searchBtn.disabled = true;
-            var params = new URLSearchParams({ accion: accion, service: servicePath, urgencia: urgencia });
+            var params = new URLSearchParams();
+            if (accion) params.set('accion', accion);
+            if (servicePath) params.set('service', servicePath);
             if (brand) params.set('brand', brand);
             if (province) params.set('provincia', province);
             if (city) params.set('ciudad', city);
-            if (needForm.getAttribute('data-relax-model')) { params.set('relaxModel', '1'); needForm.removeAttribute('data-relax-model'); }
-            if (needForm.getAttribute('data-relax-brand')) { params.set('relaxBrand', '1'); needForm.removeAttribute('data-relax-brand'); }
-            fetch('/api/v1/professionals/search?' + params)
-                .then(function (r) { return r.json(); })
-                .then(function (data) {
-                    searchBtn.disabled = false;
-                    var results = data.results || data;
-                    var suggestions = data.suggestions || [];
-                    if (!results || results.length === 0) {
-                        resultsArea.innerHTML = '<div class="fm-empty"><p style="font-size:1.1rem;">' + _t('No encontramos profesionales para esta búsqueda') + '</p></div>';
-                        if (suggestions.length > 0) showNoResultsPopup(suggestions);
-                        return;
-                    }
-                    var maxScore = Math.max.apply(null, results.map(function (p) { return p.score || 0; }));
-                    var html = '<div style="margin-bottom:0.75rem;color:#B8922E;font-weight:600;">' + results.length + ' ' + _t('profesional') + (results.length > 1 ? 'es' : '') + ' ' + _t('encontrado') + (results.length > 1 ? 's' : '') + '</div><div class="fm-results-grid">';
-                    results.forEach(function (p) {
-                        var pct = maxScore > 0 ? Math.round((p.score / maxScore) * 100) : 0;
-                        var barColor = pct >= 80 ? '#2ecc71' : pct >= 50 ? '#f39c12' : '#e74c3c';
-                        var phoneClean = p.phone ? p.phone.replace(/\D/g, '') : '';
-                        var aliasEsc = (p.alias || '').replace(/'/g, "\\'");
-                        html += '<div class="fm-pro-card">';
-                        html += '<div style="display:flex;justify-content:space-between;align-items:center;"><div class="fm-pro-name">' + (p.alias || _t('Profesional')) + '</div><span style="font-size:0.75rem;color:#888;">' + _t('coincide') + ' ' + pct + '%</span></div>';
-                        html += '<div style="height:4px;background:#333;border-radius:2px;margin:4px 0 8px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:' + barColor + ';border-radius:2px;"></div></div>';
-                        html += '<div class="fm-pro-badges"><span class="fm-pro-badge">\uD83D\uDEE1\uFE0F ' + _t('Verificado') + '</span><span class="fm-pro-badge">\u2B50 ' + (p.averageRating > 0 ? p.averageRating.toFixed(1) : '4.9') + ' ' + _t('valoración') + '</span></div>';
-                        html += '<div class="fm-pro-detail">' + (p.bio || '') + '</div>';
-                        if (p.location) html += '<div class="fm-pro-detail">\uD83D\uDCCD ' + p.location + '</div>';
-                        if (p.services && p.services.length > 0) html += '<div class="fm-pro-detail" style="font-size:0.8rem;color:#B8922E;">' + p.services.slice(0,3).join(' · ') + '</div>';
-                        if (phoneClean) html += '<div class="fm-pro-contact"><a href="https://wa.me/' + phoneClean + '" target="_blank" onclick="event.preventDefault();contactProfessional(\'' + phoneClean + '\',\'' + p.id + '\',\'' + aliasEsc + '\')">' + _t('Contactar por WhatsApp') + '</a></div>';
-                        html += '</div>';
-                    });
-                    html += '</div>';
-                    resultsArea.innerHTML = html;
-                })
-                .catch(function () { searchBtn.disabled = false; resultsArea.innerHTML = '<div class="fm-empty">' + _t('Error al buscar.') + '</div>'; });
+            if (urgencia) params.set('urgencia', urgencia);
+            if (needForm.getAttribute('data-relax-model')) params.set('relaxModel', '1');
+            if (needForm.getAttribute('data-relax-brand')) params.set('relaxBrand', '1');
+            window.location.href = '/hogar.html?' + params.toString();
         }
 
         function processFuzzyQueue(queue, idx, originalWord) {

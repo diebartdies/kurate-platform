@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { BadgeCheck, MapPin, Star } from "lucide-react";
+import { BadgeCheck } from "lucide-react";
 import ContactIcons from "./ContactIcons";
 import type { ProResult } from "../types";
 
@@ -12,70 +12,61 @@ export default function ProCard({ result }: ProCardProps) {
   return (
     <Link
       to={`/profesional/${p.id}`}
-      className="group block bg-white border border-[rgba(15,15,26,0.1)] rounded-3xl p-5 hover:border-[#e94560]/40 hover:shadow-[0_20px_50px_-35px_rgba(20,33,30,0.5)] transition-all duration-300 select-none"
+      className="group block hogar-card"
       aria-label={p.alias}
       data-pro-id={p.id}
       onContextMenu={(e) => e.preventDefault()}
     >
-      <div className="flex gap-4">
+      <div className="treasure-img-container">
         {p.photo ? (
           <img
             src={p.photo}
             alt={p.alias}
-            className="w-20 h-20 rounded-2xl object-cover shrink-0"
+            className="treasure-img"
+            loading="lazy"
           />
         ) : (
-          <div className="w-20 h-20 rounded-2xl bg-[#e94560]/10 shrink-0 flex items-center justify-center text-xl font-semibold text-[#e94560]">
+          <div className="treasure-img flex items-center justify-center text-4xl font-bold text-[#B8922E]">
             {p.alias?.[0]}
           </div>
         )}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <h3 className="font-semibold truncate">{p.alias}</h3>
+        <div className="treasure-caption">
+          <span className="treasure-caption-alias">
+            {p.alias}
             {!p.mustMatch && p.brandMatched && (
-              <BadgeCheck className="w-4 h-4 text-[#e94560] shrink-0" />
+              <BadgeCheck className="w-4 h-4 text-[#B8922E] inline ml-1" />
             )}
-          </div>
-          <p className="text-sm text-[rgba(15,15,26,0.55)] truncate">{p.bio}</p>
-          <div className="mt-2 flex items-center gap-4 text-xs text-[rgba(15,15,26,0.5)]">
-            <span className="flex items-center gap-1">
-              <MapPin className="w-3.5 h-3.5" />
-              {p.location || "Sin ubicación"}
+          </span>
+          {p.location && (
+            <span className="treasure-caption-location">{p.location}</span>
+          )}
+          {p.averageRating > 0 && (
+            <span className="treasure-caption-specialty">
+              ★ {p.averageRating.toFixed(1)}
             </span>
-            {p.averageRating > 0 && (
-              <span className="flex items-center gap-1">
-                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                {p.averageRating.toFixed(1)}
-              </span>
-            )}
-          </div>
+          )}
         </div>
-        {result.pct != null && (
-          <div className="text-right shrink-0">
-            <div className="text-2xl font-semibold text-[#e94560] tabular-nums">
-              {result.pct}%
-            </div>
-            <div className="text-[10px] uppercase tracking-widest text-[rgba(15,15,26,0.4)]">
-              afinidad
-            </div>
-          </div>
-        )}
       </div>
-      {result.brandMatched && (
-        <div className="mt-4 flex flex-wrap gap-2">
-          <span className="text-[11px] px-2.5 py-1 rounded-full bg-[#e94560]/8 text-[#e94560]">
-            Marca exacta
-          </span>
+      <div className="p-3">
+        <div className="flex items-center gap-2 mb-2">
+          {result.pct != null && (
+            <span className="text-sm font-bold text-[#B8922E]">
+              {result.pct}% afinidad
+            </span>
+          )}
+          {result.brandMatched && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#B8922E]/15 text-[#B8922E]">
+              Marca exacta
+            </span>
+          )}
+          {result.brandGeneric && !result.brandMatched && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-900/30 text-amber-400">
+              Repara categoría
+            </span>
+          )}
         </div>
-      )}
-      {result.brandGeneric && !result.brandMatched && (
-        <div className="mt-4 flex flex-wrap gap-2">
-          <span className="text-[11px] px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">
-            Repara esa categoría
-          </span>
-        </div>
-      )}
-      <ContactIcons phone={p.phone} email={p.email} alias={p.alias} />
+        <ContactIcons phone={p.phone} email={p.email} alias={p.alias} />
+      </div>
     </Link>
   );
 }
