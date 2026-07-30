@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { BadgeCheck, MapPin, Star } from "lucide-react";
-import { deviceLabel } from "../lib/taxonomy";
 import ContactIcons from "./ContactIcons";
 import type { ProResult } from "../types";
 
@@ -76,9 +75,6 @@ export default function ProCard({ result }: ProCardProps) {
           </span>
         </div>
       )}
-      <div className="mt-3 text-[11px] text-[rgba(15,15,26,0.4)] truncate">
-        {p.services.slice(0, 5).map(deviceLabel).join(" · ")}
-      </div>
       <ContactIcons phone={p.phone} email={p.email} alias={p.alias} />
     </Link>
   );
