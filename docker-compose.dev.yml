@@ -3,12 +3,12 @@ services:
     image: mongo:4.4
     pull_policy: if_not_present
     command: ["mongod", "--wiredTigerCacheSizeGB", "0.25", "--bind_ip_all"]
-    container_name: KuraTe_mongo
+    container_name: KuraTe_mongo_dev
     restart: unless-stopped
     ports:
-      - "27018:27017"
+      - "27019:27017"
     volumes:
-      - mongo_data:/data/db
+      - mongo_dev_data:/data/db
     healthcheck:
       test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
       interval: 10s
@@ -20,13 +20,15 @@ services:
     build:
       context: .
       args:
-        INSTALL_TWILIO: "${INSTALL_TWILIO:-1}"
-    container_name: KuraTe_app
+        INSTALL_TWILIO: "${INSTALL_TWILIO:-0}"
+    container_name: KuraTe_app_dev
     restart: unless-stopped
     env_file: .env
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - MONGO_URI=mongodb://mongo:27017/KuraTe
+    ports:
+      - "5002:5001"
     volumes:
       - ./public:/app/public
       - ./controllers:/app/controllers
@@ -41,30 +43,6 @@ services:
       mongo:
         condition: service_healthy
 
-  nginx:
-    image: nginx:alpine
-    container_name: KuraTe_nginx
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      - ./KurateCerts:/etc/nginx/certs:ro
-      - ./certbot/www:/var/www/certbot:ro
-    depends_on:
-      - app
-      - web
-
-  web:
-    build:
-      context: ./kurate-app
-    container_name: KuraTe_web
-    restart: unless-stopped
-    expose:
-      - "80"
-
 volumes:
-  mongo_data:
-    name: KuraTe_mongo_data
+  mongo_dev_data:
+    name: KuraTe_mongo_dev_data

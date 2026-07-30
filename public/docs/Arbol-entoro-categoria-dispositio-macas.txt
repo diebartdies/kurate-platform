@@ -7,12 +7,21 @@
         "nombre": "Linea Blanca",
         "dispositivos": [
           {
-            "nombre": "Heladera con Freezer",
+            "nombre": "Heladera",
             "marcas": [
               "Ariston", "Bambi", "Bosch", "Briket", "Columbia", 
               "Drean", "Electrolux", "Eslabón de Lujo", "Gafa", "Hisense", 
               "Koh-i-noor", "LG", "Midea", "Patrick", "Philco", 
               "Samsung", "Siam", "Smartlife", "Vondom", "Whirlpool"
+            ]
+          },
+          {
+            "nombre": "Freezer",
+            "marcas": [
+              "Bambi", "Briket", "Columbia", "Drean", "Electrolux", 
+              "Eslabón de Lujo", "Frate", "Gafa", "Hisense", "Inelro", 
+              "Koh-i-noor", "LG", "Midea", "Nebba", "Patrick", 
+              "Philco", "Siam", "Teora", "Vondom", "Whirlpool"
             ]
           },
           {
