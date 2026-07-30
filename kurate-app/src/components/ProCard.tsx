@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { BadgeCheck, MapPin, Star } from "lucide-react";
 import { deviceLabel } from "../lib/taxonomy";
+import ContactIcons from "./ContactIcons";
 import type { ProResult } from "../types";
 
 interface ProCardProps {
@@ -12,7 +13,10 @@ export default function ProCard({ result }: ProCardProps) {
   return (
     <Link
       to={`/profesional/${p.id}`}
-      className="group block bg-white border border-[rgba(15,15,26,0.1)] rounded-3xl p-5 hover:border-[#e94560]/40 hover:shadow-[0_20px_50px_-35px_rgba(20,33,30,0.5)] transition-all duration-300"
+      className="group block bg-white border border-[rgba(15,15,26,0.1)] rounded-3xl p-5 hover:border-[#e94560]/40 hover:shadow-[0_20px_50px_-35px_rgba(20,33,30,0.5)] transition-all duration-300 select-none"
+      aria-label={p.alias}
+      data-pro-id={p.id}
+      onContextMenu={(e) => e.preventDefault()}
     >
       <div className="flex gap-4">
         {p.photo ? (
@@ -75,6 +79,7 @@ export default function ProCard({ result }: ProCardProps) {
       <div className="mt-3 text-[11px] text-[rgba(15,15,26,0.4)] truncate">
         {p.services.slice(0, 5).map(deviceLabel).join(" · ")}
       </div>
+      <ContactIcons phone={p.phone} email={p.email} alias={p.alias} />
     </Link>
   );
 }

@@ -131,6 +131,11 @@ if ! replace_app_container; then
   replace_app_container
 fi
 
+echo "Building web (React SPA)..."
+if ! $DC build web 2>&1 | tee "$DEPLOY_DIR/.cache/docker-build-web.log"; then
+  echo "WARN: web build failed — continuing with existing image..."
+fi
+
 if ! app_resolves_mongo; then
   reconcile_stack_network
 elif ! docker logs KuraTe_app 2>&1 | tail -20 | grep -q 'MongoDB Connected'; then
@@ -146,6 +151,7 @@ recreate_nginx() {
   nginx_config_test || return 1
   docker rm -f KuraTe_nginx 2>/dev/null || true
   $DC up -d --force-recreate --pull never nginx
+  $DC up -d --pull never web
 }
 
 if docker ps -a --format '{{.Names}}' | grep -qx KuraTe_nginx; then
