@@ -12,7 +12,7 @@ const professionals = [
     headline: 'Técnico en refrigeración y línea blanca',
     bio: '20 años reparando heladeras y freezers. Service oficial Samsung y LG. Atiendo domicilios en CABA y zona norte con garantía escrita de 6 meses.',
     phone: '5491144556677',
-    province: 'Ciudad Autónoma de Buenos Aires',
+    province: 'CABA',
     city: 'Palermo',
     areas: ['hogar'],
     devices: ['heladera', 'freezer', 'lavarropas', 'aire-split'],
@@ -28,7 +28,7 @@ const professionals = [
     headline: 'Electrodomésticos y cocinas',
     bio: 'Especialista en cocinas, hornos y microondas. Trabajo con repuestos originales y presupuesto sin cargo.',
     phone: '5491133445566',
-    province: 'Ciudad Autónoma de Buenos Aires',
+    province: 'CABA',
     city: 'Caballito',
     areas: ['hogar'],
     devices: ['cocina', 'horno', 'microondas', 'campana'],
@@ -156,7 +156,7 @@ const professionals = [
     headline: 'Electricidad domiciliaria',
     bio: 'Tableros, instalaciones nuevas y certificación eléctrica. Urgencias en el día en zona sur de CABA.',
     phone: '5491199887766',
-    province: 'Ciudad Autónoma de Buenos Aires',
+    province: 'CABA',
     city: 'Barracas',
     areas: ['hogar'],
     devices: ['tablero', 'instalacion', 'calefactor'],
@@ -259,6 +259,9 @@ async function seed() {
       user.professionalProfile.quality = 'Standard';
       user.role = 'professional';
       user.accountDeletedAt = null;
+      user.verificationStatus = pro.verified ? 'approved' : 'pending';
+      user.isVerified = true;
+      user.professionalType = 'hogar';
       await user.save();
       updated++;
       console.log(`Updated: ${pro.full_name}`);
@@ -281,10 +284,13 @@ async function seed() {
           area: pro.areas[0],
           action: 'reparacion',
           address: { province: pro.province, city: pro.city },
-          contact: { phone: pro.phone }
+          contact: { phone: pro.phone, whatsapp: true, mobilePhone: pro.phone }
         } : undefined,
         emailVerified: true,
-        accountDeletedAt: null
+        accountDeletedAt: null,
+        verificationStatus: pro.verified ? 'approved' : 'pending',
+        isVerified: true,
+        professionalType: 'hogar'
       });
       created++;
       console.log(`Created: ${pro.full_name}`);

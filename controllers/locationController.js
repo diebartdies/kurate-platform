@@ -71,13 +71,8 @@ exports.getCitiesByProvinceName = async (req, res, next) => {
       return res.status(404).json([]);
     }
 
-    if (province.name === 'CABA') {
-      const neighborhoods = await Neighborhood.find({ province: province._id }).sort('name');
-      return res.status(200).json(neighborhoods.map(n => ({ name: n.name, id: n._id })));
-    } else {
-      const cities = await City.find({ province: province._id }).sort('name');
-      return res.status(200).json(cities.map(c => ({ name: c.name, id: c._id })));
-    }
+    const cities = await City.find({ province: province._id }).sort('name');
+    return res.status(200).json(cities.map(c => ({ name: c.name, id: c._id })));
   } catch (error) {
     res.status(400).json([]);
   }

@@ -26,8 +26,8 @@ export default function ProCard({ result }: ProCardProps) {
             loading="lazy"
           />
         ) : (
-          <div className="treasure-img flex items-center justify-center text-4xl font-bold text-[#B8922E]">
-            {p.alias?.[0]}
+          <div className="treasure-img flex items-center justify-center bg-[#1a1a2e]">
+            <img src="/images/reparacion.png" alt="" className="w-16 h-16 opacity-30" />
           </div>
         )}
         <div className="treasure-caption">
@@ -65,7 +65,12 @@ export default function ProCard({ result }: ProCardProps) {
             </span>
           )}
         </div>
-        <ContactIcons phone={p.phone} email={p.email} alias={p.alias} />
+        <ContactIcons
+          phone={p.phone}
+          email={p.email}
+          alias={p.alias}
+          hasWhatsApp={true}
+        />
       </div>
     </Link>
   );

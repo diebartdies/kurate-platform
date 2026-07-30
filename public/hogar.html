@@ -180,7 +180,7 @@
     const API_URL = (window.API_URL || '').replace(/\/$/, '') || '';
     function apiBase() { return API_URL ? API_URL : window.location.origin + '/api/v1'; }
     function resolvePhotoSrc(url) { return (!url || typeof url !== 'string') ? '/images/no-photo.svg' : url; }
-    const NO_PHOTO = '/images/no-photo.svg';
+    const NO_PHOTO = '/images/reparacion.png';
     function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
 
     function renderHogarCard(grid, tech) {
@@ -273,6 +273,12 @@
       img.loading = 'lazy';
       img.onerror = () => { img.onerror = null; img.src = NO_PHOTO; };
       imgContainer.appendChild(img);
+
+      const btnRow = el('div', 'contact-badge');
+      function imgBadge(src, title) { const i = el('img'); i.src = src; i.alt = title; i.title = title; i.onerror = () => { i.style.display = 'none'; }; return i; }
+      if (p.phone) btnRow.appendChild(imgBadge('/images/whatsapp.png', 'WhatsApp'));
+      if (btnRow.childElementCount) imgContainer.appendChild(btnRow);
+
       const caption = el('div', 'treasure-caption');
       caption.appendChild(el('span', 'treasure-caption-alias', p.alias || 'Profesional'));
       if (p.location) caption.appendChild(el('span', 'treasure-caption-location', p.location));
@@ -285,13 +291,13 @@
       const info = el('div', '');
       info.style.cssText = 'padding:10px 12px;';
       if (p.brandMatched) {
-        const badge = el('span', '', 'Marca exacta');
-        badge.style.cssText = 'font-size:0.7rem;padding:2px 8px;border-radius:9999px;background:rgba(184,146,46,0.15);color:#B8922E;display:inline-block;margin-bottom:6px;';
-        info.appendChild(badge);
+        const b = el('span', '', 'Marca exacta');
+        b.style.cssText = 'font-size:0.7rem;padding:2px 8px;border-radius:9999px;background:rgba(184,146,46,0.15);color:#B8922E;display:inline-block;margin-bottom:6px;';
+        info.appendChild(b);
       } else if (p.brandGeneric) {
-        const badge = el('span', '', 'Repara categoría');
-        badge.style.cssText = 'font-size:0.7rem;padding:2px 8px;border-radius:9999px;background:rgba(217,190,106,0.15);color:#D9BC6A;display:inline-block;margin-bottom:6px;';
-        info.appendChild(badge);
+        const b = el('span', '', 'Repara categoría');
+        b.style.cssText = 'font-size:0.7rem;padding:2px 8px;border-radius:9999px;background:rgba(217,190,106,0.15);color:#D9BC6A;display:inline-block;margin-bottom:6px;';
+        info.appendChild(b);
       }
       if (p.phone) {
         var phoneClean = p.phone.replace(/\D/g, '');
@@ -306,6 +312,20 @@
         telLink.href = 'tel:' + p.phone;
         telLink.style.cssText = 'font-size:0.75rem;color:#B8922E;text-decoration:none;';
         contactRow.appendChild(telLink);
+        if (p.email) {
+          var mailLink = el('a', '', 'Email');
+          mailLink.href = 'mailto:' + p.email + '?subject=Consulta desde KuraTe';
+          mailLink.style.cssText = 'font-size:0.75rem;color:#3B82F6;text-decoration:none;';
+          contactRow.appendChild(mailLink);
+        }
+        info.appendChild(contactRow);
+      } else if (p.email) {
+        var contactRow = el('div', '');
+        contactRow.style.cssText = 'display:flex;gap:8px;margin-top:6px;';
+        var mailLink = el('a', '', 'Email');
+        mailLink.href = 'mailto:' + p.email + '?subject=Consulta desde KuraTe';
+        mailLink.style.cssText = 'font-size:0.75rem;color:#3B82F6;text-decoration:none;';
+        contactRow.appendChild(mailLink);
         info.appendChild(contactRow);
       }
       card.appendChild(info);

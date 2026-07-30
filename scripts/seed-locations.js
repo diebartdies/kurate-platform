@@ -2,100 +2,93 @@ const mongoose = require('mongoose');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
-const Province = require('../models/Province');
-const City = require('../models/City');
-const Neighborhood = require('../models/Neighborhood');
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/KuraTe';
 
 const provinces = [
-  'Buenos Aires', 'CABA', 'Catamarca', 'Chaco', 'Chubut', 'Córdoba',
-  'Corrientes', 'Entre Ríos', 'Formosa', 'Jujuy', 'La Pampa', 'La Rioja',
-  'Mendoza', 'Misiones', 'Neuquén', 'Río Negro', 'Salta', 'San Juan',
-  'San Luis', 'Santa Cruz', 'Santa Fe', 'Santiago del Estero', 'Tierra del Fuego', 'Tucumán'
-];
-
-const citiesByProvince = {
-  'Buenos Aires': ['La Plata', 'Mar del Plata', 'Bahía Blanca', 'Tandil', 'San Nicolás', 'Zárate', 'Campana', 'Luján', 'Pergamino', 'Junín', 'Azul', 'Olavarría', 'Necochea', 'Pehuajó', 'Chivilcoy', 'Mercedes', 'Bragado', 'Lincoln', 'Carlos Casares', 'Trenque Lauquen', 'Bolívar', 'Daireaux', '9 de Julio', '25 de Mayo'],
-  'Catamarca': ['San Fernando del Valle de Catamarca', 'Andalgalá', 'Belén', 'Tinogasta', 'Santa María', 'Recreo', 'San José', 'Fiambalá'],
-  'Chaco': ['Resistencia', 'Presidencia Roque Sáenz Peña', 'Villa Ángela', 'Charata', 'General José de San Martín', 'Las Breñas', 'Quitilipi', 'Machagai'],
-  'Chubut': ['Rawson', 'Comodoro Rivadavia', 'Puerto Madryn', 'Trelew', 'Esquel', 'Gaiman', 'Dolavon', 'Sarmiento', 'Rada Tilly'],
-  'Córdoba': ['Córdoba', 'Villa María', 'Río Cuarto', 'Villa Carlos Paz', 'San Francisco', 'Jesús María', 'Cruz del Eje', 'Cosquín', 'La Falda', 'Mina Clavero', 'Río Tercero', 'Alta Gracia', 'Bell Ville', 'Arroyito', 'Marcos Juárez'],
-  'Corrientes': ['Corrientes', 'Goya', 'Paso de los Libres', 'Curuzú Cuatiá', 'Mercedes', 'Santo Tomé', 'Bella Vista', 'Esquina', 'Monte Caseros', 'Saladas'],
-  'Entre Ríos': ['Paraná', 'Concordia', 'Gualeguaychú', 'Concepción del Uruguay', 'Colón', 'Gualeguay', 'Villaguay', 'Nogoyá', 'Victoria', 'La Paz', 'Federación', 'Chajarí'],
-  'Formosa': ['Formosa', 'Clorinda', 'Pirané', 'Laguna Blanca', 'El Colorado', 'Ibarreta', 'Las Lomitas', 'Ingeniero Juárez'],
-  'Jujuy': ['San Salvador de Jujuy', 'Palpalá', 'La Quiaca', 'Libertador General San Martín', 'Humahuaca', 'Tilcara', 'El Carmen', 'Perico', 'Fraile Pintado'],
-  'La Pampa': ['Santa Rosa', 'General Pico', 'Eduardo Castex', 'Realicó', 'Intendente Alvear', 'Victorica', 'General Acha', 'Macachín', 'Toay'],
-  'La Rioja': ['La Rioja', 'Chilecito', 'Aimogasta', 'Villa Unión', 'Famatina', 'Olta', 'Chamical', 'Chepes'],
-  'Mendoza': ['Mendoza', 'Godoy Cruz', 'Guaymallén', 'Las Heras', 'San Rafael', 'Maipú', 'Luján de Cuyo', 'Tunuyán', 'Rivadavia', 'General Alvear', 'Malargüe', 'San Martín'],
-  'Misiones': ['Posadas', 'Oberá', 'Eldorado', 'Puerto Iguazú', 'San Vicente', 'Apóstoles', 'Leandro N. Alem', 'Jardín América', 'Montecarlo', 'Aristóbulo del Valle'],
-  'Neuquén': ['Neuquén', 'Cutral Có', 'Zapala', 'San Martín de los Andes', 'Villa La Angostura', 'Plottier', 'Centenario', 'Rincón de los Sauces', 'Chos Malal'],
-  'Río Negro': ['Viedma', 'General Roca', 'Bariloche', 'Cipolletti', 'Villa Regina', 'Allen', 'Cinco Saltos', 'El Bolsón', 'Choele Choel', 'Río Colorado'],
-  'Salta': ['Salta', 'San Ramón de la Nueva Orán', 'Tartagal', 'Cafayate', 'Rosario de la Frontera', 'Metán', 'Embarcación', 'General Güemes', 'Joaquín V. González'],
-  'San Juan': ['San Juan', 'Rivadavia', 'Rawson', 'Caucete', 'San Martín', 'Albardón', 'Pocito', 'Jáchal', 'Calingasta'],
-  'San Luis': ['San Luis', 'Villa Mercedes', 'Merlo', 'La Punta', 'Justo Daract', 'Buena Esperanza', 'Concarán', 'Tilisarao'],
-  'Santa Cruz': ['Río Gallegos', 'Caleta Olivia', 'El Calafate', 'Las Heras', 'Pico Truncado', 'Puerto Deseado', 'Perito Moreno', 'Puerto San Julián'],
-  'Santa Fe': ['Rosario', 'Santa Fe', 'Rafaela', 'Venado Tuerto', 'Villa Gobernador Gálvez', 'Reconquista', 'San Lorenzo', 'Esperanza', 'Cañada de Gómez', 'Casilda', 'Firmat', 'Sunchales', 'Tostado'],
-  'Santiago del Estero': ['Santiago del Estero', 'La Banda', 'Termas de Río Hondo', 'Añatuya', 'Frías', 'Fernández', 'Monte Quemado', 'Quimilí'],
-  'Tierra del Fuego': ['Ushuaia', 'Río Grande', 'Tolhuin'],
-  'Tucumán': ['San Miguel de Tucumán', 'Concepción', 'Tafí Viejo', 'Yerba Buena', 'Aguilares', 'Monteros', 'Famaillá', 'Bella Vista', 'Simoca', 'Lules']
-};
-
-const cabaNeighborhoods = [
-  'Palermo', 'Recoleta', 'Belgrano', 'Nuñez', 'Colegiales', 'Chacarita', 'Villa Crespo',
-  'Almagro', 'Balvanera', 'San Nicolás', 'Montserrat', 'Puerto Madero', 'Retiro', 'La Boca',
-  'Barracas', 'Constitución', 'San Telmo', 'Parque Patricios', 'Boedo', 'Caballito',
-  'Flores', 'Floresta', 'Villa Lugano', 'Villa Soldati', 'Villa Riachuelo', 'Liniers',
-  'Mataderos', 'Villa Luro', 'Versalles', 'Villa Real', 'Monte Castro', 'Devoto',
-  'Villa del Parque', 'Villa Santa Rita', 'Villa General Mitre', 'Paternal', 'Saavedra',
-  'Coghlan', 'Villa Urquiza', 'Parque Avellaneda', 'Villa Devoto', 'Villa Ortúzar',
-  'Parque Chacabuco', 'Nueva Pompeya', 'Villa Pueyrredón', 'Agronomía', 'Villa del Parque'
+  { name: 'CABA', countryCode: '054' },
+  { name: 'Buenos Aires', countryCode: '054' },
+  { name: 'Catamarca', countryCode: '054' },
+  { name: 'Chaco', countryCode: '054' },
+  { name: 'Chubut', countryCode: '054' },
+  { name: 'Córdoba', countryCode: '054' },
+  { name: 'Corrientes', countryCode: '054' },
+  { name: 'Entre Ríos', countryCode: '054' },
+  { name: 'Formosa', countryCode: '054' },
+  { name: 'Jujuy', countryCode: '054' },
+  { name: 'La Pampa', countryCode: '054' },
+  { name: 'La Rioja', countryCode: '054' },
+  { name: 'Mendoza', countryCode: '054' },
+  { name: 'Misiones', countryCode: '054' },
+  { name: 'Neuquén', countryCode: '054' },
+  { name: 'Río Negro', countryCode: '054' },
+  { name: 'Salta', countryCode: '054' },
+  { name: 'San Juan', countryCode: '054' },
+  { name: 'San Luis', countryCode: '054' },
+  { name: 'Santa Cruz', countryCode: '054' },
+  { name: 'Santa Fe', countryCode: '054' },
+  { name: 'Santiago del Estero', countryCode: '054' },
+  { name: 'Tierra del Fuego', countryCode: '054' },
+  { name: 'Tucumán', countryCode: '054' }
 ];
 
 async function seed() {
-  try {
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log('Connected to MongoDB');
+  await mongoose.connect(MONGO_URI);
+  console.log('Connected to MongoDB');
 
-    // Clear existing data
-    await Promise.all([
-      Province.deleteMany({}),
-      City.deleteMany({}),
-      Neighborhood.deleteMany({})
-    ]);
-    console.log('Cleared existing location data');
+  const Province = mongoose.model('Province', new mongoose.Schema({
+    name: { type: String, required: true, unique: true, trim: true },
+    countryCode: { type: String, default: '054', required: true }
+  }));
 
-    // Insert provinces
-    const provinceDocs = await Province.insertMany(
-      provinces.map(name => ({ name }))
-    );
-    console.log(`Inserted ${provinceDocs.length} provinces`);
+  const City = mongoose.model('City', new mongoose.Schema({
+    name: { type: String, required: true, trim: true },
+    province: { type: mongoose.Schema.Types.ObjectId, ref: 'Province', required: true }
+  }));
 
-    const provinceMap = {};
-    for (const p of provinceDocs) {
-      provinceMap[p.name] = p._id;
+  await Province.deleteMany({});
+  const inserted = await Province.insertMany(provinces);
+  console.log('Inserted', inserted.length, 'provinces');
+
+  const citiesByProvince = {
+    'CABA': ['Agronomía','Almagro','Balvanera','Barracas','Belgrano','Boedo','Caballito','Chacarita','Coghlan','Colegiales','Constitución','Flores','Floresta','La Boca','Liniers','Mataderos','Monte Castro','Monserrat','Nueva Pompeya','Núñez','Palermo','Parque Avellaneda','Parque Chacabuco','Parque Chas','Parque Patricios','Puerto Madero','Recoleta','Retiro','Saavedra','San Cristóbal','San Nicolás','San Telmo','Vélez Sarsfield','Versalles','Villa Crespo','Villa del Parque','Villa Devoto','Villa General Mitre','Villa Lugano','Villa Luro','Villa Ortúzar','Villa Pueyrredón','Villa Real','Villa Riachuelo','Villa Santa Rita','Villa Soldati','Villa Urquiza'],
+    'Buenos Aires': ['La Plata', 'Mar del Plata', 'Bahía Blanca', 'Tandil', 'Olavarría', 'Quilmes', 'Lomas de Zamora', 'Avellaneda', 'Lanús', 'General San Martín', 'Vicente López', 'La Matanza', 'Morón', 'Ituzaingó', 'Merlo', 'Moreno', 'Tres de Febrero', 'San Isidro', 'San Fernando', 'Tigre', 'Escobar', 'Pilar', 'José C. Paz', 'Malvinas Argentinas', 'Junín', 'Chivilcoy', 'Lobos', 'Cañuelas', 'Esteban Echeverría', 'Ezeiza'],
+    'Córdoba': ['Córdoba', 'Villa Carlos Paz', 'Río Cuarto', 'Villa María', 'Villa Allende', 'Cosquín', 'Alta Gracia', 'Río Tercero', 'San Francisco', 'Villa General Belgrano', 'La Calera', 'Unquillo'],
+    'Santa Fe': ['Rosario', 'Santa Fe', 'Rafaela', 'Venado Tuerto', 'Reconquista', 'Casilda', 'Villa Gobernador Gálvez', 'Sunchales', 'Cañada de Gómez', 'Funes', 'Pérez'],
+    'Mendoza': ['Mendoza', 'San Rafael', 'Godoy Cruz', 'Guaymallén', 'Las Heras', 'Luján de Cuyo', 'Maipú', 'Tunuyán', 'San Martín', 'Villa Nueva'],
+    'Tucumán': ['San Miguel de Tucumán', 'Concepción', 'Bella Vista', 'Tafí Viejo', 'Aguilares', 'Lules', 'Monteros', 'Simoca', 'Chicligasta'],
+    'Salta': ['Salta', 'San Ramón de la Nueva Orán', 'Cafayate', 'Metán', 'Tartagal', 'Orán', 'Vaqueros'],
+    'Entre Ríos': ['Paraná', 'Concordia', 'Gualeguaychú', 'Villaguay', 'Federal', 'Basavilbaso', 'Diamante', 'Victoria'],
+    'Misiones': ['Posadas', 'Puerto Iguazú', 'Eldorado', 'Oberá', 'San Pedro', 'Leandro N. Alem', 'Apóstoles'],
+    'Chaco': ['Resistencia', 'Presidencia Roque Sáenz Peña', 'Villa Ángela', 'Charata', 'Saenz Peña', 'Barranqueras'],
+    'Corrientes': ['Corrientes', 'Goya', 'Mercedes', 'Curuzú Cuatiá', 'Esquina', 'Paso de los Libres', 'Monte Caseros'],
+    'San Juan': ['San Juan', 'Rawson', 'Chimbas', 'Rivadavia', 'Santa Lucía', 'Caucete', 'Jáchal', 'San Agustín de Valle Fértil'],
+    'Neuquén': ['Neuquén', 'San Martín de los Andes', 'Bariloche', 'Cutral Có', 'Plottier', 'Villa Regina', 'General Roca', 'Cipolletti'],
+    'Chubut': ['Rawson', 'Comodoro Rivadavia', 'Trelew', 'Puerto Madryn', 'Esquel', 'Gaiman', 'Trelew'],
+    'Río Negro': ['Viedma', 'General Roca', 'Bariloche', 'Cipolletti', 'Villa Regina', 'Choele Choel', 'El Bolsón'],
+    'La Pampa': ['Santa Rosa', 'General Pico', '25 de Mayo', 'Victorica', 'Realicó', 'Macachín'],
+    'Catamarca': ['San Fernando del Valle de Catamarca', 'Belén', 'Fiambalá', 'Tinogasta', 'Andalgalá', 'Chumbicha'],
+    'Santiago del Estero': ['Santiago del Estero', 'La Banda', 'Termas de Río Hondo', 'Frías', 'Añatuya', 'Suncho Corral'],
+    'Formosa': ['Formosa', 'Clorinda', 'Pirané', 'El Colorado', 'Las Lomitas', 'Ingeniero Juárez'],
+    'Jujuy': ['San Salvador de Jujuy', 'San Pedro', 'La Quiaca', 'Humahuaca', 'Santa Catalina', 'Perico'],
+    'San Luis': ['San Luis', 'Villa Mercedes', 'Villa de la Quebrada del Río Potrero', 'Concarán', 'Quines'],
+    'La Rioja': ['La Rioja', 'Chilecito', 'Villa Unión', 'Chamical', 'Famatina'],
+    'Santa Cruz': ['Río Gallegos', 'Caleta Olivia', 'El Calafate', 'Perito Moreno', 'Gobernador Gregores', 'Las Heras'],
+    'Tierra del Fuego': ['Ushuaia', 'Río Grande', 'Tolhuin']
+  };
+
+  let cityCount = 0;
+  for (const prov of inserted) {
+    const cities = citiesByProvince[prov.name] || [];
+    const cityDocs = cities.map(name => ({ name, province: prov._id }));
+    if (cityDocs.length > 0) {
+      await City.insertMany(cityDocs);
+      cityCount += cityDocs.length;
     }
-
-    // Insert cities for each province (except CABA)
-    let cityCount = 0;
-    for (const [provName, cities] of Object.entries(citiesByProvince)) {
-      if (provName === 'CABA') continue;
-      const provId = provinceMap[provName];
-      if (!provId) continue;
-      await City.insertMany(cities.map(name => ({ name, province: provId })));
-      cityCount += cities.length;
-    }
-    console.log(`Inserted ${cityCount} cities`);
-
-    // Insert CABA neighborhoods
-    const cabaId = provinceMap['CABA'];
-    await Neighborhood.insertMany(cabaNeighborhoods.map(name => ({ name, province: cabaId })));
-    console.log(`Inserted ${cabaNeighborhoods.length} CABA neighborhoods`);
-
-    console.log('\nSeed complete!');
-    process.exit(0);
-  } catch (err) {
-    console.error('Seed failed:', err);
-    process.exit(1);
   }
+
+  console.log('Inserted', cityCount, 'cities');
+  console.log('Done');
+  await mongoose.disconnect();
 }
 
-seed();
+seed().catch(err => { console.error(err); process.exit(1); });

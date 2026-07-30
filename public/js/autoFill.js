@@ -236,7 +236,7 @@
 
     if (cityLower && !provinceLower) {
       if (CABA_NEIGHBORHOODS.has(cityLower)) {
-        errors.push({ field: 'provincia', message: 'Este barrio pertenece a CABA. Completá la provincia: Ciudad Autónoma de Buenos Aires.' });
+        errors.push({ field: 'provincia', message: 'Este barrio pertenece a CABA. Completá la provincia: CABA.' });
       } else {
         errors.push({ field: 'provincia', message: 'Ingresaste una ciudad pero no la provincia. ¿En qué provincia se encuentra? Puede haber varias ciudades con el mismo nombre.' });
       }
@@ -246,7 +246,7 @@
       const isCaba = provinceLower.includes('caba') || provinceLower.includes('ciudad autonoma') || provinceLower.includes('buenos aires');
       const isNeighborhood = CABA_NEIGHBORHOODS.has(cityLower);
       if (isNeighborhood && !isCaba) {
-        errors.push({ field: 'provincia', message: `"${cityVal}" es un barrio de CABA. La provincia debe ser "Ciudad Autónoma de Buenos Aires".` });
+        errors.push({ field: 'provincia', message: `"${cityVal}" es un barrio de CABA. La provincia debe ser "CABA".` });
       }
     }
 

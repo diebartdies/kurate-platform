@@ -502,7 +502,7 @@ exports.searchProfessionals = async (req, res, next) => {
           suggestions.push({
             type: 'location',
             label: 'Buscar en CABA (todos los barrios)',
-            params: { ciudad: '', provincia: 'Ciudad Autónoma de Buenos Aires' }
+            params: { ciudad: '', provincia: 'CABA' }
           });
           suggestions.push({
             type: 'location',

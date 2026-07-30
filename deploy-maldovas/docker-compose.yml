@@ -1,0 +1,78 @@
+services:
+  mongo:
+    image: mongo:4.4
+    pull_policy: if_not_present
+    command: ["mongod", "--wiredTigerCacheSizeGB", "0.25", "--bind_ip_all"]
+    container_name: KuraTe_mongo
+    restart: unless-stopped
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  app:
+    build:
+      context: .
+      args:
+        INSTALL_TWILIO: "${INSTALL_TWILIO:-1}"
+    container_name: KuraTe_app
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://mongo:27017/KuraTe
+    volumes:
+      - ./public:/app/public
+      - ./controllers:/app/controllers
+      - ./services:/app/services
+      - ./models:/app/models
+      - ./middleware:/app/middleware
+      - ./utils:/app/utils
+      - ./config:/app/config
+      - ./data:/app/data
+      - ./server.js:/app/server.js
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:alpine
+    container_name: KuraTe_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+    depends_on:
+      - app
+      - web
+
+  web:
+    build:
+      context: ./kurate-app
+    container_name: KuraTe_web
+    restart: unless-stopped
+    expose:
+      - "80"
+
+  certbot:
+    image: certbot/certbot
+    container_name: KuraTe_certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+volumes:
+  mongo_data:
+    name: KuraTe_mongo_data

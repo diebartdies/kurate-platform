@@ -5,9 +5,10 @@ interface ContactIconsProps {
   phone?: string | null;
   email?: string;
   alias: string;
+  hasWhatsApp?: boolean;
 }
 
-export default function ContactIcons({ phone, email, alias }: ContactIconsProps) {
+export default function ContactIcons({ phone, email, alias, hasWhatsApp = true }: ContactIconsProps) {
   const [revealed, setRevealed] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
 
@@ -35,46 +36,49 @@ export default function ContactIcons({ phone, email, alias }: ContactIconsProps)
       {!revealed ? (
         <button
           onClick={handleReveal}
-          className="text-[11px] px-3 py-1.5 rounded-full bg-[#0f0f1a]/5 hover:bg-[#0f0f1a]/10 text-[rgba(15,15,26,0.6)] transition-colors font-medium"
+          className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 transition-colors font-medium"
         >
+          {hasWhatsApp && whatsappNumber && (
+            <MessageCircle className="w-3 h-3" />
+          )}
           Ver contacto
         </button>
       ) : (
         <div className="flex items-center gap-1.5">
-          {phone && (
+          {phone && hasWhatsApp && whatsappNumber && (
             <>
               <a
-                href={`tel:${phone}`}
-                title={`Llamar a ${alias}`}
-                className="p-1.5 rounded-lg hover:bg-green-50 text-green-600 transition-colors"
+                href={`https://wa.me/${whatsappNumber}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={`WhatsApp ${alias}`}
+                className="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-600 transition-colors"
               >
-                <Phone className="w-3.5 h-3.5" />
+                <MessageCircle className="w-3.5 h-3.5" />
               </a>
               {copied !== "phone" ? (
                 <button
-                  onClick={(e) => handleCopy(phone, "phone", e)}
-                  title="Copiar teléfono"
-                  className="p-1.5 rounded-lg hover:bg-green-50 text-green-600/60 transition-colors"
+                  onClick={(e) => handleCopy(whatsappNumber, "phone", e)}
+                  title="Copiar WhatsApp"
+                  className="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-600/60 transition-colors"
                 >
                   <Copy className="w-3 h-3" />
                 </button>
               ) : (
-                <span className="p-1.5 text-green-600">
+                <span className="p-1.5 text-emerald-600">
                   <Check className="w-3 h-3" />
                 </span>
               )}
-              {whatsappNumber && (
-                <a
-                  href={`https://wa.me/${whatsappNumber}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title={`WhatsApp ${alias}`}
-                  className="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-600 transition-colors"
-                >
-                  <MessageCircle className="w-3.5 h-3.5" />
-                </a>
-              )}
             </>
+          )}
+          {phone && (
+            <a
+              href={`tel:${phone}`}
+              title={`Llamar a ${alias}`}
+              className="p-1.5 rounded-lg hover:bg-green-50 text-green-600 transition-colors"
+            >
+              <Phone className="w-3.5 h-3.5" />
+            </a>
           )}
           {email && (
             <>
