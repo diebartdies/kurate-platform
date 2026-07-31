@@ -190,7 +190,7 @@
             </div>
 
             <div class="fm-card">
-                <label>2. ¿Qué artefacto o equipo?</label>
+                <label for="fAreaDevice">2. ¿Qué artefacto o equipo?</label>
                 <div class="fm-row" style="margin-bottom:0;">
                     <div style="flex:1;min-width:0;">
                         <select id="fAreaDevice" class="fm-select" required>
@@ -562,6 +562,50 @@
         const fModel = document.getElementById('fModel');
         let servicesTree = {};
 
+        function restoreFilters() {
+            var saved = sessionStorage.getItem('landingFilters');
+            if (!saved) return;
+            try {
+                var f = JSON.parse(saved);
+                sessionStorage.removeItem('landingFilters');
+                if (f.accion) document.getElementById('accion').value = f.accion;
+                if (f.urgencia) document.getElementById('urgencia').value = f.urgencia;
+                if (f.servicePath) {
+                    fDevice.value = f.servicePath;
+                    var parts = f.servicePath.split('/');
+                    if (parts[0] && fAreaDevice.querySelector('option[value="' + parts[0] + '"]')) {
+                        fAreaDevice.value = parts[0];
+                        fAreaDevice.dispatchEvent(new Event('change'));
+                        setTimeout(function() {
+                            if (parts[1]) {
+                                fCategoryDevice.value = f.servicePath;
+                                var catKey = Object.keys(servicesTree[parts[0]] || {}).find(function(k) {
+                                    return (servicesTree[parts[0]][k] || []).some(function(d) {
+                                        return f.servicePath.startsWith(parts[0] + '/' + k + '/');
+                                    });
+                                });
+                                if (catKey) {
+                                    fCategoryDevice.value = catKey;
+                                    fCategoryDevice.dispatchEvent(new Event('change'));
+                                    setTimeout(function() {
+                                        fDevice.value = f.servicePath;
+                                        if (f.brand) fModel.value = f.brand;
+                                    }, 100);
+                                }
+                            }
+                        }, 100);
+                    }
+                }
+                if (f.province) {
+                    provinciaSel.value = f.province;
+                    provinciaSel.dispatchEvent(new Event('change'));
+                    setTimeout(function() {
+                        if (f.city) ciudadSel.value = f.city;
+                    }, 400);
+                }
+            } catch(e) {}
+        }
+
         fetch('/api/v1/services').then(r => r.json()).then(resp => {
             servicesTree = resp.data || {};
             const areas = Object.keys(servicesTree);
@@ -570,6 +614,7 @@
                 opt.value = a; opt.textContent = a;
                 fAreaDevice.appendChild(opt);
             });
+            restoreFilters();
         });
 
         fAreaDevice.addEventListener('change', function() {
@@ -630,6 +675,7 @@
                 const provinces = resp.data || [];
                 provinciaSel.innerHTML = '<option value="">' + _t('Provincia / CABA...') + '</option>';
                 provinces.forEach(p => { provinciaSel.innerHTML += `<option value="${p.name}">${p.name}</option>`; });
+                restoreFilters();
             });
 
         provinciaSel.addEventListener('change', function() {
@@ -762,6 +808,9 @@
             if (urgencia) params.set('urgencia', urgencia);
             if (needForm.getAttribute('data-relax-model')) params.set('relaxModel', '1');
             if (needForm.getAttribute('data-relax-brand')) params.set('relaxBrand', '1');
+            sessionStorage.setItem('landingFilters', JSON.stringify({
+                accion, servicePath, brand, province, city, urgencia
+            }));
             window.location.href = '/hogar.html?' + params.toString();
         }
 
