@@ -164,6 +164,7 @@ app.use((req, res, next) => {
 
 // SEO routes (must be registered before static files)
 const seoController = require('./controllers/seoController');
+const { ACTIONS, ENVIRONMENTS, CATEGORIES, buildSeoLandingPage } = require('./utils/seoLandingPages');
 app.get('/robots.txt', seoController.robotsTxt);
 app.get('/sitemap.xml', seoController.sitemapXml);
 app.get('/sitemap-KuraTe.xml', seoController.sitemapKuraTeXml);
@@ -171,6 +172,26 @@ app.get('/sitemap-KuraTe.xml', seoController.sitemapKuraTeXml);
 app.get('/acompanantes/:provinceSlug/:areaSlug', seoController.renderLocationPage);
 app.get('/acompanantes/:provinceSlug', seoController.renderLocationPage);
 app.get('/perfil/:alias', seoController.renderProfilePage);
+
+// SEO landing pages: actions, environments, categories
+app.get('/acciones/:slug', (req, res) => {
+  const item = ACTIONS.find(a => a.slug === req.params.slug);
+  if (!item) return res.status(404).send('Not found');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.type('html').send(buildSeoLandingPage('action', item));
+});
+app.get('/entornos/:slug', (req, res) => {
+  const item = ENVIRONMENTS.find(e => e.slug === req.params.slug);
+  if (!item) return res.status(404).send('Not found');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.type('html').send(buildSeoLandingPage('environment', item));
+});
+app.get('/categorias/:slug', (req, res) => {
+  const item = CATEGORIES.find(c => c.slug === req.params.slug);
+  if (!item) return res.status(404).send('Not found');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.type('html').send(buildSeoLandingPage('category', item));
+});
 
 // Favicon (browsers request /favicon.ico by default)
 app.get('/favicon.ico', (req, res) => {
@@ -183,12 +204,23 @@ app.get('/favicon.ico', (req, res) => {
 app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders: (res, filePath) => {
     if (filePath.match(/\.(jpg|jpeg|png|gif|webp|svg|css)$/i)) {
-      res.setHeader('Cache-Control', 'public, max-age=2592000'); // Cache images & CSS for 30 days
+      res.setHeader('Cache-Control', 'public, max-age=2592000');
     } else {
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     }
   }
 }));
+
+// APK download redirect — maps Google Play-style link to direct download
+app.get('/play', (req, res) => {
+  res.download(path.join(__dirname, 'public', 'app-debug.apk'), 'KuraTe.apk');
+});
+app.get('/store', (req, res) => {
+  res.redirect(301, '/play');
+});
+app.get('/get-app', (req, res) => {
+  res.redirect(301, '/play');
+});
 
 // --- Multer File Upload Configuration ---
 const uploadsDir = path.join(__dirname, 'public', 'uploads', 'photos');
@@ -457,6 +489,12 @@ app.get('/api/v1/public/client-config', (req, res) => {
   });
 });
 
+// APK version check — bump this when releasing a new APK build
+const APP_VERSION = process.env.APP_VERSION || '1.0.0';
+app.get('/api/v1/public/app-version', (req, res) => {
+  res.status(200).json({ version: APP_VERSION });
+});
+
 // Terms acceptance deferred — re-enable POST /api/v1/terms/accept when legal flow ships
 // const termsController = require('./controllers/termsController');
 // app.post('/api/v1/terms/accept', termsController.acceptTerms);
@@ -474,7 +512,8 @@ app.post('/api/v1/public/pre-register/verify-phone', preRegistrationController.v
 app.post('/api/v1/public/pre-register/verify-email', preRegistrationController.verifyEmail);
 app.post('/api/v1/public/pre-register/verify-email-google', preRegistrationController.verifyEmailViaGoogle);
 app.post('/api/v1/public/pre-register/resend-code', preRegistrationController.resendCode);
-app.post('/api/v1/public/pre-register/validate-dni', preRegistrationController.validateDniPhoto);
+app.post('/api/v1/public/pre-register/scan-dni', preRegistrationController.scanDni);
+app.post('/api/v1/public/pre-register/complete', preRegistrationController.complete);
 app.get('/api/v1/public/pre-register/status/:id', preRegistrationController.getStatus);
 
 app.get('/api/v1/interest-notes', protect, authorize('professional', 'admin'), interestNoteController.listInterestNotes);

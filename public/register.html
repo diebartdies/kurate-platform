@@ -191,6 +191,16 @@
 <body class="register-page blueprint-theme blueprint-auth-page">
     <div style="padding:0.75rem 1rem 0;max-width:520px;margin:0 auto;"><a href="javascript:history.back()" class="fm-back-global">&#8592; Volver</a></div>
     <main id="registerMain" class="container reg-page">
+        <!-- APK download banner -->
+        <div class="apk-banner" id="apkBanner" style="display:none;background:linear-gradient(135deg,#B8922E 0%,#8a6a1e 100%);color:#fff;padding:0.75rem 1rem;border-radius:10px;margin-bottom:0.75rem;box-shadow:0 2px 12px rgba(184,146,46,0.25);">
+            <div style="font-size:1.8rem;flex-shrink:0;">📲</div>
+            <div style="flex:1;">
+                <strong style="display:block;font-size:0.95rem;margin-bottom:2px;">Descargá KuraTe</strong>
+                <span style="font-size:0.78rem;opacity:0.9;">Disponible en Google Play</span>
+            </div>
+            <a href="/play" style="background:#fff;color:#B8922E;border:none;border-radius:6px;padding:0.5rem 0.9rem;font-weight:700;font-size:0.82rem;cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-block;">Descargar</a>
+            <button onclick="document.getElementById('apkBanner').style.display='none';sessionStorage.setItem('apkBannerDismissed','1');" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:1.2rem;cursor:pointer;padding:0 0.3rem;">&times;</button>
+        </div>
         <div id="regFormPanel" class="reg-form-panel">
         <h1 id="regFormTitle" class="gold-text" style="text-align:center;font-size:1.6rem;margin:0 0 8px;">Professional Registration</h1>
         <p id="regFormIntro" style="text-align:center;color:#aaa;font-size:0.95rem;margin:0 0 8px;line-height:1.5;">
@@ -290,5 +300,46 @@
     </main>
     <script src="/js/app.js?v=8.28-debug" type="module"></script>
     <script src="/js/adminHome.js?v=1" defer></script>
+    <script>
+    (function() {
+        var banner = document.getElementById('apkBanner');
+        if (!banner) return;
+        var isApp = window.location.protocol === 'capacitor:' || window.location.hostname === 'localhost'
+            || /KuraTe/i.test(navigator.userAgent) || window.android;
+        if (isApp) return;
+        if (sessionStorage.getItem('apkBannerDismissed') === '1') return;
+        banner.style.display = 'flex';
+    })();
+    </script>
+    <script>
+    // APK version check — runs only inside Capacitor
+    (function() {
+        var isApp = window.location.protocol === 'capacitor:' || window.location.hostname === 'localhost'
+            || /KuraTe/i.test(navigator.userAgent) || window.android;
+        if (!isApp) return;
+        var STORED_KEY = 'kurate_apk_version';
+        fetch('/api/v1/public/app-version')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.version) return;
+                var stored = localStorage.getItem(STORED_KEY);
+                if (stored && stored !== data.version) {
+                    showUpdateBanner();
+                }
+                localStorage.setItem(STORED_KEY, data.version);
+            })
+            .catch(function() {});
+        function showUpdateBanner() {
+            if (document.getElementById('apkUpdateBanner')) return;
+            var div = document.createElement('div');
+            div.id = 'apkUpdateBanner';
+            div.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 10px rgba(0,0,0,0.3);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;';
+            div.innerHTML = '<span style="flex:1;font-size:0.9rem;"><strong>Nueva versión disponible.</strong> Actualizá la app para tener la última versión.</span>'
+                + '<a href="/play" style="background:#fff;color:#c0392b;border:none;border-radius:6px;padding:6px 14px;font-weight:700;font-size:0.82rem;cursor:pointer;text-decoration:none;white-space:nowrap;">Actualizar</a>'
+                + '<button onclick="this.parentElement.remove()" style="background:none;border:none;color:rgba(255,255,255,0.8);font-size:1.3rem;cursor:pointer;padding:0 4px;line-height:1;">&times;</button>';
+            document.body.prepend(div);
+        }
+    })();
+    </script>
 </body>
 </html>

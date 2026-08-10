@@ -12,10 +12,6 @@ const PreRegistrationSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
-  dateOfBirth: {
-    type: Date,
-    required: true
-  },
   phoneCode: {
     type: String
   },
@@ -38,16 +34,96 @@ const PreRegistrationSchema = new mongoose.Schema({
   },
   step: {
     type: String,
-    enum: ['phone', 'email', 'complete', 'dni'],
+    enum: ['phone', 'email', 'verified', 'dni', 'complete'],
     default: 'phone'
   },
-  dniFrontValidated: {
-    type: Boolean,
-    default: false
+  dniFrontImage: {
+    type: String
+  },
+  dniNumeroTramite: {
+    type: String
+  },
+  dniApellido: {
+    type: String
+  },
+  dniNombre: {
+    type: String
+  },
+  dniSegundoNombre: {
+    type: String
+  },
+  dniFechaNacimiento: {
+    type: String
+  },
+  dniFechaEmision: {
+    type: String
+  },
+  firstName: {
+    type: String
+  },
+  surname: {
+    type: String
+  },
+  middleName: {
+    type: String
   },
   password: {
     type: String,
     select: false
+  },
+  role: {
+    type: String,
+    enum: ['professional', 'user'],
+    default: 'professional'
+  },
+  alias: {
+    type: String,
+    trim: true
+  },
+  bio: {
+    type: String
+  },
+  street: {
+    type: String
+  },
+  number: {
+    type: String
+  },
+  floor: {
+    type: String
+  },
+  apartment: {
+    type: String
+  },
+  postalCode: {
+    type: String
+  },
+  province: {
+    type: String
+  },
+  city: {
+    type: String
+  },
+  neighborhood: {
+    type: String
+  },
+  services: {
+    type: [String]
+  },
+  height: {
+    type: String
+  },
+  measurements: {
+    type: String
+  },
+  originCountry: {
+    type: String
+  },
+  instagram: {
+    type: String
+  },
+  facebook: {
+    type: String
   },
   createdAt: {
     type: Date,

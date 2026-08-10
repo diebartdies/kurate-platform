@@ -5,10 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="alternate icon" href="/favicon.ico">
-  <title>Técnicos Hogar / Oficina</title>
+  <title>Técnicos Hogar y Oficina en Argentina | KuraTe</title>
+  <meta name="description" content="Encontrá técnicos verificados en Argentina para reparar, instalar o mantener electrodomésticos, climatización, gas, plomería y más. Presupuesto sin cargo.">
   <meta name="theme-color" content="#B8922E">
   <meta name="color-scheme" content="dark">
-  <meta name="robots" content="noindex, nofollow">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://kurate.drsrv.net.ar/hogar.html">
+  <meta property="og:title" content="Técnicos Hogar y Oficina en Argentina | KuraTe">
+  <meta property="og:description" content="Encontrá técnicos verificados en Argentina para reparar, instalar o mantener electrodomésticos, climatización, gas, plomería y más.">
+  <meta property="og:url" content="https://kurate.drsrv.net.ar/hogar.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="KuraTe">
+  <meta property="og:image" content="https://kurate.drsrv.net.ar/images/reparacion.png">
   <style>
     :root {
       --gold-highlight: #F0E4C3;
@@ -121,10 +129,36 @@
       .area-chip { width: auto; flex: 1 1 calc(50% - 8px); text-align: center; }
     }
     @media (max-width: 480px) { .area-chip { flex: 1 1 100%; } }
+  <style>
+    /* APK download banner */
+    .apk-banner { display: none; background: linear-gradient(135deg, #B8922E 0%, #8a6a1e 100%); color: #fff; padding: 0.75rem 1rem; border-radius: 10px; margin-bottom: 0.75rem; position: relative; box-shadow: 0 2px 12px rgba(184,146,46,0.25); }
+    .apk-banner.show { display: flex; align-items: center; gap: 0.75rem; }
+    .apk-banner-icon { font-size: 1.8rem; flex-shrink: 0; }
+    .apk-banner-text { flex: 1; }
+    .apk-banner-text strong { display: block; font-size: 0.95rem; margin-bottom: 2px; }
+    .apk-banner-text span { font-size: 0.78rem; opacity: 0.9; }
+    .apk-banner-btn { background: #fff; color: #B8922E; border: none; border-radius: 6px; padding: 0.5rem 0.9rem; font-weight: 700; font-size: 0.82rem; cursor: pointer; white-space: nowrap; text-decoration: none; display: inline-block; }
+    .apk-banner-btn:hover { background: #f0f0f0; }
+    .apk-banner-close { background: none; border: none; color: rgba(255,255,255,0.7); font-size: 1.2rem; cursor: pointer; padding: 0 0.3rem; line-height: 1; }
+    .apk-banner-close:hover { color: #fff; }
+    @media (max-width: 420px) {
+      .apk-banner-text span { font-size: 0.72rem; }
+      .apk-banner-btn { padding: 0.4rem 0.7rem; font-size: 0.76rem; }
+    }
   </style>
 </head>
 <body>
   <div class="container">
+    <div class="apk-banner" id="apkBanner">
+      <div class="apk-banner-icon">📲</div>
+      <div class="apk-banner-text">
+        <strong>Descargá KuraTe</strong>
+        <span>Disponible en Google Play</span>
+      </div>
+      <a href="/play" class="apk-banner-btn">Descargar</a>
+      <button class="apk-banner-close" id="apkBannerClose">&times;</button>
+    </div>
+
     <div class="fm-top-bar">
       <a href="/index.html" class="fm-back">← <span class="fm-back-text">Volver</span></a>
       <div class="fm-top-right">
@@ -469,6 +503,51 @@
       });
       loadHogar({});
     });
+
+    // APK banner — show on mobile web, hide if dismissed or running in Capacitor
+    (function() {
+        var banner = document.getElementById('apkBanner');
+        var closeBtn = document.getElementById('apkBannerClose');
+        if (!banner) return;
+        var isApp = window.location.protocol === 'capacitor:' || window.location.hostname === 'localhost'
+            || /KuraTe/i.test(navigator.userAgent) || window.android;
+        if (isApp) return;
+        if (sessionStorage.getItem('apkBannerDismissed') === '1') return;
+        banner.classList.add('show');
+        closeBtn.addEventListener('click', function() {
+            sessionStorage.setItem('apkBannerDismissed', '1');
+            banner.classList.remove('show');
+        });
+    })();
+
+    // APK version check — runs only inside Capacitor
+    (function() {
+        var isApp = window.location.protocol === 'capacitor:' || window.location.hostname === 'localhost'
+            || /KuraTe/i.test(navigator.userAgent) || window.android;
+        if (!isApp) return;
+        var STORED_KEY = 'kurate_apk_version';
+        fetch('/api/v1/public/app-version')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.version) return;
+                var stored = localStorage.getItem(STORED_KEY);
+                if (stored && stored !== data.version) {
+                    showUpdateBanner();
+                }
+                localStorage.setItem(STORED_KEY, data.version);
+            })
+            .catch(function() {});
+        function showUpdateBanner() {
+            if (document.getElementById('apkUpdateBanner')) return;
+            var div = document.createElement('div');
+            div.id = 'apkUpdateBanner';
+            div.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 10px rgba(0,0,0,0.3);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;';
+            div.innerHTML = '<span style="flex:1;font-size:0.9rem;"><strong>Nueva versión disponible.</strong> Actualizá la app para tener la última versión.</span>'
+                + '<a href="/play" style="background:#fff;color:#c0392b;border:none;border-radius:6px;padding:6px 14px;font-weight:700;font-size:0.82rem;cursor:pointer;text-decoration:none;white-space:nowrap;">Actualizar</a>'
+                + '<button onclick="this.parentElement.remove()" style="background:none;border:none;color:rgba(255,255,255,0.8);font-size:1.3rem;cursor:pointer;padding:0 4px;line-height:1;">&times;</button>';
+            document.body.prepend(div);
+        }
+    })();
   </script>
 </body>
 </html>

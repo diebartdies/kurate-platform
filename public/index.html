@@ -3,19 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KuraTe — ¿Qué necesitás?</title>
+    <title>KuraTe — ¿Qué necesitás? | Profesionales verificados en Argentina</title>
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/blueprint.css">
     <script src="/js/autoFill.js"></script>
-    <meta name="description" content="KuraTe — Decinos qué necesitás y te conectamos con el profesional indicado.">
+    <meta name="description" content="KuraTe te conecta con profesionales verificados en Argentina. Reparación de electrodomésticos, climatización, gas, plomería, electricidad y más. Presupuesto sin cargo.">
     <meta name="robots" content="index, follow">
-    <meta property="og:title" content="KuraTe — ¿Qué necesitás?">
-    <meta property="og:description" content="Contanos qué necesitás y te encontramos al profesional ideal.">
-    <meta property="og:url" content="https://KuraTe.drsrv.net.ar/">
+    <meta name="google-site-verification" content="PTGT6eQxlD_BAMvbbimcOlSPUZiivVDS6luP1cD4ePQ">
+    <link rel="canonical" href="https://kurate.drsrv.net.ar/">
+    <meta property="og:title" content="KuraTe — Profesionales verificados en Argentina">
+    <meta property="og:description" content="Contanos qué necesitás y te encontramos al profesional ideal. Reparación, instalación y mantenimiento en todo el país.">
+    <meta property="og:url" content="https://kurate.drsrv.net.ar/">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="KuraTe">
+    <meta property="og:image" content="https://kurate.drsrv.net.ar/images/reparacion.png">
     <meta name="theme-color" content="#B8922E">
     <meta name="color-scheme" content="dark">
+    <meta name="app-version" content="1.0.0">
     <style>
         * { box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f0f1a; color: #e0e0e0; margin: 0; }
@@ -147,10 +151,41 @@
             .fm-card { padding: 1rem; }
             .fm-modal { padding: 1rem; }
         }
+        /* APK download banner */
+        .apk-banner { display: none; background: linear-gradient(135deg, #B8922E 0%, #8a6a1e 100%); color: #fff; padding: 0.75rem 1rem; border-radius: 10px; margin-bottom: 1rem; position: relative; box-shadow: 0 2px 12px rgba(184,146,46,0.25); }
+        .apk-banner.show { display: flex; align-items: center; gap: 0.75rem; }
+        .apk-banner-icon { font-size: 1.8rem; flex-shrink: 0; }
+        .apk-banner-text { flex: 1; }
+        .apk-banner-text strong { display: block; font-size: 0.95rem; margin-bottom: 2px; }
+        .apk-banner-text span { font-size: 0.78rem; opacity: 0.9; }
+        .apk-banner-btn { background: #fff; color: #B8922E; border: none; border-radius: 6px; padding: 0.5rem 0.9rem; font-weight: 700; font-size: 0.82rem; cursor: pointer; white-space: nowrap; text-decoration: none; display: inline-block; }
+        .apk-banner-btn:hover { background: #f0f0f0; }
+        .apk-banner-close { background: none; border: none; color: rgba(255,255,255,0.7); font-size: 1.2rem; cursor: pointer; padding: 0 0.3rem; line-height: 1; }
+        .apk-banner-close:hover { color: #fff; }
+
+        @media (max-width: 420px) {
+            .apk-banner-text span { font-size: 0.72rem; }
+            .apk-banner-btn { padding: 0.4rem 0.7rem; font-size: 0.76rem; }
+        }
+
+        /* Pre-registration modal */
+        .fm-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+        .fm-modal { background: #1a1a2e; border: 1px solid #333; border-radius: 12px; padding: 1.5rem; max-width: 480px; width: 100%; position: relative; }
     </style>
 </head>
 <body>
     <div class="fm-container">
+        <!-- APK download banner -->
+        <div class="apk-banner" id="apkBanner">
+            <div class="apk-banner-icon">📲</div>
+            <div class="apk-banner-text">
+                <strong>Descargá KuraTe</strong>
+                <span>Disponible en Google Play</span>
+            </div>
+            <a href="/play" class="apk-banner-btn" id="apkDownloadBtn">Descargar</a>
+            <button class="apk-banner-close" id="apkBannerClose">&times;</button>
+        </div>
+
         <div class="fm-top-bar">
             <div class="fm-top-left">
                 <a href="kurate://exit" class="fm-back" id="landingBack">&#8592; <span class="fm-back-text">Volver</span></a>
@@ -287,18 +322,6 @@
                     <div style="margin-bottom:1rem;">
                         <label for="preregPhone">Teléfono</label>
                         <input type="tel" id="preregPhone" class="fm-input" placeholder="11 2345-6789">
-                    </div>
-                    <div style="margin-bottom:1rem;">
-                        <label for="preregDob">Fecha de nacimiento</label>
-                        <input type="date" id="preregDob" class="fm-input">
-                    </div>
-                    <div style="margin-bottom:1rem;">
-                        <label for="preregPassword">Contraseña</label>
-                        <input type="password" id="preregPassword" class="fm-input" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
-                    </div>
-                    <div style="margin-bottom:1rem;">
-                        <label for="preregPasswordConfirm">Confirmar contraseña</label>
-                        <input type="password" id="preregPasswordConfirm" class="fm-input" placeholder="Repetí la contraseña" autocomplete="new-password">
                     </div>
                     <div class="fm-error" id="preregStep1Error"></div>
                     <button class="fm-btn fm-btn-block" id="preregStep1Btn">Enviar código SMS</button>
@@ -890,9 +913,6 @@
             preregId = null;
             document.getElementById('preregEmail').value = '';
             document.getElementById('preregPhone').value = '';
-            document.getElementById('preregDob').value = '';
-            document.getElementById('preregPassword').value = '';
-            document.getElementById('preregPasswordConfirm').value = '';
             document.getElementById('preregStep1Error').style.display = 'none';
             document.getElementById('preregStep2Error').style.display = 'none';
             document.getElementById('preregStep3Error').style.display = 'none';
@@ -929,19 +949,11 @@
         step1Btn.addEventListener('click', async function() {
             const email = document.getElementById('preregEmail').value.trim();
             const phone = document.getElementById('preregPhone').value.trim();
-            const dob = document.getElementById('preregDob').value;
-            const password = document.getElementById('preregPassword').value;
-            const passwordConfirm = document.getElementById('preregPasswordConfirm').value;
             const err = document.getElementById('preregStep1Error');
             err.style.display = 'none';
 
             if (!email) { err.textContent = 'Ingresá tu email.'; err.style.display = 'block'; return; }
             if (!phone) { err.textContent = 'Ingresá tu teléfono.'; err.style.display = 'block'; return; }
-            if (!dob) { err.textContent = 'Ingresá tu fecha de nacimiento.'; err.style.display = 'block'; return; }
-            const age = Math.floor((new Date() - new Date(dob)) / 31557600000);
-            if (age < 18) { err.textContent = 'Debés ser mayor de 18 años.'; err.style.display = 'block'; return; }
-            if (!password || password.length < 6) { err.textContent = 'La contraseña debe tener al menos 6 caracteres.'; err.style.display = 'block'; return; }
-            if (password !== passwordConfirm) { err.textContent = 'Las contraseñas no coinciden.'; err.style.display = 'block'; return; }
 
             this.disabled = true;
             this.textContent = 'Enviando...';
@@ -950,7 +962,7 @@
                 const r = await fetch('/api/v1/public/pre-register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, phone, dateOfBirth: dob, password })
+                    body: JSON.stringify({ email, phone })
                 });
                 const data = await r.json();
                 if (!r.ok) { err.textContent = data.error || 'Error al enviar SMS.'; err.style.display = 'block'; this.disabled = false; this.textContent = 'Enviar código SMS'; return; }
@@ -1128,9 +1140,8 @@
 
             function renderDniUi() {
                 msg.innerHTML = `
-                    <p style="margin-bottom:1rem;">Tomá las fotos de tu DNI para completar la verificación.</p>
-                    ${dniFrame('front', 'Frente del DNI')}
-                    ${dniFrame('back', 'Dorso del DNI')}
+                    <p style="margin-bottom:1rem;">Tomá la foto del frente de tu DNI para escanear el código de barras.</p>
+                    ${dniFrame('front', 'Frente del DNI (con código de barras)')}
                     <div id="dniActions" style="display:flex;flex-direction:column;gap:0.75rem;"></div>
                     <div id="dniStatus" style="margin-top:0.75rem;"></div>
                 `;
@@ -1139,31 +1150,79 @@
 
                 if (!dniFront) {
                     const btn = document.createElement('button');
-                    btn.className = 'fm-btn fm-btn-block'; btn.textContent = 'Tomar foto frente';
+                    btn.className = 'fm-btn fm-btn-block'; btn.textContent = 'Tomar foto frente del DNI';
                     btn.addEventListener('click', () => captureDni('front'));
                     actions.appendChild(btn);
-                } else if (!dniBack) {
-                    const btn = document.createElement('button');
-                    btn.className = 'fm-btn fm-btn-block'; btn.textContent = 'Tomar foto dorso';
-                    btn.addEventListener('click', () => captureDni('back'));
-                    actions.appendChild(btn);
-                    status.innerHTML = '<p style="color:#2ecc71;font-size:0.85rem;">Frente validado. Ahora el dorso.</p>';
                 } else {
-                    status.innerHTML = `
-                        <p style="color:#2ecc71;font-size:0.85rem;margin-bottom:0.75rem;">DNI completo. Pronto revisaremos tus datos.</p>
-                        <button class="fm-btn fm-btn-block" onclick="document.getElementById('preregModal').classList.remove('active')">Listo</button>
-                    `;
+                    renderCompleteForm();
                 }
 
                 // Wire click on frame to retake
                 msg.querySelectorAll('.dni-frame').forEach(frame => {
                     frame.addEventListener('click', () => {
                         const side = frame.dataset.side;
-                        if ((side === 'front' && dniFront) || (side === 'back' && dniBack)) {
-                            if (confirm('¿Querés volver a tomar esta foto?')) captureDni(side);
+                        if (side === 'front' && dniFront) {
+                            if (confirm('¿Querés volver a tomar esta foto?')) {
+                                dniFront = null;
+                                captureDni(side);
+                            }
                         }
                     });
                 });
+            }
+
+            function renderCompleteForm() {
+                const actions = document.getElementById('dniActions');
+                actions.innerHTML = `
+                    <p style="color:#2ecc71;font-size:0.85rem;margin-bottom:0.75rem;">DNI escaneado correctamente. Completá tu perfil.</p>
+                    <div style="margin-bottom:0.75rem;">
+                        <label style="color:#888;font-size:0.8rem;">Contraseña</label>
+                        <input type="password" id="preregFinalPassword" placeholder="Mínimo 6 caracteres" style="width:100%;padding:0.6rem;border:1px solid #2a2a3e;border-radius:8px;background:#0f0f1a;color:#fff;font-size:0.9rem;box-sizing:border-box;">
+                    </div>
+                    <div style="margin-bottom:0.75rem;">
+                        <label style="color:#888;font-size:0.8rem;">Confirmar contraseña</label>
+                        <input type="password" id="preregFinalPasswordConfirm" placeholder="Repetí la contraseña" style="width:100%;padding:0.6rem;border:1px solid #2a2a3e;border-radius:8px;background:#0f0f1a;color:#fff;font-size:0.9rem;box-sizing:border-box;">
+                    </div>
+                    <div style="margin-bottom:0.75rem;">
+                        <label style="color:#888;font-size:0.8rem;">Alias (mostrado públicamente)</label>
+                        <input type="text" id="preregFinalAlias" placeholder="Tu nombre de fantasía" style="width:100%;padding:0.6rem;border:1px solid #2a2a3e;border-radius:8px;background:#0f0f1a;color:#fff;font-size:0.9rem;box-sizing:border-box;">
+                    </div>
+                    <div style="margin-bottom:0.75rem;">
+                        <label style="color:#888;font-size:0.8rem;">Tipo de cuenta</label>
+                        <select id="preregFinalRole" style="width:100%;padding:0.6rem;border:1px solid #2a2a3e;border-radius:8px;background:#0f0f1a;color:#fff;font-size:0.9rem;box-sizing:border-box;">
+                            <option value="professional">Profesional</option>
+                            <option value="user">Usuario</option>
+                        </select>
+                    </div>
+                    <div id="preregFinalError" style="color:#e74c3c;font-size:0.85rem;display:none;margin-bottom:0.5rem;"></div>
+                    <button class="fm-btn fm-btn-block" id="preregFinalBtn">Crear cuenta</button>
+                `;
+                document.getElementById('preregFinalBtn').addEventListener('click', submitCompleteForm);
+            }
+
+            async function submitCompleteForm() {
+                const err = document.getElementById('preregFinalError');
+                err.style.display = 'none';
+                const password = document.getElementById('preregFinalPassword').value;
+                const passwordConfirm = document.getElementById('preregFinalPasswordConfirm').value;
+                const alias = document.getElementById('preregFinalAlias').value.trim();
+                const role = document.getElementById('preregFinalRole').value;
+                if (!password || password.length < 6) { err.textContent = 'La contraseña debe tener al menos 6 caracteres.'; err.style.display = 'block'; return; }
+                if (password !== passwordConfirm) { err.textContent = 'Las contraseñas no coinciden.'; err.style.display = 'block'; return; }
+                const btn = document.getElementById('preregFinalBtn');
+                btn.disabled = true; btn.textContent = 'Creando cuenta...';
+                try {
+                    const r = await fetch('/api/v1/public/pre-register/complete', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: preregId, password, role, alias })
+                    });
+                    const data = await r.json();
+                    if (!r.ok) { err.textContent = data.error || 'Error al crear la cuenta.'; err.style.display = 'block'; btn.disabled = false; btn.textContent = 'Crear cuenta'; return; }
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    window.location.href = role === 'professional' ? '/professional.html' : '/hogar.html';
+                } catch (e) { err.textContent = 'Error de conexión.'; err.style.display = 'block'; btn.disabled = false; btn.textContent = 'Crear cuenta'; }
             }
 
             async function captureDni(side) {
@@ -1181,7 +1240,7 @@
                             const status = document.getElementById('dniStatus');
                             status.innerHTML = '<p style="color:#888;font-size:0.85rem;">Analizando DNI...</p>';
                             try {
-                                const r = await fetch('/api/v1/public/pre-register/validate-dni', {
+                                const r = await fetch('/api/v1/public/pre-register/scan-dni', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ id: preregId, image: dniFront })
@@ -1189,20 +1248,13 @@
                                 const data = await r.json();
                                 if (!r.ok) {
                                     dniFront = null;
-                                    if (data.mismatch) {
-                                        status.innerHTML = `<p style="color:#e67e22;font-size:0.85rem;">${data.error}</p>`;
-                                    } else {
-                                        status.innerHTML = `<p style="color:#e74c3c;font-size:0.85rem;">${data.error}</p>`;
-                                    }
+                                    status.innerHTML = `<p style="color:#e74c3c;font-size:0.85rem;">${data.error}</p>`;
                                     renderDniUi();
                                     return;
                                 }
-                                if (data.warning) {
-                                    status.innerHTML = `<p style="color:#e67e22;font-size:0.85rem;">${data.warning}</p>`;
-                                } else {
-                                    status.innerHTML = '<p style="color:#2ecc71;font-size:0.85rem;">DNI frente verificado correctamente.</p>';
-                                }
-                                renderDniUi();
+                                const dni = data.dni || {};
+                                status.innerHTML = '<p style="color:#2ecc71;font-size:0.85rem;">DNI escaneado: ' + (dni.apellido || '') + ', ' + (dni.nombre || '') + ' (DNI ' + (dni.dni || '') + ')</p>';
+                                renderCompleteForm();
                             } catch (err) {
                                 status.innerHTML = '<p style="color:#e74c3c;font-size:0.85rem;">Error al validar el DNI.</p>';
                             }
@@ -1227,6 +1279,42 @@
             }
         }
     });
+    });
+    </script>
+
+    <script>
+    // APK version check — runs only inside Capacitor
+    (function() {
+        var isApp = window.location.protocol === 'capacitor:' || window.location.hostname === 'localhost'
+            || /KuraTe/i.test(navigator.userAgent) || window.android;
+        if (!isApp) return;
+
+        var STORED_KEY = 'kurate_apk_version';
+        fetch('/api/v1/public/app-version')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.version) return;
+                var stored = localStorage.getItem(STORED_KEY);
+                if (stored && stored !== data.version) {
+                    // Version mismatch — APK is outdated
+                    showUpdateBanner(data.version);
+                }
+                localStorage.setItem(STORED_KEY, data.version);
+            })
+            .catch(function() {});
+
+        function showUpdateBanner(latestVersion) {
+            var existing = document.getElementById('apkUpdateBanner');
+            if (existing) return;
+            var div = document.createElement('div');
+            div.id = 'apkUpdateBanner';
+            div.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 10px rgba(0,0,0,0.3);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;';
+            div.innerHTML = '<span style="flex:1;font-size:0.9rem;"><strong>Nueva versión disponible.</strong> Actualizá la app para tener la última versión.</span>'
+                + '<a href="/play" style="background:#fff;color:#c0392b;border:none;border-radius:6px;padding:6px 14px;font-weight:700;font-size:0.82rem;cursor:pointer;text-decoration:none;white-space:nowrap;">Actualizar</a>'
+                + '<button onclick="this.parentElement.remove()" style="background:none;border:none;color:rgba(255,255,255,0.8);font-size:1.3rem;cursor:pointer;padding:0 4px;line-height:1;">&times;</button>';
+            document.body.prepend(div);
+        }
+    })();
     </script>
 </body>
 </html>
