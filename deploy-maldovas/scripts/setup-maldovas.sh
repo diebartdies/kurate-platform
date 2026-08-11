@@ -126,7 +126,7 @@ docker rm KuraTe_nginx_init 2>/dev/null || true
 
 # 8. Restore MongoDB dump if available
 echo "[8/8] Checking for MongoDB dump..."
-DUMP_FILE=$(find /tmp -maxdepth 1 -name "sexappeal_final_backup*" -o -name "kurate_*.gz" 2>/dev/null | head -1)
+DUMP_FILE=$(find /tmp -maxdepth 1 -name "kurate_*.gz" 2>/dev/null | head -1)
 if [ -n "$DUMP_FILE" ]; then
   echo "Found dump: $DUMP_FILE"
   echo "After app starts, restore with:"

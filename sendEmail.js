@@ -32,7 +32,7 @@ const sendEmail = async (options) => {
   });
 
   const message = {
-    from: `${process.env.FROM_NAME || 'SexAppeal'} <${process.env.FROM_EMAIL}>`,
+    from: `${process.env.FROM_NAME || 'KuraTe'} <${process.env.FROM_EMAIL}>`,
     to: options.email,
     subject: options.subject,
     text: options.message

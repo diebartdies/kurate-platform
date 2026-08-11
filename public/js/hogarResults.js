@@ -19,7 +19,7 @@ function el(tag, cls, text) {
   return e;
 }
 
-// Render a single technician card — identical markup to the SexAppeal treasure card.
+// Render a single technician card
 function renderHogarCard(grid, tech) {
   const variant = window.HOGAR_CARD_VARIANT || 'violet';
   const card = el('div', `card treasure-card hogar-card hogar-card--${variant}`);
