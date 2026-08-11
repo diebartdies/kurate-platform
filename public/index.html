@@ -1283,6 +1283,28 @@
     </script>
 
     <script>
+    // APK banner — show on mobile web, hide if dismissed or running in Capacitor
+    (function() {
+        var banner = document.getElementById('apkBanner');
+        var closeBtn = document.getElementById('apkBannerClose');
+        if (!banner) return;
+
+        var isApp = window.location.protocol === 'capacitor:' || window.location.hostname === 'localhost'
+            || /KuraTe/i.test(navigator.userAgent) || window.android;
+        if (isApp) return;
+
+        if (sessionStorage.getItem('apkBannerDismissed') === '1') return;
+
+        banner.classList.add('show');
+
+        closeBtn.addEventListener('click', function() {
+            sessionStorage.setItem('apkBannerDismissed', '1');
+            banner.classList.remove('show');
+        });
+    })();
+    </script>
+
+    <script>
     // APK version check — runs only inside Capacitor
     (function() {
         var isApp = window.location.protocol === 'capacitor:' || window.location.hostname === 'localhost'
@@ -1296,7 +1318,6 @@
                 if (!data.version) return;
                 var stored = localStorage.getItem(STORED_KEY);
                 if (stored && stored !== data.version) {
-                    // Version mismatch — APK is outdated
                     showUpdateBanner(data.version);
                 }
                 localStorage.setItem(STORED_KEY, data.version);
