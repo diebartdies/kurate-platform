@@ -8,7 +8,7 @@ echo.
 
 :: Server configuration
 set SERVER_USER=root
-set SERVER_IP=192.168.1.67
+set SERVER_IP=91.208.206.35
 set SERVER_PATH=/root/KuraTe-platform
 set SSH_OPTS=-o ConnectTimeout=60 -o ServerAliveInterval=15 -o ServerAliveCountMax=480 -o TCPKeepAlive=yes
 
