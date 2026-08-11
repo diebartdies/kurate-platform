@@ -25,15 +25,12 @@
 <body class="landing-page login-page blueprint-theme blueprint-login-page">
     <div style="padding:1rem 1rem 0;"><a href="javascript:history.back()" class="fm-back-global">&#8592; Volver</a></div>
     <div class="container landing-container">
-        <!-- APK download banner -->
-        <div class="apk-banner" id="apkBanner" style="display:none;background:linear-gradient(135deg,#B8922E 0%,#8a6a1e 100%);color:#fff;padding:0.75rem 1rem;border-radius:10px;margin-bottom:0.75rem;box-shadow:0 2px 12px rgba(184,146,46,0.25);">
-            <div style="font-size:1.8rem;flex-shrink:0;">📲</div>
-            <div style="flex:1;">
-                <strong style="display:block;font-size:0.95rem;margin-bottom:2px;">Descargá KuraTe</strong>
-                <span style="font-size:0.78rem;opacity:0.9;">Disponible en Google Play</span>
-            </div>
-            <a href="/play" style="background:#fff;color:#B8922E;border:none;border-radius:6px;padding:0.5rem 0.9rem;font-weight:700;font-size:0.82rem;cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-block;">Descargar</a>
-            <button onclick="document.getElementById('apkBanner').style.display='none';sessionStorage.setItem('apkBannerDismissed','1');" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:1.2rem;cursor:pointer;padding:0 0.3rem;">&times;</button>
+        <!-- APK banner: reminder (web) / download (Android/iOS) -->
+        <div class="apk-banner" id="apkBanner" style="display:none;background:linear-gradient(135deg,#B8922E 0%,#8a6a1e 100%);color:#fff;padding:0.4rem 0.75rem;border-radius:8px;margin-bottom:0.75rem;box-shadow:0 2px 12px rgba(184,146,46,0.25);align-items:center;gap:0.5rem;font-size:0.8rem;">
+            <img src="/images/apks_android_IOS.png" alt="APK" style="height:22px;width:auto;flex-shrink:0;">
+            <span id="apkBannerText">KuraTe funciona mejor en la app</span>
+            <a href="/play" id="apkDownloadBtn" style="display:none;background:#fff;color:#B8922E;border:none;border-radius:5px;padding:0.3rem 0.7rem;font-weight:700;font-size:0.75rem;cursor:pointer;white-space:nowrap;text-decoration:none;">Descargar</a>
+            <button onclick="document.getElementById('apkBanner').style.display='none';sessionStorage.setItem('apkBannerDismissed','1');" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:1.1rem;cursor:pointer;padding:0 0.2rem;line-height:1;margin-left:auto;">&times;</button>
         </div>
         <section class="hero landing-dual" id="loginPage">
             <div class="landing-frame landing-frame-logo">
@@ -88,6 +85,19 @@
             || /KuraTe/i.test(navigator.userAgent) || window.android;
         if (isApp) return;
         if (sessionStorage.getItem('apkBannerDismissed') === '1') return;
+
+        var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        var text = document.getElementById('apkBannerText');
+        var dlBtn = document.getElementById('apkDownloadBtn');
+
+        if (isMobile) {
+            if (text) text.textContent = 'Descargá KuraTe';
+            if (dlBtn) dlBtn.style.display = '';
+        } else {
+            if (text) text.textContent = 'KuraTe funciona mejor en la app';
+            if (dlBtn) dlBtn.style.display = 'none';
+        }
+
         banner.style.display = 'flex';
     })();
     </script>

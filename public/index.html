@@ -152,37 +152,26 @@
             .fm-modal { padding: 1rem; }
         }
         /* APK download banner */
-        .apk-banner { display: none; background: linear-gradient(135deg, #B8922E 0%, #8a6a1e 100%); color: #fff; padding: 0.75rem 1rem; border-radius: 10px; margin-bottom: 1rem; position: relative; box-shadow: 0 2px 12px rgba(184,146,46,0.25); }
-        .apk-banner.show { display: flex; align-items: center; gap: 0.75rem; }
-        .apk-banner-icon { font-size: 1.8rem; flex-shrink: 0; }
-        .apk-banner-text { flex: 1; }
-        .apk-banner-text strong { display: block; font-size: 0.95rem; margin-bottom: 2px; }
-        .apk-banner-text span { font-size: 0.78rem; opacity: 0.9; }
-        .apk-banner-btn { background: #fff; color: #B8922E; border: none; border-radius: 6px; padding: 0.5rem 0.9rem; font-weight: 700; font-size: 0.82rem; cursor: pointer; white-space: nowrap; text-decoration: none; display: inline-block; }
+        .apk-banner { display: none; background: linear-gradient(135deg, #B8922E 0%, #8a6a1e 100%); color: #fff; padding: 0.4rem 0.75rem; border-radius: 8px; margin-bottom: 0.75rem; position: relative; box-shadow: 0 2px 12px rgba(184,146,46,0.25); align-items: center; gap: 0.5rem; font-size: 0.8rem; }
+        .apk-banner.show { display: flex; }
+        .apk-banner img { height: 22px; width: auto; flex-shrink: 0; }
+        .apk-banner-btn { background: #fff; color: #B8922E; border: none; border-radius: 5px; padding: 0.3rem 0.7rem; font-weight: 700; font-size: 0.75rem; cursor: pointer; white-space: nowrap; text-decoration: none; }
         .apk-banner-btn:hover { background: #f0f0f0; }
-        .apk-banner-close { background: none; border: none; color: rgba(255,255,255,0.7); font-size: 1.2rem; cursor: pointer; padding: 0 0.3rem; line-height: 1; }
+        .apk-banner-close { background: none; border: none; color: rgba(255,255,255,0.7); font-size: 1.1rem; cursor: pointer; padding: 0 0.2rem; line-height: 1; margin-left: auto; }
         .apk-banner-close:hover { color: #fff; }
 
-        @media (max-width: 420px) {
-            .apk-banner-text span { font-size: 0.72rem; }
-            .apk-banner-btn { padding: 0.4rem 0.7rem; font-size: 0.76rem; }
-        }
-
         /* Pre-registration modal */
-        .fm-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+        .fm-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1000; padding: 1rem; }
         .fm-modal { background: #1a1a2e; border: 1px solid #333; border-radius: 12px; padding: 1.5rem; max-width: 480px; width: 100%; position: relative; }
     </style>
 </head>
 <body>
     <div class="fm-container">
-        <!-- APK download banner -->
+        <!-- APK banner: reminder (web) / download (Android/iOS) -->
         <div class="apk-banner" id="apkBanner">
-            <div class="apk-banner-icon">📲</div>
-            <div class="apk-banner-text">
-                <strong>Descargá KuraTe</strong>
-                <span>Disponible en Google Play</span>
-            </div>
-            <a href="/play" class="apk-banner-btn" id="apkDownloadBtn">Descargar</a>
+            <img src="/images/apks_android_IOS.png" alt="APK">
+            <span id="apkBannerText">KuraTe funciona mejor en la app</span>
+            <a href="/play" class="apk-banner-btn" id="apkDownloadBtn" style="display:none;">Descargar</a>
             <button class="apk-banner-close" id="apkBannerClose">&times;</button>
         </div>
 
@@ -1293,6 +1282,18 @@
         if (isApp) return;
 
         if (sessionStorage.getItem('apkBannerDismissed') === '1') return;
+
+        var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        var text = document.getElementById('apkBannerText');
+        var dlBtn = document.getElementById('apkDownloadBtn');
+
+        if (isMobile) {
+            if (text) text.textContent = 'Descargá KuraTe';
+            if (dlBtn) dlBtn.style.display = '';
+        } else {
+            if (text) text.textContent = 'KuraTe funciona mejor en la app';
+            if (dlBtn) dlBtn.style.display = 'none';
+        }
 
         banner.classList.add('show');
 
