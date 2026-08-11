@@ -63,49 +63,6 @@ export function initBootstrap() {
         const is18Plus = localStorage.getItem('is18Plus');
         const hasToken = localStorage.getItem('token');
 
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                document.title = "Book1 - Excel";
-                document.body.innerHTML = `
-                <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:#fff; z-index:9999999; font-family:Arial, sans-serif; cursor:default;">
-                    <div style="background:#217346; color:white; padding:10px 15px; font-weight:bold; font-size:14px; display:flex; align-items:center;">
-                        <div style="background:white; color:#217346; padding:2px 6px; margin-right:15px; font-weight:900; border-radius:2px;">X</div>
-                        Book1 - Excel
-                    </div>
-                    <div style="background:#f3f2f1; padding:8px 15px; border-bottom:1px solid #ccc; display:flex; gap:20px; font-size:13px; color:#444;">
-                        <span style="border-bottom:2px solid #217346; padding-bottom:4px; font-weight:bold; color:#217346;">Home</span>
-                        <span>Insert</span><span>Page Layout</span><span>Formulas</span><span>Data</span><span>Review</span><span>View</span>
-                    </div>
-                    <div style="padding:0; background:#fff; overflow:hidden; height:calc(100vh - 80px);">
-                        <table style="width:100%; border-collapse:collapse; font-size:12px; color:#333;">
-                            <thead>
-                                <tr>
-                                    <th style="border:1px solid #ccc; background:#f3f2f1; width:40px; padding:5px;"></th>
-                                    <th style="border:1px solid #ccc; background:#f3f2f1; padding:5px; width:150px;">A</th>
-                                    <th style="border:1px solid #ccc; background:#f3f2f1; padding:5px; width:150px;">B</th>
-                                    <th style="border:1px solid #ccc; background:#f3f2f1; padding:5px; width:150px;">C</th>
-                                    <th style="border:1px solid #ccc; background:#f3f2f1; padding:5px;">D</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${Array(40).fill('').map((_, i) => `
-                                <tr>
-                                    <td style="border:1px solid #ccc; background:#f3f2f1; text-align:center; padding:4px;">${i + 1}</td>
-                                    <td style="border:1px solid #ccc; padding:4px;">${i === 0 ? 'Q1 Revenue' : (i === 1 ? '$45,000' : '')}</td>
-                                    <td style="border:1px solid #ccc; padding:4px;">${i === 0 ? 'Q2 Revenue' : (i === 1 ? '$52,000' : '')}</td>
-                                    <td style="border:1px solid #ccc; padding:4px;">${i === 0 ? 'Q3 Revenue' : (i === 1 ? '$48,000' : '')}</td>
-                                    <td style="border:1px solid #ccc; padding:4px;">${i === 0 ? 'Q4 Revenue' : (i === 1 ? '$61,000' : '')}</td>
-                                </tr>`).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            `;
-                const topBar = document.getElementById('globalTopBar');
-                if (topBar) topBar.remove();
-            }
-        });
-
         attachPasswordToggles(document);
 
         if (!isPublicPage && is18Plus !== 'true' && !hasToken) {
