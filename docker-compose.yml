@@ -2,13 +2,16 @@ services:
   mongo:
     image: mongo:4.4
     pull_policy: if_not_present
-    command: ["mongod", "--wiredTigerCacheSizeGB", "0.25", "--bind_ip_all"]
+    command: ["mongod", "--config", "/etc/mongo/mongod.conf"]
     container_name: KuraTe_mongo
     restart: unless-stopped
     ports:
       - "27018:27017"
     volumes:
       - mongo_data:/data/db
+      - ./mongo-tls/mongod.conf:/etc/mongo/mongod.conf:ro
+      - ./mongo-tls/ca.pem:/etc/mongo/ca.pem:ro
+      - ./mongo-tls/server-keycert.pem:/etc/mongo/server-keycert.pem:ro
     healthcheck:
       test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
       interval: 10s
@@ -26,7 +29,7 @@ services:
     env_file: .env
     environment:
       - NODE_ENV=production
-      - MONGO_URI=mongodb://mongo:27017/KuraTe
+      - MONGO_URI=mongodb://kurateApp:Kurate2026Secure!@mongo:27017/KuraTe?authSource=admin
     volumes:
       - ./public:/app/public
       - ./controllers:/app/controllers

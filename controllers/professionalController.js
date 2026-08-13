@@ -198,10 +198,13 @@ exports.searchProfessionals = async (req, res, next) => {
     const baseFilter = mergePublicListingFilter();
     // Match professionals with either professionalProfile or hogarProfile
     delete baseFilter['professionalProfile.isExposed'];
-    baseFilter.$or = [
-      { 'professionalProfile.alias': { $exists: true, $ne: '' } },
-      { 'hogarProfile.firstName': { $exists: true, $ne: '' } }
-    ];
+    baseFilter.$and = baseFilter.$and || [];
+    baseFilter.$and.push({
+      $or: [
+        { 'professionalProfile.alias': { $exists: true, $ne: '' } },
+        { 'hogarProfile.firstName': { $exists: true, $ne: '' } }
+      ]
+    });
 
     if (provincia && provincia.trim()) {
       baseFilter.$and = baseFilter.$and || [];
@@ -439,9 +442,12 @@ exports.searchProfessionals = async (req, res, next) => {
       };
     });
 
-    // Filter: remove zero-score, brand/model required match, and < 50% match
+    // Filter: remove zero-score, brand/model required match, and low match
+    // When no service/brand/model queried, lower threshold since location-only matches are valid
+    const hasServiceQuery = !!(service || brand || model || descripcion);
+    const minPct = hasServiceQuery ? 30 : 0;
     const results = scored
-      .filter(p => p.score > 0 && !p.mustMatch && p.pct >= 50)
+      .filter(p => p.score > 0 && !p.mustMatch && p.pct >= minPct)
       .sort((a, b) => b.pct - a.pct || b.score - a.score)
       .slice(0, 50);
 
@@ -1750,7 +1756,7 @@ exports.getHogarProfessionalById = async (req, res, next) => {
       accountDeletedAt: null,
       isVerified: true,
       verificationStatus: 'approved'
-    }).select('name email hogarProfile').lean();
+    }).select('name email hogarProfile professionalProfile').lean();
 
     if (!user) {
       return res.status(404).json({ success: false, error: 'Técnico no encontrado' });
@@ -1788,7 +1794,8 @@ exports.getHogarProfessionalById = async (req, res, next) => {
         name: hp.firstName ? `${hp.firstName} ${hp.lastName || ''}`.trim() : (user.name || 'Técnico'),
         email: b64(user.email),
         contact,
-        hogarProfile: { ...hpClean, photos }
+        hogarProfile: { ...hpClean, photos },
+        professionalProfile: user.professionalProfile || undefined
       }
     });
   } catch (error) {

@@ -192,14 +192,11 @@
     <div style="padding:0.75rem 1rem 0;max-width:520px;margin:0 auto;"><a href="javascript:history.back()" class="fm-back-global">&#8592; Volver</a></div>
     <main id="registerMain" class="container reg-page">
         <!-- APK banner: reminder (web) / download (Android/iOS) -->
-        <div class="apk-banner" id="apkBanner" style="display:none;background:linear-gradient(135deg,#B8922E 0%,#8a6a1e 100%);color:#fff;padding:0.75rem 1rem;border-radius:10px;margin-bottom:0.75rem;box-shadow:0 2px 12px rgba(184,146,46,0.25);">
-            <div style="font-size:1.8rem;flex-shrink:0;">📲</div>
-            <div style="flex:1;">
-                <strong id="apkBannerTitle" style="display:block;font-size:0.95rem;margin-bottom:2px;">KuraTe</strong>
-                <span id="apkBannerSub" style="font-size:0.78rem;opacity:0.9;">Disponible en Google Play</span>
-            </div>
-            <a href="/play" id="apkDownloadBtn" style="display:none;background:#fff;color:#B8922E;border:none;border-radius:6px;padding:0.5rem 0.9rem;font-weight:700;font-size:0.82rem;cursor:pointer;white-space:nowrap;text-decoration:none;">Descargar</a>
-            <button onclick="document.getElementById('apkBanner').style.display='none';sessionStorage.setItem('apkBannerDismissed','1');" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:1.2rem;cursor:pointer;padding:0 0.3rem;">&times;</button>
+        <div class="apk-banner" id="apkBanner" style="display:none;background:linear-gradient(135deg,#B8922E 0%,#8a6a1e 100%);color:#fff;padding:0.4rem 0.75rem;border-radius:8px;margin-bottom:0.75rem;box-shadow:0 2px 12px rgba(184,146,46,0.25);align-items:center;gap:0.5rem;font-size:0.8rem;">
+            <img src="/images/apks_android_IOS.png" alt="APK" style="height:22px;width:auto;flex-shrink:0;">
+            <span id="apkBannerText">KuraTe funciona mejor en la app</span>
+            <a href="/play" id="apkDownloadBtn" style="display:none;background:#fff;color:#B8922E;border:none;border-radius:5px;padding:0.3rem 0.7rem;font-weight:700;font-size:0.75rem;cursor:pointer;white-space:nowrap;text-decoration:none;">Descargar</a>
+            <button onclick="document.getElementById('apkBanner').style.display='none';sessionStorage.setItem('apkBannerDismissed','1');" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:1.1rem;cursor:pointer;padding:0 0.2rem;line-height:1;margin-left:auto;">&times;</button>
         </div>
         <div id="regFormPanel" class="reg-form-panel">
         <h1 id="regFormTitle" class="gold-text" style="text-align:center;font-size:1.6rem;margin:0 0 8px;">Professional Registration</h1>
@@ -310,17 +307,14 @@
         if (sessionStorage.getItem('apkBannerDismissed') === '1') return;
 
         var isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-        var title = document.getElementById('apkBannerTitle');
-        var sub = document.getElementById('apkBannerSub');
+        var text = document.getElementById('apkBannerText');
         var dlBtn = document.getElementById('apkDownloadBtn');
 
         if (isMobile) {
-            if (title) title.textContent = 'Descargá KuraTe';
-            if (sub) sub.textContent = 'Disponible en Google Play';
+            if (text) text.textContent = 'Descargá KuraTe';
             if (dlBtn) dlBtn.style.display = '';
         } else {
-            if (title) title.textContent = 'KuraTe funciona mejor en la app';
-            if (sub) sub.textContent = 'Descargala desde tu navegador Android';
+            if (text) text.textContent = 'KuraTe funciona mejor en la app';
             if (dlBtn) dlBtn.style.display = 'none';
         }
 

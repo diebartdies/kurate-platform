@@ -1,4 +1,4 @@
-Set-Location D:\KuraTe
+Set-Location D:\fullminent
 Write-Host "Starting KuraTe server on port 5001..." -ForegroundColor Green
 node server.js
 Read-Host "Press Enter to exit"

@@ -116,7 +116,8 @@
     }
 
     function render(d) {
-      const hp = d.hogarProfile || d;
+      const hp = d.hogarProfile || {};
+      const pp = d.professionalProfile || {};
       const rawContact = d.contact || hp.contact || {};
       const contact = {
         whatsapp: rawContact.whatsapp,
@@ -127,10 +128,17 @@
       };
       const addr = hp.address || {};
       const photos = (hp.photos && hp.photos.length) ? hp.photos : [NO_PHOTO];
-      const services = hp.services || [];
-      const location = (addr.province || '').toLowerCase() === 'caba'
-        ? [addr.neighborhood, 'CABA'].filter(Boolean).join(', ')
-        : [addr.neighborhood, addr.city].filter(Boolean).join(', ');
+      const services = (hp.services && hp.services.length) ? hp.services : (pp.services || []).map(s => ({ name: s, brands: [] }));
+      const alias = hp.firstName ? `${hp.firstName} ${hp.lastName || ''}`.trim() : (pp.alias || d.name || 'Técnico');
+      const bio = hp.bio || pp.bio || '';
+      const loc = pp.location || {};
+      const location = (addr.province || loc.province || '').toLowerCase() === 'caba'
+        ? [addr.neighborhood || addr.city || loc.city, 'CABA'].filter(Boolean).join(', ')
+        : [addr.neighborhood || addr.city || loc.city, addr.province || loc.province].filter(Boolean).join(', ');
+      const category = hp.category || '';
+      const availability = hp.availability || '';
+      const action = hp.action || '';
+      const actionDetails = hp.actionDetails || '';
 
       const phoneDigits = String(contact.mobilePhone || '').replace(/[^0-9]/g, '');
       const telHref = 'tel:' + encodeURIComponent(String(contact.mobilePhone || '').replace(/[^0-9+]/g, ''));
@@ -162,26 +170,28 @@
       document.getElementById('detail').innerHTML = `
         <div class="panel">
           <div class="head">
-            <img class="photo" src="${resolvePhoto(photos[0])}" alt="${esc(d.name)}" onerror="this.src='${NO_PHOTO}'">
+            <img class="photo" src="${resolvePhoto(photos[0])}" alt="${esc(alias)}" onerror="this.src='${NO_PHOTO}'">
             <div class="head-info">
-              <h1>${esc(d.name)}</h1>
-              <div class="area">${esc(categoryLabel(hp.category))} · ${esc(labelArea(hp.area))}</div>
-              <div class="spec">${esc(hp.specialty || '')}</div>
+              <h1>${esc(alias)}</h1>
+              <div class="area">${esc(categoryLabel(category))} · ${esc(labelArea(hp.area))}</div>
+              <div class="spec">${esc(bio || services.map(s => s.name || s.path || s).join(', '))}</div>
               <div class="badges">${badges.join('')}</div>
             </div>
           </div>
 
-          ${hp.action ? `<div class="section"><h2 data-i18n="Qué hace">Qué hace</h2><div class="row"><div><strong>${esc(hp.action)}</strong>${hp.actionDetails ? ' — ' + esc(hp.actionDetails) : ''}</div></div></div>` : ''}
+          ${action ? `<div class="section"><h2 data-i18n="Qué hace">Qué hace</h2><div class="row"><div><strong>${esc(action)}</strong>${actionDetails ? ' — ' + esc(actionDetails) : ''}</div></div></div>` : ''}
 
           <div class="section"><h2 data-i18n="Detalles">Detalles</h2><div class="row">
             ${hp.companyName ? `<div><span class="k" data-i18n="Empresa">Empresa</span>${esc(hp.companyName)}</div>` : ''}
-            ${hp.category ? `<div><span class="k" data-i18n="Categoría">Categoría</span>${esc(categoryLabel(hp.category))}</div>` : ''}
-            ${hp.availability ? `<div><span class="k" data-i18n="Disponibilidad">Disponibilidad</span>${esc(availabilityLabel(hp.availability))}</div>` : ''}
+            ${category ? `<div><span class="k" data-i18n="Categoría">Categoría</span>${esc(categoryLabel(category))}</div>` : ''}
+            ${availability ? `<div><span class="k" data-i18n="Disponibilidad">Disponibilidad</span>${esc(availabilityLabel(availability))}</div>` : ''}
             ${location ? `<div><span class="k" data-i18n="Zona">Zona</span>${esc(location)}</div>` : ''}
             ${addr.street ? `<div><span class="k" data-i18n="Dirección">Dirección</span>${esc(addr.street)} ${esc(addr.number || '')}</div>` : ''}
           </div></div>
 
           ${svcChips ? `<div class="section"><h2 data-i18n="Servicios">Servicios</h2><div class="chips">${svcChips}</div></div>` : ''}
+
+          ${bio ? `<div class="section"><h2 data-i18n="Sobre mí">Sobre mí</h2><div style="color:#d8d8d8;line-height:1.6;">${esc(bio)}</div></div>` : ''}
 
           <div class="section"><h2 data-i18n="Fotos">Fotos</h2><div class="gallery">${gallery}</div></div>
 
@@ -208,6 +218,7 @@
         'Profesional matriculado': 'Licensed professional', 'Técnico matriculado': 'Licensed technician',
         'Técnico no matriculado': 'Unlicensed technician', 'Idóneo': 'Qualified',
         'Hogar': 'Home', 'Oficina': 'Office', 'PIME': 'SME', 'Industria': 'Industry',
+        'Sobre mí': 'About me',
         'WhatsApp disponible': 'WhatsApp available', 'Telegram disponible': 'Telegram available',
         'Sin datos de contacto públicos.': 'No public contact info.',
         'Cargando detalle...': 'Loading details...', 'Falta el id del técnico.': 'Missing technician id.'
