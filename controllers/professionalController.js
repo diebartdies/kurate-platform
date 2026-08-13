@@ -449,7 +449,7 @@ exports.searchProfessionals = async (req, res, next) => {
     const results = scored
       .filter(p => p.score > 0 && !p.mustMatch && p.pct >= minPct)
       .sort((a, b) => b.pct - a.pct || b.score - a.score)
-      .slice(0, 50);
+      .slice(0, hasServiceQuery ? 50 : 200);
 
     // Build relaxation suggestions when results are few
     const CABA_BARRIOS = [
@@ -1662,10 +1662,22 @@ exports.getHogarProfessionals = async (req, res, next) => {
       query['hogarProfile.availability'] = req.query.availability.trim();
     }
     if (req.query.province && req.query.province.trim()) {
-      query['hogarProfile.address.province'] = { $regex: req.query.province.trim(), $options: 'i' };
+      const provRegex = { $regex: req.query.province.trim(), $options: 'i' };
+      query.$and = query.$and || [];
+      query.$and.push({ $or: [
+        { 'hogarProfile.address.province': provRegex },
+        { 'professionalProfile.location.province': provRegex },
+        { 'province': provRegex }
+      ]});
     }
     if (req.query.city && req.query.city.trim()) {
-      query['hogarProfile.address.city'] = { $regex: req.query.city.trim(), $options: 'i' };
+      const cityRegex = { $regex: req.query.city.trim(), $options: 'i' };
+      query.$and = query.$and || [];
+      query.$and.push({ $or: [
+        { 'hogarProfile.address.city': cityRegex },
+        { 'professionalProfile.location.city': cityRegex },
+        { 'city': cityRegex }
+      ]});
     }
     if (req.query.neighborhood && req.query.neighborhood.trim()) {
       query['hogarProfile.address.neighborhood'] = { $regex: req.query.neighborhood.trim(), $options: 'i' };

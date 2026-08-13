@@ -165,7 +165,7 @@
           <div class="filter-group"><label for="fCategory" data-i18n="Categoría">Categoría</label><select id="fCategory"><option value="" data-i18n="Todas">Todas</option><option value="profesional_matriculado">Profesional matriculado</option><option value="tecnico_matriculado">Técnico matriculado</option><option value="tecnico_no_matriculado">Técnico no matriculado</option><option value="idoneo">Idóneo</option></select></div>
           <div class="filter-group"><label for="fAvailability" data-i18n="Disponibilidad">Disponibilidad</label><select id="fAvailability"><option value="" data-i18n="Todas">Todas</option><option value="inmediata">Inmediata</option><option value="rapida">Rápida (&lt;2 días)</option><option value="puedo_esperar">2–4 días</option><option value="sin_apuro">&gt;4 días</option></select></div>
           <div class="filter-group"><label for="fProvince" data-i18n="Provincia">Provincia</label><select id="fProvince"><option value="" data-i18n="Todas">Todas</option><option value="CABA">CABA</option><option value="Buenos Aires">Buenos Aires</option><option value="Catamarca">Catamarca</option><option value="Chaco">Chaco</option><option value="Chubut">Chubut</option><option value="Córdoba">Córdoba</option><option value="Corrientes">Corrientes</option><option value="Entre Ríos">Entre Ríos</option><option value="Formosa">Formosa</option><option value="Jujuy">Jujuy</option><option value="La Pampa">La Pampa</option><option value="La Rioja">La Rioja</option><option value="Mendoza">Mendoza</option><option value="Misiones">Misiones</option><option value="Neuquén">Neuquén</option><option value="Río Negro">Río Negro</option><option value="Salta">Salta</option><option value="San Juan">San Juan</option><option value="San Luis">San Luis</option><option value="Santa Cruz">Santa Cruz</option><option value="Santa Fe">Santa Fe</option><option value="Santiago del Estero">Santiago del Estero</option><option value="Tierra del Fuego">Tierra del Fuego</option><option value="Tucumán">Tucumán</option></select></div>
-          <div class="filter-group"><label for="fCity" data-i18n="Localidad">Localidad</label><input type="text" id="fCity" placeholder="Localidad"></div>
+          <div class="filter-group"><label for="fCity" data-i18n="Localidad">Localidad</label><select id="fCity" disabled><option value="">Todas las ciudades / barrios</option></select></div>
           <div class="filter-group"><label for="fService" data-i18n="Servicio / Equipo">Servicio / Equipo</label><input type="text" id="fService" placeholder="Ej: lavarropas, aire, impresoras"></div>
           <div class="filter-group"><label for="fBrand" data-i18n="Marca">Marca</label><input type="text" id="fBrand" placeholder="Ej: Samsung, HP, LG"></div>
           <div style="display:flex; gap:10px; margin-top:14px;">
@@ -477,9 +477,26 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       initFilterDrawer();
+      const fProvince = document.getElementById('fProvince');
+      const fCity = document.getElementById('fCity');
+      fProvince.addEventListener('change', function() {
+        const prov = this.value;
+        fCity.innerHTML = '<option value="">Cargando...</option>';
+        fCity.disabled = true;
+        if (!prov) { fCity.innerHTML = '<option value="">Todas las ciudades / barrios</option>'; fCity.disabled = true; return; }
+        fetch('/api/v1/locations/provinces/name/' + encodeURIComponent(prov) + '/cities')
+          .then(r => r.json())
+          .then(data => {
+            fCity.innerHTML = '<option value="">Todas las ciudades / barrios</option>';
+            (data || []).forEach(c => { fCity.innerHTML += '<option value="' + c.name + '">' + c.name + '</option>'; });
+            fCity.disabled = false;
+          });
+      });
       document.getElementById('btnApply').addEventListener('click', () => loadHogar(readFilters()));
       document.getElementById('btnClear').addEventListener('click', () => {
         ['fArea','fAction','fCategory','fAvailability','fProvince','fCity','fService','fBrand'].forEach(id => { document.getElementById(id).value = ''; });
+        document.getElementById('fCity').innerHTML = '<option value="">Todas las ciudades / barrios</option>';
+        document.getElementById('fCity').disabled = true;
         loadHogar({});
       });
       const AREAS = [{ value: '', label: 'Todas' }, { value: 'hogar', label: 'Hogar' }, { value: 'oficina', label: 'Oficina' }, { value: 'pime', label: 'PIME' }, { value: 'industria', label: 'Industria' }];
