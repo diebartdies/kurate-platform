@@ -483,8 +483,8 @@ exports.searchProfessionals = async (req, res, next) => {
       .sort((a, b) => {
         // Primary: by pct (descending)
         const pctDiff = b.pct - a.pct;
-        // If pcts within 5%, use distance as tiebreaker (closer wins)
-        if (Math.abs(pctDiff) <= 5 && uLat && uLng) {
+        // If pcts are basically tied (within 0.5%), use distance as tiebreaker (closer wins)
+        if (Math.abs(pctDiff) < 0.5 && uLat && uLng) {
           if (a.distance != null && b.distance != null) return a.distance - b.distance;
           if (a.distance != null) return -1;
           if (b.distance != null) return 1;
@@ -597,7 +597,7 @@ exports.searchProfessionals = async (req, res, next) => {
         .filter(p => p.score > 0 && p.pct >= minPct)
         .sort((a, b) => {
           const pctDiff = b.pct - a.pct;
-          if (Math.abs(pctDiff) <= 5) {
+          if (Math.abs(pctDiff) < 0.5) {
             if (a.distance != null && b.distance != null) return a.distance - b.distance;
             if (a.distance != null) return -1;
             if (b.distance != null) return 1;

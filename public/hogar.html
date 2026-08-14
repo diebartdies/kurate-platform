@@ -243,7 +243,28 @@
     const PAGE_LIMIT = 12;
 
     function getSearchParams() {
-      return new URLSearchParams(window.location.search);
+      const params = new URLSearchParams(window.location.search);
+      if (!params.has('userLat') || !params.has('userLng')) {
+        try {
+          var gps = JSON.parse(sessionStorage.getItem('userGPS'));
+          if (gps && gps.lat && gps.lng) {
+            if (!params.has('userLat')) params.set('userLat', gps.lat);
+            if (!params.has('userLng')) params.set('userLng', gps.lng);
+          }
+        } catch(e) {}
+      }
+      return params;
+    }
+
+    function ensureGPS() {
+      if (sessionStorage.getItem('userGPS')) return Promise.resolve();
+      return new Promise(function(resolve) {
+        if (!navigator.geolocation) { resolve(); return; }
+        navigator.geolocation.getCurrentPosition(function(pos) {
+          sessionStorage.setItem('userGPS', JSON.stringify({lat: pos.coords.latitude, lng: pos.coords.longitude}));
+          resolve();
+        }, function(){ resolve(); }, {timeout: 5000});
+      });
     }
 
     function hasSearchParams() {
@@ -282,7 +303,9 @@
         if (title) {
           var txt = exactCount + ' profesional' + (exactCount > 1 ? 'es' : '') + ' en ' + (params.get('ciudad') || params.get('provincia') || 'CABA');
           if (nearCount > 0) txt += ' · ' + nearCount + ' en barrios cercanos';
+          var burger = title.querySelector('.burger');
           title.textContent = txt;
+          if (burger) title.insertBefore(burger, title.firstChild);
         }
         results.forEach(p => renderSearchCard(grid, p));
       } catch (err) {
@@ -342,7 +365,7 @@
     }
 
     async function loadHogar(params = {}, append = false) {
-      if (hasSearchParams() && !append) { loadSearchResults(); return; }
+      if (hasSearchParams() && !append) { await ensureGPS(); loadSearchResults(); return; }
       const grid = document.getElementById('hogarGrid');
       const loader = document.getElementById('hogarLoader');
       if (!grid) return;
