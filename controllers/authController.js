@@ -8,6 +8,7 @@ const { getClientIp } = require('../utils/clientIp');
 const { recordAdminLoginIp, HOME_LABEL } = require('../utils/adminKnownIps');
 const Specialty = require('../models/Specialty');
 const { normalizeRegistrationMobilePhone } = require('../utils/professionalInviteMessage');
+const { assignGpsToLocation } = require('../utils/cityCoordinates');
 const { rollbackPendingUser, purgeExpiredUnverifiedUsers, isEmailFullyRegistered, hasVerifiedGuestAccount } = require('../utils/pendingRegistration');
 const { getCertificateExpiryWarnings } = require('../utils/certExpiry');
 const { OAuth2Client } = require('google-auth-library');
@@ -282,7 +283,7 @@ exports.register = async (req, res, next) => {
       alias, bio: bio || '',
       hasOwnApartment: hasOwnApartment === 'true',
       hasFantasyWardrobe: hasFantasyWardrobe === 'true',
-      location: { province, city, neighborhood, street, number, floor, apartment, postalCode, country: originCountry },
+      location: assignGpsToLocation({ province, city, neighborhood, street, number, floor, apartment, postalCode, country: originCountry }),
       measurements, height,
       whatsappNumber: mobilePhone ? String(mobilePhone).trim() : '',
       services: services ? services.split(',').map(s => s.trim()).filter(Boolean) : [],

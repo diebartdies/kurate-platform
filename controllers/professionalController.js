@@ -7,6 +7,7 @@ const sendEmail = require('../sendEmail');
 const Specialty = require('../models/Specialty');
 const Statistic = require('../models/Statistic');
 const Review = require('../models/Review');
+const { assignGpsToLocation } = require('../utils/cityCoordinates');
 const Feedback = require('../models/Feedback');
 const Connection = require('../models/Connection');
 const ConnectionRequest = require('../models/ConnectionRequest');
@@ -480,12 +481,16 @@ exports.searchProfessionals = async (req, res, next) => {
     const results = scored
       .filter(p => p.score > 0 && !p.mustMatch && p.pct >= minPct)
       .sort((a, b) => {
-        if (uLat && uLng) {
+        // Primary: by pct (descending)
+        const pctDiff = b.pct - a.pct;
+        // If pcts within 5%, use distance as tiebreaker (closer wins)
+        if (Math.abs(pctDiff) <= 5 && uLat && uLng) {
           if (a.distance != null && b.distance != null) return a.distance - b.distance;
           if (a.distance != null) return -1;
           if (b.distance != null) return 1;
         }
-        return b.pct - a.pct || b.score - a.score;
+        if (pctDiff !== 0) return pctDiff;
+        return b.score - a.score;
       })
       .slice(0, hasServiceQuery ? 50 : 200);
 
@@ -591,10 +596,14 @@ exports.searchProfessionals = async (req, res, next) => {
         })
         .filter(p => p.score > 0 && p.pct >= minPct)
         .sort((a, b) => {
-          if (a.distance != null && b.distance != null) return a.distance - b.distance;
-          if (a.distance != null) return -1;
-          if (b.distance != null) return 1;
-          return b.pct - a.pct;
+          const pctDiff = b.pct - a.pct;
+          if (Math.abs(pctDiff) <= 5) {
+            if (a.distance != null && b.distance != null) return a.distance - b.distance;
+            if (a.distance != null) return -1;
+            if (b.distance != null) return 1;
+          }
+          if (pctDiff !== 0) return pctDiff;
+          return b.score - a.score;
         })
         .slice(0, 200 - results.length);
     }
@@ -1325,7 +1334,7 @@ exports.updateProfile = async (req, res, next) => {
 
     // Safely update the nested location object if location data is provided
     if (req.body.province || req.body.city || req.body.neighborhood || req.body.street !== undefined || req.body.number !== undefined || req.body.floor !== undefined || req.body.apartment !== undefined || req.body.postalCode !== undefined) {
-      professionalProfile.location = {
+      const newLoc = {
         province: req.body.province || oldProf.location?.province,
         city: req.body.city !== undefined ? req.body.city : oldProf.location?.city,
         neighborhood: req.body.neighborhood !== undefined ? req.body.neighborhood : oldProf.location?.neighborhood,
@@ -1335,6 +1344,8 @@ exports.updateProfile = async (req, res, next) => {
         apartment: req.body.apartment !== undefined ? req.body.apartment : oldProf.location?.apartment,
         postalCode: req.body.postalCode !== undefined ? req.body.postalCode : oldProf.location?.postalCode
       };
+      if (!newLoc.lat && !newLoc.lng) assignGpsToLocation(newLoc);
+      professionalProfile.location = newLoc;
     }
 
     if (req.body.quality) {

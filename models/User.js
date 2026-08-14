@@ -199,7 +199,9 @@ const UserSchema = new mongoose.Schema({
       apartment: String,
       postalCode: String,
       country: String,
-      zipCode: String
+      zipCode: String,
+      lat: Number,
+      lng: Number
     },
     pricing: mongoose.Schema.Types.Mixed,
     measurements: String,

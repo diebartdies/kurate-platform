@@ -8,6 +8,7 @@ const { sendSms } = require('../services/smsService');
 const { OAuth2Client } = require('google-auth-library');
 const { decodeDniBarcode, parseDniDate, calculateAge } = require('../utils/dniBarcode');
 const bcrypt = require('bcryptjs');
+const { assignGpsToLocation } = require('../utils/cityCoordinates');
 const jwt = require('jsonwebtoken');
 
 function normalizePhone(phone) {
@@ -275,7 +276,7 @@ exports.complete = async (req, res) => {
         alias: alias || '',
         bio: bio || '',
         expressRegistration: false,
-        location: { province: province || '', city: city || '', neighborhood: neighborhood || '', street: street || '', number: number || '', floor: floor || '', apartment: apartment || '', postalCode: postalCode || '' },
+        location: assignGpsToLocation({ province: province || '', city: city || '', neighborhood: neighborhood || '', street: street || '', number: number || '', floor: floor || '', apartment: apartment || '', postalCode: postalCode || '' }),
         services: services || [],
         height: height || '',
         measurements: measurements || '',
