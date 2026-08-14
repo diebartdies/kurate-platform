@@ -139,6 +139,14 @@
       const availability = hp.availability || '';
       const action = hp.action || '';
       const actionDetails = hp.actionDetails || '';
+      const commercialDesc = hp.commercialDescription || hp.description || pp.commercialDescription || '';
+      const workingDays = hp.workingDays || pp.workingDays || [];
+      const workingHours = hp.workingHours || pp.workingHours || {};
+      const pLat = pp.location?.lat || loc.lat || null;
+      const pLng = pp.location?.lng || loc.lng || null;
+      const mapLink = (pLat && pLng) ? 'https://www.google.com/maps/search/?api=1&query=' + pLat + ',' + pLng : (addr.street ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent((addr.street + ' ' + (addr.number || '') + ', ' + (addr.city || loc.city || '') + ', ' + (addr.province || loc.province || ''))) : '');
+      const fullAddress = [addr.street, addr.number, addr.floor ? 'Piso ' + addr.floor : '', addr.apartment ? 'Dto. ' + addr.apartment : '', addr.city || loc.city, addr.province || loc.province].filter(Boolean).join(', ');
+      const budget = hp.budgetPrice || {};
 
       const phoneDigits = String(contact.mobilePhone || '').replace(/[^0-9]/g, '');
       const telHref = 'tel:' + encodeURIComponent(String(contact.mobilePhone || '').replace(/[^0-9+]/g, ''));
@@ -186,12 +194,24 @@
             ${category ? `<div><span class="k" data-i18n="Categoría">Categoría</span>${esc(categoryLabel(category))}</div>` : ''}
             ${availability ? `<div><span class="k" data-i18n="Disponibilidad">Disponibilidad</span>${esc(availabilityLabel(availability))}</div>` : ''}
             ${location ? `<div><span class="k" data-i18n="Zona">Zona</span>${esc(location)}</div>` : ''}
-            ${addr.street ? `<div><span class="k" data-i18n="Dirección">Dirección</span>${esc(addr.street)} ${esc(addr.number || '')}</div>` : ''}
           </div></div>
+
+          ${fullAddress ? `<div class="section"><h2 data-i18n="Dirección comercial">Dirección comercial</h2><div class="row"><div style="display:flex;align-items:center;gap:8px;"><span>${esc(fullAddress)}</span>${mapLink ? '<a href="' + mapLink + '" target="_blank" rel="noopener" style="color:var(--primary-gold);text-decoration:none;font-size:0.85rem;display:inline-flex;align-items:center;gap:4px;border:1px solid var(--primary-gold);border-radius:6px;padding:3px 8px;white-space:nowrap;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg> Ver en mapa</a>' : ''}</div></div></div>` : ''}
+
+          ${workingDays.length ? `<div class="section"><h2 data-i18n="Horarios">Horarios</h2><div class="row"><div><span class="k" data-i18n="Días">Días</span>${esc(workingDays.map(d => ({Monday:'Lunes',Tuesday:'Martes',Wednesday:'Miércoles',Thursday:'Jueves',Friday:'Viernes',Saturday:'Sábado',Sunday:'Domingo'}[d] || d)).join(', '))}</div>${workingHours.start && workingHours.end ? `<div><span class="k" data-i18n="Horario">Horario</span>${esc(workingHours.start)} - ${esc(workingHours.end)}</div>` : ''}</div></div>` : ''}
 
           ${svcChips ? `<div class="section"><h2 data-i18n="Servicios">Servicios</h2><div class="chips">${svcChips}</div></div>` : ''}
 
-          ${bio ? `<div class="section"><h2 data-i18n="Sobre mí">Sobre mí</h2><div style="color:#d8d8d8;line-height:1.6;">${esc(bio)}</div></div>` : ''}
+          ${budget.type === 'con_cargo' && budget.amount ? `<div class="section"><h2 data-i18n="Presupuesto">Presupuesto</h2><div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:10px;padding:14px 16px;">
+            <div style="font-size:1.4rem;font-weight:700;color:#22c55e;margin-bottom:6px;">$ ${Number(budget.amount).toLocaleString('es-AR')}</div>
+            <div style="color:#888;font-size:0.78rem;margin-top:6px;font-style:italic;">Se abona anticipadamente para reservar el turno</div>
+          </div></div>` : ''}
+          ${budget.type === 'sin_cargo' ? `<div class="section"><h2 data-i18n="Presupuesto">Presupuesto</h2><div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:10px;padding:14px 16px;">
+            <div style="font-size:1.1rem;font-weight:600;color:#22c55e;">Sin cargo — consulta gratuita</div>
+          </div></div>` : ''}
+
+          ${commercialDesc ? `<div class="section"><h2 data-i18n="Sobre mi trabajo">Sobre mi trabajo</h2><div style="color:#d8d8d8;line-height:1.6;">${esc(commercialDesc)}</div></div>` : ''}
+          ${bio && bio !== commercialDesc ? `<div class="section"><h2 data-i18n="Sobre mí">Sobre mí</h2><div style="color:#d8d8d8;line-height:1.6;">${esc(bio)}</div></div>` : ''}
 
           <div class="section"><h2 data-i18n="Fotos">Fotos</h2><div class="gallery">${gallery}</div></div>
 
@@ -219,6 +239,13 @@
         'Técnico no matriculado': 'Unlicensed technician', 'Idóneo': 'Qualified',
         'Hogar': 'Home', 'Oficina': 'Office', 'PIME': 'SME', 'Industria': 'Industry',
         'Sobre mí': 'About me',
+        'Sobre mi trabajo': 'About my work',
+        'Dirección comercial': 'Business address',
+        'Horarios': 'Business hours',
+        'Días': 'Days',
+        'Horario': 'Hours',
+        'Ver en mapa': 'View on map',
+        'Presupuesto': 'Budget',
         'WhatsApp disponible': 'WhatsApp available', 'Telegram disponible': 'Telegram available',
         'Sin datos de contacto públicos.': 'No public contact info.',
         'Cargando detalle...': 'Loading details...', 'Falta el id del técnico.': 'Missing technician id.'

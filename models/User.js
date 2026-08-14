@@ -166,6 +166,10 @@ const UserSchema = new mongoose.Schema({
       type: String,
       maxlength: [500, 'Bio cannot be more than 500 characters']
     },
+    commercialDescription: {
+      type: String,
+      maxlength: [1000, 'Commercial description cannot be more than 1000 characters']
+    },
     hasOwnApartment: {
       type: Boolean,
       default: false
@@ -346,7 +350,28 @@ const UserSchema = new mongoose.Schema({
       default: 'domicilio'
     },
     experience: String,
-    certifications: [String]
+    certifications: [String],
+    workingHours: {
+      start: { type: String, default: '09:00' },
+      end: { type: String, default: '18:00' }
+    },
+    workingDays: [{
+      type: String,
+      enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+      default: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+    }],
+    commercialDescription: {
+      type: String,
+      maxlength: [1000, 'Commercial description cannot be more than 1000 characters']
+    },
+    onCall: {
+      type: Boolean,
+      default: false
+    },
+    budgetPrice: {
+      type: { type: String, enum: ['sin_cargo', 'con_cargo'], default: 'sin_cargo' },
+      amount: { type: Number }
+    }
   },
   resetPasswordToken: String,
   resetPasswordExpire: Date,

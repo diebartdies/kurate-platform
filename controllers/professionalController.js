@@ -465,6 +465,7 @@ exports.searchProfessionals = async (req, res, next) => {
         phone: pp.whatsappNumber || pp.contact?.phone || null,
         email: p.email,
         telegram: !!(p.hogarProfile && p.hogarProfile.contact && p.hogarProfile.contact.telegram),
+        onCall: !!(p.hogarProfile && p.hogarProfile.onCall),
         averageRating: avgRating,
         brandMatched,
         brandGeneric,
