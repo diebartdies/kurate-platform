@@ -193,7 +193,9 @@ exports.getProfessionals = async (req, res, next) => {
 // @access  Public
 exports.searchProfessionals = async (req, res, next) => {
   try {
-    const { accion, descripcion, service, model, brand, provincia, ciudad, urgencia, relaxBrand, relaxModel } = req.query;
+    const { accion, descripcion, service, model, brand, provincia, ciudad, urgencia, relaxBrand, relaxModel, userLat, userLng } = req.query;
+    const uLat = parseFloat(userLat) || null;
+    const uLng = parseFloat(userLng) || null;
 
     const baseFilter = mergePublicListingFilter();
     // Match professionals with either professionalProfile or hogarProfile
@@ -224,6 +226,7 @@ exports.searchProfessionals = async (req, res, next) => {
         ]
       });
     }
+    const isCabaBarrio = ciudad && ciudad.trim() && provincia && provincia.trim().toLowerCase() === 'caba';
 
     // New: structured service search from dropdowns
     const searchTerms = new Set();
@@ -231,25 +234,16 @@ exports.searchProfessionals = async (req, res, next) => {
     let plan = { brand: '', model: '', keywords: [], serviceCategory: '' };
 
     if (service && service.trim()) {
-      // service path like "hogar/linea-blanca/heladera-con-freezer"
       const parts = service.split('/');
       parts.forEach(p => { if (p) searchTerms.add(p.replace(/-/g, ' ')); });
       patterns = [...searchTerms].map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
 
-      // Match services in either professionalProfile or hogarProfile
       const svcRegex = service.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const nameRegex = parts[parts.length - 1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       baseFilter.$and = baseFilter.$and || [];
       baseFilter.$and.push({
         $or: [
-          { 'professionalProfile.services': { $elemMatch: { $or: [
-            { path: { $regex: `^${svcRegex}` } },
-            { name: { $regex: nameRegex, $options: 'i' } }
-          ]}}},
-          { 'hogarProfile.services': { $elemMatch: { $or: [
-            { path: { $regex: `^${svcRegex}` } },
-            { name: { $regex: nameRegex, $options: 'i' } }
-          ]}}}
+          { 'professionalProfile.services': { $regex: svcRegex, $options: 'i' } },
+          { 'hogarProfile.services.path': { $regex: svcRegex, $options: 'i' } }
         ]
       });
     }
@@ -314,8 +308,12 @@ exports.searchProfessionals = async (req, res, next) => {
     const brandQuery = (relaxBrand ? '' : (brand || plan.brand || '')).toLowerCase().trim();
     const modelQuery = (relaxModel ? '' : (model || plan.model || '')).toLowerCase().trim();
 
+    // Global weights for percentage calculation
+    const W_ACTION = 5, W_URGENCY = 5, W_SERVICE = 30, W_BIO = 10, W_BRAND = 25, W_MODEL = 25, W_LOCATION = 15;
+    const usedBrand = !!brandQuery;
+    const usedModel = !!modelQuery;
+
     // Score each professional — calculate match percentage (0-100)
-    // Required: at least brand OR model must match (if user provided one)
     const scored = professionals.map(p => {
       // Support both professionalProfile and hogarProfile — prefer one with services
       let pp = p.professionalProfile || p.hogarProfile || {};
@@ -332,9 +330,6 @@ exports.searchProfessionals = async (req, res, next) => {
       let maxPossible = 0;
 
       // Weights for percentage calculation — only count relevant weights
-      const W_ACTION = 5, W_URGENCY = 5, W_SERVICE = 30, W_BIO = 10, W_BRAND = 25, W_MODEL = 25, W_LOCATION = 15;
-      const usedBrand = !!brandQuery;
-      const usedModel = !!modelQuery;
       maxPossible = W_ACTION + W_URGENCY + W_SERVICE + W_BIO + W_LOCATION + (usedBrand ? W_BRAND : 0) + (usedModel ? W_MODEL : 0);
 
       if (accion) score += W_ACTION;
@@ -404,15 +399,35 @@ exports.searchProfessionals = async (req, res, next) => {
         }
       }
 
-      // Location boost — binary: 100% match or 0%
-      if (provincia && pp.location?.province) {
-        if (pp.location.province.toLowerCase() === provincia.toLowerCase()) score += W_LOCATION;
+      // Location boost — scaled by distance
+      let distCalc = null;
+      if (uLat && uLng && pp.location?.lat && pp.location?.lng) {
+        const R = 6371;
+        const dLat = (pp.location.lat - uLat) * Math.PI / 180;
+        const dLng = (pp.location.lng - uLng) * Math.PI / 180;
+        const a = Math.sin(dLat/2)**2 + Math.cos(uLat*Math.PI/180)*Math.cos(pp.location.lat*Math.PI/180)*Math.sin(dLng/2)**2;
+        distCalc = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
       }
+      // Province match — full weight if <=6km, half if <=15km, zero if >15km
+      if (provincia && pp.location?.province) {
+        if (pp.location.province.toLowerCase() === provincia.toLowerCase()) {
+          if (distCalc == null || distCalc <= 6) score += W_LOCATION;
+          else if (distCalc <= 15) score += Math.floor(W_LOCATION / 2);
+        }
+      }
+      // City/barrio match — bonus if close
       if (ciudad && pp.location?.city) {
-        if (pp.location.city.toLowerCase() === ciudad.toLowerCase()) score += Math.floor(W_LOCATION / 2);
+        if (pp.location.city.toLowerCase() === ciudad.toLowerCase()) {
+          if (distCalc == null || distCalc <= 6) score += Math.floor(W_LOCATION / 2);
+          else if (distCalc <= 15) score += Math.floor(W_LOCATION / 4);
+        }
       }
 
-      score += Math.round(avgRating * 2);
+      // Rating boost — reduced for distant professionals
+      const ratingBoost = Math.round(avgRating * 2);
+      if (distCalc != null && distCalc > 15) score += Math.floor(ratingBoost / 3);
+      else if (distCalc != null && distCalc > 6) score += Math.floor(ratingBoost / 2);
+      else score += ratingBoost;
 
       // Calculate percentage
       const pct = Math.round((score / maxPossible) * 100);
@@ -422,6 +437,18 @@ exports.searchProfessionals = async (req, res, next) => {
       const hasBrandOrModelQuery = (brandQuery || modelQuery) && !relaxBrand && !relaxModel;
       const mustMatch = hasBrandOrModelQuery && !brandMatched && !brandGeneric && !modelMatched && !modelGeneric;
 
+      // Distance from user (if GPS provided)
+      let distance = null;
+      const pLat = pp.location?.lat;
+      const pLng = pp.location?.lng;
+      if (uLat && uLng && pLat && pLng) {
+        const R = 6371;
+        const dLat = (pLat - uLat) * Math.PI / 180;
+        const dLng = (pLng - uLng) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(uLat*Math.PI/180) * Math.cos(pLat*Math.PI/180) * Math.sin(dLng/2) * Math.sin(dLng/2);
+        distance = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+      }
+
       return {
         id: p._id,
         score,
@@ -429,16 +456,20 @@ exports.searchProfessionals = async (req, res, next) => {
         alias: pp.alias || [pp.firstName, pp.lastName].filter(Boolean).join(' ') || 'Profesional',
         bio: pp.bio || '',
         location: [pp.location?.city || pp.address?.city, pp.location?.province || pp.address?.province].filter(Boolean).join(', '),
+        lat: pLat || null,
+        lng: pLng || null,
+        distance,
         services: svcs,
         photo: firstPhoto,
         phone: pp.whatsappNumber || pp.contact?.phone || null,
         email: p.email,
+        telegram: !!(p.hogarProfile && p.hogarProfile.contact && p.hogarProfile.contact.telegram),
         averageRating: avgRating,
         brandMatched,
         brandGeneric,
         modelMatched,
         modelGeneric,
-        mustMatch // flag: user asked for brand/model but this pro didn't match
+        mustMatch
       };
     });
 
@@ -448,8 +479,127 @@ exports.searchProfessionals = async (req, res, next) => {
     const minPct = hasServiceQuery ? 30 : 0;
     const results = scored
       .filter(p => p.score > 0 && !p.mustMatch && p.pct >= minPct)
-      .sort((a, b) => b.pct - a.pct || b.score - a.score)
+      .sort((a, b) => {
+        if (uLat && uLng) {
+          if (a.distance != null && b.distance != null) return a.distance - b.distance;
+          if (a.distance != null) return -1;
+          if (b.distance != null) return 1;
+        }
+        return b.pct - a.pct || b.score - a.score;
+      })
       .slice(0, hasServiceQuery ? 50 : 200);
+
+    // If CABA barrio search and few results, expand to all CABA with distance scoring
+    let expandedResults = [];
+    if (isCabaBarrio && results.length < 5) {
+      const expandFilter = JSON.parse(JSON.stringify(baseFilter));
+      // Remove the ciudad $and clause
+      if (expandFilter.$and) {
+        expandFilter.$and = expandFilter.$and.filter(clause => {
+          if (clause.$or && clause.$or.some(c => c['professionalProfile.location.city'] || c['hogarProfile.address.city'])) return false;
+          return true;
+        });
+      }
+      const expandProfessionals = await User.find(expandFilter)
+        .select({
+          'professionalProfile.alias': 1, 'professionalProfile.bio': 1, 'professionalProfile.location': 1,
+          'professionalProfile.services': 1, 'professionalProfile.photos': 1, 'professionalProfile.whatsappNumber': 1,
+          'hogarProfile.firstName': 1, 'hogarProfile.lastName': 1, 'hogarProfile.bio': 1, 'hogarProfile.area': 1,
+          'hogarProfile.action': 1, 'hogarProfile.services': 1, 'hogarProfile.photos': 1,
+          'hogarProfile.availability': 1, 'hogarProfile.address': 1, 'hogarProfile.contact': 1,
+          name: 1, email: 1
+        }).lean().limit(200);
+
+      const expandIds = new Set(results.map(r => r.id.toString()));
+      const expandRatingAgg = await Feedback.aggregate([
+        { $match: { professional: { $in: expandProfessionals.map(p => p._id) }, status: 'completed' } },
+        { $group: { _id: '$professional', avg: { $avg: '$rating' } } }
+      ]);
+      const expandRatingMap = {};
+      for (const r of expandRatingAgg) expandRatingMap[r._id.toString()] = Math.round(r.avg * 10) / 10;
+
+      expandedResults = expandProfessionals
+        .filter(p => !expandIds.has(p._id.toString()))
+        .map(p => {
+          let pp = p.professionalProfile || p.hogarProfile || {};
+          const ppHasServices = Array.isArray(pp.services) && pp.services.length > 0;
+          if (!ppHasServices && p.hogarProfile && Array.isArray(p.hogarProfile.services) && p.hogarProfile.services.length > 0) pp = p.hogarProfile;
+          const svcs = Array.isArray(pp.services) ? pp.services.map(s => typeof s === 'string' ? s.toLowerCase() : (s.name || s.path || '').toLowerCase()) : [];
+          const bio = (pp.bio || '').toLowerCase();
+          const avgRating = expandRatingMap[p._id.toString()] || 0;
+          let score = 0;
+          let maxPossible = W_ACTION + W_URGENCY + W_SERVICE + W_BIO + W_LOCATION + (usedBrand ? W_BRAND : 0) + (usedModel ? W_MODEL : 0);
+          if (accion) score += W_ACTION;
+          if (urgencia) score += W_URGENCY;
+          let serviceMatched = false;
+          for (const pat of patterns) {
+            for (const s of svcs) {
+              if (s.includes(pat) || pat.includes(s)) { if (!serviceMatched) { score += W_SERVICE; serviceMatched = true; } }
+            }
+          }
+          let bioMatchCount = 0;
+          for (const pat of patterns) { if (bio.includes(pat)) bioMatchCount++; }
+          if (bioMatchCount > 0) score += Math.min(W_BIO, bioMatchCount * 5);
+          if (brandQuery) {
+            const inBio = bio.includes(brandQuery);
+            const inServices = svcs.some(s => s.includes(brandQuery));
+            if (inBio || inServices) { score += W_BRAND; brandMatched = true; }
+          }
+          if (modelQuery) {
+            const inBio = bio.includes(modelQuery);
+            const inServices = svcs.some(s => s.includes(modelQuery));
+            if (inBio || inServices) { score += W_MODEL; modelMatched = true; }
+          }
+          let dist = null;
+          if (pp.location) {
+            const pLat = pp.location.lat;
+            const pLng = pp.location.lng;
+            if (uLat && uLng && pLat && pLng) {
+              const R = 6371;
+              const dLat = (pLat - uLat) * Math.PI / 180;
+              const dLng = (pLng - uLng) * Math.PI / 180;
+              const a = Math.sin(dLat/2)**2 + Math.cos(uLat*Math.PI/180)*Math.cos(pLat*Math.PI/180)*Math.sin(dLng/2)**2;
+              dist = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+            }
+          }
+          // Province match — scaled by distance
+          if (pp.location && pp.location.province && provincia) {
+            if (pp.location.province.toLowerCase() === provincia.toLowerCase()) {
+              if (dist == null || dist <= 6) score += W_LOCATION;
+              else if (dist <= 15) score += Math.floor(W_LOCATION / 2);
+            }
+          }
+      // Rating boost — reduced for distant professionals
+      const ratingBoost = Math.round(avgRating * 2);
+      if (dist != null && dist > 15) score += Math.floor(ratingBoost / 3);
+      else if (dist != null && dist > 6) score += Math.floor(ratingBoost / 2);
+      else score += ratingBoost;
+          const pct = Math.round((score / maxPossible) * 100);
+          const photos = Array.isArray(pp.photos) ? pp.photos : [];
+          return {
+            id: p._id, score, pct, nearBarrio: true,
+            alias: pp.alias || [pp.firstName, pp.lastName].filter(Boolean).join(' ') || 'Profesional',
+            bio: pp.bio || '',
+            location: [pp.location?.city || pp.address?.city, pp.location?.province || pp.address?.province].filter(Boolean).join(', '),
+            lat: pp.location?.lat || null, lng: pp.location?.lng || null, distance: dist || null,
+            services: svcs, photo: photos[0] || null,
+            phone: pp.whatsappNumber || pp.contact?.phone || null, email: p.email,
+            telegram: !!(p.hogarProfile && p.hogarProfile.contact && p.hogarProfile.contact.telegram),
+            averageRating: avgRating, brandMatched: false, brandGeneric: false,
+            modelMatched: false, modelGeneric: false, mustMatch: false
+          };
+        })
+        .filter(p => p.score > 0 && p.pct >= minPct)
+        .sort((a, b) => {
+          if (a.distance != null && b.distance != null) return a.distance - b.distance;
+          if (a.distance != null) return -1;
+          if (b.distance != null) return 1;
+          return b.pct - a.pct;
+        })
+        .slice(0, 200 - results.length);
+    }
+
+    const allResults = [...results, ...expandedResults];
 
     // Build relaxation suggestions when results are few
     const CABA_BARRIOS = [
@@ -496,7 +646,6 @@ exports.searchProfessionals = async (req, res, next) => {
       'la matanza', 'lomas de zamora', 'lanús', 'avellaneda'
     ];
 
-    const isCabaBarrio = ciudad && CABA_BARRIOS.includes(ciudad.toLowerCase().trim());
     const provLower = (provincia || '').toLowerCase().trim();
     const neighbors = NEIGHBORS[provLower] || [];
 
@@ -565,7 +714,7 @@ exports.searchProfessionals = async (req, res, next) => {
       }
     }
 
-    res.status(200).json({ results, suggestions });
+    res.status(200).json({ results: allResults, suggestions });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
   }

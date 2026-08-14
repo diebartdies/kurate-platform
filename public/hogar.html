@@ -277,7 +277,13 @@
         }
         grid.innerHTML = '';
         var title = document.querySelector('.main-title');
-        if (title) title.textContent = results.length + ' profesional' + (results.length > 1 ? 'es' : '') + ' encontrado' + (results.length > 1 ? 's' : '');
+        var exactCount = results.filter(r => !r.nearBarrio).length;
+        var nearCount = results.filter(r => r.nearBarrio).length;
+        if (title) {
+          var txt = exactCount + ' profesional' + (exactCount > 1 ? 'es' : '') + ' en ' + (params.get('ciudad') || params.get('provincia') || 'CABA');
+          if (nearCount > 0) txt += ' · ' + nearCount + ' en barrios cercanos';
+          title.textContent = txt;
+        }
         results.forEach(p => renderSearchCard(grid, p));
       } catch (err) {
         if (loader) loader.style.display = 'none'; grid.classList.remove('hidden');
@@ -300,12 +306,15 @@
       const btnRow = el('div', 'contact-badge');
       function imgBadge(src, title) { const i = el('img'); i.src = src; i.alt = title; i.title = title; i.onerror = () => { i.style.display = 'none'; }; return i; }
       if (p.phone) btnRow.appendChild(imgBadge('/images/whatsapp.png', 'WhatsApp'));
+      if (p.telegram) btnRow.appendChild(imgBadge('/images/Telegram.png', 'Telegram'));
       if (btnRow.childElementCount) imgContainer.appendChild(btnRow);
 
       const caption = el('div', 'treasure-caption');
       caption.appendChild(el('span', 'treasure-caption-alias', p.alias || 'Profesional'));
       if (p.location) caption.appendChild(el('span', 'treasure-caption-location', p.location));
       var badges = [];
+      if (p.nearBarrio) badges.push('Barrios cercanos');
+      if (p.distance != null) badges.push(p.distance + ' km');
       if (p.averageRating > 0) badges.push('★ ' + p.averageRating.toFixed(1));
       if (p.pct != null) badges.push(p.pct + '%');
       if (badges.length) caption.appendChild(el('span', 'treasure-caption-specialty', badges.join(' · ')));
@@ -321,35 +330,6 @@
         const b = el('span', '', 'Repara categoría');
         b.style.cssText = 'font-size:0.7rem;padding:2px 8px;border-radius:9999px;background:rgba(217,190,106,0.15);color:#D9BC6A;display:inline-block;margin-bottom:6px;';
         info.appendChild(b);
-      }
-      if (p.phone) {
-        var phoneClean = p.phone.replace(/\D/g, '');
-        var contactRow = el('div', '');
-        contactRow.style.cssText = 'display:flex;gap:8px;margin-top:6px;';
-        var waLink = el('a', '', 'WhatsApp');
-        waLink.href = 'https://wa.me/' + phoneClean;
-        waLink.target = '_blank';
-        waLink.style.cssText = 'font-size:0.75rem;color:#25D366;text-decoration:none;';
-        contactRow.appendChild(waLink);
-        var telLink = el('a', '', 'Llamar');
-        telLink.href = 'tel:' + p.phone;
-        telLink.style.cssText = 'font-size:0.75rem;color:#B8922E;text-decoration:none;';
-        contactRow.appendChild(telLink);
-        if (p.email) {
-          var mailLink = el('a', '', 'Email');
-          mailLink.href = 'mailto:' + p.email + '?subject=Consulta desde KuraTe';
-          mailLink.style.cssText = 'font-size:0.75rem;color:#3B82F6;text-decoration:none;';
-          contactRow.appendChild(mailLink);
-        }
-        info.appendChild(contactRow);
-      } else if (p.email) {
-        var contactRow = el('div', '');
-        contactRow.style.cssText = 'display:flex;gap:8px;margin-top:6px;';
-        var mailLink = el('a', '', 'Email');
-        mailLink.href = 'mailto:' + p.email + '?subject=Consulta desde KuraTe';
-        mailLink.style.cssText = 'font-size:0.75rem;color:#3B82F6;text-decoration:none;';
-        contactRow.appendChild(mailLink);
-        info.appendChild(contactRow);
       }
       card.appendChild(info);
       grid.appendChild(card);
