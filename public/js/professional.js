@@ -10,7 +10,9 @@ import { beginModalSession, endModalSession } from './navReturn.js';
 import {
     buildQualitySelectOptions,
     loadCategoryPricingTable,
-    needsProfessionalCategorySetup
+    needsProfessionalCategorySetup,
+    renderCompletionChecklist,
+    getProfileCompletionChecklist
 } from './professionalSetup.js';
 
 import {
@@ -125,7 +127,7 @@ export function mountProfessionalPaymentOverlays() {
 
 export function renderProfessionalMainDashboardShell(content) {
     content.innerHTML = `
-        <h2 class="gold-text" style="margin-bottom: 16px;">Your Sanctuary Dashboard</h2>
+        <h2 class="gold-text" style="margin-bottom: 16px;">Your Dashboard</h2>
         <div style="text-align: center; margin-bottom: 28px;">
             <a href="${appPath('notas-interes.html')}" class="interest-notes-dashboard-link" style="display:inline-block;padding:12px 22px;border:1px solid rgba(212,175,55,0.45);border-radius:8px;color:var(--primary-gold);text-decoration:none;font-weight:600;letter-spacing:0.5px;">${t('Notes of Interest')}</a>
         </div>
@@ -214,16 +216,28 @@ export function injectProfessionalDashboardGuides(content, data, insertRef) {
 
         welcomeSection.innerHTML = `
             <div class="welcome-guide-header">
-                <h3 class="gold-text welcome-guide-title">📖 ${t('Welcome Guide & How It Works')}</h3>
+                <h3 class="gold-text welcome-guide-title">📖 ${t('Welcome Guide')}</h3>
                 <button type="button" id="dismissWelcomeBtn" class="welcome-guide-dismiss">${t('Dismiss')}</button>
             </div>
-            <ul class="welcome-guide-list">
-                <li style="margin-bottom: 10px;"><strong>${t('Free evaluation month:')}</strong> ${t('Your first 30 days are free. During this period your profile appears in a random category so you can experience how visibility works.')}</li>
-                <li style="margin-bottom: 10px;"><strong>${t('Your chosen category:')}</strong> ${t('After approval, choose your category and specialties in your model dashboard. After your first validated payment, you move to that category rate.')}</li>
-                <li style="margin-bottom: 10px;"><strong>${t('Vacations:')}</strong> ${t('While on vacation your profile shows as inactive. Up to 15 vacation days per month are discounted from your monthly balance.')}</li>
-                <li style="margin-bottom: 10px;"><strong>${t('Monthly payment:')}</strong> ${t('Use Pago mensual to upload your receipt. Tap Cómo pagar for transfer details.')}</li>
-                <li style="margin-bottom: 10px;"><strong>${t('Privacy Guarantee:')}</strong> ${t('Our platform uses zero cookies and zero third-party trackers. Your identity and client interactions remain completely confidential.')}</li>
-            </ul>
+            <div style="color: #ddd; line-height: 1.7; font-size: 0.92rem;">
+                <p style="margin: 0 0 14px 0;"><strong style="color: var(--primary-gold);">${t('Your profile in the guide')}:</strong> ${t('Clients search for professionals by area and services. Your profile appears as a card with the following elements:')}</p>
+                <ul style="margin: 0 0 14px 18px; padding: 0;">
+                    <li style="margin-bottom: 6px;"><strong>${t('Main photo:')}</strong> ${t("It's the first thing the client sees. Choose a clear, professional photo.")}</li>
+                    <li style="margin-bottom: 6px;"><strong>${t('Alias:')}</strong> ${t('Your public name on the platform.')}</li>
+                    <li style="margin-bottom: 6px;"><strong>${t('Distance:')}</strong> ${t('Shown automatically based on client location. Closer = more visible.')}</li>
+                    <li style="margin-bottom: 6px;"><strong>${t('Reviews and rating:')}</strong> ${t('Previous client reviews directly influence your positioning.')}</li>
+                    <li style="margin-bottom: 6px;"><strong>${t('Category:')}</strong> ${t('Indicates your level (Experto, Maestro, Profesional, Técnico, Inicial). Choose the one that best represents your experience.')}</li>
+                    <li style="margin-bottom: 6px;"><strong>${t('Services:')}</strong> ${t('The specialties you offer. Choose them well to appear in the right searches.')}</li>
+                    <li style="margin-bottom: 6px;"><strong>${t('Bio:')}</strong> ${t('Briefly describe what you do and why choose you.')}</li>
+                </ul>
+                <p style="margin: 0 0 14px 0;"><strong style="color: var(--primary-gold);">${t('How search works:')}:</strong></p>
+                <ul style="margin: 0 0 0 18px; padding: 0;">
+                    <li style="margin-bottom: 6px;">${t('The client chooses their area and type of service.')}</li>
+                    <li style="margin-bottom: 6px;">${t('Results are ordered by: 1) Proximity, 2) Reviews and rating, 3) Category.')}</li>
+                    <li style="margin-bottom: 6px;">${t('More positive reviews and higher category = higher in results.')}</li>
+                    <li style="margin-bottom: 0;">${t('Complete all profile fields to maximize your visibility.')}</li>
+                </ul>
+            </div>
         `;
         content.insertBefore(welcomeSection, insertRef);
 
@@ -569,9 +583,9 @@ export function bindProfessionalProfileForm() {
 
         formData.append('alias', document.getElementById('upAlias').value);
         formData.append('bio', document.getElementById('upBio').value);
-        formData.append('hasOwnApartment', document.getElementById('upOwnApartment').checked);
-        formData.append('hasFantasyWardrobe', document.getElementById('upFantasyWardrobe').checked);
         formData.append('quality', document.getElementById('upQuality')?.value || '');
+        formData.append('usesWhatsApp', document.getElementById('upUsesWhatsApp')?.checked || false);
+        formData.append('usesTelegram', document.getElementById('upUsesTelegram')?.checked || false);
         
         const upIsExposed = document.getElementById('upIsExposed');
         if (upIsExposed) formData.append('isExposed', upIsExposed.checked);
@@ -1329,28 +1343,13 @@ export async function loadProfDashboard() {
                     <h3 class="gold-text" style="margin-bottom: 12px;">${t('Re-upload verification photos')}</h3>
                     <p style="font-size: 0.85rem; color: #ccc; margin-bottom: 16px;">${t('Upload clear replacements for ID front, ID back, and selfie with gesture.')}</p>
                     <div class="reg-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-                        <div><label>${t('ID Front photo')}</label><input type="file" id="resubmitIdFront" accept="image/*" class="reg-input" style="padding: 8px;"></div>
-                        <div><label>${t('ID Back photo')}</label><input type="file" id="resubmitIdBack" accept="image/*" class="reg-input" style="padding: 8px;"></div>
+                        <div><label for="resubmitIdFront">${t('ID Front photo')}</label><input type="file" id="resubmitIdFront" accept="image/*" class="reg-input" style="padding: 8px;"></div>
+                        <div><label for="resubmitIdBack">${t('ID Back photo')}</label><input type="file" id="resubmitIdBack" accept="image/*" class="reg-input" style="padding: 8px;"></div>
                     </div>
-                    <div style="margin-bottom: 16px;"><label>${t('Selfie photo')}</label><input type="file" id="resubmitSelfie" accept="image/*" class="reg-input" style="padding: 8px; width: 100%; box-sizing: border-box;"></div>
+                    <div style="margin-bottom: 16px;"><label for="resubmitSelfie">${t('Selfie photo')}</label><input type="file" id="resubmitSelfie" accept="image/*" class="reg-input" style="padding: 8px; width: 100%; box-sizing: border-box;"></div>
                     <button type="button" id="btnResubmitVerification" style="width: 100%; padding: 12px; background: var(--primary-gold); color: #111; font-weight: bold; border: none; border-radius: 4px; cursor: pointer;">${t('Submit verification for review')}</button>
                 </div>
             ` : '';
-            if (!isApproved && !allowResubmission) {
-                formObj.style.maxWidth = '600px';
-                formObj.style.width = '100%';
-                formObj.style.margin = '0 auto';
-                formObj.innerHTML = `
-                    ${statusBannerHtml}
-                    <button type="button" id="bottomBackBtn" style="background: var(--primary-gold); color: var(--dark-bg); font-weight: bold; width: 100%; padding: 12px; border-radius: 4px; border: none; cursor: pointer;">&#8592; ${t('Back to Main Dashboard')}</button>
-                `;
-                document.getElementById('bottomBackBtn').onclick = () => navigateBack();
-                loader.classList.add('hidden');
-                layout.classList.remove('hidden');
-                finishDashboardLoad('profDashboardLayout', 'loader');
-                applyStaticTranslations(layout);
-                return;
-            }
 
             if (user.firstApprovedLogin) {
                 fetch(`${API_URL}/professionals/acknowledge-first-login`, {
@@ -1389,29 +1388,32 @@ export async function loadProfDashboard() {
             formObj.innerHTML = `
                 <div class="prof-dash-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h2 class="gold-text" style="margin: 0; display: flex; align-items: center; gap: 10px;">
-                        Professional Dashboard <span style="font-size: 1.5rem; text-shadow: 0 0 5px rgba(212,175,55,0.5);">✏️</span>
+                        Panel Profesional <span style="font-size: 1.5rem; text-shadow: 0 0 5px rgba(212,175,55,0.5);">✏️</span>
                     </h2>
-                    <button type="button" id="profDashHeaderBackBtn" onmouseover="this.style.background='rgba(212, 175, 55, 0.1)'" onmouseout="this.style.background='transparent'" style="padding: 6px 12px; background: transparent; border: 1px solid var(--primary-gold); color: var(--primary-gold); border-radius: 4px; cursor: pointer; transition: background 0.3s ease; font-weight: bold; font-size: 0.85rem;">&#8592; Back</button>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="button" id="profDashEditBtn" onmouseover="this.style.background='var(--primary-gold)';this.style.color='var(--dark-bg)'" onmouseout="this.style.background='transparent';this.style.color='var(--primary-gold)'" style="padding: 6px 12px; background: transparent; border: 1px solid var(--primary-gold); color: var(--primary-gold); border-radius: 4px; cursor: pointer; transition: all 0.3s ease; font-weight: bold; font-size: 0.85rem;">✏️ ${t('Editar')}</button>
+                        <button type="button" id="profDashHeaderBackBtn" onmouseover="this.style.background='rgba(212, 175, 55, 0.1)'" onmouseout="this.style.background='transparent'" style="padding: 6px 12px; background: transparent; border: 1px solid var(--primary-gold); color: var(--primary-gold); border-radius: 4px; cursor: pointer; transition: background 0.3s ease; font-weight: bold; font-size: 0.85rem;">&#8592; Volver</button>
+                    </div>
                 </div>
 
                 ${statusBannerHtml}
                 ${firstApprovedBannerHtml}
                 ${setupBannerHtml}
+                ${renderCompletionChecklist(user)}
                 ${resubmitSectionHtml}
                 
                 <!-- 1. Statistics Top Frame -->
                 <div class="card fileteado-section" style="margin-bottom: 20px; border: 1px solid var(--primary-gold);">
-                    <h3 class="gold-text" style="margin-bottom: 15px;">Statistics</h3>
-                    <div style="display: flex; gap: 20px; justify-content: space-around; text-align: center; flex-wrap: wrap;">
-                        <div><div style="font-size: 2.5rem; color: var(--primary-gold);">${stats.photoCount || 0}</div><div style="font-size: 0.9rem; color: #ccc;">Dashboard Photo Clicks</div></div>
-                        <div><div style="font-size: 2.5rem; color: var(--primary-gold);">${stats.whatsappcCount || 0}</div><div style="font-size: 0.9rem; color: #ccc;">WhatsApp Button Pushes</div></div>
-                        <div><div style="font-size: 2.5rem; color: var(--primary-gold);">${stats.callCount || 0}</div><div style="font-size: 0.9rem; color: #ccc;">Call Button Pushes</div></div>
-                        <div><div style="font-size: 2.5rem; color: var(--primary-gold);">0</div><div style="font-size: 0.9rem; color: #ccc;">Hourly Hits (Peak Time)</div></div>
+                    <h3 class="gold-text" style="margin-bottom: 10px; font-size: 1rem;">Estadísticas</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; text-align: center;">
+                        <div style="padding: 8px; background: rgba(212,175,55,0.05); border-radius: 6px;"><div style="font-size: 1.5rem; color: var(--primary-gold); font-weight: bold;">${stats.photoCount || 0}</div><div style="font-size: 0.7rem; color: #aaa;">Fotos vistos</div></div>
+                        <div style="padding: 8px; background: rgba(212,175,55,0.05); border-radius: 6px;"><div style="font-size: 1.5rem; color: var(--primary-gold); font-weight: bold;">${stats.whatsappcCount || 0}</div><div style="font-size: 0.7rem; color: #aaa;">WhatsApp</div></div>
+                        <div style="padding: 8px; background: rgba(212,175,55,0.05); border-radius: 6px;"><div style="font-size: 1.5rem; color: var(--primary-gold); font-weight: bold;">${stats.callCount || 0}</div><div style="font-size: 0.7rem; color: #aaa;">Llamadas</div></div>
+                        <div style="padding: 8px; background: rgba(212,175,55,0.05); border-radius: 6px;"><div style="font-size: 1.5rem; color: var(--primary-gold); font-weight: bold;">0</div><div style="font-size: 0.7rem; color: #aaa;">Visitas hora pico</div></div>
                     </div>
                 </div>
                 
-                <input type="hidden" id="upIdNumber" value="${prof.idNumber || ''}">
-                <input type="hidden" id="upBirthDate" value="${prof.birthDate ? new Date(prof.birthDate).toISOString().split('T')[0] : ''}">
+                <input type="hidden" id="upBirthDateBackup" value="${prof.birthDate ? new Date(prof.birthDate).toISOString().split('T')[0] : ''}">
                 <input type="checkbox" id="upIsExposed" style="display:none;" ${prof.isExposed !== false ? 'checked' : ''}>
                 <input type="checkbox" id="upPaysMonthly" style="display:none;" ${prof.paysMonthlyCharges !== false ? 'checked' : ''}>
                 <input type="hidden" id="upInstagram" value="${prof.instagram || ''}">
@@ -1419,53 +1421,41 @@ export async function loadProfDashboard() {
 
                 <!-- 2. Personal Information -->
                 <div id="profPersonalInfoSection" class="card fileteado-section" style="margin-bottom: 20px; border: 1px solid var(--primary-gold);${needsCategorySetup ? ' box-shadow: 0 0 0 2px rgba(212,175,55,0.35);' : ''}">
-                    <h3 class="gold-text" style="margin-bottom: 15px;">Personal Information</h3>
+                    <h3 class="gold-text" style="margin-bottom: 15px;">Datos Personales</h3>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
-                        <div style="flex: 1; min-width: 150px;"><label>Name</label><input type="text" id="upFirstName" value="${prof.firstName || ''}" style="width: 100%; padding: 8px; background: #333; color: #888; border: 1px solid #444; border-radius: 4px;" disabled></div>
-                        <div style="flex: 1; min-width: 150px;"><label>Surname</label><input type="text" id="upSurname" value="${prof.surname || ''}" style="width: 100%; padding: 8px; background: #333; color: #888; border: 1px solid #444; border-radius: 4px;" disabled></div>
-                        <div style="flex: 1; min-width: 150px;"><label>Middle Name</label><input type="text" id="upMiddleName" value="${prof.middleName || ''}" style="width: 100%; padding: 8px; background: #333; color: #888; border: 1px solid #444; border-radius: 4px;" disabled></div>
+                        <div style="flex: 1; min-width: 150px;"><label for="upFirstName">Nombre</label><input type="text" id="upFirstName" value="${prof.firstName || ''}" style="width: 100%; padding: 8px; background: #333; color: #888; border: 1px solid #444; border-radius: 4px;" disabled></div>
+                        <div style="flex: 1; min-width: 150px;"><label for="upSurname">Apellido</label><input type="text" id="upSurname" value="${prof.surname || ''}" style="width: 100%; padding: 8px; background: #333; color: #888; border: 1px solid #444; border-radius: 4px;" disabled></div>
+                        <div style="flex: 1; min-width: 150px;"><label for="upMiddleName">Segundo Nombre</label><input type="text" id="upMiddleName" value="${prof.middleName || ''}" style="width: 100%; padding: 8px; background: #333; color: #888; border: 1px solid #444; border-radius: 4px;" disabled></div>
                     </div>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
-                        <div style="flex: 1; min-width: 150px;"><label>Alias</label><input type="text" id="upAlias" value="${prof.alias || ''}" style="width: 100%; padding: 8px; background: #333; color: #888; border: 1px solid #444; border-radius: 4px;" disabled></div>
-                        <div style="flex: 1; min-width: 150px;"><label>Birth Date</label><input type="date" id="upBirthDate" value="${prof.birthDate ? new Date(prof.birthDate).toISOString().split('T')[0] : ''}" style="width: 100%; padding: 8px; background: #333; color: #888; border: 1px solid #444; border-radius: 4px; cursor: not-allowed;" disabled></div>
-                        <div style="flex: 1; min-width: 150px;"><label>Height</label><input type="text" id="upHeight" value="${prof.height || ''}" style="width: 100%; padding: 8px; background: #333; color: #888; border: 1px solid #444; border-radius: 4px;" disabled></div>
-                        <div style="flex: 1; min-width: 150px;"><label>Measures</label><input type="text" id="upMeasurements" value="${prof.measurements || ''}" style="width: 100%; padding: 8px; background: #333; color: #888; border: 1px solid #444; border-radius: 4px;" disabled></div>
+                        <div style="flex: 1; min-width: 150px;"><label for="upIdNumber">Documento (DNI)</label><input type="text" id="upIdNumber" value="${prof.idNumber || ''}" style="width: 100%; padding: 8px; background: #333; color: #888; border: 1px solid #444; border-radius: 4px; font-family: monospace;" disabled></div>
+                        <div style="flex: 1; min-width: 150px;"><label for="upBirthDate">Fecha de Nacimiento</label><input type="date" id="upBirthDate" value="${prof.birthDate ? new Date(prof.birthDate).toISOString().split('T')[0] : ''}" style="width: 100%; padding: 8px; background: #333; color: #888; border: 1px solid #444; border-radius: 4px; cursor: not-allowed;" disabled></div>
+                        <div style="flex: 1; min-width: 100px;"><label for="upAge">Edad</label><input type="text" id="upAge" value="${prof.age || ''}" style="width: 100%; padding: 8px; background: #333; color: var(--primary-gold); border: 1px solid #444; border-radius: 4px; font-weight: bold; text-align: center;" disabled></div>
+                    </div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 150px;"><label for="upAlias">Alias</label><input type="text" id="upAlias" value="${prof.alias || ''}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
                     </div>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                         <div style="flex: 1; min-width: 100%;">
-                            <label>${t('Category pricing')}</label>
+                            <label style="color: var(--primary-gold); font-weight: bold; margin-bottom: 5px; display: block;">${t('Category and Pricing Table')}</label>
                             <table id="profCategoryTable" style="width:100%;border-collapse:collapse;font-size:0.85rem;margin:10px 0 16px;">
                                 <thead>
                                     <tr>
                                         <th style="border:1px solid rgba(212,175,55,0.25);padding:8px;background:rgba(212,175,55,0.1);color:var(--primary-gold);text-align:left;">${t('Category')}</th>
-                                        <th style="border:1px solid rgba(212,175,55,0.25);padding:8px;background:rgba(212,175,55,0.1);color:var(--primary-gold);text-align:left;">${t('Alias')}</th>
-                                        <th style="border:1px solid rgba(212,175,55,0.25);padding:8px;background:rgba(212,175,55,0.1);color:var(--primary-gold);text-align:left;">${t('Monthly Price')}</th>
-                                        <th style="border:1px solid rgba(212,175,55,0.25);padding:8px;background:rgba(212,175,55,0.1);color:var(--primary-gold);text-align:left;">${t('Unit')}</th>
+                                        <th style="border:1px solid rgba(212,175,55,0.25);padding:8px;background:rgba(212,175,55,0.1);color:var(--primary-gold);text-align:left;">${t('Level')}</th>
+                                        <th style="border:1px solid rgba(212,175,55,0.25);padding:8px;background:rgba(212,175,55,0.1);color:var(--primary-gold);text-align:right;">${t('Monthly Price')}</th>
+                                        <th style="border:1px solid rgba(212,175,55,0.25);padding:8px;background:rgba(212,175,55,0.1);color:var(--primary-gold);text-align:center;">${t('Currency')}</th>
                                     </tr>
                                 </thead>
                                 <tbody></tbody>
                             </table>
                         </div>
                         <div style="flex: 1; min-width: 150px;">
-                            <label>${t('Category')}${needsCategorySetup ? ' <span style="color:var(--accent-red);">*</span>' : ''}</label>
-                            <select id="upQuality" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid var(--primary-gold); border-radius: 4px;">
+                            <label for="upQuality">${t('Categoría')}${needsCategorySetup ? ' <span style="color:var(--accent-red);">*</span>' : ''}</label>
+                            <select id="upQuality" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid var(--primary-gold); border-radius: 4px;" disabled>
                                 ${qualitySelectOptions}
                             </select>
                         </div>
-                        <div style="flex: 2; min-width: 250px;">
-                            <label>${t('Specialties')}${needsCategorySetup ? ' <span style="color:var(--accent-red);">*</span>' : ''}</label>
-                            <div id="specsContainer" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px;"></div>
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 15px; border-top: 1px solid #444; padding-top: 15px;">
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #ccc; font-size: 0.9rem;">
-                            <input type="checkbox" id="upOwnApartment" ${prof.hasOwnApartment ? 'checked' : ''}>
-                            ${t('Has own apartment')}
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #ccc; font-size: 0.9rem;">
-                            <input type="checkbox" id="upFantasyWardrobe" ${prof.hasFantasyWardrobe ? 'checked' : ''}>
-                            ${t('Has fantasy wardrobe (sexy costumes, high heels)')}
-                        </label>
                     </div>
                 </div>
 
@@ -1480,7 +1470,7 @@ export async function loadProfDashboard() {
                 <div class="card fileteado-section" style="margin-bottom: 20px; border: 1px solid var(--primary-gold);">
                     <h3 class="gold-text" style="margin-bottom: 15px;">${t('Contact')}</h3>
                     <div style="margin-bottom: 12px;">
-                        <label>${t('Mobile phone')}</label>
+                        <label for="upMobilePhone">${t('Mobile phone')}</label>
                         ${phonePickerHtml('upMobile', prof.mobilePhone, 'upMobilePhone')}
                         <div id="phoneVerifyContainer" style="margin-top: 8px;">
                             <div id="phoneVerifyStatus" style="font-size: 0.85rem; margin-bottom: 6px;">
@@ -1499,37 +1489,43 @@ export async function loadProfDashboard() {
                             ` : ''}
                         </div>
                     </div>
-                    <div>
-                        <label>${t('WhatsApp Number')}</label>
-                        ${phonePickerHtml('upWa', prof.whatsappNumber, 'upWaInput')}
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid #444;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #ccc; font-size: 0.9rem;">
+                            <input type="checkbox" id="upUsesWhatsApp" ${prof.usesWhatsApp !== false ? 'checked' : ''}>
+                            WhatsApp
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #ccc; font-size: 0.9rem;">
+                            <input type="checkbox" id="upUsesTelegram" ${prof.usesTelegram ? 'checked' : ''}>
+                            Telegram
+                        </label>
                     </div>
                 </div>
 
                 <!-- 3. Address -->
                 <div class="card fileteado-section" style="margin-bottom: 20px; border: 1px solid var(--primary-gold);">
-                    <h3 class="gold-text" style="margin-bottom: 15px;">Address</h3>
+                    <h3 class="gold-text" style="margin-bottom: 15px;">${t('Dirección')}</h3>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
-                        <div style="flex: 2; min-width: 200px;"><label>Street</label><input type="text" id="upStreet" value="${prof.location?.street || ''}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
-                        <div style="flex: 1; min-width: 100px;"><label>Number</label><input type="text" id="upStreetNumber" value="${prof.location?.number || ''}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
-                        <div style="flex: 1; min-width: 80px;"><label>Floor</label><input type="text" id="upFloor" value="${prof.location?.floor || ''}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
-                        <div style="flex: 1; min-width: 80px;"><label>Appartment</label><input type="text" id="upApartment" value="${prof.location?.apartment || ''}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
-                        <div style="flex: 1; min-width: 100px;"><label>Postal Code</label><input type="text" id="upPostCode" value="${prof.location?.postalCode || ''}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
+                        <div style="flex: 2; min-width: 200px;"><label for="upStreet">${t('Calle')}</label><input type="text" id="upStreet" value="${prof.location?.street || ''}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
+                        <div style="flex: 1; min-width: 100px;"><label for="upStreetNumber">${t('Número')}</label><input type="text" id="upStreetNumber" value="${prof.location?.number || ''}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
+                        <div style="flex: 1; min-width: 80px;"><label for="upFloor">${t('Piso')}</label><input type="text" id="upFloor" value="${prof.location?.floor || ''}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
+                        <div style="flex: 1; min-width: 80px;"><label for="upApartment">${t('Departamento')}</label><input type="text" id="upApartment" value="${prof.location?.apartment || ''}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
+                        <div style="flex: 1; min-width: 100px;"><label for="upPostCode">${t('Código Postal')}</label><input type="text" id="upPostCode" value="${prof.location?.postalCode || ''}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
                     </div>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <div style="flex: 1; min-width: 150px;"><label>Province</label><select id="upProvince" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></select></div>
-                        <div style="flex: 1; min-width: 150px;"><label>Ciudad-Barrio (City)</label><select id="upCity" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></select></div>
-                        <div style="flex: 1; min-width: 150px;"><label>Ciudad-Barrio (Neighborhood)</label><input type="text" id="upNeighborhood" value="${prof.location?.neighborhood || ''}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;" placeholder="Neighborhood..."></div>
+                        <div style="flex: 1; min-width: 150px;"><label for="upProvince">${t('Provincia')}</label><select id="upProvince" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></select></div>
+                        <div style="flex: 1; min-width: 150px;"><label for="upCity">${t('Ciudad')}</label><select id="upCity" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></select></div>
+                        <div style="flex: 1; min-width: 150px;"><label for="upNeighborhood">${t('Barrio')}</label><input type="text" id="upNeighborhood" value="${prof.location?.neighborhood || ''}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
                     </div>
                 </div>
 
                 <!-- 4. Availability -->
                 <div class="card fileteado-section" style="margin-bottom: 20px; border: 1px solid var(--primary-gold);">
-                    <h3 class="gold-text" style="margin-bottom: 15px;">Availability</h3>
+                    <h3 class="gold-text" style="margin-bottom: 15px;">${t('Disponibilidad')}</h3>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
-                        <div style="flex: 1; min-width: 150px;"><label>Avail-start</label><input type="time" id="upAvailStart" value="${prof.workingHours?.start || '00:00'}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
-                        <div style="flex: 1; min-width: 150px;"><label>Avail-end</label><input type="time" id="upAvailEnd" value="${prof.workingHours?.end || '23:59'}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
-                        <div style="flex: 1; min-width: 150px;"><label>Vac-start</label><input type="date" id="upVacationStart" value="${prof.vacation?.startDate ? new Date(prof.vacation.startDate).toISOString().split('T')[0] : ''}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
-                        <div style="flex: 1; min-width: 150px;"><label>Vac-end</label><input type="date" id="upVacationEnd" value="${prof.vacation?.endDate ? new Date(prof.vacation.endDate).toISOString().split('T')[0] : ''}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
+                        <div style="flex: 1; min-width: 150px;"><label for="upAvailStart">${t('Horario inicio')}</label><input type="time" id="upAvailStart" value="${prof.workingHours?.start || '00:00'}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
+                        <div style="flex: 1; min-width: 150px;"><label for="upAvailEnd">${t('Horario fin')}</label><input type="time" id="upAvailEnd" value="${prof.workingHours?.end || '23:59'}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
+                        <div style="flex: 1; min-width: 150px;"><label for="upVacationStart">${t('Vacaciones desde')}</label><input type="date" id="upVacationStart" value="${prof.vacation?.startDate ? new Date(prof.vacation.startDate).toISOString().split('T')[0] : ''}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
+                        <div style="flex: 1; min-width: 150px;"><label for="upVacationEnd">${t('Vacaciones hasta')}</label><input type="date" id="upVacationEnd" value="${prof.vacation?.endDate ? new Date(prof.vacation.endDate).toISOString().split('T')[0] : ''}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
                     </div>
                     <div id="daysContainer" style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 10px;"></div>
                 </div>
@@ -1537,8 +1533,8 @@ export async function loadProfDashboard() {
                 <!-- 5. Photos -->
                 <div class="card fileteado-section" style="margin-bottom: 20px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h3 class="gold-text" style="margin: 0;">Photos</h3>
-                        <button type="button" id="btnUploadPhoto" style="padding: 8px 16px; background: var(--primary-gold); color: #111; font-weight: bold; border: none; border-radius: 4px; cursor: pointer;">Upload</button>
+                        <h3 class="gold-text" style="margin: 0;">${t('Fotos')}</h3>
+                        <button type="button" id="btnUploadPhoto" style="padding: 8px 16px; background: var(--primary-gold); color: #111; font-weight: bold; border: none; border-radius: 4px; cursor: pointer;">${t('Subir')}</button>
                     </div>
                     <p style="font-size: 0.85rem; color: #ccc; margin-bottom: 15px;">Admin upload, update, remove actions. Drag photos to reorder. ${t('Click a photo to enlarge and review its content.')}</p>
                     <input type="file" id="newPhotoInput" accept="image/png, image/jpeg, image/jpg, image/webp" multiple style="display: none;">
@@ -1561,23 +1557,6 @@ export async function loadProfDashboard() {
             `;
 
             // Logic to populate the components
-            const specsContainer = document.getElementById('specsContainer');
-            const specs = [
-                { name: 'Love Alchemy', tooltip: 'Sex' }, { name: 'Massage', tooltip: 'Conventional massage' },
-                { name: 'Virtual Connection', tooltip: 'Virtual call' }, { name: 'Media Content', tooltip: 'Share hot content pics or videos' },
-                { name: 'Streaming Kisses', tooltip: 'Live streaming kisses' }
-            ];
-            const userServices = prof.services || [];
-            specs.forEach(spec => {
-                const lbl = document.createElement('label');
-                lbl.title = t(spec.tooltip);
-                lbl.style.cssText = 'display:flex; align-items:center; gap:5px; cursor:pointer; padding:8px 12px; background:rgba(212,175,55,0.1); border-radius:4px; border:1px solid rgba(212,175,55,0.3); font-size:0.9rem;';
-                const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = spec.name; cb.className = 'dashboard-specialty-cb';
-                cb.checked = userServices.includes(spec.name) || userServices.includes(spec.name.toLowerCase());
-                lbl.appendChild(cb); lbl.appendChild(document.createTextNode(t(spec.name)));
-                specsContainer.appendChild(lbl);
-            });
-
             loadCategoryPricingTable(document.querySelector('#profCategoryTable tbody'));
 
             if (needsCategorySetup) {
@@ -1666,7 +1645,7 @@ export async function loadProfDashboard() {
                     el.style.background = '#222';
                     el.style.color = 'white';
                 });
-                formObj.querySelectorAll('.dashboard-specialty-cb, .avail-day-cb, #upOwnApartment, #upFantasyWardrobe').forEach((el) => {
+                formObj.querySelectorAll('.dashboard-specialty-cb, .avail-day-cb').forEach((el) => {
                     el.disabled = false;
                     if (el.parentElement) el.parentElement.style.opacity = '1';
                 });
@@ -1749,6 +1728,68 @@ export async function loadProfDashboard() {
             };
 
             document.getElementById('profDashHeaderBackBtn')?.addEventListener('click', () => navigateBack());
+
+            // Edit mode toggle
+            const editBtn = document.getElementById('profDashEditBtn');
+            const explicitSaveBtn = document.getElementById('explicitSaveBtn');
+            let editMode = false;
+            const readOnlyFields = ['upFirstName', 'upSurname', 'upMiddleName', 'upIdNumber', 'upBirthDate'];
+            const editableFields = ['upAlias', 'upMobilePhone', 'upWaInput', 'upProvince', 'upCity', 'upNeighborhood', 'upStreet', 'upStreetNumber', 'upBio', 'upQuality', 'upUsesWhatsApp', 'upUsesTelegram'];
+            
+            function setEditMode(enabled) {
+                editMode = enabled;
+                // Identity fields stay disabled always
+                readOnlyFields.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.disabled = true;
+                });
+                // Editable fields toggle
+                editableFields.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.disabled = !enabled;
+                });
+                // Day checkboxes
+                document.querySelectorAll('.day-toggle-cb, .half-day-cb').forEach(cb => cb.disabled = !enabled);
+                // Show/hide save button
+                if (explicitSaveBtn) {
+                    explicitSaveBtn.classList.toggle('hidden', !enabled);
+                    explicitSaveBtn.disabled = !enabled;
+                }
+                // Edit button text
+                if (editBtn) editBtn.innerHTML = enabled ? `✅ ${t('Edit Mode')}` : `✏️ ${t('Editar')}`;
+            }
+
+            editBtn?.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                editMode = !editMode;
+                setEditMode(editMode);
+                if (editMode) {
+                    const firstEditable = document.getElementById('upAlias');
+                    if (firstEditable) firstEditable.focus();
+                }
+            });
+
+            // Start in read-only mode
+            setEditMode(false);
+
+            // Calculate age from birth date
+            function calculateAge(birthDate) {
+                if (!birthDate) return '';
+                const today = new Date();
+                const birth = new Date(birthDate);
+                let age = today.getFullYear() - birth.getFullYear();
+                const monthDiff = today.getMonth() - birth.getMonth();
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+                    age--;
+                }
+                return age;
+            }
+            const ageInput = document.getElementById('upAge');
+            const birthDateInput = document.getElementById('upBirthDate');
+            if (ageInput && birthDateInput && birthDateInput.value) {
+                ageInput.value = calculateAge(birthDateInput.value);
+            }
 
             loader.classList.add('hidden');
             layout.classList.remove('hidden');

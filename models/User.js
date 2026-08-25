@@ -160,6 +160,8 @@ const UserSchema = new mongoose.Schema({
     birthDate: Date,
     age: Number,
     mobilePhone: String,
+    usesWhatsApp: { type: Boolean, default: true },
+    usesTelegram: { type: Boolean, default: false },
     instagram: String,
     facebook: String,
     bio: {

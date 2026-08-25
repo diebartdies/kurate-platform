@@ -64,7 +64,14 @@ function renderHogarCard(grid, tech) {
     const locEl = el('span', 'treasure-caption-location', tech.location);
     caption.appendChild(locEl);
   }
-  if (sub) {
+  var badges = [];
+  if (tech.nearBarrio) badges.push('Barrios cercanos');
+  if (tech.distance != null) badges.push(tech.distance + ' km');
+  if (tech.averageRating > 0) badges.push('★ ' + tech.averageRating.toFixed(1));
+  if (tech.pct != null) badges.push(tech.pct + '%');
+  if (badges.length) {
+    caption.appendChild(el('span', 'treasure-caption-specialty', badges.join(' · ')));
+  } else if (sub) {
     const specEl = el('span', 'treasure-caption-specialty', sub);
     caption.appendChild(specEl);
   }
@@ -114,14 +121,15 @@ async function loadHogar(params = {}, append = false) {
 
     if (techs.length === 0 && !append) {
       grid.innerHTML = `<div class="card" style="grid-column:1/-1;text-align:center;">
-        <h3 style="color:#D9BC6A;font-weight:600;">Sin resultados</h3>
-        <p style="color:#aaa;">Probá ampliar los filtros.</p>
+        <h3 style="color:#D9BC6A;font-weight:600;" data-i18n="Sin resultados">Sin resultados</h3>
+        <p style="color:#aaa;" data-i18n="Probá ampliar los filtros.">Probá ampliar los filtros.</p>
       </div>`;
     } else {
       techs.forEach(t => renderHogarCard(grid, t));
     }
 
     renderLoadMore(grid);
+    if (typeof window._kurateReTranslate === 'function') window._kurateReTranslate();
   } catch (err) {
     if (loader) loader.style.display = 'none';
     grid.classList.remove('hidden');
@@ -139,6 +147,7 @@ function renderLoadMore(grid) {
   moreBtn = el('button', 'sa-btn sa-btn--ghost', 'Cargar más');
   moreBtn.id = 'loadMoreBtn';
   moreBtn.type = 'button';
+  moreBtn.setAttribute('data-i18n', 'Cargar más');
   Object.assign(moreBtn.style, { display: 'block', margin: '20px auto', gridColumn: '1/-1' });
   moreBtn.addEventListener('click', () => {
     currentPage += 1;

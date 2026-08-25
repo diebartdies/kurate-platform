@@ -512,6 +512,7 @@ export async function loadDashboard() {
                                 <button id="btnGuestTraffic" class="admin-nav-btn">🕵️‍♂️ Guest Traffic</button>
                                 <button id="btnTreasuresSteps" class="admin-nav-btn">💎 Treasures Steps</button>
                                 <button id="btnViewLogs" class="admin-nav-btn">📊 Full Activity Logs</button>
+                                <button id="btnAccessLogs" class="admin-nav-btn">🔒 Access Logs</button>
                             </div>
                         </div>
 
@@ -544,6 +545,7 @@ export async function loadDashboard() {
                 
                 document.getElementById('btnEditPricing').addEventListener('click', () => openEditPricingModal(data.globalPricing));
                 document.getElementById('btnViewLogs').addEventListener('click', () => openActivityLogsModal());
+                document.getElementById('btnAccessLogs').addEventListener('click', () => openAccessLogsModal());
                 document.getElementById('btnGuestTraffic').addEventListener('click', () => openActivityLogsModal('Guest Traffic', { isGuest: 'true' }));
                 document.getElementById('btnTreasuresSteps').addEventListener('click', () => openActivityLogsModal('Treasures Steps', { isGuest: 'false' }));
                 document.getElementById('btnApplyInvitations').addEventListener('click', openViewLeadsModal);
@@ -1595,6 +1597,109 @@ function readLogFiltersFromUi() {
     if (ip) currentLogFilters.ipAddress = ip;
     if (agent) currentLogFilters.userAgent = agent;
     if (highlight) currentLogFilters.highlight = highlight;
+}
+
+export async function openAccessLogsModal() {
+    let modal = document.getElementById('accessLogsModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'accessLogsModal';
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px;';
+        modal.innerHTML = `
+            <div style="background:#1a1a2e;border:1px solid var(--primary-gold);border-radius:8px;max-width:1100px;width:100%;max-height:85vh;display:flex;flex-direction:column;">
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #333;">
+                    <h3 style="color:var(--primary-gold);margin:0;">🔒 Access Logs</h3>
+                    <button id="closeAccessLogsBtn" style="background:none;border:none;color:#aaa;font-size:1.5rem;cursor:pointer;">&times;</button>
+                </div>
+                <div style="padding:12px 20px;border-bottom:1px solid #333;display:flex;gap:10px;flex-wrap:wrap;">
+                    <input type="text" id="alSearch" placeholder="Search path..." style="padding:6px 10px;background:#222;color:white;border:1px solid #444;border-radius:4px;flex:1;min-width:150px;">
+                    <input type="date" id="alFrom" style="padding:6px 10px;background:#222;color:white;border:1px solid #444;border-radius:4px;">
+                    <input type="date" id="alTo" style="padding:6px 10px;background:#222;color:white;border:1px solid #444;border-radius:4px;">
+                    <button id="alFilterBtn" style="padding:6px 14px;background:var(--primary-gold);color:#111;border:none;border-radius:4px;cursor:pointer;font-weight:bold;">Filter</button>
+                </div>
+                <div id="accessLogsContent" style="overflow-y:auto;flex:1;padding:10px 20px;font-size:0.85rem;"></div>
+                <div id="accessLogsPagination" style="padding:12px 20px;border-top:1px solid #333;display:flex;justify-content:center;gap:8px;"></div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        document.getElementById('closeAccessLogsBtn').addEventListener('click', () => modal.remove());
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+        document.getElementById('alFilterBtn').addEventListener('click', () => loadAccessLogs(1));
+    }
+    modal.style.display = 'flex';
+    loadAccessLogs(1);
+}
+
+async function loadAccessLogs(page = 1) {
+    const content = document.getElementById('accessLogsContent');
+    const pagination = document.getElementById('accessLogsPagination');
+    const search = document.getElementById('alSearch')?.value || '';
+    const from = document.getElementById('alFrom')?.value || '';
+    const to = document.getElementById('alTo')?.value || '';
+    const token = localStorage.getItem('token');
+    
+    content.innerHTML = '<p style="color:#aaa;text-align:center;padding:20px;">Loading...</p>';
+    
+    try {
+        const params = new URLSearchParams({ page, limit: 50 });
+        if (search) params.set('path', search);
+        if (from) params.set('from', from);
+        if (to) params.set('to', to);
+        
+        const res = await fetch(`${API_URL}/admin/access-logs?${params}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        let data;
+        try {
+            data = await res.json();
+        } catch {
+            content.innerHTML = `<p style="color:red;text-align:center;padding:20px;">Server returned non-JSON response (${res.status})</p>`;
+            pagination.innerHTML = '';
+            return;
+        }
+        
+        if (!data.success || !data.data.length) {
+            content.innerHTML = '<p style="color:#888;text-align:center;padding:20px;">No logs found</p>';
+            pagination.innerHTML = '';
+            return;
+        }
+        
+        content.innerHTML = `
+            <table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
+                <thead>
+                    <tr style="border-bottom:1px solid #444;">
+                        <th style="padding:8px;text-align:left;color:var(--primary-gold);">Timestamp</th>
+                        <th style="padding:8px;text-align:left;color:var(--primary-gold);">Email</th>
+                        <th style="padding:8px;text-align:left;color:var(--primary-gold);">Method</th>
+                        <th style="padding:8px;text-align:left;color:var(--primary-gold);">Path</th>
+                        <th style="padding:8px;text-align:left;color:var(--primary-gold);">Status</th>
+                        <th style="padding:8px;text-align:left;color:var(--primary-gold);">IP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.data.map(log => `
+                        <tr style="border-bottom:1px solid #333;">
+                            <td style="padding:6px 8px;color:#ccc;white-space:nowrap;">${new Date(log.timestamp).toLocaleString('es-AR')}</td>
+                            <td style="padding:6px 8px;color:#aaa;">${log.email || log.user?.email || '—'}</td>
+                            <td style="padding:6px 8px;"><span style="padding:2px 6px;border-radius:3px;font-size:0.75rem;font-weight:bold;${log.method === 'GET' ? 'background:#1a4a1a;color:#4caf50;' : 'background:#4a3a1a;color:#ff9800;'}">${log.method}</span></td>
+                            <td style="padding:6px 8px;color:#ccc;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${log.path}">${log.path}</td>
+                            <td style="padding:6px 8px;"><span style="padding:2px 6px;border-radius:3px;font-size:0.75rem;${log.status < 400 ? 'background:#1a4a1a;color:#4caf50;' : 'background:#4a1a1a;color:#f44336;'}">${log.status}</span></td>
+                            <td style="padding:6px 8px;color:#888;">${log.ip || '—'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+        
+        let pagHtml = '';
+        for (let i = 1; i <= data.pages; i++) {
+            pagHtml += `<button onclick="window.__loadAccessLogs(${i})" style="padding:4px 10px;background:${i === data.page ? 'var(--primary-gold)' : '#333'};color:${i === data.page ? '#111' : '#ccc'};border:none;border-radius:4px;cursor:pointer;">${i}</button>`;
+        }
+        pagination.innerHTML = pagHtml;
+        window.__loadAccessLogs = loadAccessLogs;
+    } catch (err) {
+        content.innerHTML = `<p style="color:red;text-align:center;padding:20px;">Error: ${err.message}</p>`;
+    }
 }
 
 export async function openActivityLogsModal(title = 'Activity Logs', baseFilters = {}) {

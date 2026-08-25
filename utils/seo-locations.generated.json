@@ -1,6 +1,347 @@
 {
-  "generatedAt": "2026-08-13T13:23:40.632Z",
+  "generatedAt": "2026-08-14T13:23:31.194Z",
   "minProfessionals": 1,
-  "totalPages": 0,
-  "pages": []
+  "totalPages": 34,
+  "pages": [
+    {
+      "provinceSlug": "buenos-aires",
+      "provinceName": "Buenos Aires",
+      "areaSlug": null,
+      "areaName": null,
+      "areaType": "province",
+      "path": "/acompanantes/buenos-aires",
+      "count": 30,
+      "lastUpdated": "2026-08-06T05:01:47.927Z"
+    },
+    {
+      "provinceSlug": "buenos-aires",
+      "provinceName": "Buenos Aires",
+      "areaSlug": "almirante-brown",
+      "areaName": "Almirante Brown",
+      "areaType": "city",
+      "path": "/acompanantes/buenos-aires/almirante-brown",
+      "count": 2,
+      "lastUpdated": "2026-08-06T05:01:46.671Z"
+    },
+    {
+      "provinceSlug": "buenos-aires",
+      "provinceName": "Buenos Aires",
+      "areaSlug": "avellaneda",
+      "areaName": "Avellaneda",
+      "areaType": "city",
+      "path": "/acompanantes/buenos-aires/avellaneda",
+      "count": 2,
+      "lastUpdated": "2026-08-06T05:01:46.805Z"
+    },
+    {
+      "provinceSlug": "buenos-aires",
+      "provinceName": "Buenos Aires",
+      "areaSlug": "florencio-varela",
+      "areaName": "Florencio Varela",
+      "areaType": "city",
+      "path": "/acompanantes/buenos-aires/florencio-varela",
+      "count": 2,
+      "lastUpdated": "2026-08-06T05:01:47.243Z"
+    },
+    {
+      "provinceSlug": "buenos-aires",
+      "provinceName": "Buenos Aires",
+      "areaSlug": "ituzaingo",
+      "areaName": "Ituzaingó",
+      "areaType": "city",
+      "path": "/acompanantes/buenos-aires/ituzaingo",
+      "count": 2,
+      "lastUpdated": "2026-08-06T05:01:47.531Z"
+    },
+    {
+      "provinceSlug": "buenos-aires",
+      "provinceName": "Buenos Aires",
+      "areaSlug": "la-matanza",
+      "areaName": "La Matanza",
+      "areaType": "city",
+      "path": "/acompanantes/buenos-aires/la-matanza",
+      "count": 2,
+      "lastUpdated": "2026-08-06T05:01:46.401Z"
+    },
+    {
+      "provinceSlug": "buenos-aires",
+      "provinceName": "Buenos Aires",
+      "areaSlug": "lanus",
+      "areaName": "Lanús",
+      "areaType": "city",
+      "path": "/acompanantes/buenos-aires/lanus",
+      "count": 2,
+      "lastUpdated": "2026-08-06T05:01:46.946Z"
+    },
+    {
+      "provinceSlug": "buenos-aires",
+      "provinceName": "Buenos Aires",
+      "areaSlug": "lomas-de-zamora",
+      "areaName": "Lomas de Zamora",
+      "areaType": "city",
+      "path": "/acompanantes/buenos-aires/lomas-de-zamora",
+      "count": 2,
+      "lastUpdated": "2026-08-06T05:01:46.540Z"
+    },
+    {
+      "provinceSlug": "buenos-aires",
+      "provinceName": "Buenos Aires",
+      "areaSlug": "malvinas-argentinas",
+      "areaName": "Malvinas Argentinas",
+      "areaType": "city",
+      "path": "/acompanantes/buenos-aires/malvinas-argentinas",
+      "count": 1,
+      "lastUpdated": "2026-08-06T05:01:45.723Z"
+    },
+    {
+      "provinceSlug": "buenos-aires",
+      "provinceName": "Buenos Aires",
+      "areaSlug": "merlo",
+      "areaName": "Merlo",
+      "areaType": "city",
+      "path": "/acompanantes/buenos-aires/merlo",
+      "count": 2,
+      "lastUpdated": "2026-08-06T05:01:47.665Z"
+    },
+    {
+      "provinceSlug": "buenos-aires",
+      "provinceName": "Buenos Aires",
+      "areaSlug": "moreno",
+      "areaName": "Moreno",
+      "areaType": "city",
+      "path": "/acompanantes/buenos-aires/moreno",
+      "count": 2,
+      "lastUpdated": "2026-08-06T05:01:47.800Z"
+    },
+    {
+      "provinceSlug": "buenos-aires",
+      "provinceName": "Buenos Aires",
+      "areaSlug": "moron",
+      "areaName": "Morón",
+      "areaType": "city",
+      "path": "/acompanantes/buenos-aires/moron",
+      "count": 2,
+      "lastUpdated": "2026-08-06T05:01:47.385Z"
+    },
+    {
+      "provinceSlug": "buenos-aires",
+      "provinceName": "Buenos Aires",
+      "areaSlug": "quilmes",
+      "areaName": "Quilmes",
+      "areaType": "city",
+      "path": "/acompanantes/buenos-aires/quilmes",
+      "count": 2,
+      "lastUpdated": "2026-08-06T05:01:47.105Z"
+    },
+    {
+      "provinceSlug": "buenos-aires",
+      "provinceName": "Buenos Aires",
+      "areaSlug": "san-fernando",
+      "areaName": "San Fernando",
+      "areaType": "city",
+      "path": "/acompanantes/buenos-aires/san-fernando",
+      "count": 1,
+      "lastUpdated": "2026-08-06T05:01:46.117Z"
+    },
+    {
+      "provinceSlug": "buenos-aires",
+      "provinceName": "Buenos Aires",
+      "areaSlug": "san-isidro",
+      "areaName": "San Isidro",
+      "areaType": "city",
+      "path": "/acompanantes/buenos-aires/san-isidro",
+      "count": 1,
+      "lastUpdated": "2026-08-06T05:01:45.988Z"
+    },
+    {
+      "provinceSlug": "buenos-aires",
+      "provinceName": "Buenos Aires",
+      "areaSlug": "san-miguel",
+      "areaName": "San Miguel",
+      "areaType": "city",
+      "path": "/acompanantes/buenos-aires/san-miguel",
+      "count": 1,
+      "lastUpdated": "2026-08-06T05:01:45.577Z"
+    },
+    {
+      "provinceSlug": "buenos-aires",
+      "provinceName": "Buenos Aires",
+      "areaSlug": "tigre",
+      "areaName": "Tigre",
+      "areaType": "city",
+      "path": "/acompanantes/buenos-aires/tigre",
+      "count": 1,
+      "lastUpdated": "2026-08-06T05:01:46.256Z"
+    },
+    {
+      "provinceSlug": "buenos-aires",
+      "provinceName": "Buenos Aires",
+      "areaSlug": "tres-de-febrero",
+      "areaName": "Tres de Febrero",
+      "areaType": "city",
+      "path": "/acompanantes/buenos-aires/tres-de-febrero",
+      "count": 2,
+      "lastUpdated": "2026-08-06T05:01:47.927Z"
+    },
+    {
+      "provinceSlug": "buenos-aires",
+      "provinceName": "Buenos Aires",
+      "areaSlug": "vicente-lopez",
+      "areaName": "Vicente López",
+      "areaType": "city",
+      "path": "/acompanantes/buenos-aires/vicente-lopez",
+      "count": 1,
+      "lastUpdated": "2026-08-06T05:01:45.855Z"
+    },
+    {
+      "provinceSlug": "caba",
+      "provinceName": "CABA",
+      "areaSlug": null,
+      "areaName": null,
+      "areaType": "province",
+      "path": "/acompanantes/caba",
+      "count": 60,
+      "lastUpdated": "2026-08-06T05:01:43.812Z"
+    },
+    {
+      "provinceSlug": "cordoba",
+      "provinceName": "Córdoba",
+      "areaSlug": null,
+      "areaName": null,
+      "areaType": "province",
+      "path": "/acompanantes/cordoba",
+      "count": 2,
+      "lastUpdated": "2026-08-06T05:01:48.859Z"
+    },
+    {
+      "provinceSlug": "cordoba",
+      "provinceName": "Córdoba",
+      "areaSlug": "cordoba",
+      "areaName": "Córdoba",
+      "areaType": "city",
+      "path": "/acompanantes/cordoba/cordoba",
+      "count": 1,
+      "lastUpdated": "2026-08-06T05:01:48.064Z"
+    },
+    {
+      "provinceSlug": "cordoba",
+      "provinceName": "Córdoba",
+      "areaSlug": "rio-cuarto",
+      "areaName": "Río Cuarto",
+      "areaType": "city",
+      "path": "/acompanantes/cordoba/rio-cuarto",
+      "count": 1,
+      "lastUpdated": "2026-08-06T05:01:48.859Z"
+    },
+    {
+      "provinceSlug": "entre-rios",
+      "provinceName": "Entre Ríos",
+      "areaSlug": null,
+      "areaName": null,
+      "areaType": "province",
+      "path": "/acompanantes/entre-rios",
+      "count": 1,
+      "lastUpdated": "2026-08-06T05:01:48.729Z"
+    },
+    {
+      "provinceSlug": "entre-rios",
+      "provinceName": "Entre Ríos",
+      "areaSlug": "gualeguaychu",
+      "areaName": "Gualeguaychú",
+      "areaType": "city",
+      "path": "/acompanantes/entre-rios/gualeguaychu",
+      "count": 1,
+      "lastUpdated": "2026-08-06T05:01:48.729Z"
+    },
+    {
+      "provinceSlug": "mendoza",
+      "provinceName": "Mendoza",
+      "areaSlug": null,
+      "areaName": null,
+      "areaType": "province",
+      "path": "/acompanantes/mendoza",
+      "count": 2,
+      "lastUpdated": "2026-08-06T05:01:49.125Z"
+    },
+    {
+      "provinceSlug": "mendoza",
+      "provinceName": "Mendoza",
+      "areaSlug": "godoy-cruz",
+      "areaName": "Godoy Cruz",
+      "areaType": "city",
+      "path": "/acompanantes/mendoza/godoy-cruz",
+      "count": 2,
+      "lastUpdated": "2026-08-06T05:01:49.125Z"
+    },
+    {
+      "provinceSlug": "salta",
+      "provinceName": "Salta",
+      "areaSlug": null,
+      "areaName": null,
+      "areaType": "province",
+      "path": "/acompanantes/salta",
+      "count": 1,
+      "lastUpdated": "2026-08-06T05:01:48.588Z"
+    },
+    {
+      "provinceSlug": "salta",
+      "provinceName": "Salta",
+      "areaSlug": "cafayete",
+      "areaName": "Cafayete",
+      "areaType": "city",
+      "path": "/acompanantes/salta/cafayete",
+      "count": 1,
+      "lastUpdated": "2026-08-06T05:01:48.588Z"
+    },
+    {
+      "provinceSlug": "santa-fe",
+      "provinceName": "Santa Fe",
+      "areaSlug": null,
+      "areaName": null,
+      "areaType": "province",
+      "path": "/acompanantes/santa-fe",
+      "count": 2,
+      "lastUpdated": "2026-08-06T05:01:48.990Z"
+    },
+    {
+      "provinceSlug": "santa-fe",
+      "provinceName": "Santa Fe",
+      "areaSlug": "santa-fe",
+      "areaName": "Santa Fe",
+      "areaType": "city",
+      "path": "/acompanantes/santa-fe/santa-fe",
+      "count": 1,
+      "lastUpdated": "2026-08-06T05:01:48.201Z"
+    },
+    {
+      "provinceSlug": "santa-fe",
+      "provinceName": "Santa Fe",
+      "areaSlug": "venado-tuerto",
+      "areaName": "Venado Tuerto",
+      "areaType": "city",
+      "path": "/acompanantes/santa-fe/venado-tuerto",
+      "count": 1,
+      "lastUpdated": "2026-08-06T05:01:48.990Z"
+    },
+    {
+      "provinceSlug": "tucuman",
+      "provinceName": "Tucumán",
+      "areaSlug": null,
+      "areaName": null,
+      "areaType": "province",
+      "path": "/acompanantes/tucuman",
+      "count": 2,
+      "lastUpdated": "2026-08-06T05:01:49.262Z"
+    },
+    {
+      "provinceSlug": "tucuman",
+      "provinceName": "Tucumán",
+      "areaSlug": "concepcion",
+      "areaName": "Concepción",
+      "areaType": "city",
+      "path": "/acompanantes/tucuman/concepcion",
+      "count": 2,
+      "lastUpdated": "2026-08-06T05:01:49.262Z"
+    }
+  ]
 }

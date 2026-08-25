@@ -21,6 +21,12 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  overscroll-behavior: contain;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -29,10 +35,30 @@ body {
   color: var(--fg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 #root {
   min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Sticky header safe area */
+header {
+  padding-top: env(safe-area-inset-top, 0px) !important;
+}
+
+/* Touch-friendly minimum sizes for interactive elements */
+button, a, input, select, textarea {
+  min-height: 44px;
+}
+
+/* Smooth scroll for anchor links */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 60px);
 }
 
 /* ===== HOGAR CARD STYLES ===== */
@@ -53,6 +79,17 @@ body {
   transform: translateY(-3px);
   border-color: var(--primary-gold);
   box-shadow: 0 6px 20px rgba(var(--gold-rgb), 0.18);
+}
+
+@media (hover: none) {
+  .hogar-card:hover {
+    transform: none;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+  }
+  .hogar-card:active {
+    transform: scale(0.98);
+    transition: transform 0.1s;
+  }
 }
 
 .treasure-img-container {

@@ -2,6 +2,9 @@
 chcp 65001 >nul
 setlocal
 
+REM --- Force correct JAVA_HOME (override any stale system/user value) ---
+set "JAVA_HOME=C:\Program Files\Microsoft\jdk-21.0.11.10-hotspot"
+
 set "ANDROID_DIR=D:\FullMinent\android"
 set "APK=%ANDROID_DIR%\app\build\outputs\apk\debug\app-debug.apk"
 

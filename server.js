@@ -13,6 +13,7 @@ const connectDB = require('./config/database');
 const User = require('./models/User');
 const { calculateMonthlyInvoiceAmount } = require('./utils/categoryBilling');
 const ActivityLog = require('./models/ActivityLog');
+const AccessLog = require('./models/AccessLog');
 const { getClientIp } = require('./utils/clientIp');
 const { isKnownAdminIp, resolveAdminIpLabel } = require('./utils/adminKnownIps');
 const sendEmail = require('./sendEmail');
@@ -162,6 +163,29 @@ app.use((req, res, next) => {
     : strictLimiter(req, res, next);
 });
 
+// Access logging middleware
+app.use((req, res, next) => {
+  if (!req.path.startsWith('/api')) return next();
+  if (req.path.includes('health') || req.path.includes('webhooks')) return next();
+  const start = Date.now();
+  const logData = {
+    ip: getClientIp(req),
+    userAgent: req.headers['user-agent']?.substring(0, 200),
+    path: req.path,
+    method: req.method
+  };
+  res.on('finish', () => {
+    logData.status = res.statusCode;
+    logData.duration = Date.now() - start;
+    if (req.user) {
+      logData.user = req.user._id;
+      logData.email = req.user.email;
+    }
+    AccessLog.create(logData).catch(() => {});
+  });
+  next();
+});
+
 // SEO routes (must be registered before static files)
 const seoController = require('./controllers/seoController');
 const { ACTIONS, ENVIRONMENTS, CATEGORIES, buildSeoLandingPage } = require('./utils/seoLandingPages');
@@ -174,23 +198,27 @@ app.get('/acompanantes/:provinceSlug', seoController.renderLocationPage);
 app.get('/perfil/:alias', seoController.renderProfilePage);
 
 // SEO landing pages: actions, environments, categories
+app.get('/acciones', (req, res) => res.redirect(301, '/'));
 app.get('/acciones/:slug', (req, res) => {
   const item = ACTIONS.find(a => a.slug === req.params.slug);
   if (!item) return res.status(404).send('Not found');
+  const lang = req.query.lang === 'en' ? 'en' : 'es';
   res.setHeader('Cache-Control', 'public, max-age=3600');
-  res.type('html').send(buildSeoLandingPage('action', item));
+  res.type('html').send(buildSeoLandingPage('action', item, lang));
 });
 app.get('/entornos/:slug', (req, res) => {
   const item = ENVIRONMENTS.find(e => e.slug === req.params.slug);
   if (!item) return res.status(404).send('Not found');
+  const lang = req.query.lang === 'en' ? 'en' : 'es';
   res.setHeader('Cache-Control', 'public, max-age=3600');
-  res.type('html').send(buildSeoLandingPage('environment', item));
+  res.type('html').send(buildSeoLandingPage('environment', item, lang));
 });
 app.get('/categorias/:slug', (req, res) => {
   const item = CATEGORIES.find(c => c.slug === req.params.slug);
   if (!item) return res.status(404).send('Not found');
+  const lang = req.query.lang === 'en' ? 'en' : 'es';
   res.setHeader('Cache-Control', 'public, max-age=3600');
-  res.type('html').send(buildSeoLandingPage('category', item));
+  res.type('html').send(buildSeoLandingPage('category', item, lang));
 });
 
 // Favicon (browsers request /favicon.ico by default)
@@ -453,6 +481,29 @@ app.put('/api/v1/admin/payments/:id/acknowledge', protect, authorize('admin'), a
 app.post('/api/v1/admin/notify-rate-change', protect, authorize('admin'), professionalController.notifyRateChange);
 app.get('/api/v1/admin/logs/filters', protect, authorize('admin'), adminController.getActivityLogFilters);
 app.get('/api/v1/admin/logs', protect, authorize('admin'), adminController.getActivityLogs);
+app.get('/api/v1/admin/access-logs', protect, authorize('admin'), async (req, res) => {
+  try {
+    const { page = 1, limit = 50, user, action, path: reqPath, from, to } = req.query;
+    const query = {};
+    if (user) query.user = user;
+    if (action) query.action = action;
+    if (reqPath) query.path = { $regex: reqPath, $options: 'i' };
+    if (from || to) {
+      query.timestamp = {};
+      if (from) query.timestamp.$gte = new Date(from);
+      if (to) query.timestamp.$lte = new Date(to);
+    }
+    const logs = await AccessLog.find(query)
+      .sort({ timestamp: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit))
+      .populate('user', 'email alias role');
+    const total = await AccessLog.countDocuments(query);
+    res.json({ success: true, data: logs, total, page: Number(page), pages: Math.ceil(total / limit) });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 app.put('/api/v1/admin/professionals/:id', protect, authorize('admin'), adminController.updateProfessionalProfile);
 app.delete('/api/v1/admin/professionals/:id', protect, authorize('admin'), adminController.deleteProfessional);
 app.get('/api/v1/admin/professionals', protect, authorize('admin'), adminController.getAllProfessionals);

@@ -141,7 +141,6 @@ export function initBootstrap() {
 
         initGlobalTopBar();
         initRelativeLinkFixer();
-        initPrivacyShield();
         injectGlobalStyles();
         injectPlausible();
         initAwarenessCampaigns();

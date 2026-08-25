@@ -47,13 +47,7 @@ export function redirectAfterLogin(user = {}) {
     if (intended) {
         window.location.replace(intended);
     } else if (user.role === 'professional') {
-        if (user.allowResubmission || user.firstApprovedLogin || needsProfessionalCategorySetup(user)) {
-            window.location.replace(appPath('profDashboard.html'));
-        } else if (user.professionalProfile?.alias) {
-            window.location.replace('/perfil/' + encodeURIComponent(user.professionalProfile.alias));
-        } else {
-            window.location.replace(appPath('profDashboard.html'));
-        }
+        window.location.replace(appPath('profDashboard.html'));
     } else if (user.role === 'admin') {
         window.location.replace(appPath('dashboard.html'));
     } else {
@@ -217,7 +211,7 @@ function handleAgeGateEnter(btn) {
     }
 
     btn.disabled = true;
-    btn.textContent = t('');
+    btn.textContent = t('Loading...');
     btn.style.opacity = '0.7';
 
     try {
@@ -446,13 +440,7 @@ if (verifyForm) {
                 if (intended) {
                     window.location.replace(intended);
                 } else if (data.user.role === 'professional') {
-                    if (needsProfessionalCategorySetup(data.user)) {
-                        window.location.replace(appPath('profDashboard.html'));
-                    } else if (data.user.professionalProfile?.alias) {
-                        window.location.replace('/perfil/' + encodeURIComponent(data.user.professionalProfile.alias));
-                    } else {
-                        window.location.replace(appPath('profDashboard.html'));
-                    }
+                    window.location.replace(appPath('profDashboard.html'));
                 } else if (data.user.role === 'admin') {
                     window.location.replace('/dashboard.html');
                 } else {
