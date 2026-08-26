@@ -4,7 +4,6 @@ function mergePublicListingFilter() {
     accountDeletedAt: null,
     'professionalProfile.isExposed': { $ne: false },
     'professionalProfile.alias': { $exists: true, $ne: null, $ne: '' },
-    'professionalProfile.desiredQuality': { $exists: true, $ne: null, $ne: '' },
     'professionalProfile.bio': { $exists: true, $ne: null, $ne: '' },
     'professionalProfile.location.province': { $exists: true, $ne: null, $ne: '' },
     'professionalProfile.services': { $exists: true, $not: { $size: 0 } },
