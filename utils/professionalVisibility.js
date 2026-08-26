@@ -8,7 +8,7 @@ function mergePublicListingFilter() {
     'professionalProfile.bio': { $exists: true, $ne: null, $ne: '' },
     'professionalProfile.location.province': { $exists: true, $ne: null, $ne: '' },
     'professionalProfile.services': { $exists: true, $not: { $size: 0 } },
-    'professionalProfile.photos': { $exists: true, $not: { $size: 0 } },
+    'professionalProfile.photos': { $exists: true },
     $or: [
       { verificationStatus: 'approved' },
       { verificationStatus: { $exists: false } },
