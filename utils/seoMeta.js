@@ -19,7 +19,11 @@ function buildSeoHeadTags(seo) {
 }
 
 function isProfileIndexable(professional) {
-  return false;
+  if (!professional) return false;
+  const prof = professional.professionalProfile || {};
+  const status = professional.verificationStatus;
+  const isExposed = prof.isExposed;
+  return status === 'approved' && isExposed !== false;
 }
 
 function buildProfileSeo(professional) {
