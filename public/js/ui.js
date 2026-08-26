@@ -243,6 +243,7 @@ export function initGlobalTopBar() {
 
     langSwitcher.appendChild(makeLangBtn('es', 'https://flagcdn.com/w40/ar.png', 'Español'));
     langSwitcher.appendChild(makeLangBtn('en', 'https://flagcdn.com/w40/us.png', 'English'));
+    langSwitcher.appendChild(makeLangBtn('zh', 'https://flagcdn.com/w40/cn.png', '中文'));
 
     if (!isLoggedIn) {
         const authLinks = document.createElement('div');
