@@ -4,111 +4,200 @@ import { t, applyStaticTranslations } from './i18n.js';
 export async function renderSpecialtyDropdown(containerId, preselectedServices = [], options = {}) {
     const { quality = '', context = 'form' } = options;
     let container = document.getElementById(containerId);
-    
-    // Aggressive fallback to find legacy checkbox groups if ID is missing or changed
-    if (!container) {
-        const labels = Array.from(document.querySelectorAll('label'));
-        const specLabel = labels.find(l => 
-            l.textContent.trim().toLowerCase().includes('specialt') || 
-            l.textContent.trim().toLowerCase().includes('especialidad') ||
-            l.textContent.trim().toLowerCase().includes('service') ||
-            l.textContent.trim().toLowerCase().includes('servicio')
-        );
-        
-        if (specLabel) {
-            const sibling = specLabel.nextElementSibling;
-            if (sibling && (sibling.tagName === 'DIV' || sibling.tagName === 'UL')) {
-                container = sibling;
-                container.id = containerId;
-            } else {
-                const parent = specLabel.closest('.filter-control') || specLabel.parentNode;
-                if (parent) {
-                    const wrapper = parent.querySelector('div.checkbox-group, div.custom-select-wrapper, ul, div');
-                    if (wrapper && wrapper !== specLabel) {
-                        container = wrapper;
-                        container.id = containerId;
-                    }
-                }
-            }
-        }
-    }
-
     if (!container) return;
 
-    // Forcefully morph any DIV/UL (like checkbox containers) into a standard SELECT drop-down
-    if (container.tagName !== 'SELECT') {
-        const select = document.createElement('select');
-        select.id = container.id;
-        select.className = 'form-select';
-        if (container.getAttribute('name')) select.name = container.getAttribute('name');
-        else if (container.id === 'specialtySelect') select.name = 'specialty';
-        else select.name = 'services';
-        
-        select.style.width = '100%';
-        select.style.padding = context === 'form' ? '8px' : '12px';
-        select.style.background = context === 'form' ? '#222' : 'transparent';
-        select.style.border = context === 'form' ? '1px solid #444' : '1px solid var(--primary-gold)';
-        select.style.color = 'white';
-        if (context === 'form') select.style.borderRadius = '4px';
-        
-        // Ensure it is a strict drop-down menu (no multi-select box)
-        select.multiple = false;
-        
-        container.parentNode.replaceChild(select, container);
-        container = select;
-        
-        // Update the corresponding label's 'for' attribute
-        const labels = Array.from(document.querySelectorAll('label'));
-        const specLabel = labels.find(l => l.textContent.trim().toLowerCase().includes('specialt') || l.textContent.trim().toLowerCase().includes('especialidad'));
-        if (specLabel) specLabel.setAttribute('for', container.id);
-    } else if (container.tagName === 'SELECT') {
-        container.multiple = false;
-        container.removeAttribute('size');
-        container.style.height = 'auto';
-        container.style.width = '100%';
-        container.style.padding = context === 'form' ? '8px' : '12px';
-        container.style.background = context === 'form' ? '#222' : 'transparent';
-        container.style.border = context === 'form' ? '1px solid #444' : '1px solid var(--primary-gold)';
-        container.style.color = 'white';
-        if (context === 'form') container.style.borderRadius = '4px';
+    if (container.tagName !== 'DIV') {
+        const div = document.createElement('div');
+        div.id = container.id;
+        div.className = container.className;
+        container.parentNode.replaceChild(div, container);
+        container = div;
     }
 
+    let preselectedArr = [];
+    if (preselectedServices) {
+        if (Array.isArray(preselectedServices)) preselectedArr = preselectedServices;
+        else if (typeof preselectedServices === 'string') preselectedArr = preselectedServices.split(',');
+    }
+    preselectedArr = preselectedArr.map(s => (s || '').trim()).filter(Boolean);
+
+    let tree = [];
     try {
-        let preselectedArr = [];
-        if (preselectedServices) {
-            if (Array.isArray(preselectedServices)) preselectedArr = preselectedServices;
-            else if (typeof preselectedServices === 'string') preselectedArr = preselectedServices.split(',');
-        }
-        preselectedArr = preselectedArr.map(s => (s || '').trim().toLowerCase()).filter(Boolean);
-
-        const specialties = ['Massage', 'Virtual Connection', 'Love Alchemy', 'Media Content', 'Streaming Kisses'];
-        
-        container.innerHTML = '';
-        
-        if (context === 'filter') {
-            const defaultOpt = document.createElement('option');
-            defaultOpt.value = '';
-            defaultOpt.textContent = t('All Specialties');
-            defaultOpt.style.background = 'var(--dark-bg)';
-            defaultOpt.style.color = 'var(--light-text)';
-            container.appendChild(defaultOpt);
-        }
-
-        specialties.forEach(specialty => {
-            const opt = document.createElement('option');
-            opt.value = specialty;
-            opt.textContent = t(specialty);
-            opt.style.background = 'var(--dark-bg)';
-            opt.style.color = 'var(--light-text)';
-            if (preselectedArr.includes(specialty.toLowerCase().trim())) {
-                opt.selected = true;
-            }
-            container.appendChild(opt);
-        });
-    } catch (err) { 
-        console.error('Error loading specialties:', err);
-        container.innerHTML = '<option value="">Error loading specialties.</option>'; 
+        const res = await fetch(`${API_URL}/service-tree`);
+        const data = await res.json();
+        if (data.success && data.data) tree = data.data;
+    } catch (e) {
+        container.innerHTML = '<p style="color:var(--accent-red);">Error loading services.</p>';
+        return;
     }
+
+    const pathSet = new Set(preselectedArr.map(s => s.toLowerCase()));
+
+    if (!document.getElementById('serviceTreeStyles')) {
+        const style = document.createElement('style');
+        style.id = 'serviceTreeStyles';
+        style.textContent = `
+            .svc-tree { font-family: sans-serif; }
+            .svc-area { margin-bottom: 8px; border: 1px solid rgba(212,175,55,0.2); border-radius: 8px; overflow: hidden; transition: border-color 0.3s; }
+            .svc-area:hover { border-color: rgba(212,175,55,0.5); }
+            .svc-area-header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; cursor: pointer; background: rgba(212,175,55,0.06); user-select: none; transition: background 0.2s; }
+            .svc-area-header:hover { background: rgba(212,175,55,0.12); }
+            .svc-area-header .svc-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+            .svc-area-header .svc-name { flex: 1; font-weight: 700; color: var(--primary-gold); font-size: 0.95rem; }
+            .svc-area-header .svc-count { font-size: 0.75rem; color: #888; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 10px; }
+            .svc-area-header .svc-chevron { color: #666; transition: transform 0.3s; font-size: 0.8rem; }
+            .svc-area.open .svc-chevron { transform: rotate(90deg); }
+            .svc-children { display: none; padding: 6px 0; }
+            .svc-area.open > .svc-children { display: block; }
+            .svc-sub { margin: 0 8px 4px 8px; border-left: 2px solid rgba(212,175,55,0.15); padding-left: 10px; }
+            .svc-sub-header { display: flex; align-items: center; gap: 6px; padding: 6px 8px; cursor: pointer; border-radius: 4px; transition: background 0.2s; user-select: none; }
+            .svc-sub-header:hover { background: rgba(255,255,255,0.04); }
+            .svc-sub-header .svc-name { font-size: 0.85rem; color: #ccc; font-weight: 500; }
+            .svc-sub-header .svc-chevron { color: #555; transition: transform 0.3s; font-size: 0.7rem; }
+            .svc-sub.open > .svc-sub-header .svc-chevron { transform: rotate(90deg); }
+            .svc-leaf { display: none; padding: 2px 0 2px 24px; }
+            .svc-sub.open > .svc-leaf { display: block; }
+            .svc-leaf-item { display: flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 4px; cursor: pointer; transition: background 0.15s; }
+            .svc-leaf-item:hover { background: rgba(212,175,55,0.08); }
+            .svc-leaf-item input[type="checkbox"] { accent-color: var(--primary-gold); cursor: pointer; }
+            .svc-leaf-item span { font-size: 0.83rem; color: #aaa; }
+            .svc-leaf-item input:checked + span { color: var(--primary-gold); }
+            .svc-empty { color: #555; font-size: 0.8rem; font-style: italic; padding: 8px 12px; }
+            .svc-toggle-all { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; font-size: 0.75rem; color: var(--primary-gold); background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.2); border-radius: 4px; cursor: pointer; transition: background 0.2s; margin-bottom: 6px; }
+            .svc-toggle-all:hover { background: rgba(212,175,55,0.15); }
+        `;
+        document.head.appendChild(style);
+    }
+
+    const AREA_ICONS = {
+        hogar: '🏠', oficina: '🏢', pime: '🏭', industria: '⚙️'
+    };
+
+    container.innerHTML = '';
+    const treeEl = document.createElement('div');
+    treeEl.className = 'svc-tree';
+    container.appendChild(treeEl);
+
+    function matchesPreselected(path) {
+        return pathSet.has(path.toLowerCase()) ||
+            preselectedArr.some(ps => ps.toLowerCase().startsWith(path.toLowerCase() + '.') || path.toLowerCase().startsWith(ps.toLowerCase() + '.'));
+    }
+
+    function countLeaves(node) {
+        if (!node.children || node.children.length === 0) return 1;
+        return node.children.reduce((sum, c) => sum + countLeaves(c), 0);
+    }
+
+    function renderLeaf(node, path) {
+        const item = document.createElement('label');
+        item.className = 'svc-leaf-item';
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.value = path;
+        cb.checked = pathSet.has(path.toLowerCase());
+        cb.className = 'dashboard-specialty-cb';
+
+        const sp = document.createElement('span');
+        sp.textContent = node.name;
+
+        item.appendChild(cb);
+        item.appendChild(sp);
+        return item;
+    }
+
+    function renderSub(node, parentPath) {
+        const path = parentPath ? `${parentPath}.${node.id}` : node.id;
+        const hasLeaves = node.children && node.children.length > 0;
+        const isOpen = matchesPreselected(path);
+
+        const wrap = document.createElement('div');
+        wrap.className = 'svc-sub' + (isOpen ? ' open' : '');
+
+        const header = document.createElement('div');
+        header.className = 'svc-sub-header';
+
+        const chevron = document.createElement('span');
+        chevron.className = 'svc-chevron';
+        chevron.textContent = '▶';
+
+        const name = document.createElement('span');
+        name.className = 'svc-name';
+        name.textContent = node.name;
+
+        header.appendChild(chevron);
+        header.appendChild(name);
+
+        if (hasLeaves) {
+            header.addEventListener('click', (e) => {
+                e.stopPropagation();
+                wrap.classList.toggle('open');
+            });
+        }
+
+        wrap.appendChild(header);
+
+        if (hasLeaves) {
+            const leafContainer = document.createElement('div');
+            leafContainer.className = 'svc-leaf';
+            node.children.forEach(child => {
+                const childPath = `${path}.${child.id}`;
+                if (child.children && child.children.length > 0) {
+                    leafContainer.appendChild(renderSub(child, path));
+                } else {
+                    leafContainer.appendChild(renderLeaf(child, childPath));
+                }
+            });
+            wrap.appendChild(leafContainer);
+        }
+
+        return wrap;
+    }
+
+    tree.forEach(area => {
+        const isOpen = matchesPreselected(area.id);
+        const areaEl = document.createElement('div');
+        areaEl.className = 'svc-area' + (isOpen ? ' open' : '');
+
+        const header = document.createElement('div');
+        header.className = 'svc-area-header';
+
+        const icon = document.createElement('div');
+        icon.className = 'svc-icon';
+        icon.textContent = AREA_ICONS[area.id] || '📦';
+
+        const name = document.createElement('div');
+        name.className = 'svc-name';
+        name.textContent = area.name;
+
+        const count = document.createElement('div');
+        count.className = 'svc-count';
+        count.textContent = countLeaves(area);
+
+        const chevron = document.createElement('div');
+        chevron.className = 'svc-chevron';
+        chevron.textContent = '▶';
+
+        header.appendChild(icon);
+        header.appendChild(name);
+        header.appendChild(count);
+        header.appendChild(chevron);
+
+        header.addEventListener('click', () => areaEl.classList.toggle('open'));
+
+        areaEl.appendChild(header);
+
+        if (area.children && area.children.length > 0) {
+            const childContainer = document.createElement('div');
+            childContainer.className = 'svc-children';
+            area.children.forEach(child => {
+                childContainer.appendChild(renderSub(child, area.id));
+            });
+            areaEl.appendChild(childContainer);
+        }
+
+        treeEl.appendChild(areaEl);
+    });
 }
 
 // Populates location dropdowns dynamically based on current API relationships

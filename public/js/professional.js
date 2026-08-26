@@ -1459,6 +1459,13 @@ export async function loadProfDashboard() {
                     </div>
                 </div>
 
+                <!-- Services / Specialties -->
+                <div class="card fileteado-section" style="margin-bottom: 20px; border: 1px solid var(--primary-gold);">
+                    <h3 class="gold-text" style="margin-bottom: 5px;">${t('Especialidades')}</h3>
+                    <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 12px;">${t('The specialties you offer. Choose them well to appear in the right searches.')}</p>
+                    <div id="upServices"></div>
+                </div>
+
                 <!-- Service Description -->
                 <div class="card fileteado-section" style="margin-bottom: 20px; border: 1px solid var(--primary-gold);">
                     <h3 class="gold-text" style="margin-bottom: 10px;">${t('Service Description')}</h3>
@@ -1570,6 +1577,8 @@ export async function loadProfDashboard() {
             renderAvailabilityDayControls(daysContainer, prof.workingDays);
 
             setupLocationDropdowns('upProvince', 'upCity', 'upNeighborhood', false, prof.location || {});
+
+            renderSpecialtyDropdown('upServices', prof.services || []);
 
             initPhonePicker('upMobile');
             initPhonePicker('upWa');
