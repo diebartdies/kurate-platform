@@ -1085,8 +1085,8 @@ textarea:focus:not(:focus-visible) {
 
 .admin-prof-grid {
     display: grid;
-    gap: clamp(8px, 2cqi, 16px);
-    grid-template-columns: repeat(auto-fit, minmax(clamp(120px, 42cqi, 280px), 1fr));
+    gap: clamp(6px, 1.5cqi, 12px);
+    grid-template-columns: repeat(auto-fit, minmax(clamp(45px, 17cqi, 100px), 1fr));
     align-items: start;
     width: 100%;
     min-width: 0;
@@ -1095,7 +1095,7 @@ textarea:focus:not(:focus-visible) {
 }
 
 .five-column-grid.admin-prof-grid {
-    grid-template-columns: repeat(auto-fit, minmax(clamp(120px, 42cqi, 280px), 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(clamp(45px, 17cqi, 100px), 1fr));
 }
 
 @container (max-width: 280px) {
@@ -1115,7 +1115,7 @@ textarea:focus:not(:focus-visible) {
     margin: 0;
     min-width: 0;
     overflow-wrap: anywhere;
-    font-size: clamp(0.82rem, 2.8vw, 1rem);
+    font-size: clamp(0.65rem, 2vw, 0.8rem);
 }
 
 .admin-prof-category .category-section-header h4 span {
@@ -1124,7 +1124,7 @@ textarea:focus:not(:focus-visible) {
 }
 
 .admin-prof-card {
-    padding: clamp(6px, 2cqi, 12px) !important;
+    padding: clamp(2px, 1cqi, 5px) !important;
     border: 1px solid #2a2a2a !important;
     min-width: 0;
     width: 100%;
@@ -1155,8 +1155,8 @@ textarea:focus:not(:focus-visible) {
 
 .admin-prof-thumb {
     aspect-ratio: 3 / 4 !important;
-    border-radius: 6px !important;
-    margin-bottom: 4px !important;
+    border-radius: 4px !important;
+    margin-bottom: 2px !important;
     width: 100%;
     max-width: 100%;
     height: auto;
@@ -1178,8 +1178,8 @@ textarea:focus:not(:focus-visible) {
     line-height: 1.1;
     white-space: nowrap;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-    font-size: clamp(0.48rem, 9cqi, 0.58rem);
-    max-width: calc(100% - 8px);
+    font-size: clamp(0.35rem, 7cqi, 0.45rem);
+    max-width: calc(100% - 6px);
     box-sizing: border-box;
     text-transform: capitalize;
 }
@@ -1200,15 +1200,15 @@ textarea:focus:not(:focus-visible) {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: clamp(0.62rem, 9cqi, 0.95rem);
+    font-size: clamp(0.45rem, 7cqi, 0.7rem);
     min-width: 0;
     flex-shrink: 1;
 }
 
 .admin-prof-email {
-    font-size: clamp(0.52rem, 7.5cqi, 0.78rem);
+    font-size: clamp(0.38rem, 5.5cqi, 0.55rem);
     color: #aaa;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

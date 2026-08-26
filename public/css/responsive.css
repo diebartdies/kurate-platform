@@ -154,8 +154,8 @@ html.page-pending #pageLoader {
 }
 
 #adminGridContent .admin-prof-grid {
-    grid-template-columns: repeat(auto-fit, minmax(clamp(120px, 42cqi, 280px), 1fr));
-    gap: clamp(8px, 2cqi, 16px);
+    grid-template-columns: repeat(auto-fit, minmax(clamp(45px, 17cqi, 100px), 1fr));
+    gap: clamp(6px, 1.5cqi, 12px);
     width: 100%;
     max-width: 100%;
     align-items: start;
