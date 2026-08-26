@@ -146,7 +146,15 @@ export function initGlobalTopBar() {
             if (user.role === 'professional') {
                 const editBtn = document.createElement('button');
                 editBtn.type = 'button';
-                editBtn.onclick = () => { window.location.href = appPath('profDashboard.html'); };
+                editBtn.onclick = () => {
+                    // If already on profDashboard, toggle edit mode via the existing button
+                    const existingEditBtn = document.getElementById('profDashEditBtn');
+                    if (existingEditBtn) {
+                        existingEditBtn.click();
+                    } else {
+                        window.location.href = appPath('profDashboard.html');
+                    }
+                };
                 editBtn.onmouseover = function() { this.style.background = 'var(--primary-gold)'; this.style.color = 'var(--dark-bg)'; };
                 editBtn.onmouseout = function() { this.style.background = 'transparent'; this.style.color = 'var(--primary-gold)'; };
                 editBtn.style.cssText = 'padding: 6px 12px; background: transparent; border: 1px solid var(--primary-gold); color: var(--primary-gold); border-radius: 4px; cursor: pointer; transition: 0.3s; font-weight: bold; font-size: 0.85rem; margin-left: 10px;';
