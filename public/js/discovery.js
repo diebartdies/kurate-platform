@@ -300,7 +300,7 @@ export async function loadTreasures(page = 1, append = false, options = {}) {
                     <div class="card" style="grid-column: 1/-1; text-align: center;">
                         <h3 class="gold-text">${t('No Treasures Found')}</h3>
                         <p style="margin-bottom: 20px;">${hasFilters ? t('No models match your current selection.') : t('No models have been revealed yet. Please check back later.')}</p>
-                        ${hasFilters ? `<button onclick="window.location.href='${appPath('categories.html')}'">${t('Filter Again')}</button>` : ''}
+                        ${hasFilters ? `<button onclick="window.location.href='${appPath('hogar.html')}'">${t('Filter Again')}</button>` : ''}
                     </div>
                 `;
             } else {
@@ -539,7 +539,7 @@ export async function loadTreasureDetails() {
             }
 
             document.getElementById('treasureBackBtn')?.addEventListener('click', () => {
-                navigateBack(() => { window.location.href = appPath('categories.html'); });
+                navigateBack(() => { window.location.href = appPath('hogar.html'); });
             });
             document.getElementById('ownerEditProfileBtn')?.addEventListener('click', () => {
                 navigateWithReturn(appPath('profDashboard.html'));
@@ -582,7 +582,7 @@ export function initTreasureGridControls(onOpenFilters = null) {
         if (!bar) return;
         const barHeight = bar.offsetHeight || 44;
 
-        // On pages with a dedicated central frame (categories.html), keep the
+        // On pages with a dedicated central frame (hogar.html), keep the
         // menu centered over that frame on BOTH axes. The viewport center is
         // off here because of the left/right side frames.
         const centerFrame = document.querySelector('.categories-frame-center');
@@ -855,7 +855,7 @@ export async function initializeFilters() {
             } else {
                 clearBtn.style.flex = '1';
             }
-            clearBtn.onclick = () => { window.location.href = appPath('categories.html'); };
+            clearBtn.onclick = () => { window.location.href = appPath('hogar.html'); };
 
             const applyBtn = document.createElement('button');
             applyBtn.type = 'submit';
@@ -953,7 +953,7 @@ export async function initializeFilters() {
         const cityEl = document.getElementById('citySelect');
         const neighEl = document.getElementById('neighborhoodSelect');
 
-        const url = new URL(`${BASE_ORIGIN}/categories.html`);
+        const url = new URL(`${BASE_ORIGIN}/hogar.html`);
         if (quality && quality.trim()) url.searchParams.set('quality', quality);
         if (specialty && specialty.trim()) url.searchParams.set('specialty', specialty);
         if (provEl && provEl.value.trim()) {

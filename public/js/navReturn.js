@@ -191,5 +191,5 @@ export function bindReturnOnClick(element, href) {
 
 /** Safe fallback when no return point exists. */
 export function defaultGuestFallback() {
-    window.location.href = appPath('categories.html');
+    window.location.href = appPath('hogar.html');
 }

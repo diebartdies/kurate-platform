@@ -78,16 +78,16 @@ export function initBootstrap() {
         }
 
         const allowedAncestors = {
-            'categories.html': ['index.html', 'categories.html', 'treasure.html', 'dashboard.html', 'login.html'],
-            'treasure.html': ['categories.html', 'treasure.html'],
-            'dashboard.html': ['index.html', 'login.html', 'verify.html', 'categories.html', 'treasure.html', 'dashboard.html', 'profDashboard.html', 'profile.html', 'notas-interes.html', 'nota-interes.html'],
-            'profDashboard.html': ['index.html', 'login.html', 'verify.html', 'dashboard.html', 'profDashboard.html', 'profile.html', 'categories.html', 'treasure.html', 'notas-interes.html', 'nota-interes.html'],
-            'profile.html': ['index.html', 'login.html', 'verify.html', 'dashboard.html', 'profDashboard.html', 'profile.html', 'categories.html', 'treasure.html', 'notas-interes.html', 'nota-interes.html'],
+            'hogar.html': ['index.html', 'hogar.html', 'treasure.html', 'dashboard.html', 'login.html'],
+            'treasure.html': ['hogar.html', 'treasure.html'],
+            'dashboard.html': ['index.html', 'login.html', 'verify.html', 'hogar.html', 'treasure.html', 'dashboard.html', 'profDashboard.html', 'profile.html', 'notas-interes.html', 'nota-interes.html'],
+            'profDashboard.html': ['index.html', 'login.html', 'verify.html', 'dashboard.html', 'profDashboard.html', 'profile.html', 'hogar.html', 'treasure.html', 'notas-interes.html', 'nota-interes.html'],
+            'profile.html': ['index.html', 'login.html', 'verify.html', 'dashboard.html', 'profDashboard.html', 'profile.html', 'hogar.html', 'treasure.html', 'notas-interes.html', 'nota-interes.html'],
             'notas-interes.html': ['dashboard.html', 'profDashboard.html', 'profile.html', 'notas-interes.html', 'nota-interes.html'],
             'nota-interes.html': ['dashboard.html', 'profDashboard.html', 'profile.html', 'notas-interes.html', 'nota-interes.html'],
             'verify.html': ['register.html', 'login.html', 'verify.html'],
-            'register.html': ['index.html', 'login.html', 'register.html', 'dashboard.html', 'categories.html', 'treasure.html'],
-            'login.html': ['index.html', 'register.html', 'recover.html', 'login.html', 'dashboard.html', 'categories.html', 'treasure.html'],
+            'register.html': ['index.html', 'login.html', 'register.html', 'dashboard.html', 'hogar.html', 'treasure.html'],
+            'login.html': ['index.html', 'register.html', 'recover.html', 'login.html', 'dashboard.html', 'hogar.html', 'treasure.html'],
             'recover.html': ['login.html', 'recover.html'],
             'home.html': ['dashboard.html', 'home.html']
         };
@@ -125,7 +125,7 @@ export function initBootstrap() {
             const currentAncestorCode = sessionStorage.getItem('ancestor_code');
             const allowed = allowedAncestors[effectivePage];
 
-            if (!currentAncestorCode && (hasToken || isFromOurSite) && (effectivePage === 'categories.html' || effectivePage === 'treasure.html' || effectivePage === 'dashboard.html' || effectivePage === 'profDashboard.html' || effectivePage === 'profile.html')) {
+            if (!currentAncestorCode && (hasToken || isFromOurSite) && (effectivePage === 'hogar.html' || effectivePage === 'treasure.html' || effectivePage === 'dashboard.html' || effectivePage === 'profDashboard.html' || effectivePage === 'profile.html')) {
                 sessionStorage.setItem('ancestor_code', 'index.html');
             }
 
@@ -168,7 +168,7 @@ export function initBootstrap() {
                     sessionStorage.removeItem('intended_destination');
                     window.location.replace(intended);
                 } else {
-                    window.location.replace(appPath('categories.html'));
+                    window.location.replace(appPath('hogar.html'));
                 }
                 return;
             }
