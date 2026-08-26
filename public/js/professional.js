@@ -581,8 +581,8 @@ export function bindProfessionalProfileForm() {
         formData.append('floor', document.getElementById('upFloor')?.value || '');
         formData.append('apartment', document.getElementById('upApartment')?.value || '');
 
-        formData.append('alias', document.getElementById('upAlias').value);
-        formData.append('bio', document.getElementById('upBio').value);
+        formData.append('alias', document.getElementById('upAlias')?.value || '');
+        formData.append('bio', document.getElementById('upBio')?.value || '');
         formData.append('quality', document.getElementById('upQuality')?.value || '');
         formData.append('usesWhatsApp', document.getElementById('upUsesWhatsApp')?.checked || false);
         formData.append('usesTelegram', document.getElementById('upUsesTelegram')?.checked || false);
@@ -625,8 +625,8 @@ export function bindProfessionalProfileForm() {
             }
         }
 
-        formData.append('measurements', document.getElementById('upMeasurements').value);
-        formData.append('height', document.getElementById('upHeight').value);
+        formData.append('measurements', document.getElementById('upMeasurements')?.value || '');
+        formData.append('height', document.getElementById('upHeight')?.value || '');
         {
             const waDial = document.getElementById('upWaDial')?.value || '+54';
             const waLocal = document.getElementById('upWaInput')?.value || '';
