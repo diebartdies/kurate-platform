@@ -238,11 +238,6 @@ export async function renderAdminGrid(container) {
                 <select id="adminFilterNeigh" class="form-select" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"><option value="">${t('All Neighborhoods')}</option></select>
                 <select id="adminFilterSpecialty" class="form-select" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;">
                     <option value="">${t('All Specialties')}</option>
-                    <option value="Love Alchemy">${t('Love Alchemy')}</option>
-                    <option value="Massage">${t('Massage')}</option>
-                    <option value="Virtual Connection">${t('Virtual Connection')}</option>
-                    <option value="Media Content">${t('Media Content')}</option>
-                    <option value="Streaming Kisses">${t('Streaming Kisses')}</option>
                 </select>
                 <select id="adminFilterQuality" class="form-select" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;">
                     <option value="">${t('All Qualities')}</option>
@@ -295,6 +290,24 @@ export async function loadAdminGridData() {
         }
 
         let profs = data.data;
+
+        // Populate specialty filter dynamically from loaded data
+        if (specialtyEl && specialtyEl.options.length <= 1) {
+            const allSpecialties = new Set();
+            profs.forEach(p => {
+                const prof = p.professionalProfile || {};
+                (prof.services || []).forEach(s => { if (s) allSpecialties.add(s); });
+            });
+            const prev = specialtyEl.value;
+            const sorted = [...allSpecialties].sort();
+            sorted.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s;
+                opt.textContent = s.split('/').pop().replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                specialtyEl.appendChild(opt);
+            });
+            specialtyEl.value = prev;
+        }
 
         // Apply frontend filters
         const provEl = document.getElementById('adminFilterProv');
