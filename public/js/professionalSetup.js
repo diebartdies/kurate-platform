@@ -18,11 +18,7 @@ export function getProfileCompletionChecklist(user = {}) {
     const prof = user.professionalProfile || {};
     const missing = [];
 
-    if (!prof.firstName) missing.push({ key: 'firstName', label: 'Nombre', section: 'personal' });
-    if (!prof.surname) missing.push({ key: 'surname', label: 'Apellido', section: 'personal' });
     if (!prof.alias) missing.push({ key: 'alias', label: 'Alias', section: 'personal' });
-    if (!prof.idNumber) missing.push({ key: 'idNumber', label: 'Documento (DNI)', section: 'personal' });
-    if (!prof.birthDate) missing.push({ key: 'birthDate', label: 'Fecha de nacimiento', section: 'personal' });
     if (!prof.mobilePhone) missing.push({ key: 'mobilePhone', label: 'Teléfono móvil', section: 'contact' });
     if (!prof.desiredQuality) missing.push({ key: 'desiredQuality', label: 'Categoría', section: 'personal' });
     if (!prof.bio) missing.push({ key: 'bio', label: 'Descripción de servicios (bio)', section: 'bio' });
