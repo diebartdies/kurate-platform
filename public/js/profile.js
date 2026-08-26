@@ -82,6 +82,7 @@
         const statusColor = vStatus === 'approved' ? '#22c55e' : (vStatus === 'rejected' ? '#e08' : '#f59e0b');
         const statusLabel = vStatus === 'approved' ? 'Aprobado' : (vStatus === 'rejected' ? 'Rechazado' : 'Pendiente');
         const isEvaluation = prof.isEvaluationPeriod === true;
+        const CATEGORY_ORDER = Object.keys(CATEGORY_META);
         const qualityIndex = CATEGORY_ORDER.indexOf(quality);
         const desiredIndex = CATEGORY_ORDER.indexOf(desiredQuality);
 
@@ -106,7 +107,6 @@
         }).reverse().join('');
 
         // Build specialties
-        const CATEGORY_ORDER = Object.keys(CATEGORY_META);
         const activeServices = services.map(s => s.toLowerCase());
         const specHtml = services.length > 0 ? services.map(s => {
             return `<div style="background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.4);border-radius:8px;padding:8px 12px;font-size:0.85rem;color:var(--primary-gold);display:flex;align-items:center;gap:6px;"><span style="font-weight:700;">✓</span><span>${esc(s)}</span></div>`;
