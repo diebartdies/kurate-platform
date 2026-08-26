@@ -477,6 +477,11 @@ export async function loadDashboard() {
                 adminPanel.style.flexShrink = '0';
                 adminPanel.style.position = 'sticky';
                 adminPanel.style.top = '70px';
+                adminPanel.style.maxHeight = 'calc(100vh - 90px)';
+                adminPanel.style.overflowY = 'auto';
+                adminPanel.style.overscrollBehavior = 'contain';
+                adminPanel.style.scrollbarWidth = 'thin';
+                adminPanel.style.scrollbarColor = 'rgba(212,175,55,0.3) transparent';
                 adminPanel.style.padding = '0';
                 
                 adminPanel.innerHTML = `
