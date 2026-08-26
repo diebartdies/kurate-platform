@@ -65,6 +65,9 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
             .svc-empty { color: #555; font-size: 0.8rem; font-style: italic; padding: 8px 12px; }
             .svc-toggle-all { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; font-size: 0.75rem; color: var(--primary-gold); background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.2); border-radius: 4px; cursor: pointer; transition: background 0.2s; margin-bottom: 6px; }
             .svc-toggle-all:hover { background: rgba(212,175,55,0.15); }
+            .svc-brands { border-left: 1px dashed rgba(212,175,55,0.15); margin-left: 8px; padding-top: 2px; }
+            .svc-brand-item { padding: 2px 6px !important; }
+            .svc-brand-item:hover { background: rgba(212,175,55,0.05); }
         `;
         document.head.appendChild(style);
     }
@@ -103,6 +106,40 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
 
         item.appendChild(cb);
         item.appendChild(sp);
+
+        // If node has brands, render them as a sub-list
+        if (node.brands && node.brands.length > 0) {
+            const brandContainer = document.createElement('div');
+            brandContainer.className = 'svc-brands';
+            brandContainer.style.cssText = 'padding-left: 24px; display: none;';
+
+            node.brands.forEach(brand => {
+                const brandItem = document.createElement('label');
+                brandItem.className = 'svc-leaf-item svc-brand-item';
+                brandItem.style.cssText = 'font-size: 0.78rem; color: #888;';
+
+                const brandCb = document.createElement('input');
+                brandCb.type = 'checkbox';
+                brandCb.value = `${path}.${brand}`;
+                brandCb.checked = pathSet.has(`${path}.${brand}`.toLowerCase());
+                brandCb.className = 'dashboard-specialty-cb';
+
+                const brandSp = document.createElement('span');
+                brandSp.textContent = brand;
+
+                brandItem.appendChild(brandCb);
+                brandItem.appendChild(brandSp);
+                brandContainer.appendChild(brandItem);
+            });
+
+            item.appendChild(brandContainer);
+
+            // Toggle brands visibility on parent click
+            cb.addEventListener('change', () => {
+                brandContainer.style.display = cb.checked ? 'block' : 'none';
+            });
+        }
+
         return item;
     }
 
