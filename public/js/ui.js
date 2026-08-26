@@ -144,11 +144,14 @@ export function initGlobalTopBar() {
             userInfo.innerHTML = userDisplay;
 
             if (user.role === 'professional') {
-                const editLink = document.createElement('a');
-                editLink.href = appPath('profDashboard.html');
-                editLink.style.cssText = 'color: var(--dark-bg); background-color: var(--primary-gold); margin-left: 10px; text-decoration: none; font-size: 0.8rem; font-weight: bold; padding: 3px 8px; border-radius: 4px;';
-                editLink.textContent = `✏️ ${t('Edit Profile')}`;
-                userInfo.appendChild(editLink);
+                const editBtn = document.createElement('button');
+                editBtn.type = 'button';
+                editBtn.onclick = () => { window.location.href = appPath('profDashboard.html'); };
+                editBtn.onmouseover = function() { this.style.background = 'var(--primary-gold)'; this.style.color = 'var(--dark-bg)'; };
+                editBtn.onmouseout = function() { this.style.background = 'transparent'; this.style.color = 'var(--primary-gold)'; };
+                editBtn.style.cssText = 'padding: 6px 12px; background: transparent; border: 1px solid var(--primary-gold); color: var(--primary-gold); border-radius: 4px; cursor: pointer; transition: 0.3s; font-weight: bold; font-size: 0.85rem; margin-left: 10px;';
+                editBtn.textContent = `✏️ ${t('Edit Profile')}`;
+                userInfo.appendChild(editBtn);
             } else if (user.role === 'admin') {
                 // Give admins a clear top-menu link back to their home
                 // dashboard. On pages that render this global top bar, the
