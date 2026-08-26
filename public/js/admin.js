@@ -358,7 +358,10 @@ export async function loadAdminGridData() {
                 applyStaticTranslations(content);
             },
             {
-                onAllComplete: () => applyStaticTranslations(content)
+                onAllComplete: () => {
+                    applyStaticTranslations(content);
+                    highlightFindMeCard();
+                }
             }
         );
 
@@ -366,6 +369,43 @@ export async function loadAdminGridData() {
         resetLazyCategoryLoader();
         content.innerHTML = `<p style="color: var(--accent-red);">${t('Error connecting to the vault:')} ${err.message}</p>`;
     }
+}
+
+function highlightFindMeCard() {
+    const params = new URLSearchParams(window.location.search);
+    const findMe = params.get('findMe');
+    if (!findMe) return;
+
+    const allCards = document.querySelectorAll('.admin-prof-card');
+    for (const card of allCards) {
+        const aliasEl = card.querySelector('.admin-prof-alias');
+        if (aliasEl && aliasEl.textContent.trim().toLowerCase() === findMe.trim().toLowerCase()) {
+            card.style.transition = 'box-shadow 0.3s, border-color 0.3s, transform 0.3s';
+            card.style.boxShadow = '0 0 0 3px var(--primary-gold), 0 0 20px rgba(212,175,55,0.5)';
+            card.style.borderColor = 'var(--primary-gold)';
+            card.style.transform = 'scale(1.05)';
+            card.style.zIndex = '10';
+            card.style.position = 'relative';
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            setTimeout(() => {
+                card.style.boxShadow = '0 0 0 2px var(--primary-gold)';
+                card.style.transform = 'scale(1)';
+            }, 2000);
+            setTimeout(() => {
+                card.style.boxShadow = '';
+                card.style.borderColor = '';
+                card.style.transform = '';
+                card.style.zIndex = '';
+                card.style.position = '';
+            }, 5000);
+            break;
+        }
+    }
+
+    params.delete('findMe');
+    const newUrl = params.toString() ? '?' + params.toString() : window.location.pathname;
+    window.history.replaceState({}, '', newUrl);
 }
 
 // --- Dashboard ---
@@ -438,7 +478,7 @@ export async function loadDashboard() {
             localStorage.setItem('user', JSON.stringify(user)); // Ensure local storage is synced
 
             if (user.role === 'professional') {
-                window.location.replace(appPath('profDashboard.html'));
+                window.location.replace(appPath('profile.html'));
                 return;
             }
 

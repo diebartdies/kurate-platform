@@ -47,7 +47,7 @@ export function redirectAfterLogin(user = {}) {
     if (intended) {
         window.location.replace(intended);
     } else if (user.role === 'professional') {
-        window.location.replace(appPath('profDashboard.html'));
+        window.location.replace(appPath('profile.html'));
     } else if (user.role === 'admin') {
         window.location.replace(appPath('dashboard.html'));
     } else {
@@ -440,7 +440,7 @@ if (verifyForm) {
                 if (intended) {
                     window.location.replace(intended);
                 } else if (data.user.role === 'professional') {
-                    window.location.replace(appPath('profDashboard.html'));
+                    window.location.replace(appPath('profile.html'));
                 } else if (data.user.role === 'admin') {
                     window.location.replace('/dashboard.html');
                 } else {
