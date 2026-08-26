@@ -99,7 +99,7 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
         cb.className = 'dashboard-specialty-cb';
 
         const sp = document.createElement('span');
-        sp.textContent = node.name;
+        sp.textContent = t(node.name);
 
         item.appendChild(cb);
         item.appendChild(sp);
@@ -123,7 +123,7 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
 
         const name = document.createElement('span');
         name.className = 'svc-name';
-        name.textContent = node.name;
+        name.textContent = t(node.name);
 
         header.appendChild(chevron);
         header.appendChild(name);
@@ -168,7 +168,7 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
 
         const name = document.createElement('div');
         name.className = 'svc-name';
-        name.textContent = area.name;
+        name.textContent = t(area.name);
 
         const count = document.createElement('div');
         count.className = 'svc-count';
