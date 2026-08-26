@@ -4,12 +4,20 @@
     const API_URL = (window.location.protocol === 'file:' ? 'http://localhost:5000' : window.location.origin) + '/api/v1';
     const NO_PHOTO = '/images/no-photo.svg';
     const CATEGORY_META = {
-        'verificados': { name: '⭐ Verificados', alias: 'Experto' },
-        'Premium': { name: '✨ Premium', alias: 'Maestro' },
-        'Gold': { name: '🟡 Gold', alias: 'Profesional' },
-        'Silver': { name: '⚪ Silver', alias: 'Técnico' },
-        'Standard': { name: '🟤 Standard', alias: 'Inicial' }
+        'verificados': { name: '⭐ Verificados', alias: 'Experto', order: 5 },
+        'Premium': { name: '✨ Premium', alias: 'Maestro', order: 4 },
+        'Gold': { name: '🟡 Gold', alias: 'Profesional', order: 3 },
+        'Silver': { name: '⚪ Silver', alias: 'Técnico', order: 2 },
+        'Standard': { name: '🟤 Standard', alias: 'Inicial', order: 1 }
     };
+    const CATEGORY_ORDER = ['Standard', 'Silver', 'Gold', 'Premium', 'verificados'];
+    const SPECIALTY_LIST = [
+        { key: 'Love Alchemy', icon: '❤️' },
+        { key: 'Massage', icon: '💆' },
+        { key: 'Virtual Connection', icon: '📱' },
+        { key: 'Media Content', icon: '📸' },
+        { key: 'Streaming Kisses', icon: '💋' }
+    ];
 
     function esc(s) { return (s == null) ? '' : String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
@@ -68,6 +76,7 @@
     function renderProfile(content, user, stats) {
         const prof = user.professionalProfile || {};
         const quality = prof.quality || 'Standard';
+        const desiredQuality = prof.desiredQuality || quality;
         const meta = CATEGORY_META[quality] || CATEGORY_META['Standard'];
         const photo = (prof.photos && prof.photos.length > 0) ? resolvePhoto(prof.photos[0]) : NO_PHOTO;
         const alias = prof.alias || 'Sin alias';
@@ -80,7 +89,50 @@
         const vStatus = user.verificationStatus || 'pending';
         const statusColor = vStatus === 'approved' ? '#22c55e' : (vStatus === 'rejected' ? '#e08' : '#f59e0b');
         const statusLabel = vStatus === 'approved' ? 'Aprobado' : (vStatus === 'rejected' ? 'Rechazado' : 'Pendiente');
-        const isApproved = vStatus === 'approved';
+        const isEvaluation = prof.isEvaluationPeriod === true;
+        const qualityIndex = CATEGORY_ORDER.indexOf(quality);
+        const desiredIndex = CATEGORY_ORDER.indexOf(desiredQuality);
+
+        // Build category ladder
+        const ladderHtml = CATEGORY_ORDER.map((q, i) => {
+            const m = CATEGORY_META[q];
+            const isCurrent = q === quality;
+            const isDesired = q === desiredQuality && isEvaluation;
+            const isReached = i <= qualityIndex;
+            let style = 'display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;font-size:0.85rem;';
+            if (isCurrent) {
+                style += 'background:rgba(212,175,55,0.2);border:2px solid var(--primary-gold);font-weight:700;';
+            } else if (isDesired) {
+                style += 'background:rgba(212,175,55,0.08);border:1px dashed rgba(212,175,55,0.5);';
+            } else if (isReached) {
+                style += 'background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);opacity:0.7;';
+            } else {
+                style += 'background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);opacity:0.4;';
+            }
+            const badge = isCurrent ? '<span style="color:var(--primary-gold);font-weight:700;">TU</span>' : (isDesired ? '<span style="color:var(--primary-gold);font-size:0.7rem;">elegida</span>' : '');
+            return `<div style="${style}"><span style="flex:1;">${m.name}</span>${badge}</div>`;
+        }).reverse().join('');
+
+        // Build specialties
+        const activeServices = services.map(s => s.toLowerCase());
+        const specHtml = SPECIALTY_LIST.map(sp => {
+            const active = activeServices.some(a => a.includes(sp.key.toLowerCase()));
+            const color = active ? 'var(--primary-gold)' : '#555';
+            const bg = active ? 'rgba(212,175,55,0.12)' : 'rgba(255,255,255,0.03)';
+            const border = active ? 'rgba(212,175,55,0.4)' : 'rgba(255,255,255,0.08)';
+            const check = active ? '✓' : '';
+            return `<div style="background:${bg};border:1px solid ${border};border-radius:8px;padding:8px 12px;font-size:0.85rem;color:${color};display:flex;align-items:center;gap:6px;"><span>${sp.icon}</span><span style="flex:1;">${sp.key}</span><span style="font-weight:700;">${check}</span></div>`;
+        }).join('');
+
+        // Evaluation info
+        let evalHtml = '';
+        if (isEvaluation) {
+            const desiredMeta = CATEGORY_META[desiredQuality] || CATEGORY_META['Standard'];
+            evalHtml = `<div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:12px;margin-bottom:16px;">
+                <div style="color:#f59e0b;font-weight:600;font-size:0.9rem;margin-bottom:4px;">Período de evaluación activo</div>
+                <div style="color:#ccc;font-size:0.85rem;">Aparecés como <strong style="color:var(--primary-gold);">${meta.name}</strong>. Tu categoría elegida es <strong>${desiredMeta.name}</strong> — se aplica tras tu primer pago validado.</div>
+            </div>`;
+        }
 
         content.innerHTML = `
             <div style="max-width: 600px; margin: 0 auto;">
@@ -103,13 +155,27 @@
 
                         ${location ? `<div style="margin-bottom: 14px;"><div style="color: #999; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Ubicación</div><div style="color: #ddd;">${esc(location)}</div></div>` : ''}
 
-                        ${services.length > 0 ? `<div style="margin-bottom: 14px;"><div style="color: #999; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Servicios</div><div style="display: flex; flex-wrap: wrap; gap: 6px;">${services.map(s => '<span style="background: rgba(212,175,55,0.1); border: 1px solid rgba(212,175,55,0.3); border-radius: 6px; padding: 4px 10px; font-size: 0.85rem; color: var(--primary-gold);">' + esc(s) + '</span>').join('')}</div></div>` : ''}
-
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; text-align: center; padding: 14px 0; border-top: 1px solid rgba(212,175,55,0.15);">
                             <div><div style="font-size: 1.6rem; color: var(--primary-gold); font-weight: 700;">${stats.photoCount || 0}</div><div style="font-size: 0.75rem; color: #888;">Fotos vistas</div></div>
                             <div><div style="font-size: 1.6rem; color: #00ff50; font-weight: 700;">${stats.whatsappcCount || 0}</div><div style="font-size: 0.75rem; color: #888;">WhatsApp</div></div>
                             <div><div style="font-size: 1.6rem; color: #60a5fa; font-weight: 700;">${stats.callCount || 0}</div><div style="font-size: 0.75rem; color: #888;">Llamadas</div></div>
                         </div>
+                    </div>
+                </div>
+
+                ${evalHtml}
+
+                <div class="card" style="border: 1px solid rgba(212, 175, 55, 0.3); margin-top: 16px; padding: 16px;">
+                    <div style="color: #999; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Categoría</div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        ${ladderHtml}
+                    </div>
+                </div>
+
+                <div class="card" style="border: 1px solid rgba(212, 175, 55, 0.3); margin-top: 12px; padding: 16px;">
+                    <div style="color: #999; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Especialidades (donde aparecés)</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                        ${specHtml}
                     </div>
                 </div>
 
