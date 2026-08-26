@@ -230,6 +230,9 @@ function handleAgeGateEnter(btn) {
         // A logged-in admin entering through the age gate goes straight to their home.
         sessionStorage.removeItem('intended_destination');
         targetUrl = appPath('dashboard.html');
+    } else if (cachedUser && cachedUser.role === 'professional') {
+        sessionStorage.removeItem('intended_destination');
+        targetUrl = appPath('profile.html');
     } else if (intended) {
         sessionStorage.removeItem('intended_destination');
         targetUrl = intended;

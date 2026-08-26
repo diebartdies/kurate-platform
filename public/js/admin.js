@@ -1231,7 +1231,7 @@ export async function loadDashboard() {
                         if (typeof window.saveProfessionalProfile === 'function') {
                             await window.saveProfessionalProfile(true);
                         }
-                        window.location.href = appPath('categories.html');
+                        window.location.href = appPath('profile.html');
                     };
                     document.getElementById('updateProfileForm').appendChild(bottomBackBtn);
                 }
