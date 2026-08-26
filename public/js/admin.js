@@ -291,6 +291,13 @@ export async function loadAdminGridData() {
 
         let profs = data.data;
 
+        // Apply frontend filters
+        const provEl = document.getElementById('adminFilterProv');
+        const cityEl = document.getElementById('adminFilterCity');
+        const neighEl = document.getElementById('adminFilterNeigh');
+        const qualityEl = document.getElementById('adminFilterQuality');
+        const specialtyEl = document.getElementById('adminFilterSpecialty');
+        
         // Populate specialty filter dynamically from loaded data
         if (specialtyEl && specialtyEl.options.length <= 1) {
             const allSpecialties = new Set();
@@ -308,13 +315,6 @@ export async function loadAdminGridData() {
             });
             specialtyEl.value = prev;
         }
-
-        // Apply frontend filters
-        const provEl = document.getElementById('adminFilterProv');
-        const cityEl = document.getElementById('adminFilterCity');
-        const neighEl = document.getElementById('adminFilterNeigh');
-        const qualityEl = document.getElementById('adminFilterQuality');
-        const specialtyEl = document.getElementById('adminFilterSpecialty');
         
         const prov = provEl ? provEl.value.trim().toLowerCase() : '';
         const city = cityEl ? cityEl.value.trim().toLowerCase() : '';
