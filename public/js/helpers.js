@@ -68,12 +68,14 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
             .svc-brands { border-left: 1px dashed rgba(212,175,55,0.15); margin-left: 8px; padding-top: 2px; }
             .svc-brand-item { padding: 2px 6px !important; }
             .svc-brand-item:hover { background: rgba(212,175,55,0.05); }
+            .svc-device { margin: 0 8px 4px 8px; border-left: 2px solid rgba(212,175,55,0.1); padding-left: 10px; }
+            .svc-device.open > .svc-leaf { display: block; }
         `;
         document.head.appendChild(style);
     }
 
     const AREA_ICONS = {
-        hogar: '🏠', oficina: '🏢', pime: '🏭', industria: '⚙️'
+        hogar: '🏠', oficina: '🏢', 'casa-campo': '🏡', industria: '⚙️'
     };
 
     container.innerHTML = '';
@@ -86,66 +88,78 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
             preselectedArr.some(ps => ps.toLowerCase().startsWith(path.toLowerCase() + '.') || path.toLowerCase().startsWith(ps.toLowerCase() + '.'));
     }
 
-    function countLeaves(node) {
-        if (!node.children || node.children.length === 0) return 1;
-        return node.children.reduce((sum, c) => sum + countLeaves(c), 0);
+    function countDevices(cat) {
+        if (!cat.devices) return 0;
+        return cat.devices.length;
     }
 
-    function renderLeaf(node, path) {
+    function renderBrand(brand, path) {
         const item = document.createElement('label');
-        item.className = 'svc-leaf-item';
+        item.className = 'svc-leaf-item svc-brand-item';
 
         const cb = document.createElement('input');
         cb.type = 'checkbox';
-        cb.value = path;
-        cb.checked = pathSet.has(path.toLowerCase());
+        cb.value = `${path}.${brand}`;
+        cb.checked = pathSet.has(`${path}.${brand}`.toLowerCase());
         cb.className = 'dashboard-specialty-cb';
 
         const sp = document.createElement('span');
-        sp.textContent = t(node.name);
+        sp.textContent = brand;
 
         item.appendChild(cb);
         item.appendChild(sp);
-
-        // If node has brands, render them as a sub-list
-        if (node.brands && node.brands.length > 0) {
-            const brandContainer = document.createElement('div');
-            brandContainer.className = 'svc-brands';
-            brandContainer.style.cssText = 'padding-left: 24px; display: none;';
-
-            node.brands.forEach(brand => {
-                const brandItem = document.createElement('label');
-                brandItem.className = 'svc-leaf-item svc-brand-item';
-                brandItem.style.cssText = 'font-size: 0.78rem; color: #888;';
-
-                const brandCb = document.createElement('input');
-                brandCb.type = 'checkbox';
-                brandCb.value = `${path}.${brand}`;
-                brandCb.checked = pathSet.has(`${path}.${brand}`.toLowerCase());
-                brandCb.className = 'dashboard-specialty-cb';
-
-                const brandSp = document.createElement('span');
-                brandSp.textContent = brand;
-
-                brandItem.appendChild(brandCb);
-                brandItem.appendChild(brandSp);
-                brandContainer.appendChild(brandItem);
-            });
-
-            item.appendChild(brandContainer);
-
-            // Toggle brands visibility on parent click
-            cb.addEventListener('change', () => {
-                brandContainer.style.display = cb.checked ? 'block' : 'none';
-            });
-        }
-
         return item;
     }
 
-    function renderSub(node, parentPath) {
-        const path = parentPath ? `${parentPath}.${node.id}` : node.id;
-        const hasLeaves = node.children && node.children.length > 0;
+    function renderDevice(device, parentPath) {
+        const path = `${parentPath}.${device.id}`;
+        const isOpen = matchesPreselected(path);
+
+        const wrap = document.createElement('div');
+        wrap.className = 'svc-device' + (isOpen ? ' open' : '');
+
+        const header = document.createElement('div');
+        header.className = 'svc-sub-header';
+
+        const chevron = document.createElement('span');
+        chevron.className = 'svc-chevron';
+        chevron.textContent = '▶';
+
+        const name = document.createElement('span');
+        name.className = 'svc-name';
+        name.textContent = t(device.name);
+
+        const brandCount = document.createElement('span');
+        brandCount.className = 'svc-count';
+        brandCount.textContent = `${device.brands.length} marcas`;
+
+        header.appendChild(chevron);
+        header.appendChild(name);
+        header.appendChild(brandCount);
+
+        if (device.brands && device.brands.length > 0) {
+            header.addEventListener('click', (e) => {
+                e.stopPropagation();
+                wrap.classList.toggle('open');
+            });
+        }
+
+        wrap.appendChild(header);
+
+        if (device.brands && device.brands.length > 0) {
+            const brandContainer = document.createElement('div');
+            brandContainer.className = 'svc-leaf';
+            device.brands.forEach(brand => {
+                brandContainer.appendChild(renderBrand(brand, path));
+            });
+            wrap.appendChild(brandContainer);
+        }
+
+        return wrap;
+    }
+
+    function renderCategory(cat, parentPath) {
+        const path = `${parentPath}.${cat.id}`;
         const isOpen = matchesPreselected(path);
 
         const wrap = document.createElement('div');
@@ -160,12 +174,17 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
 
         const name = document.createElement('span');
         name.className = 'svc-name';
-        name.textContent = t(node.name);
+        name.textContent = t(cat.name);
+
+        const devCount = document.createElement('span');
+        devCount.className = 'svc-count';
+        devCount.textContent = `${countDevices(cat)} dispositivos`;
 
         header.appendChild(chevron);
         header.appendChild(name);
+        header.appendChild(devCount);
 
-        if (hasLeaves) {
+        if (cat.devices && cat.devices.length > 0) {
             header.addEventListener('click', (e) => {
                 e.stopPropagation();
                 wrap.classList.toggle('open');
@@ -174,18 +193,13 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
 
         wrap.appendChild(header);
 
-        if (hasLeaves) {
-            const leafContainer = document.createElement('div');
-            leafContainer.className = 'svc-leaf';
-            node.children.forEach(child => {
-                const childPath = `${path}.${child.id}`;
-                if (child.children && child.children.length > 0) {
-                    leafContainer.appendChild(renderSub(child, path));
-                } else {
-                    leafContainer.appendChild(renderLeaf(child, childPath));
-                }
+        if (cat.devices && cat.devices.length > 0) {
+            const deviceContainer = document.createElement('div');
+            deviceContainer.className = 'svc-leaf';
+            cat.devices.forEach(device => {
+                deviceContainer.appendChild(renderDevice(device, path));
             });
-            wrap.appendChild(leafContainer);
+            wrap.appendChild(deviceContainer);
         }
 
         return wrap;
@@ -207,9 +221,9 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
         name.className = 'svc-name';
         name.textContent = t(area.name);
 
-        const count = document.createElement('div');
-        count.className = 'svc-count';
-        count.textContent = countLeaves(area);
+        const catCount = document.createElement('div');
+        catCount.className = 'svc-count';
+        catCount.textContent = `${area.categories.length} categorías`;
 
         const chevron = document.createElement('div');
         chevron.className = 'svc-chevron';
@@ -217,20 +231,20 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
 
         header.appendChild(icon);
         header.appendChild(name);
-        header.appendChild(count);
+        header.appendChild(catCount);
         header.appendChild(chevron);
 
         header.addEventListener('click', () => areaEl.classList.toggle('open'));
 
         areaEl.appendChild(header);
 
-        if (area.children && area.children.length > 0) {
-            const childContainer = document.createElement('div');
-            childContainer.className = 'svc-children';
-            area.children.forEach(child => {
-                childContainer.appendChild(renderSub(child, area.id));
+        if (area.categories && area.categories.length > 0) {
+            const catContainer = document.createElement('div');
+            catContainer.className = 'svc-children';
+            area.categories.forEach(cat => {
+                catContainer.appendChild(renderCategory(cat, area.id));
             });
-            areaEl.appendChild(childContainer);
+            areaEl.appendChild(catContainer);
         }
 
         treeEl.appendChild(areaEl);
