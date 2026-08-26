@@ -51,7 +51,7 @@ export function redirectAfterLogin(user = {}) {
     } else if (user.role === 'admin') {
         window.location.replace(appPath('dashboard.html'));
     } else {
-        window.location.replace(appPath('categories.html'));
+        window.location.replace(appPath('hogar.html'));
     }
 }
 
@@ -223,7 +223,7 @@ function handleAgeGateEnter(btn) {
     }
 
     const intended = sessionStorage.getItem('intended_destination');
-    let targetUrl = appPath('categories.html');
+    let targetUrl = appPath('hogar.html');
     let cachedUser = null;
     try { cachedUser = JSON.parse(localStorage.getItem('user') || 'null'); } catch (e) { /* ignore */ }
     if (cachedUser && cachedUser.role === 'admin') {
@@ -447,7 +447,7 @@ if (verifyForm) {
                 } else if (data.user.role === 'admin') {
                     window.location.replace('/dashboard.html');
                 } else {
-                    window.location.replace('/categories.html');
+                    window.location.replace('/hogar.html');
                 }
             } else if (data.code === 'VERIFY_CODE_EXPIRED') {
                 showExpiredVerifyPrompt(alert, email);

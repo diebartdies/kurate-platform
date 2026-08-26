@@ -11,7 +11,7 @@ export const TERMS_VERSION = '2026-06-18';
 /** Known static pages — must not be treated as profile aliases under /perfil/ */
 export const APP_PAGES = new Set([
     'index.html', 'login.html', 'register.html', 'recover.html', 'verify.html',
-    'categories.html', 'dashboard.html', 'profDashboard.html', 'treasure.html',
+    'hogar.html', 'dashboard.html', 'profDashboard.html', 'treasure.html',
     'discover.html', 'home.html', 'services.html', 'admin.html', 'admin-potentials.html', 'whatsapp-inbox.html', 'plataforma.html',
     'notas-interes.html', 'nota-interes.html', 'profile.html'
 ]);
