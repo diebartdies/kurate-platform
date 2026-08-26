@@ -122,7 +122,7 @@
         `;
 
         document.getElementById('findOnGridBtn').addEventListener('click', function () {
-            window.location.href = '/admin.html?findMe=' + encodeURIComponent(alias);
+            window.location.href = '/perfil/' + encodeURIComponent(alias);
         });
     }
 
