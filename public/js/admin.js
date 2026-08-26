@@ -4393,19 +4393,19 @@ export async function openEditPricingModal(currentPricing) {
             <form id="editPricingForm" style="display: flex; flex-direction: column; gap: 15px;">
                 <div id="editPricingAlert" class="alert hidden" style="padding: 10px; border-radius: 4px; border: 1px solid transparent;"></div>
                 
-                <label>⭐ verificados (ARS)</label>
+                <label>⭐ Experto (ARS)</label>
                 <input type="number" id="priceverificados" required style="padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;">
 
-                <label>✨ Premium (ARS)</label>
+                <label>✨ Maestro (ARS)</label>
                 <input type="number" id="pricePremium" required style="padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;">
 
-                <label>🟡 Gold (ARS)</label>
+                <label>🟡 Profesional (ARS)</label>
                 <input type="number" id="priceGold" required style="padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;">
 
-                <label>⚪ Silver (ARS)</label>
+                <label>⚪ Técnico (ARS)</label>
                 <input type="number" id="priceSilver" required style="padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;">
 
-                <label>🟤 Standard (ARS)</label>
+                <label>🟤 Inicial (ARS)</label>
                 <input type="number" id="priceStandard" required style="padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;">
 
                 <button type="submit" style="margin-top: 10px; padding: 10px; background: var(--primary-gold); color: var(--dark-bg); font-weight: bold; border: none; border-radius: 4px; cursor: pointer;">Save Pricing</button>

@@ -4,11 +4,11 @@
     const API_URL = (window.location.protocol === 'file:' ? 'http://localhost:5000' : window.location.origin) + '/api/v1';
     const NO_PHOTO = '/images/no-photo.svg';
     const CATEGORY_META = {
-        'verificados': { name: '⭐ Verificados', alias: 'Experto', order: 5 },
-        'Premium': { name: '✨ Premium', alias: 'Maestro', order: 4 },
-        'Gold': { name: '🟡 Gold', alias: 'Profesional', order: 3 },
-        'Silver': { name: '⚪ Silver', alias: 'Técnico', order: 2 },
-        'Standard': { name: '🟤 Standard', alias: 'Inicial', order: 1 }
+        'verificados': { name: '⭐ Experto', alias: 'Experto', order: 5 },
+        'Premium': { name: '✨ Maestro', alias: 'Maestro', order: 4 },
+        'Gold': { name: '🟡 Profesional', alias: 'Profesional', order: 3 },
+        'Silver': { name: '⚪ Técnico', alias: 'Técnico', order: 2 },
+        'Standard': { name: '🟤 Inicial', alias: 'Inicial', order: 1 }
     };
 
     function esc(s) { return (s == null) ? '' : String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
