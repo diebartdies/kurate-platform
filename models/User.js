@@ -230,6 +230,20 @@ const UserSchema = new mongoose.Schema({
       type: Boolean,
       default: true // Determines if professional is shown on discovery grid
     },
+    budgetType: {
+      type: String,
+      enum: ['sin_cargo', 'con_cargo'],
+      default: 'sin_cargo'
+    },
+    budgetAmount: {
+      type: Number,
+      min: 0
+    },
+    responseSpeed: {
+      type: String,
+      enum: ['inmediata', '24hs', '48hs', '72hs'],
+      default: '24hs'
+    },
     paysMonthlyCharges: {
       type: Boolean,
       default: true // Determines if the professional is subject to monthly fees

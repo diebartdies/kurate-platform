@@ -136,7 +136,10 @@ exports.getProfessionals = async (req, res, next) => {
       'professionalProfile.workingHours': 1,
       'professionalProfile.workingDays': 1,
       'professionalProfile.vacation': 1,
-      'professionalProfile.photos': 1
+      'professionalProfile.photos': 1,
+      'professionalProfile.budgetType': 1,
+      'professionalProfile.budgetAmount': 1,
+      'professionalProfile.responseSpeed': 1
     };
 
     if (req.query.minimal === 'true') {
@@ -744,7 +747,7 @@ exports.getProfessionalByAlias = async (req, res, next) => {
     const professional = await User.findOne({ 
       'professionalProfile.alias': aliasRegex,
       ...ALIAS_LOOKUP_FILTER
-    }).select('accountDeletedAt professionalProfile.alias professionalProfile.quality professionalProfile.bio professionalProfile.services professionalProfile.location professionalProfile.pricing professionalProfile.measurements professionalProfile.height professionalProfile.eyeColor professionalProfile.hasTattoos professionalProfile.whatsappNumber professionalProfile.mobilePhone professionalProfile.photos professionalProfile.workingHours professionalProfile.workingDays professionalProfile.vacation');
+    }).select('accountDeletedAt professionalProfile.alias professionalProfile.quality professionalProfile.bio professionalProfile.services professionalProfile.location professionalProfile.pricing professionalProfile.measurements professionalProfile.height professionalProfile.eyeColor professionalProfile.hasTattoos professionalProfile.whatsappNumber professionalProfile.mobilePhone professionalProfile.photos professionalProfile.workingHours professionalProfile.workingDays professionalProfile.vacation professionalProfile.budgetType professionalProfile.budgetAmount professionalProfile.responseSpeed');
 
     if (!professional || isAccountDeleted(professional)) {
       return res.status(404).json({
@@ -1317,12 +1320,16 @@ exports.updateProfile = async (req, res, next) => {
       whatsappNumber,
       hasOwnApartment: req.body.hasOwnApartment === 'true',
       hasFantasyWardrobe: req.body.hasFantasyWardrobe === 'true',
+      budgetType: ['sin_cargo','con_cargo'].includes(req.body.budgetType) ? req.body.budgetType : (oldProf.budgetType || 'sin_cargo'),
+      budgetAmount: req.body.budgetAmount !== undefined && req.body.budgetAmount !== '' ? Number(req.body.budgetAmount) : (oldProf.budgetAmount || undefined),
+      responseSpeed: ['inmediata','24hs','48hs','72hs'].includes(req.body.responseSpeed) ? req.body.responseSpeed : (oldProf.responseSpeed || '24hs'),
       workingHours: {
         start: req.body.workingHoursStart || '00:00',
         end: req.body.workingHoursEnd || '23:59'
       },
       workingDays: parsedDays
     };
+    if (professionalProfile.budgetType === 'sin_cargo') professionalProfile.budgetAmount = undefined;
     
     if (req.body.isExposed !== undefined) {
       professionalProfile.isExposed = req.body.isExposed === 'true';

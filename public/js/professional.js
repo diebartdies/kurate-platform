@@ -665,6 +665,10 @@ export function bindProfessionalProfileForm() {
             formData.set('workingDays', selectedDays);
         }
 
+        formData.append('budgetType', document.getElementById('upBudgetType')?.value || 'sin_cargo');
+        formData.append('budgetAmount', document.getElementById('upBudgetAmount')?.value || '');
+        formData.append('responseSpeed', document.getElementById('upResponseSpeed')?.value || '24hs');
+
         const existingPhotos = [];
         const photoElements = document.querySelectorAll('#photoGrid .photo-item img');
 
@@ -1525,6 +1529,34 @@ export async function loadProfDashboard() {
                     </div>
                 </div>
 
+                <!-- Presupuesto y Respuesta -->
+                <div class="card fileteado-section" style="margin-bottom: 20px; border: 1px solid var(--primary-gold);">
+                    <h3 class="gold-text" style="margin-bottom: 15px;">Presupuesto y Tiempo de Respuesta</h3>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 12px;">
+                        <div style="flex: 1; min-width: 180px;">
+                            <label for="upBudgetType">¿Cobrás presupuesto?</label>
+                            <select id="upBudgetType" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;">
+                                <option value="sin_cargo" ${prof.budgetType !== 'con_cargo' ? 'selected' : ''}>No — Presupuesto sin cargo</option>
+                                <option value="con_cargo" ${prof.budgetType === 'con_cargo' ? 'selected' : ''}>Sí — Con cargo</option>
+                            </select>
+                        </div>
+                        <div id="upBudgetAmountWrap" style="flex: 1; min-width: 150px; display: ${prof.budgetType === 'con_cargo' ? 'block' : 'none'};">
+                            <label for="upBudgetAmount">Monto del presupuesto (ARS)</label>
+                            <input type="number" id="upBudgetAmount" min="0" step="100" placeholder="Ej: 5000" value="${prof.budgetAmount || ''}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;">
+                        </div>
+                        <div style="flex: 1; min-width: 180px;">
+                            <label for="upResponseSpeed">Velocidad de respuesta</label>
+                            <select id="upResponseSpeed" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;">
+                                <option value="inmediata" ${prof.responseSpeed === 'inmediata' ? 'selected' : ''}>Inmediata — urgencias</option>
+                                <option value="24hs" ${!prof.responseSpeed || prof.responseSpeed === '24hs' ? 'selected' : ''}>24 hs — mantenimiento</option>
+                                <option value="48hs" ${prof.responseSpeed === '48hs' ? 'selected' : ''}>48 hs — reparación programada</option>
+                                <option value="72hs" ${prof.responseSpeed === '72hs' ? 'selected' : ''}>72 hs — programada</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.78rem; color: #999; line-height: 1.5; margin: 0;">⚠️ El plazo se pacta directamente con el profesional. <strong>KuraTe no garantiza</strong> el cumplimiento de los tiempos indicados. Luego del trabajo es muy importante dejar tu opinión: afecta el posicionamiento del profesional en el ranking.</p>
+                </div>
+
                 <!-- 4. Availability -->
                 <div class="card fileteado-section" style="margin-bottom: 20px; border: 1px solid var(--primary-gold);">
                     <h3 class="gold-text" style="margin-bottom: 15px;">${t('Disponibilidad')}</h3>
@@ -1584,6 +1616,18 @@ export async function loadProfDashboard() {
             initPhonePicker('upWa');
 
             initPhoneVerification();
+
+            // Toggle presupuesto monto
+            const budgetTypeEl = document.getElementById('upBudgetType');
+            const budgetWrap = document.getElementById('upBudgetAmountWrap');
+            if (budgetTypeEl && budgetWrap) {
+                budgetTypeEl.addEventListener('change', () => {
+                    budgetWrap.style.display = budgetTypeEl.value === 'con_cargo' ? 'block' : 'none';
+                    document.getElementById('explicitSaveBtn')?.classList.remove('hidden');
+                });
+                document.getElementById('upBudgetAmount')?.addEventListener('input', () => document.getElementById('explicitSaveBtn')?.classList.remove('hidden'));
+                document.getElementById('upResponseSpeed')?.addEventListener('change', () => document.getElementById('explicitSaveBtn')?.classList.remove('hidden'));
+            }
 
             injectProfessionalDashboardGuides(content, data, formObj);
 

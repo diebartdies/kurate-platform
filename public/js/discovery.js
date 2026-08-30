@@ -115,6 +115,15 @@ function renderTreasureCategorySection(grid, cat, items, eagerImages = false) {
             imgContainer.appendChild(virtualBadge);
         }
 
+        // Presupuesto sin cargo badge — only when free, per spec (if charges, no badge on card)
+        if (prof.budgetType !== 'con_cargo') {
+            const freeBadge = document.createElement('span');
+            freeBadge.className = 'treasure-budget-badge';
+            freeBadge.style.cssText = 'position:absolute;top:8px;left:8px;background:#1a9e1a;color:#fff;font-size:0.68rem;font-weight:800;padding:3px 7px;border-radius:10px;letter-spacing:0.3px;box-shadow:0 1px 4px rgba(0,0,0,0.4);';
+            freeBadge.textContent = 'Presupuesto sin cargo';
+            imgContainer.appendChild(freeBadge);
+        }
+
         // Foot-of-photo caption: alias, barrio/ciudad and primary specialty.
         // White italic text, left-aligned with a small left padding, sitting on
         // a subtle dark gradient scrim so it stays legible over any photo.
@@ -437,6 +446,32 @@ export async function loadTreasureDetails() {
                         <p style="white-space: pre-wrap; color: #ccc; line-height: 1.65; margin: 0;">${safeBio || t('No service description available.')}</p>
                     </div>
 
+                    <!-- Presupuesto y Respuesta -->
+                    ${(() => {
+                        const bt = prof.budgetType || 'sin_cargo';
+                        const amt = prof.budgetAmount ? ` — $${Number(prof.budgetAmount).toLocaleString('es-AR')}` : '';
+                        const rs = prof.responseSpeed || '24hs';
+                        const rsLabel = rs === 'inmediata' ? 'Inmediata (urgencias)' : rs === '24hs' ? '24 hs' : rs === '48hs' ? '48 hs' : '72 hs';
+                        const presupuestoHtml = bt === 'con_cargo'
+                            ? `<div style="background: rgba(255,165,0,0.12); border-left: 4px solid #ff9800; padding: 10px 14px; border-radius: 6px; color: #ff9800; font-weight: bold; font-size: 0.95rem;">⚠️ Presupuesto con cargo${amt}</div>`
+                            : `<div style="background: rgba(46,160,67,0.12); border-left: 4px solid #2ea043; padding: 10px 14px; border-radius: 6px; color: #2ea043; font-weight: bold; font-size: 0.95rem;">✓ Presupuesto sin cargo</div>`;
+                        return `
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 18px 0;">
+                            ${presupuestoHtml}
+                            <div style="background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.3); padding: 10px 14px; border-radius: 6px;">
+                                <div style="font-size: 0.8rem; color: #aaa;">Tiempo de respuesta</div>
+                                <div style="font-weight: bold; color: var(--primary-gold);">${rsLabel}</div>
+                                <div style="font-size: 0.72rem; color: #888;">${rs === 'inmediata' ? 'Para urgencias' : rs === '24hs' ? 'Mantenimiento' : 'Reparación programada'}</div>
+                            </div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.04); border: 1px dashed rgba(255,255,255,0.12); padding: 10px 12px; border-radius: 6px; margin-bottom: 14px;">
+                            <p style="margin: 0; font-size: 0.78rem; color: #aaa; line-height: 1.5;">ℹ️ El tiempo de respuesta se pacta directamente con el profesional. <strong style="color:#ccc;">KuraTe no tiene responsabilidad</strong> en el cumplimiento de los plazos. Luego del trabajo, tu opinión es muy importante: la encuesta afecta el posicionamiento del profesional en el ranking de forma positiva o negativa según su desempeño.</p>
+                        </div>
+                        <div style="background: rgba(212,175,55,0.06); border-left: 3px solid var(--primary-gold); padding: 10px 12px; border-radius: 6px; margin-bottom: 18px;">
+                            <p style="margin: 0; font-size: 0.82rem; color: #ddd; line-height: 1.55;"><strong style="color: var(--primary-gold);">Consejo:</strong> Cuando pactes con un profesional, dejalo expresado en la plataforma. Así facilitamos el <strong>pago del servicio</strong>, te enviamos el <strong>detalle de trabajos realizados y la garantía</strong> extendida, y luego recibirás la <strong>encuesta de servicio</strong> para evaluar. Tu evaluación será enviada al profesional y afectará su posición en el ranking.</p>
+                        </div>`;
+                    })()}
+
                     <div style="margin-top: 0;">
                         <p><strong>${t('Country')}:</strong> ${prof.location?.country || 'N/A'}</p>
                         <p><strong>${t('Location')}:</strong> ${(() => {
@@ -456,6 +491,27 @@ export async function loadTreasureDetails() {
                     <div style="margin-top: 30px; text-align: center; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
                         ${hasWhatsapp ? `<button onclick="contactOnWhatsApp('${prof.alias}')" style="background: #25D366; color: white; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; font-weight: bold;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.405-.881-.728-1.476-1.626-1.65-1.923-.173-.298-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.012c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>${t('Contact on WhatsApp')}</button>` : ''}
                         ${hasWhatsapp ? `<button onclick="contactOnPhone('${prof.alias}')" style="background: transparent; border: 1px solid var(--primary-gold); color: var(--primary-gold); display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>${t('Phone Call')}</button>` : ''}
+                    </div>
+
+                    <!-- Reviews Section -->
+                    <div id="reviewsSection" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <h3 class="gold-text" style="margin: 0 0 15px; font-size: 1.1rem;">${t('Reviews')}</h3>
+                        <div id="reviewsList"><p style="color: #999; font-size: 0.9rem;">${t('Loading reviews...')}</p></div>
+                        <div id="reviewFormContainer" style="display:none; margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+                            <h4 style="margin: 0 0 12px; color: var(--primary-gold); font-size: 1rem;">${t('Leave a Review')}</h4>
+                            <div style="margin-bottom: 12px;">
+                                <label style="display: block; margin-bottom: 6px; color: #ccc; font-size: 0.9rem;">${t('Rating')}:</label>
+                                <div id="reviewStarPicker" style="display: flex; gap: 4px; cursor: pointer;">
+                                    ${[1,2,3,4,5].map(n => `<span class="star-pick" data-val="${n}" style="font-size: 1.5rem; color: #555; transition: color 0.2s;">&#9733;</span>`).join('')}
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 12px;">
+                                <label style="display: block; margin-bottom: 6px; color: #ccc; font-size: 0.9rem;">${t('Comment')}:</label>
+                                <textarea id="reviewCommentInput" rows="3" style="width: 100%; padding: 10px; background: #1a1a1a; border: 1px solid #333; border-radius: 6px; color: #eee; font-size: 0.9rem; resize: vertical;" placeholder="${t('Share your experience...')}"></textarea>
+                            </div>
+                            <button id="submitReviewBtn" style="padding: 10px 20px; background: var(--primary-gold); color: #111; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">${t('Submit Review')}</button>
+                            <p id="reviewFormMsg" style="margin-top: 8px; font-size: 0.85rem; display: none;"></p>
+                        </div>
                     </div>
                 </div>
             `;
@@ -547,6 +603,10 @@ export async function loadTreasureDetails() {
 
             finishPageLoad('treasureContent', 'loader');
             applyStaticTranslations(content);
+
+            // --- Reviews: load + form logic ---
+            loadProfileReviews(treasure._id);
+            setupReviewForm(treasure._id);
         } else {
             failPageLoad('treasureContent', 'loader', `<p class="alert">${t('Could not find the specified treasure.')}</p>`);
         }
@@ -1156,6 +1216,117 @@ export function contactOnPhone(alias) {
     }
     const url = `${API_URL}/professionals/${encodeURIComponent(alias)}/phone`;
     window.open(url, '_self');
+}
+
+// --- Reviews ---
+function getAuthToken() {
+    try {
+        const u = localStorage.getItem('user');
+        return u ? JSON.parse(u)?.token : null;
+    } catch(e) { return null; }
+}
+
+async function loadProfileReviews(professionalId) {
+    const listEl = document.getElementById('reviewsList');
+    if (!listEl) return;
+    try {
+        const res = await fetch(`${API_URL}/professionals/${professionalId}/reviews`);
+        if (!res.ok) throw new Error('Failed to load reviews');
+        const data = await res.json();
+        if (!data.success || !data.data.length) {
+            listEl.innerHTML = `<p style="color: #999; font-size: 0.9rem;">${t('No reviews yet.')}</p>`;
+            return;
+        }
+        const reviews = data.data;
+        const avg = (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1);
+        listEl.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                <span style="color: var(--primary-gold); font-size: 1.3rem; font-weight: bold;">★ ${avg}</span>
+                <span style="color: #999; font-size: 0.85rem;">(${reviews.length} ${reviews.length === 1 ? t('review') : t('reviews')})</span>
+            </div>
+            ${reviews.map(r => `
+                <div style="padding: 12px; margin-bottom: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="color: var(--primary-gold); font-size: 0.95rem;">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</span>
+                        <span style="color: #666; font-size: 0.8rem;">${new Date(r.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <p style="color: #ccc; font-size: 0.9rem; margin: 0; line-height: 1.5;">${String(r.text || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+                    ${r.author ? `<p style="color: #888; font-size: 0.8rem; margin: 6px 0 0;">— ${r.author.professionalProfile?.alias || r.author.name || ''}</p>` : ''}
+                </div>
+            `).join('')}
+        `;
+    } catch(e) {
+        listEl.innerHTML = `<p style="color: #999; font-size: 0.9rem;">${t('Could not load reviews.')}</p>`;
+    }
+}
+
+function setupReviewForm(professionalId) {
+    const token = getAuthToken();
+    const formContainer = document.getElementById('reviewFormContainer');
+    if (!formContainer || !token) return; // not logged in — hide form
+    // Check if viewer is the professional themselves
+    try {
+        const u = JSON.parse(localStorage.getItem('user'));
+        if (u && (u._id === professionalId || u.role === 'admin')) return; // don't review self
+    } catch(e) {}
+
+    formContainer.style.display = 'block';
+    let selectedRating = 0;
+
+    const stars = document.querySelectorAll('#reviewStarPicker .star-pick');
+    stars.forEach(star => {
+        star.addEventListener('mouseenter', () => {
+            const val = parseInt(star.dataset.val);
+            stars.forEach(s => { s.style.color = parseInt(s.dataset.val) <= val ? '#FFD700' : '#555'; });
+        });
+        star.addEventListener('click', () => {
+            selectedRating = parseInt(star.dataset.val);
+            stars.forEach(s => { s.style.color = parseInt(s.dataset.val) <= selectedRating ? '#FFD700' : '#555'; });
+        });
+    });
+
+    document.getElementById('reviewStarPicker')?.addEventListener('mouseleave', () => {
+        stars.forEach(s => { s.style.color = parseInt(s.dataset.val) <= selectedRating ? '#FFD700' : '#555'; });
+    });
+
+    document.getElementById('submitReviewBtn')?.addEventListener('click', async () => {
+        const msgEl = document.getElementById('reviewFormMsg');
+        const comment = document.getElementById('reviewCommentInput')?.value?.trim();
+        if (!selectedRating) { showReviewMsg(msgEl, t('Please select a rating.'), true); return; }
+        if (!comment) { showReviewMsg(msgEl, t('Please write a comment.'), true); return; }
+
+        const btn = document.getElementById('submitReviewBtn');
+        btn.disabled = true;
+        btn.textContent = t('Submitting...');
+        try {
+            const res = await fetch(`${API_URL}/professionals/${professionalId}/reviews`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ rating: selectedRating, text: comment })
+            });
+            const data = await res.json();
+            if (data.success) {
+                showReviewMsg(msgEl, t('Review submitted! Thank you.'), false);
+                document.getElementById('reviewCommentInput').value = '';
+                selectedRating = 0;
+                stars.forEach(s => { s.style.color = '#555'; });
+                loadProfileReviews(professionalId);
+            } else {
+                showReviewMsg(msgEl, data.error || t('Could not submit review.'), true);
+            }
+        } catch(e) {
+            showReviewMsg(msgEl, t('Could not submit review.'), true);
+        }
+        btn.disabled = false;
+        btn.textContent = t('Submit Review');
+    });
+}
+
+function showReviewMsg(el, msg, isError) {
+    if (!el) return;
+    el.textContent = msg;
+    el.style.color = isError ? '#ff6b6b' : '#66bb6a';
+    el.style.display = 'block';
 }
 
 window.applyCountsToDropdowns = applyCountsToDropdowns;
