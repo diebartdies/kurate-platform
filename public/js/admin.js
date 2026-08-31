@@ -1699,7 +1699,7 @@ async function loadAccessLogs(page = 1) {
     content.innerHTML = '<p style="color:#aaa;text-align:center;padding:20px;">Loading...</p>';
     
     try {
-        const params = new URLSearchParams({ page, limit: 50 });
+        const params = new URLSearchParams({ page, limit: 100 });
         if (search) params.set('path', search);
         if (from) params.set('from', from);
         if (to) params.set('to', to);
