@@ -1458,11 +1458,13 @@ export function t(text) {
 let esRegexList = null;
 
 export function applyStaticTranslations(rootNode = document.body) {
-    if (currentLang === 'en' || currentLang === 'zh') return;
+    if (currentLang === 'en') return;
     
-    if (!esRegexList) {
-        const keys = Object.keys(translations['es']).sort((a, b) => b.length - a.length);
-        esRegexList = keys.map(key => {
+    const dict = translations[currentLang] || translations['es'];
+    let regexList = currentLang === 'zh' ? window._zhRegexList : esRegexList;
+    if (!regexList) {
+        const keys = Object.keys(dict).sort((a, b) => b.length - a.length);
+        regexList = keys.map(key => {
             // Escape regex, then replace any spaces with \s+ to handle weird formatting/newlines
             const pattern = key.split(/\s+/).map(word => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+');
             let finalPattern = pattern;
@@ -1470,6 +1472,8 @@ export function applyStaticTranslations(rootNode = document.body) {
             if (/\w$/.test(key)) finalPattern = finalPattern + '\\b';
             return { key, regex: new RegExp(finalPattern, 'gi') };
         });
+        if (currentLang === 'zh') window._zhRegexList = regexList;
+        else esRegexList = regexList;
     }
     
     // Walk DOM to translate text nodes
@@ -1484,15 +1488,15 @@ export function applyStaticTranslations(rootNode = document.body) {
         // Normalize all tabs, spaces, and newlines into a single space
         const normalizedText = text.replace(/\s+/g, ' ').trim();
         
-        if (translations['es'][normalizedText]) {
-            nodesToReplace.push({ node, newText: text.replace(text.trim(), translations['es'][normalizedText]) });
-        } else if (translations['es'][text.trim()]) {
-            nodesToReplace.push({ node, newText: text.replace(text.trim(), translations['es'][text.trim()]) });
+        if (dict[normalizedText]) {
+            nodesToReplace.push({ node, newText: text.replace(text.trim(), dict[normalizedText]) });
+        } else if (dict[text.trim()]) {
+            nodesToReplace.push({ node, newText: text.replace(text.trim(), dict[text.trim()]) });
         } else {
             let updatedText = text;
             let changed = false;
-            for (const { key, regex } of esRegexList) {
-                const newText = updatedText.replace(regex, translations['es'][key]);
+            for (const { key, regex } of regexList) {
+                const newText = updatedText.replace(regex, dict[key]);
                 if (newText !== updatedText) {
                     updatedText = newText;
                     changed = true;
@@ -1513,15 +1517,15 @@ export function applyStaticTranslations(rootNode = document.body) {
     inputs.forEach(input => {
         if (input.value) {
             const norm = input.value.replace(/\s+/g, ' ').trim();
-            if (translations['es'][norm]) {
-                input.value = translations['es'][norm];
-            } else if (translations['es'][input.value.trim()]) {
-                input.value = translations['es'][input.value.trim()];
+            if (dict[norm]) {
+                input.value = dict[norm];
+            } else if (dict[input.value.trim()]) {
+                input.value = dict[input.value.trim()];
             } else {
                 let text = input.value;
                 let changed = false;
-                for (const { key, regex } of esRegexList) {
-                    const newText = text.replace(regex, translations['es'][key]);
+                for (const { key, regex } of regexList) {
+                    const newText = text.replace(regex, dict[key]);
                     if (newText !== text) {
                         text = newText;
                         changed = true;
@@ -1537,15 +1541,15 @@ export function applyStaticTranslations(rootNode = document.body) {
     placeholders.forEach(input => {
         if (input.placeholder) {
             const norm = input.placeholder.replace(/\s+/g, ' ').trim();
-            if (translations['es'][norm]) {
-                input.placeholder = translations['es'][norm];
-            } else if (translations['es'][input.placeholder.trim()]) {
-                input.placeholder = translations['es'][input.placeholder.trim()];
+            if (dict[norm]) {
+                input.placeholder = dict[norm];
+            } else if (dict[input.placeholder.trim()]) {
+                input.placeholder = dict[input.placeholder.trim()];
             } else {
                 let text = input.placeholder;
                 let changed = false;
-                for (const { key, regex } of esRegexList) {
-                    const newText = text.replace(regex, translations['es'][key]);
+                for (const { key, regex } of regexList) {
+                    const newText = text.replace(regex, dict[key]);
                     if (newText !== text) {
                         text = newText;
                         changed = true;
@@ -1560,18 +1564,18 @@ export function applyStaticTranslations(rootNode = document.body) {
         const val = el.getAttribute(attr);
         if (!val || !String(val).trim()) return;
         const norm = val.replace(/\s+/g, ' ').trim();
-        if (translations['es'][norm]) {
-            el.setAttribute(attr, translations['es'][norm]);
+        if (dict[norm]) {
+            el.setAttribute(attr, dict[norm]);
             return;
         }
-        if (translations['es'][val.trim()]) {
-            el.setAttribute(attr, translations['es'][val.trim()]);
+        if (dict[val.trim()]) {
+            el.setAttribute(attr, dict[val.trim()]);
             return;
         }
         let text = val;
         let changed = false;
-        for (const { key, regex } of esRegexList) {
-            const newText = text.replace(regex, translations['es'][key]);
+        for (const { key, regex } of regexList) {
+            const newText = text.replace(regex, dict[key]);
             if (newText !== text) {
                 text = newText;
                 changed = true;
@@ -1585,8 +1589,8 @@ export function applyStaticTranslations(rootNode = document.body) {
         rootNode.querySelectorAll('[aria-label]').forEach((el) => translateAttr(el, 'aria-label'));
     }
 
-    if (rootNode === document.body && document.title && translations['es'][document.title]) {
-        document.title = translations['es'][document.title];
+    if (rootNode === document.body && document.title && dict[document.title]) {
+        document.title = dict[document.title];
     }
 }
 

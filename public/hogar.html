@@ -555,6 +555,59 @@
         'Llamar': 'Call',
         'Ver perfil': 'View profile'
       };
+      const dictZh = {
+        'Volver': '返回',
+        'Filtros': '筛选',
+        'Área': '区域',
+        'Acción': '操作',
+        'Categoría': '类别',
+        'Disponibilidad': '可用时间',
+        'Provincia': '省份',
+        'Localidad': '城市',
+        'Servicio / Equipo': '服务 / 设备',
+        'Marca': '品牌',
+        'Aplicar': '应用',
+        'Limpiar': '清除',
+        'Áreas': '区域',
+        'Contacto': '联系',
+        'Cómo leer las tarjetas': '如何阅读卡片',
+        'Si me conocés mejor, te voy a ayudar mucho más': '越了解我，越能更好地帮助您',
+        'Técnicos disponibles': '可用技术人员',
+        'Sin resultados': '无结果',
+        'Probá ampliar los filtros.': '请放宽筛选条件。',
+        'Cargar más': '加载更多',
+        'Preparando el directorio...': '正在准备目录...',
+        'WhatsApp disponible': '支持 WhatsApp',
+        'Telegram disponible': '支持 Telegram',
+        'Si no muestra ninguno, usá email o teléfono.': '如未显示，请使用电子邮件或电话。',
+        'Hogar': '家庭', 'Oficina': '办公室', 'PIME': '中小企业', 'Industria': '工业',
+        'Todas': '全部',
+        'Todos': '全部',
+        'Todas las ciudades / barrios': '所有城市/街区',
+        'Cargando...': '加载中...',
+        'Escribí el servicio': '输入服务',
+        'Escribí la marca': '输入品牌',
+        'Reparo': '维修',
+        'Instalo': '安装',
+        'Hago mantenimiento': '维护',
+        'Vendo repuestos': '销售配件',
+        'Asesoro': '咨询',
+        'Profesional matriculado': '持证专业人员',
+        'Técnico matriculado': '持证技术人员',
+        'Técnico no matriculado': '非持证技术人员',
+        'Idóneo': '熟练工',
+        'Inmediata': '立即',
+        'Rápida (<2 días)': '快速（2天内）',
+        '2–4 días': '2-4天',
+        '>4 días': '4天以上',
+        'Marca exacta': '精确品牌',
+        ' km': ' 公里',
+        'Ver más': '查看更多',
+        'Contactar': '联系',
+        'Enviar mensaje': '发送消息',
+        'Llamar': '拨打电话',
+        'Ver perfil': '查看资料'
+      };
       const lang = localStorage.getItem('platform_lang') || 'es';
       const esBtn = document.getElementById('langEs');
       const enBtn = document.getElementById('langEn');
@@ -568,9 +621,10 @@
       }
       function translate(l) {
         document.documentElement.setAttribute('lang', l);
+        const d = l === 'en' ? dict : l === 'zh' ? dictZh : null;
         document.querySelectorAll('[data-i18n]').forEach(el => {
           const key = el.getAttribute('data-i18n');
-          el.textContent = (l === 'en' && dict[key]) ? dict[key] : key;
+          el.textContent = (d && d[key]) ? d[key] : key;
         });
         document.querySelectorAll('[data-i18n-content="guide"]').forEach(el => {
           if (l === 'en') {

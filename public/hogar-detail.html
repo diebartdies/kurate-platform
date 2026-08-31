@@ -252,6 +252,10 @@
         'Sin datos de contacto públicos.': 'No public contact info.',
         'Cargando detalle...': 'Loading details...', 'Falta el id del técnico.': 'Missing technician id.'
       };
+      var dictZh = {};
+      for (var k in dict) { var en = dict[k]; var zh = (window.translations && window.translations['zh'] && window.translations['zh'][en]) || (window.translations && window.translations['zh'] && window.translations['zh'][k]) || en; dictZh[k] = zh; }
+      // manual zh overrides for detail page
+      dictZh['Volver'] = '返回'; dictZh['Sobre mí'] = '关于我'; dictZh['Sobre mi trabajo'] = '关于我的工作'; dictZh['Presupuesto'] = '预算';
       const lang = localStorage.getItem('platform_lang') || 'es';
       const esBtn = document.getElementById('langEs');
       const enBtn = document.getElementById('langEn');
@@ -262,11 +266,12 @@
         if (zhBtn) zhBtn.className = 'fm-lang-btn ' + (lang === 'zh' ? 'active' : 'inactive');
       }
       function translate() {
+        var d = lang === 'en' ? dict : lang === 'zh' ? dictZh : null;
         document.querySelectorAll('[data-i18n]').forEach(el => {
           const key = el.getAttribute('data-i18n');
-          el.textContent = (lang === 'en' && dict[key]) ? dict[key] : key;
+          el.textContent = (d && d[key]) ? d[key] : key;
         });
-        document.querySelectorAll('.fm-back-text').forEach(el => { el.textContent = (lang === 'en') ? 'Back' : 'Volver'; });
+        document.querySelectorAll('.fm-back-text').forEach(el => { el.textContent = lang === 'en' ? 'Back' : lang === 'zh' ? '返回' : 'Volver'; });
       }
       translate();
       if (esBtn) esBtn.addEventListener('click', () => { localStorage.setItem('platform_lang', 'es'); location.reload(); });

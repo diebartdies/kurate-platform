@@ -585,21 +585,29 @@
             return dict[text] || text;
         };
 
-        // Translate static DOM on load if English
-        if (lang === 'en') {
+        // Build zh dict dynamically from en->zh translations if available
+        var dictZh = {};
+        for (var k in dict) { var en = dict[k]; var zh = (window.translations && window.translations['zh'] && window.translations['zh'][en]) || (window.translations && window.translations['zh'] && window.translations['zh'][k]) || en; dictZh[k] = zh; }
+        // Manual overrides for zh where auto fails
+        dictZh['Crear aviso'] = '发布需求'; dictZh['Ingresar'] = '登录'; dictZh['Buscar profesionales'] = '查找专业人员';
+
+        // Translate static DOM on load if English or Chinese
+        if (lang === 'en' || lang === 'zh') {
+            var activeDict = lang === 'zh' ? dictZh : dict;
             document.addEventListener('DOMContentLoaded', function() {
-                document.documentElement.setAttribute('lang', 'en');
+                document.documentElement.setAttribute('lang', lang);
                 document.getElementById('langEs')?.setAttribute('aria-checked', 'false');
-                document.getElementById('langEn')?.setAttribute('aria-checked', 'true');
+                document.getElementById('langEn')?.setAttribute('aria-checked', lang === 'en' ? 'true' : 'false');
+                document.getElementById('langZh')?.setAttribute('aria-checked', lang === 'zh' ? 'true' : 'false');
                 document.querySelectorAll('*').forEach(function(el) {
                     if (el.children.length === 0 && el.textContent.trim()) {
                         var trimmed = el.textContent.trim();
-                        if (dict[trimmed]) el.textContent = el.textContent.replace(trimmed, dict[trimmed]);
+                        if (activeDict[trimmed]) el.textContent = el.textContent.replace(trimmed, activeDict[trimmed]);
                     }
-                    if (el.placeholder && dict[el.placeholder]) el.placeholder = dict[el.placeholder];
-                    if (el.title && dict[el.title]) el.title = dict[el.title];
+                    if (el.placeholder && activeDict[el.placeholder]) el.placeholder = activeDict[el.placeholder];
+                    if (el.title && activeDict[el.title]) el.title = activeDict[el.title];
                 });
-                document.title = 'KuraTe — What do you need?';
+                document.title = lang === 'zh' ? 'KuraTe — 您需要什么？' : 'KuraTe — What do you need?';
             });
         }
     })();
