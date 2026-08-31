@@ -1100,3 +1100,19 @@ const sendTokenResponse = (user, statusCode, res, options = {}) => {
     .cookie('token', token, cookieOptions)
     .json(payload);
 };
+
+// @desc    Set password after email/phone verification (so can login from phone)
+// @route   POST /api/v1/auth/set-password
+// @access  Private
+exports.setPassword = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id).select('+password');
+    if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+    const { password, confirmPassword } = req.body;
+    if (!password || String(password).length < 6) return res.status(400).json({ success: false, error: 'Password must be at least 6 characters.' });
+    if (password !== confirmPassword) return res.status(400).json({ success: false, error: 'Passwords do not match' });
+    user.password = password;
+    await user.save();
+    res.status(200).json({ success: true, message: 'Password updated' });
+  } catch (e) { res.status(400).json({ success: false, error: e.message }); }
+};

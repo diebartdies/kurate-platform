@@ -432,6 +432,39 @@ if (verifyForm) {
                 sessionStorage.setItem('valid_entry', 'true');
                 if (data.user) localStorage.setItem('user', JSON.stringify(data.user));
                 
+                // Para profesionales: pedir contraseña por duplicado antes de ir al DNI (PC->móvil handoff)
+                if (data.user && data.user.role === 'professional' && data.user.verificationStatus !== 'approved') {
+                    const vf = document.getElementById('verifyForm');
+                    const pf = document.getElementById('setPasswordForm');
+                    if (vf && pf) {
+                        vf.classList.add('hidden'); vf.style.display='none';
+                        pf.classList.remove('hidden'); pf.style.display='block';
+                        pf.scrollIntoView({behavior:'smooth'});
+                        // bind once
+                        if (!pf.dataset.bound) {
+                            pf.dataset.bound='1';
+                            pf.addEventListener('submit', async (ev)=>{
+                                ev.preventDefault();
+                                const p1=document.getElementById('pwd1')?.value||'';
+                                const p2=document.getElementById('pwd2')?.value||'';
+                                const pa=document.getElementById('pwdAlert');
+                                if(p1.length<6){ showAlert(pa,'Contraseña mínimo 6 caracteres',true); return}
+                                if(p1!==p2){ showAlert(pa,'Las contraseñas no coinciden',true); return}
+                                try{
+                                    const r=await fetch(`${API_URL}/auth/set-password`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+data.token},body:JSON.stringify({password:p1,confirmPassword:p2})});
+                                    const j=await r.json();
+                                    if(!j.success){ showAlert(pa,j.error||'Error',true); return}
+                                    showAlert(pa,'Contraseña guardada. Redirigiendo...',false);
+                                    setTimeout(()=>{
+                                        const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||window.innerWidth<768;
+                                        window.location.replace(appPath(isMobile?'captura-dni.html':'profile.html'));
+                                    },800);
+                                }catch(e){ showAlert(pa,'Error de conexión',true)}
+                            });
+                        }
+                        return;
+                    }
+                }
                 let intended = sessionStorage.getItem('intended_destination');
                 sessionStorage.removeItem('intended_destination');
 

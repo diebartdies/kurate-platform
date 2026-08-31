@@ -452,6 +452,7 @@ app.get('/api/v1/hogar/professionals/:id', professionalController.getHogarProfes
 app.delete('/api/v1/professionals/me', protect, authorize('professional'), professionalController.deleteMyProfile);
 app.post('/api/v1/professionals/resubmit-verification', protect, authorize('professional'), upload.array('verificationDocuments', 3), professionalController.resubmitVerification);
 app.post('/api/v1/professionals/verification-documents', protect, authorize('professional'), upload.array('verificationDocuments', 3), professionalController.submitInitialVerification);
+app.post('/api/v1/auth/set-password', protect, require('../controllers/authController').setPassword);
 app.put('/api/v1/professionals/acknowledge-rate', protect, authorize('professional'), professionalController.acknowledgeRateChange);
 app.post('/api/v1/professionals/acknowledge-first-login', protect, authorize('professional'), professionalController.acknowledgeFirstLogin);
 app.post('/api/v1/professionals/upload-receipt', protect, authorize('professional'), upload.single('receipt'), paymentController.uploadReceipt);
