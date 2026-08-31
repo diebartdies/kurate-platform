@@ -997,7 +997,7 @@
             openPrereg();
         }
         publishBtn.addEventListener('click', handlePublishClick);
-        registerCTA.addEventListener('click', handlePublishClick);
+        registerCTA.addEventListener('click', function(){ window.location.href='/register.html'; });
 
         // Exit the APK (native bridge intercepts kurate://exit and closes the activity)
         const exitApp = () => { window.location.href = 'kurate://exit'; };
