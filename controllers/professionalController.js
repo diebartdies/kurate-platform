@@ -1558,8 +1558,8 @@ exports.submitInitialVerification = async (req, res, next) => {
     if (user.verificationStatus === 'approved') {
       return res.status(400).json({ success: false, error: 'Already verified' });
     }
-    if (!req.files || req.files.length < 3) {
-      return res.status(400).json({ success: false, error: 'Se requieren 3 fotos: DNI frente, dorso y selfie.' });
+    if (!req.files || req.files.length < 1) {
+      return res.status(400).json({ success: false, error: 'Se requiere al menos frente del DNI.' });
     }
     const fs = require('fs');
     const verificationDocuments = [];
