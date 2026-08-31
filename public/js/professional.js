@@ -701,14 +701,16 @@ export function bindProfessionalProfileForm() {
 
         try {
             const token = localStorage.getItem('token');
+            const ctrl = new AbortController(); const tmo=setTimeout(()=>ctrl.abort(),15000);
             const res = await fetch(`${API_URL}/professionals/updateprofile`, {
                 method: 'PUT',
                 headers: { 
                     'Authorization': `Bearer ${token}`
                 },
                 credentials: 'include',
-                body: formData
-            });
+                body: formData,
+                signal: ctrl.signal
+            }); clearTimeout(tmo);
             
             if (!res.ok) {
                 if (res.status === 413) throw new Error("Payload Too Large. Nginx limit exceeded.");
@@ -1766,10 +1768,10 @@ export async function loadProfDashboard() {
                     const btn = document.getElementById('explicitSaveBtn');
                     btn.textContent = t('Saving...');
                     btn.style.opacity = '0.7';
-                    await window.saveProfessionalProfile(false); // False = show success alert to the user
-                    btn.textContent = t('💾 Save Changes');
-                    btn.style.opacity = '1';
-                    btn.classList.add('hidden'); // Hide the button again until next change
+                    btn.disabled = true;
+                    let done=false;
+                    const to=setTimeout(()=>{ if(!done){ btn.textContent='Retry'; btn.style.opacity='1'; btn.disabled=false; showAlert(document.getElementById('updateAlert'),'Tiempo agotado, reintentá',true); }},15000);
+                    try{ await window.saveProfessionalProfile(false); }catch(e){ showAlert(document.getElementById('updateAlert'), e.message||'Error',true); }finally{ done=true; clearTimeout(to); btn.textContent = t('💾 Save Changes'); btn.style.opacity = '1'; btn.disabled=false; btn.classList.add('hidden'); }
                 }
             };
 
