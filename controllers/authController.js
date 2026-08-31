@@ -238,11 +238,11 @@ exports.register = async (req, res, next) => {
       }
       const normalizedMobile = normalizeRegistrationMobilePhone(mobilePhone);
       if (normalizedMobile) mobilePhone = normalizedMobile;
-      if (!birthDate || !String(birthDate).trim()) {
-        return res.status(400).json({ success: false, error: 'Birth date is required.' });
-      }
-      if (age === undefined || age === null || !Number.isFinite(age) || age < 18 || age > 99) {
-        return res.status(400).json({ success: false, error: 'You must be at least 18 years old to register.' });
+      // birthDate opcional — se toma del DNI en captura móvil
+      if (birthDate && String(birthDate).trim()) {
+        if (age === undefined || age === null || !Number.isFinite(age) || age < 18 || age > 99) {
+          return res.status(400).json({ success: false, error: 'You must be at least 18 years old to register.' });
+        }
       }
     } else if (role === 'professional' && isFullRegistration) {
       const required = [
@@ -1030,23 +1030,24 @@ exports.completeGoogleProfile = async (req, res) => {
     if (!mobilePhone || !String(mobilePhone).trim()) {
       return res.status(400).json({ success: false, error: 'Mobile phone is required.' });
     }
-    if (!birthDate || !String(birthDate).trim()) {
-      return res.status(400).json({ success: false, error: 'Birth date is required.' });
-    }
-
     const normalizedMobile = normalizeRegistrationMobilePhone(mobilePhone);
     if (normalizedMobile) mobilePhone = normalizedMobile;
 
-    const age = ageFromBirthDate(birthDate);
-    if (age === null || age < 18 || age > 99) {
-      return res.status(400).json({ success: false, error: 'You must be at least 18 years old to register.' });
+    let age;
+    if (birthDate && String(birthDate).trim()) {
+      age = ageFromBirthDate(birthDate);
+      if (age === null || age < 18 || age > 99) {
+        return res.status(400).json({ success: false, error: 'You must be at least 18 years old to register.' });
+      }
     }
 
     if (!user.professionalProfile) user.professionalProfile = {};
     user.professionalProfile.mobilePhone = mobilePhone;
     user.professionalProfile.whatsappNumber = mobilePhone;
-    user.professionalProfile.birthDate = new Date(birthDate);
-    user.professionalProfile.age = age;
+    if (birthDate && String(birthDate).trim()) {
+      user.professionalProfile.birthDate = new Date(birthDate);
+      user.professionalProfile.age = age;
+    }
     await user.save();
 
     sendTokenResponse(user, 200, res, { needsProfileCompletion: false });

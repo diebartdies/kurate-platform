@@ -247,10 +247,12 @@ function isGuestRegistrationType() {
 function setRegistrationFormFieldsRequired(type) {
     const guestAlias = document.getElementById('regGuestAlias');
     if (guestAlias) guestAlias.required = false;
-    ['regMobilePhone', 'regBirthDate', 'regPassword', 'regPasswordConfirm'].forEach((id) => {
+    ['regMobilePhone', 'regPassword', 'regPasswordConfirm'].forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.required = type === 'professional';
     });
+    const bd=document.getElementById('regBirthDate'); if(bd) bd.required=false;
+    const bdN=document.getElementById('regBirthDateNative'); if(bdN) bdN.required=false;
 }
 
 function showRegistrationForm(type) {
@@ -371,7 +373,7 @@ function applyRegistrationPageLabels(type = currentRegistrationType || 'professi
     setRegLabel('regEmail', 'Email', true);
     setRegLabel('regGuestAlias', 'Display name (alias)', false);
     setRegLabel('regMobilePhone', 'Mobile phone', true);
-    setRegLabel('regBirthDate', 'Birth date', true);
+    setRegLabel('regBirthDate', 'Birth date', false);
     setRegLabel('regPassword', 'Password (min 6)', true);
     setRegLabel('regPasswordConfirm', 'Confirm password', true);
 
@@ -584,7 +586,6 @@ function validateRegistrationForm(form) {
     const required = [
         { id: 'regEmail', label: t('Email') },
         { id: 'regMobilePhone', label: t('Mobile phone') },
-        { id: 'regBirthDate', label: t('Birth date') },
         { id: 'regPassword', label: t('Password') },
         { id: 'regPasswordConfirm', label: t('Confirm password') }
     ];
@@ -603,7 +604,7 @@ function validateRegistrationForm(form) {
     const birthEl = document.getElementById('regBirthDate');
     const birthValue = getBirthDateIsoValue();
     const ageYears = birthValue ? computeAgeFromBirthDate(birthValue) : null;
-    if (!birthValue || ageYears === null || ageYears < 18 || ageYears > 99) {
+    if (birthValue && (ageYears === null || ageYears < 18 || ageYears > 99)) {
         highlightField(birthEl, true);
         showAlert(document.getElementById('registerAlert'), t('You must be at least 18 years old to register as a model.'), true, 'regBirthDate');
         return false;
@@ -741,7 +742,7 @@ function validateGoogleProfileCompletionForm(form) {
     const birthEl = document.getElementById('regBirthDate');
     const birthValue = getBirthDateIsoValue();
     const ageYears = birthValue ? computeAgeFromBirthDate(birthValue) : null;
-    if (!birthValue || ageYears === null || ageYears < 18 || ageYears > 99) {
+    if (birthValue && (ageYears === null || ageYears < 18 || ageYears > 99)) {
         highlightField(birthEl, true);
         showAlert(alert, t('You must be at least 18 years old to register as a model.'), true, 'regBirthDate');
         return false;
