@@ -365,9 +365,20 @@ export async function loadTreasureDetails() {
     }
 
     try {
-        const res = await fetch(`${API_URL}/professionals/${alias}`);
+        let res = await fetch(`${API_URL}/professionals/${encodeURIComponent(alias)}`);
         if (!res.ok) {
-            throw new Error(`Server returned status ${res.status}`);
+            // fallback: try alias search (accent-insensitive)
+            const alt = await fetch(`${API_URL}/professionals?alias=${encodeURIComponent(alias)}&limit=1`);
+            if (alt.ok) {
+                const altData = await alt.json();
+                if (altData.success && altData.data && altData.data.length) {
+                    const found = altData.data.find(p=> (p.professionalProfile?.alias||'').toLowerCase()===alias.toLowerCase()) || altData.data[0];
+                    if (found && found.professionalProfile?.alias) {
+                        res = await fetch(`${API_URL}/professionals/${encodeURIComponent(found.professionalProfile.alias)}`);
+                    }
+                }
+            }
+            if (!res.ok) throw new Error(`Server returned status ${res.status}`);
         }
         
         const data = await res.json();
