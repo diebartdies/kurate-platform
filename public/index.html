@@ -590,6 +590,7 @@
         for (var k in dict) { var en = dict[k]; var zh = (window.translations && window.translations['zh'] && window.translations['zh'][en]) || (window.translations && window.translations['zh'] && window.translations['zh'][k]) || en; dictZh[k] = zh; }
         // Manual overrides for zh where auto fails
         dictZh['Crear aviso'] = '发布需求'; dictZh['Ingresar'] = '登录'; dictZh['Buscar profesionales'] = '查找专业人员';
+        dictZh['Ver técnicos registrados'] = '查看已注册技术人员'; dictZh['¿Sos profesional y querés recibir consultas?'] = '您是专业人士，想接收咨询吗？'; dictZh['Registrate gratis — primer mes sin costo.'] = '免费注册 — 首月免费。'; dictZh['Quiero registrarme'] = '我要注册'; dictZh['Are you a professional and want to receive inquiries?'] = '您是专业人士，想接收咨询吗？';
 
         // Translate static DOM on load if English or Chinese
         if (lang === 'en' || lang === 'zh') {
