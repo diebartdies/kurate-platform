@@ -158,6 +158,7 @@
       <div class="fm-top-right">
         <button class="fm-lang-btn active" id="langEs" title="Español" role="switch" aria-checked="true" aria-label="Español"><img src="https://flagcdn.com/w40/ar.png" alt="ES"></button>
         <button class="fm-lang-btn inactive" id="langEn" title="English" role="switch" aria-checked="false" aria-label="English"><img src="https://flagcdn.com/w40/us.png" alt="EN"></button>
+        <button class="fm-lang-btn inactive" id="langZh" title="中文" role="switch" aria-checked="false" aria-label="中文"><img src="https://flagcdn.com/w40/cn.png" alt="CN"></button>
       </div>
     </div>
     <div class="categories-shell" role="main" id="main-content">
@@ -557,9 +558,11 @@
       const lang = localStorage.getItem('platform_lang') || 'es';
       const esBtn = document.getElementById('langEs');
       const enBtn = document.getElementById('langEn');
+      const zhBtn = document.getElementById('langZh');
       if (esBtn && enBtn) {
         esBtn.className = 'fm-lang-btn ' + (lang === 'es' ? 'active' : 'inactive');
         enBtn.className = 'fm-lang-btn ' + (lang === 'en' ? 'active' : 'inactive');
+        if (zhBtn) { zhBtn.className = 'fm-lang-btn ' + (lang === 'zh' ? 'active' : 'inactive'); zhBtn.setAttribute('aria-checked', lang === 'zh' ? 'true' : 'false'); }
         esBtn.setAttribute('aria-checked', lang === 'es' ? 'true' : 'false');
         enBtn.setAttribute('aria-checked', lang === 'en' ? 'true' : 'false');
       }
@@ -599,6 +602,7 @@
         translate(lang);
         if (esBtn) esBtn.addEventListener('click', () => { localStorage.setItem('platform_lang', 'es'); location.reload(); });
         if (enBtn) enBtn.addEventListener('click', () => { localStorage.setItem('platform_lang', 'en'); location.reload(); });
+        if (zhBtn) zhBtn.addEventListener('click', () => { localStorage.setItem('platform_lang', 'zh'); location.reload(); });
       });
     })();
 

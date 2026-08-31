@@ -190,6 +190,7 @@
                 <button type="button" class="fm-publish-btn" id="publishBtn">Crear aviso</button>
                 <button type="button" class="fm-lang-btn active" id="langEs" title="Español" role="switch" aria-checked="true" aria-label="Español"><img src="https://flagcdn.com/w40/ar.png" alt="ES"></button>
                 <button type="button" class="fm-lang-btn inactive" id="langEn" title="English" role="switch" aria-checked="false" aria-label="English"><img src="https://flagcdn.com/w40/us.png" alt="EN"></button>
+                <button type="button" class="fm-lang-btn inactive" id="langZh" title="中文" role="switch" aria-checked="false" aria-label="中文"><img src="https://flagcdn.com/w40/cn.png" alt="CN"></button>
             </div>
         </div>
 
@@ -440,9 +441,11 @@
         var lang = localStorage.getItem('platform_lang') || 'es';
         var esBtn = document.getElementById('langEs');
         var enBtn = document.getElementById('langEn');
+        var zhBtn = document.getElementById('langZh');
         if (esBtn && enBtn) {
             esBtn.className = 'fm-lang-btn ' + (lang === 'es' ? 'active' : 'inactive');
             enBtn.className = 'fm-lang-btn ' + (lang === 'en' ? 'active' : 'inactive');
+            if (zhBtn) zhBtn.className = 'fm-lang-btn ' + (lang === 'zh' ? 'active' : 'inactive');
         }
         function setLang(l) {
             if (l === lang) return;
@@ -452,6 +455,7 @@
         window.addEventListener('load', function() {
             document.getElementById('langEs')?.addEventListener('click', function() { setLang('es'); });
             document.getElementById('langEn')?.addEventListener('click', function() { setLang('en'); });
+            document.getElementById('langZh')?.addEventListener('click', function() { setLang('zh'); });
         });
 
         // --- Translation map and helpers (used by both static and dynamic text) ---

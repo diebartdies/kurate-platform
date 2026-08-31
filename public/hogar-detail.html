@@ -70,6 +70,7 @@
       <div class="fm-top-right">
         <button class="fm-lang-btn active" id="langEs" title="Español"><img src="https://flagcdn.com/w40/ar.png" alt="ES"></button>
         <button class="fm-lang-btn inactive" id="langEn" title="English"><img src="https://flagcdn.com/w40/us.png" alt="EN"></button>
+        <button class="fm-lang-btn inactive" id="langZh" title="中文"><img src="https://flagcdn.com/w40/cn.png" alt="CN"></button>
       </div>
     </div>
     <div class="apk-banner" id="apkBanner" style="display:none;background:linear-gradient(135deg,#B8922E 0%,#8a6a1e 100%);color:#fff;padding:0.4rem 0.75rem;border-radius:8px;margin-bottom:0.75rem;box-shadow:0 2px 12px rgba(184,146,46,0.25);align-items:center;gap:0.5rem;font-size:0.8rem;">
@@ -254,9 +255,11 @@
       const lang = localStorage.getItem('platform_lang') || 'es';
       const esBtn = document.getElementById('langEs');
       const enBtn = document.getElementById('langEn');
+      const zhBtn = document.getElementById('langZh');
       if (esBtn && enBtn) {
         esBtn.className = 'fm-lang-btn ' + (lang === 'es' ? 'active' : 'inactive');
         enBtn.className = 'fm-lang-btn ' + (lang === 'en' ? 'active' : 'inactive');
+        if (zhBtn) zhBtn.className = 'fm-lang-btn ' + (lang === 'zh' ? 'active' : 'inactive');
       }
       function translate() {
         document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -268,6 +271,7 @@
       translate();
       if (esBtn) esBtn.addEventListener('click', () => { localStorage.setItem('platform_lang', 'es'); location.reload(); });
       if (enBtn) enBtn.addEventListener('click', () => { localStorage.setItem('platform_lang', 'en'); location.reload(); });
+      if (zhBtn) zhBtn.addEventListener('click', () => { localStorage.setItem('platform_lang', 'zh'); location.reload(); });
     })();
 
     load();
