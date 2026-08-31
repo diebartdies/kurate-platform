@@ -158,10 +158,11 @@
         document.getElementById('findOnGridBtn').addEventListener('click', function () {
             window.location.href = '/perfil/' + encodeURIComponent(alias);
         });
+        function getCapturaUrl(){ return (window.location.origin && window.location.origin!=='null' ? window.location.origin : 'https://kurate.drsrv.net.ar') + '/captura-dni.html'; }
         const sendLinkBtn=document.getElementById('sendLinkToPhoneBtn');
         if(sendLinkBtn){
             sendLinkBtn.addEventListener('click', async function(){
-                const url=location.origin+'/captura-dni.html';
+                const url=getCapturaUrl();
                 if(navigator.clipboard && navigator.clipboard.writeText){
                     try{await navigator.clipboard.writeText(url); alert('Link copiado: '+url+'\nPegalo en tu celular o envialo por WhatsApp/SMS.'); return;}catch{}
                 }
@@ -171,7 +172,7 @@
         const waBtn=document.getElementById('sendLinkWhatsAppBtn');
         if(waBtn){
             waBtn.addEventListener('click', function(){
-                const url=location.origin+'/captura-dni.html';
+                const url=getCapturaUrl();
                 const text='Continuá tu registro KuraTe en el celular: '+url;
                 window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank');
             });
@@ -179,7 +180,7 @@
         const smsBtn=document.getElementById('sendLinkSmsBtn');
         if(smsBtn){
             smsBtn.addEventListener('click', function(){
-                const url=location.origin+'/captura-dni.html';
+                const url=getCapturaUrl();
                 const text='Continuá tu registro KuraTe: '+url;
                 window.location.href='sms:?&body='+encodeURIComponent(text);
             });
