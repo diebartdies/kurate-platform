@@ -8,6 +8,7 @@ const { sendSms } = require('../services/smsService');
 const { OAuth2Client } = require('google-auth-library');
 const { decodeDniBarcode, parseDniDate, calculateAge } = require('../utils/dniBarcode');
 const bcrypt = require('bcryptjs');
+function normalizeAlias(s){ if(!s) return s; return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim(); }
 const { assignGpsToLocation } = require('../utils/cityCoordinates');
 const jwt = require('jsonwebtoken');
 
@@ -245,7 +246,8 @@ exports.scanDni = async (req, res) => {
 // Step 5: Complete registration -> create User -> return JWT
 exports.complete = async (req, res) => {
   try {
-    const { id, password, role, alias, bio, street, number, floor, apartment, postalCode, province, city, neighborhood, services, height, measurements, originCountry, instagram, facebook } = req.body;
+    let { id, password, role, alias, bio, street, number, floor, apartment, postalCode, province, city, neighborhood, services, height, measurements, originCountry, instagram, facebook } = req.body;
+    alias = normalizeAlias(alias);
     if (!id || !password) return res.status(400).json({ error: 'Faltan datos requeridos.' });
     if (password.length < 6) return res.status(400).json({ error: 'La password debe tener al menos 6 caracteres.' });
     const prereg = await PreRegistration.findById(id).select('+password');

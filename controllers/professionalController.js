@@ -8,6 +8,7 @@ const Specialty = require('../models/Specialty');
 const Statistic = require('../models/Statistic');
 const Review = require('../models/Review');
 const { assignGpsToLocation } = require('../utils/cityCoordinates');
+function normalizeAlias(s){ if(!s) return s; return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim(); }
 const Feedback = require('../models/Feedback');
 const Connection = require('../models/Connection');
 const ConnectionRequest = require('../models/ConnectionRequest');
@@ -739,15 +740,21 @@ exports.searchProfessionals = async (req, res, next) => {
 exports.getProfessionalByAlias = async (req, res, next) => {
   try {
     // Failsafe: Prevent 'me' from being treated as an alias if route auth falls through
-    if (req.params.alias.toLowerCase() === 'me') {
+    if (normalizeAlias(req.params.alias).toLowerCase() === 'me') {
       return res.status(403).json({ success: false, error: 'Access denied. You must be logged in as a professional to view the dashboard.' });
     }
 
-    const aliasRegex = new RegExp(`^${req.params.alias}$`, 'i');
-    const professional = await User.findOne({ 
+    const aliasNorm = normalizeAlias(req.params.alias);
+    const aliasRegex = new RegExp(`^${aliasNorm}$`, 'i');
+    let professional = await User.findOne({ 
       'professionalProfile.alias': aliasRegex,
       ...ALIAS_LOOKUP_FILTER
     }).select('accountDeletedAt professionalProfile.alias professionalProfile.quality professionalProfile.bio professionalProfile.services professionalProfile.location professionalProfile.pricing professionalProfile.measurements professionalProfile.height professionalProfile.eyeColor professionalProfile.hasTattoos professionalProfile.whatsappNumber professionalProfile.mobilePhone professionalProfile.photos professionalProfile.workingHours professionalProfile.workingDays professionalProfile.vacation professionalProfile.budgetType professionalProfile.budgetAmount professionalProfile.responseSpeed');
+    // fallback original accent if DB not yet migrated
+    if (!professional) {
+      const origRegex = new RegExp(`^${req.params.alias}$`, 'i');
+      professional = await User.findOne({ 'professionalProfile.alias': origRegex, ...ALIAS_LOOKUP_FILTER }).select('accountDeletedAt professionalProfile.alias professionalProfile.quality professionalProfile.bio professionalProfile.services professionalProfile.location professionalProfile.pricing professionalProfile.measurements professionalProfile.height professionalProfile.eyeColor professionalProfile.hasTattoos professionalProfile.whatsappNumber professionalProfile.mobilePhone professionalProfile.photos professionalProfile.workingHours professionalProfile.workingDays professionalProfile.vacation professionalProfile.budgetType professionalProfile.budgetAmount professionalProfile.responseSpeed');
+    }
 
     if (!professional || isAccountDeleted(professional)) {
       return res.status(404).json({
@@ -801,7 +808,7 @@ exports.getProfessionalByAlias = async (req, res, next) => {
 // @access  Public
 exports.trackDashboardPhotoClick = async (req, res, next) => {
   try {
-    const aliasRegex = new RegExp(`^${req.params.alias}$`, 'i');
+    const aliasRegex = new RegExp(`^${normalizeAlias(req.params.alias)}$`, 'i');
     const professional = await User.findOne({
       'professionalProfile.alias': aliasRegex,
       ...ALIAS_LOOKUP_FILTER
@@ -829,7 +836,7 @@ exports.trackDashboardPhotoClick = async (req, res, next) => {
 // @access  Public
 exports.contactWhatsApp = async (req, res, next) => {
   try {
-    const aliasRegex = new RegExp(`^${req.params.alias}$`, 'i');
+    const aliasRegex = new RegExp(`^${normalizeAlias(req.params.alias)}$`, 'i');
     const professional = await User.findOne({ 
       'professionalProfile.alias': aliasRegex,
       ...ALIAS_LOOKUP_FILTER
@@ -1307,7 +1314,7 @@ exports.updateProfile = async (req, res, next) => {
     const whatsappNumber = (whatsappRaw && String(whatsappRaw).trim()) || (mobilePhone && String(mobilePhone).trim()) || '';
 
     const professionalProfile = {
-      alias: req.body.alias,
+      alias: normalizeAlias(req.body.alias),
       ...identityFields,
       mobilePhone,
       instagram: req.body.instagram !== undefined ? req.body.instagram : oldProf.instagram,
@@ -1595,7 +1602,7 @@ exports.submitInitialVerification = async (req, res, next) => {
 // @access  Public
 exports.contactPhone = async (req, res, next) => {
   try {
-    const aliasRegex = new RegExp(`^${req.params.alias}$`, 'i');
+    const aliasRegex = new RegExp(`^${normalizeAlias(req.params.alias)}$`, 'i');
     const professional = await User.findOne({ 
       'professionalProfile.alias': aliasRegex,
       ...ALIAS_LOOKUP_FILTER

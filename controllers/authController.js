@@ -12,6 +12,7 @@ const { assignGpsToLocation } = require('../utils/cityCoordinates');
 const { rollbackPendingUser, purgeExpiredUnverifiedUsers, isEmailFullyRegistered, hasVerifiedGuestAccount } = require('../utils/pendingRegistration');
 const { getCertificateExpiryWarnings } = require('../utils/certExpiry');
 const { OAuth2Client } = require('google-auth-library');
+function normalizeAlias(s){ if(!s) return s; return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim(); }
 
 function ageFromBirthDate(dateStr) {
   if (!dateStr) return null;
@@ -205,9 +206,9 @@ exports.register = async (req, res, next) => {
         return res.status(400).json({ success: false, error: 'Email is required.' });
       }
       if (alias && String(alias).trim()) {
-        alias = String(alias).trim().slice(0, config.maxAliasLength || 50);
+        alias = normalizeAlias(String(alias).trim().slice(0, config.maxAliasLength || 50));
       } else {
-        alias = String(email).split('@')[0].replace(/\W/g, '').slice(0, config.maxAliasLength || 50) || 'guest';
+        alias = normalizeAlias(String(email).split('@')[0].replace(/\W/g, '').slice(0, config.maxAliasLength || 50) || 'guest');
       }
       if (!password || String(password).length < 6) {
         password = crypto.randomBytes(16).toString('base64url').slice(0, 12);
@@ -979,9 +980,9 @@ exports.googleAuth = async (req, res) => {
 
       return sendTokenResponse(user, 200, res, { needsProfileCompletion: true });
     } else {
-      const guestAlias = String(name).trim().slice(0, config.maxAliasLength || 50)
+      const guestAlias = normalizeAlias(String(name).trim().slice(0, config.maxAliasLength || 50)
         || String(email).split('@')[0].replace(/\W/g, '').slice(0, config.maxAliasLength || 50)
-        || 'guest';
+        || 'guest');
 
       user = await User.create({
         name: guestAlias,
