@@ -295,6 +295,8 @@ function getAllSeoUrls() {
   ACTIONS.forEach(a => urls.push({ loc: `/acciones/${a.slug}`, priority: 0.6, changefreq: 'monthly' }));
   ENVIRONMENTS.forEach(e => urls.push({ loc: `/entornos/${e.slug}`, priority: 0.6, changefreq: 'monthly' }));
   CATEGORIES.forEach(c => urls.push({ loc: `/categorias/${c.slug}`, priority: 0.6, changefreq: 'monthly' }));
+  urls.push({ loc: '/reparaciones/caba', priority: 0.9, changefreq: 'weekly' });
+  urls.push({ loc: '/reparaciones', priority: 0.5, changefreq: 'monthly' });
   return urls;
 }
 

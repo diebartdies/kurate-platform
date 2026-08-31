@@ -239,6 +239,39 @@ async function getTopRatedForSeo(){
   }catch{ return []}
 }
 
+// Reparaciones por provincia — SEO para "reparaciones caba" etc.
+app.get('/reparaciones', (req, res) => res.redirect(301, '/acciones/reparar'));
+app.get('/reparaciones/:provinceSlug', async (req, res) => {
+  const raw = (req.params.provinceSlug||'').toLowerCase();
+  const mapProv = { 'caba':'CABA','capital-federal':'CABA','caba-provincia':'CABA','buenos-aires':'Buenos Aires','cordoba':'Córdoba' };
+  const province = mapProv[raw] || raw.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+  const lang = req.query.lang==='en'?'en':'es';
+  const item = ACTIONS.find(a=>a.slug==='reparar');
+  if(!item) return res.status(404).send('Not found');
+  // fetch pros in province for banner
+  let topRated=[]; try{
+    const { mergePublicListingFilter } = require('./utils/professionalVisibility');
+    const filter = mergePublicListingFilter();
+    filter['professionalProfile.location.province'] = { $regex: province, $options:'i' };
+    const pros = await User.find(filter).select('professionalProfile.alias professionalProfile.photos professionalProfile.location').limit(20).lean();
+    const Review = require('./models/Review');
+    const ids = pros.map(p=>p._id);
+    const agg = ids.length ? await Review.aggregate([{ $match:{professional:{$in:ids}}}, {$group:{_id:'$professional', avg:{$avg:'$rating'}, count:{$sum:1}}}]) : [];
+    const m={}; agg.forEach(r=>m[r._id.toString()]={avg:Math.round(r.avg*10)/10,count:r.count});
+    pros.forEach(p=>{const mm=m[p._id.toString()]||{avg:0,count:0}; p._rating=mm.avg; p._count=mm.count;});
+    pros.sort((a,b)=>b._rating-a._rating||b._count-a._count);
+    topRated = pros.slice(0,6).map(p=>({ alias:p.professionalProfile?.alias||'', photo:(p.professionalProfile?.photos&&p.professionalProfile.photos[0])||'', rating:p._rating||5.0, reviews:p._count||0, location: p.professionalProfile?.location ? [p.professionalProfile.location.neighborhood||p.professionalProfile.location.city,p.professionalProfile.location.province].filter(Boolean).join(', ') : province }));
+    if(!topRated.length) topRated = await getTopRatedForSeo();
+  }catch{} 
+  const title = lang==='en' ? `Repairs in ${province} | KuraTe` : `Reparaciones en ${province} | KuraTe`;
+  const desc = lang==='en' ? `Verified repair technicians in ${province}. White goods, climate, gas and more.` : `Técnicos verificados para reparaciones en ${province}. Línea blanca, climatización, gas y más.`;
+  const base = buildSeoLandingPage('action', {...item, title:{es:title,en:title}, description:{es:desc,en:desc}}, lang, topRated);
+  // inject province-specific CTA search url
+  const html = base.replace(`/hogar.html?accion=reparar`, `/hogar.html?accion=reparar&province=${encodeURIComponent(province)}`);
+  res.setHeader('Cache-Control','public, max-age=3600');
+  res.type('html').send(html);
+});
+
 // Favicon (browsers request /favicon.ico by default)
 app.get('/favicon.ico', (req, res) => {
   res.setHeader('Cache-Control', 'public, max-age=2592000');
