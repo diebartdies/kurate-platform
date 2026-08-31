@@ -66,7 +66,7 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
             .svc-toggle-all { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; font-size: 0.75rem; color: var(--primary-gold); background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.2); border-radius: 4px; cursor: pointer; transition: background 0.2s; margin-bottom: 6px; }
             .svc-toggle-all:hover { background: rgba(212,175,55,0.15); }
             .svc-brands { border-left: 1px dashed rgba(212,175,55,0.15); margin-left: 8px; padding-top: 2px; }
-            .svc-brand-item { padding: 2px 4px !important; display:inline-flex; align-items:center; gap:4px; }
+            .svc-brand-item { padding: 2px 4px !important; display:inline-flex; align-items:center; gap:4px; white-space:nowrap; }
             .svc-brand-item:not(:last-child)::after { content:" - "; color:#555; margin-left:4px; font-size:0.8rem; }
             .svc-brand-item:hover { background: rgba(212,175,55,0.05); }
             .svc-device { margin: 0 8px 4px 8px; border-left: 2px solid rgba(212,175,55,0.1); padding-left: 10px; }
