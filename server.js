@@ -199,27 +199,45 @@ app.get('/perfil/:alias', seoController.renderProfilePage);
 
 // SEO landing pages: actions, environments, categories
 app.get('/acciones', (req, res) => res.redirect(301, '/'));
-app.get('/acciones/:slug', (req, res) => {
+app.get('/acciones/:slug', async (req, res) => {
   const item = ACTIONS.find(a => a.slug === req.params.slug);
   if (!item) return res.status(404).send('Not found');
   const lang = req.query.lang === 'en' ? 'en' : 'es';
   res.setHeader('Cache-Control', 'public, max-age=3600');
-  res.type('html').send(buildSeoLandingPage('action', item, lang));
+  const topRated = await getTopRatedForSeo();
+  res.type('html').send(buildSeoLandingPage('action', item, lang, topRated));
 });
-app.get('/entornos/:slug', (req, res) => {
+app.get('/entornos/:slug', async (req, res) => {
   const item = ENVIRONMENTS.find(e => e.slug === req.params.slug);
   if (!item) return res.status(404).send('Not found');
   const lang = req.query.lang === 'en' ? 'en' : 'es';
   res.setHeader('Cache-Control', 'public, max-age=3600');
-  res.type('html').send(buildSeoLandingPage('environment', item, lang));
+  const topRated = await getTopRatedForSeo();
+  res.type('html').send(buildSeoLandingPage('environment', item, lang, topRated));
 });
-app.get('/categorias/:slug', (req, res) => {
+app.get('/categorias/:slug', async (req, res) => {
   const item = CATEGORIES.find(c => c.slug === req.params.slug);
   if (!item) return res.status(404).send('Not found');
   const lang = req.query.lang === 'en' ? 'en' : 'es';
   res.setHeader('Cache-Control', 'public, max-age=3600');
-  res.type('html').send(buildSeoLandingPage('category', item, lang));
+  const topRated = await getTopRatedForSeo();
+  res.type('html').send(buildSeoLandingPage('category', item, lang, topRated));
 });
+async function getTopRatedForSeo(){
+  try{
+    const { mergePublicListingFilter } = require('./utils/professionalVisibility');
+    const Review = require('./models/Review');
+    const filter = mergePublicListingFilter();
+    const pros = await User.find(filter).select('professionalProfile.alias professionalProfile.photos professionalProfile.location').limit(20).lean();
+    if(!pros.length) return [];
+    const ids = pros.map(p=>p._id);
+    const agg = await Review.aggregate([{ $match:{professional:{$in:ids}}}, {$group:{_id:'$professional', avg:{$avg:'$rating'}, count:{$sum:1}}}]);
+    const map={}; agg.forEach(r=> map[r._id.toString()]={avg:Math.round(r.avg*10)/10,count:r.count});
+    pros.forEach(p=>{ const m=map[p._id.toString()]||{avg:0,count:0}; p._rating=m.avg; p._count=m.count; });
+    pros.sort((a,b)=> b._rating - a._rating || b._count - a._count);
+    return pros.slice(0,3).map(p=>({ alias:p.professionalProfile?.alias||'', photo:(p.professionalProfile?.photos&&p.professionalProfile.photos[0])||'', rating:p._rating||5.0, reviews:p._count||0, location: p.professionalProfile?.location ? [p.professionalProfile.location.neighborhood||p.professionalProfile.location.city,p.professionalProfile.location.province].filter(Boolean).join(', ') : '' }));
+  }catch{ return []}
+}
 
 // Favicon (browsers request /favicon.ico by default)
 app.get('/favicon.ico', (req, res) => {

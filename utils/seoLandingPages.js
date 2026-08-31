@@ -136,7 +136,7 @@ const UI = {
   }
 };
 
-function buildSeoLandingPage(type, item, lang = 'es') {
+function buildSeoLandingPage(type, item, lang = 'es', topRated = []) {
   const t = UI[lang] || UI.es;
   const title = typeof item.title === 'object' ? (item.title[lang] || item.title.es) : item.title;
   const description = typeof item.description === 'object' ? (item.description[lang] || item.description.es) : item.description;
@@ -156,9 +156,9 @@ function buildSeoLandingPage(type, item, lang = 'es') {
   const altLang = lang === 'es' ? 'en' : 'es';
   const altTitle = typeof item.title === 'object' ? (item.title[altLang] || item.title.es) : item.title;
 
-  const otherActions = ACTIONS.filter(a => a.slug !== item.slug).slice(0, 5);
+  const otherActions = ACTIONS.filter(a => a.slug !== item.slug);
   const otherEnvs = ENVIRONMENTS.filter(e => e.slug !== item.slug);
-  const otherCats = CATEGORIES.filter(c => c.slug !== item.slug).slice(0, 5);
+  const otherCats = CATEGORIES.filter(c => c.slug !== item.slug);
 
   let linksHtml = '';
   if (type === 'action') {
@@ -263,6 +263,22 @@ function buildSeoLandingPage(type, item, lang = 'es') {
     <h1>${title}</h1>
     <p>${description}</p>
     ${contentHtml}
+    ${topRated.length ? `
+    <div style="margin:2rem 0;padding:16px;background:linear-gradient(135deg,rgba(184,146,46,0.12),rgba(150,112,24,0.06));border:1px solid rgba(184,146,46,0.3);border-radius:12px">
+      <h2 style="margin:0 0 12px;color:#B8922E;font-size:1.1rem">⭐ Mejores puntuados</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
+        ${topRated.map(p=>`
+          <a href="/perfil/${encodeURIComponent(p.alias)}" style="text-decoration:none;background:#1a1a2e;border:1px solid #2a2a3e;border-radius:10px;overflow:hidden;display:block">
+            <img src="${p.photo||'/images/no-photo.svg'}" alt="${p.alias}" style="width:100%;height:120px;object-fit:cover;display:block">
+            <div style="padding:8px">
+              <div style="color:#fff;font-weight:600;font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.alias}</div>
+              <div style="color:#B8922E;font-size:0.8rem">★ ${p.rating.toFixed(1)} · ${p.reviews} reseñas</div>
+              <div style="color:#888;font-size:0.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.location||''}</div>
+            </div>
+          </a>
+        `).join('')}
+      </div>
+    </div>` : ''}
     <a href="${searchUrl}" class="cta">${t.searchCta}</a>
     ${servicesHtml}
     ${faqHtml}
