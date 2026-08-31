@@ -945,10 +945,59 @@
         const step2Btn = document.getElementById('preregStep2Btn');
         const step3bBtn = document.getElementById('preregStep3bBtn');
 
-        // Open modal
+        // Open modal (smart: if already registered, route accordingly)
         function openPrereg() { preregModal.classList.add('active'); showStep(1); resetPrereg(); }
-        publishBtn.addEventListener('click', openPrereg);
-        registerCTA.addEventListener('click', openPrereg);
+        async function handlePublishClick(e){
+            e.preventDefault();
+            const token=localStorage.getItem('token');
+            const raw=localStorage.getItem('user');
+            let user=null; try{user=raw?JSON.parse(raw):null}catch{}
+            if(!token || !user){
+                openPrereg(); return;
+            }
+            // tiene sesión → verificar estado fresco
+            try{
+                const r=await fetch('/api/v1/professionals/me',{headers:{'Authorization':'Bearer '+token}});
+                const d=await r.json();
+                if(d.success && d.data){
+                    user=d.data; localStorage.setItem('user',JSON.stringify(user));
+                }
+            }catch{}
+            if(user && user.role==='professional'){
+                if(user.verificationStatus==='approved'){
+                    window.location.href='/profDashboard.html';
+                    return;
+                }
+                // no aprobado
+                const needsDni = !user.verificationDocuments || user.verificationDocuments.length<3;
+                if(needsDni){
+                    const isMobile=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+                    if(isMobile){
+                        window.location.href='/captura-dni.html';
+                    } else {
+                        alert('Tu perfil aún no tiene DNI. Continuá desde el celular para fotografiar tu DNI.');
+                        if(navigator.share){
+                            navigator.share({title:'KuraTe DNI',url:location.origin+'/captura-dni.html'}).catch(()=>{});
+                        } else {
+                            prompt('Abrí este link en tu celular:', location.origin+'/captura-dni.html');
+                        }
+                        window.location.href='/captura-dni.html';
+                    }
+                    return;
+                } else {
+                    alert('Tu perfil está en revisión (24-48hs). Te avisaremos cuando sea aprobado.');
+                    window.location.href='/profile.html';
+                    return;
+                }
+            }
+            if(user && user.role==='user'){
+                window.location.href='/hogar.html';
+                return;
+            }
+            openPrereg();
+        }
+        publishBtn.addEventListener('click', handlePublishClick);
+        registerCTA.addEventListener('click', handlePublishClick);
 
         // Exit the APK (native bridge intercepts kurate://exit and closes the activity)
         const exitApp = () => { window.location.href = 'kurate://exit'; };
