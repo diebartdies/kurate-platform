@@ -103,7 +103,7 @@
                     <div style="color:#f59e0b;font-weight:700;margin-bottom:4px">⚠️ Te falta completar tu DNI</div>
                     <div style="color:#ddd;font-size:0.85rem;line-height:1.4;margin-bottom:8px">Iniciaste en PC. Continuá desde el celular para fotografiar tu DNI.</div>
                     <a href="/captura-dni.html" style="display:inline-block;padding:10px 18px;background:#f59e0b;color:#111;border-radius:8px;font-weight:700;text-decoration:none">📸 Capturar DNI ahora</a>
-                    <div style="margin-top:6px"><a href="#" onclick="navigator.share?navigator.share({title:'KuraTe DNI',url:location.origin+'/captura-dni.html'}):prompt('Copiá este link y abrilo en tu celular:',location.origin+'/captura-dni.html');return false" style="color:var(--primary-gold);font-size:0.8rem">o enviar link al celular</a></div>
+                    <div style="margin-top:8px"><button type="button" id="sendLinkToPhoneBtn" style="background:none;border:none;color:var(--primary-gold);font-size:0.8rem;text-decoration:underline;cursor:pointer">o enviar link al celular</button></div>
                 </div>` : '';
 
         content.innerHTML = `
@@ -154,6 +154,19 @@
         document.getElementById('findOnGridBtn').addEventListener('click', function () {
             window.location.href = '/perfil/' + encodeURIComponent(alias);
         });
+        const sendLinkBtn=document.getElementById('sendLinkToPhoneBtn');
+        if(sendLinkBtn){
+            sendLinkBtn.addEventListener('click', async function(){
+                const url=location.origin+'/captura-dni.html';
+                if(navigator.share){
+                    try{await navigator.share({title:'KuraTe - Capturar DNI',text:'Continuá tu registro en el celular',url}); return;}catch{}
+                }
+                if(navigator.clipboard && navigator.clipboard.writeText){
+                    try{await navigator.clipboard.writeText(url); alert('Link copiado: '+url+'\nPegalo en tu celular.'); return;}catch{}
+                }
+                prompt('Copiá este link y abrilo en tu celular:',url);
+            });
+        }
     }
 
     if (document.readyState === 'loading') {
