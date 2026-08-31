@@ -1766,12 +1766,27 @@ export async function loadProfDashboard() {
             document.getElementById('explicitSaveBtn').onclick = async () => {
                 if (typeof window.saveProfessionalProfile === 'function') {
                     const btn = document.getElementById('explicitSaveBtn');
+                    const alertEl=document.getElementById('updateAlert');
                     btn.textContent = t('Saving...');
                     btn.style.opacity = '0.7';
                     btn.disabled = true;
+                    console.log('[Save] click', new Date().toISOString());
                     let done=false;
-                    const to=setTimeout(()=>{ if(!done){ btn.textContent='Retry'; btn.style.opacity='1'; btn.disabled=false; showAlert(document.getElementById('updateAlert'),'Tiempo agotado, reintentá',true); }},15000);
-                    try{ await window.saveProfessionalProfile(false); }catch(e){ showAlert(document.getElementById('updateAlert'), e.message||'Error',true); }finally{ done=true; clearTimeout(to); btn.textContent = t('💾 Save Changes'); btn.style.opacity = '1'; btn.disabled=false; btn.classList.add('hidden'); }
+                    const to=setTimeout(()=>{ if(!done){ console.warn('[Save] timeout 8s'); btn.textContent='Retry - tap again'; btn.style.opacity='1'; btn.disabled=false; showAlert(alertEl,'Tiempo agotado (8s) - el servidor no respondió. Reintentá o revisá F12 Network',true); }},8000);
+                    try{
+                        await window.saveProfessionalProfile(false);
+                        console.log('[Save] done');
+                    }catch(e){
+                        console.error('[Save] error',e);
+                        showAlert(alertEl, e.message||'Error',true);
+                    }finally{
+                        done=true; clearTimeout(to);
+                        btn.textContent = t('💾 Save Changes');
+                        btn.style.opacity = '1';
+                        btn.disabled=false;
+                        // no auto-hide para que veas el mensaje
+                        // btn.classList.add('hidden');
+                    }
                 }
             };
 
