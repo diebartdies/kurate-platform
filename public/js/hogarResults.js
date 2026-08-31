@@ -119,6 +119,22 @@ async function loadHogar(params = {}, append = false) {
 
     if (!append) grid.innerHTML = '';
 
+    // Actualizar encabezado para no decir "en CABA" si hay de GBA — texto correcto
+    const titleEl = document.querySelector('.categories-frame-center h2.main-title');
+    if (titleEl && !append) {
+      const prov = currentParams.province || '';
+      const total = data.pagination ? data.pagination.total : techs.length;
+      if (prov && prov.toLowerCase() === 'caba' && techs.length) {
+        const cabaCount = techs.filter(t => (t.location||'').toLowerCase().includes('caba')).length;
+        const gbaCount = techs.length - cabaCount;
+        if (gbaCount>0) titleEl.textContent = `${total} profesionales — ${cabaCount} en CABA + ${gbaCount} en GBA`;
+        else titleEl.textContent = `${total} profesionales en CABA`;
+      } else if (total) {
+        titleEl.textContent = `${total} profesionales encontrados`;
+      } else {
+        titleEl.textContent = 'Técnicos disponibles';
+      }
+    }
     if (techs.length === 0 && !append) {
       grid.innerHTML = `<div class="card" style="grid-column:1/-1;text-align:center;">
         <h3 style="color:#D9BC6A;font-weight:600;" data-i18n="Sin resultados">Sin resultados</h3>
