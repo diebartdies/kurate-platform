@@ -4303,9 +4303,7 @@ export function renderEditForm(prof) {
                 alias: document.getElementById('adminEditAlias').value,
                 quality: document.getElementById('adminEditQuality').value,
                 bio: document.getElementById('adminEditBio').value,
-                services: document.getElementById('adminEditServices').tagName === 'SELECT'
-                    ? Array.from(document.getElementById('adminEditServices').selectedOptions).map(opt => opt.value)
-                    : document.getElementById('adminEditServices').value.split(','),
+                services: (()=>{ const el=document.getElementById('adminEditServices'); if(el.tagName==='SELECT') return Array.from(el.selectedOptions).map(opt=>opt.value); const cbs=el.querySelectorAll('.dashboard-specialty-cb:checked'); if(cbs.length) return Array.from(cbs).map(cb=>cb.value); return (el.value||'').split(',').map(s=>s.trim()).filter(Boolean); })(),
                 whatsappNumber: adminWaPhone || adminMobPhone,
                 workingHours: {
                     start: document.getElementById('adminEditWStart').value,
