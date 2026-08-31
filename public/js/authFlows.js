@@ -44,6 +44,12 @@ export function redirectAfterLogin(user = {}) {
         intended = null;
     }
 
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 768;
+    const needsDni = user.role === 'professional' && user.verificationStatus !== 'approved' && (!user.verificationDocuments || user.verificationDocuments.length < 3);
+    if (needsDni && isMobile) {
+        window.location.replace(appPath('captura-dni.html'));
+        return;
+    }
     if (intended) {
         window.location.replace(intended);
     } else if (user.role === 'professional') {

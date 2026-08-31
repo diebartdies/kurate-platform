@@ -1546,6 +1546,50 @@ exports.resubmitVerification = async (req, res, next) => {
   }
 };
 
+// @desc    Submit initial DNI verification (PC->phone handoff)
+// @route   POST /api/v1/professionals/verification-documents
+// @access  Private/Professional
+exports.submitInitialVerification = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user || user.role !== 'professional') {
+      return res.status(404).json({ success: false, error: 'Professional not found' });
+    }
+    if (user.verificationStatus === 'approved') {
+      return res.status(400).json({ success: false, error: 'Already verified' });
+    }
+    if (!req.files || req.files.length < 3) {
+      return res.status(400).json({ success: false, error: 'Se requieren 3 fotos: DNI frente, dorso y selfie.' });
+    }
+    const fs = require('fs');
+    const verificationDocuments = [];
+    for (const file of req.files) {
+      const base64Data = fs.readFileSync(file.path, 'base64');
+      verificationDocuments.push(`data:${file.mimetype};base64,${base64Data}`);
+      if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+    }
+    user.verificationDocuments = verificationDocuments;
+    user.verificationStatus = 'pending';
+    user.allowResubmission = false;
+    if (user.professionalProfile) {
+      user.professionalProfile.lastPhotoUpdate = Date.now();
+    }
+    await user.save();
+    try {
+      const adminEmail = require('../config/appConfig').payment?.adminEmail || 'admin@drsrv.net.ar';
+      const { sendEmail } = require('../services/emailService');
+      await sendEmail({
+        email: adminEmail,
+        subject: 'KuraTe - DNI recibido (PC->móvil)',
+        message: `Profesional "${user.professionalProfile?.alias || user.email}" completó DNI desde móvil (${req.headers['user-agent'] || 'móvil'}).\nRevisar en Panel Admin.`
+      });
+    } catch (e) { console.error('notify admin DNI', e.message); }
+    res.status(200).json({ success: true, message: 'DNI recibido. Te avisaremos cuando sea aprobado.', data: { verificationStatus: user.verificationStatus } });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+};
+
 // @desc    Redirect to Professional's Phone (Anti-Scraping Protection)
 // @route   GET /api/v1/professionals/:alias/phone
 // @access  Public

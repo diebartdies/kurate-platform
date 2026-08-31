@@ -58,6 +58,17 @@
             }
 
             if (loader) loader.style.display = 'none';
+            // PC->móvil handoff: si es pre-registrado sin DNI y está en celular, llevar a captura
+            const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 768;
+            const needsDni = user.verificationStatus !== 'approved' && (!user.verificationDocuments || user.verificationDocuments.length < 3);
+            if (needsDni && isMobile && !location.pathname.includes('captura-dni')) {
+                // evitar loop si ya está en captura
+                if (!sessionStorage.getItem('dni_redirect_done')) {
+                    sessionStorage.setItem('dni_redirect_done','1');
+                    window.location.replace('/captura-dni.html');
+                    return;
+                }
+            }
             renderProfile(content, user, data.stats || {});
         } catch (err) {
             if (loader) loader.style.display = 'none';
@@ -87,9 +98,18 @@
             return `<div style="background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.4);border-radius:8px;padding:8px 12px;font-size:0.85rem;color:var(--primary-gold);display:flex;align-items:center;gap:6px;"><span style="font-weight:700;">✓</span><span>${esc(s)}</span></div>`;
         }).join('') : '<div style="color:#666;font-size:0.85rem;">Sin especialidades configuradas</div>';
 
+        const needsDniBanner = (vStatus !== 'approved') ? `
+                <div style="background:rgba(245,158,11,0.12);border:1px solid #f59e0b;border-radius:10px;padding:12px;margin-bottom:14px;text-align:center">
+                    <div style="color:#f59e0b;font-weight:700;margin-bottom:4px">⚠️ Te falta completar tu DNI</div>
+                    <div style="color:#ddd;font-size:0.85rem;line-height:1.4;margin-bottom:8px">Iniciaste en PC. Continuá desde el celular para fotografiar tu DNI.</div>
+                    <a href="/captura-dni.html" style="display:inline-block;padding:10px 18px;background:#f59e0b;color:#111;border-radius:8px;font-weight:700;text-decoration:none">📸 Capturar DNI ahora</a>
+                    <div style="margin-top:6px"><a href="#" onclick="navigator.share?navigator.share({title:'KuraTe DNI',url:location.origin+'/captura-dni.html'}):prompt('Copiá este link y abrilo en tu celular:',location.origin+'/captura-dni.html');return false" style="color:var(--primary-gold);font-size:0.8rem">o enviar link al celular</a></div>
+                </div>` : '';
+
         content.innerHTML = `
             <div style="max-width: 600px; margin: 0 auto;">
                 <h2 class="gold-text" style="margin-bottom: 20px; text-align: center;">Mi Perfil</h2>
+                ${needsDniBanner}
 
                 <div class="card" style="border: 1px solid rgba(212, 175, 55, 0.3); padding: 0; overflow: hidden;">
                     <div style="position: relative;">

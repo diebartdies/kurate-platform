@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<title>KuraTe - Captura DNI</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css?v=8.30">
+<style>
+body.blueprint-theme{background:#0f0f1a;color:#eee}
+.dni-wrap{max-width:480px;margin:0 auto;padding:16px}
+.dni-step{border:1px solid rgba(212,175,55,0.3);border-radius:12px;padding:14px;margin-bottom:12px;background:rgba(255,255,255,0.03)}
+.dni-step.done{border-color:#22c55e;background:rgba(34,197,94,0.08)}
+.dni-preview{width:100%;height:180px;object-fit:cover;border-radius:8px;background:#111;display:block;margin-top:8px;border:1px dashed #333}
+.dni-btn{width:100%;padding:12px;border-radius:8px;border:none;font-weight:700;cursor:pointer;margin-top:8px}
+.dni-btn-cam{background:var(--primary-gold);color:#111}
+.dni-btn-submit{background:#22c55e;color:#fff;font-size:1.05rem;padding:16px}
+.dni-btn:disabled{opacity:0.5;cursor:not-allowed}
+</style>
+</head>
+<body class="blueprint-theme">
+<div class="dni-wrap">
+  <a href="/profile.html" style="color:var(--primary-gold);text-decoration:none;font-size:0.85rem">← Volver a mi perfil</a>
+  <h2 class="gold-text" style="text-align:center;margin:16px 0 8px">📸 Completá tu identificación</h2>
+  <p style="text-align:center;color:#aaa;font-size:0.85rem;line-height:1.5;margin-bottom:16px">Iniciaste tu registro en la PC. Continuá <b style="color:#fff">desde el celular</b> capturando tu DNI para que podamos verificarte.<br><span style="color:#f59e0b">Usá la cámara trasera con buena luz.</span></p>
+  <div id="dniAlert" class="hidden" style="padding:10px;border-radius:6px;margin-bottom:12px;text-align:center;font-size:0.9rem"></div>
+
+  <div class="dni-step" id="stepFront">
+    <div style="display:flex;justify-content:space-between;align-items:center"><b>1. DNI Frente</b><span id="okFront" style="display:none;color:#22c55e">✓ listo</span></div>
+    <input type="file" id="fileFront" accept="image/*" capture="environment" style="display:none">
+    <img id="prevFront" class="dni-preview" alt="preview frente">
+    <button class="dni-btn dni-btn-cam" onclick="document.getElementById('fileFront').click()">📷 Capturar frente</button>
+  </div>
+
+  <div class="dni-step" id="stepBack">
+    <div style="display:flex;justify-content:space-between;align-items:center"><b>2. DNI Dorso</b><span id="okBack" style="display:none;color:#22c55e">✓ listo</span></div>
+    <input type="file" id="fileBack" accept="image/*" capture="environment" style="display:none">
+    <img id="prevBack" class="dni-preview" alt="preview dorso">
+    <button class="dni-btn dni-btn-cam" onclick="document.getElementById('fileBack').click()">📷 Capturar dorso</button>
+  </div>
+
+  <div class="dni-step" id="stepSelfie">
+    <div style="display:flex;justify-content:space-between;align-items:center"><b>3. Selfie con DNI en mano</b><span id="okSelfie" style="display:none;color:#22c55e">✓ listo</span></div>
+    <p style="font-size:0.75rem;color:#999;margin:4px 0 0">Sostené el DNI junto a tu rostro, que se vea nítido.</p>
+    <input type="file" id="fileSelfie" accept="image/*" capture="user" style="display:none">
+    <img id="prevSelfie" class="dni-preview" alt="preview selfie">
+    <button class="dni-btn dni-btn-cam" onclick="document.getElementById('fileSelfie').click()">🤳 Capturar selfie</button>
+  </div>
+
+  <button id="btnSubmitDni" class="dni-btn dni-btn-submit" disabled>Enviar para verificación</button>
+  <p style="text-align:center;color:#666;font-size:0.75rem;margin-top:10px">Al enviar, tu perfil quedará en revisión (24-48hs). Te avisamos por email/WhatsApp.</p>
+</div>
+
+<script type="module">
+const API = (location.protocol==='file:'?'http://localhost:5000':location.origin)+'/api/v1';
+function authHeaders(){const t=localStorage.getItem('token');return t?{'Authorization':'Bearer '+t}:{}}
+const alertEl=document.getElementById('dniAlert');
+function showAlert(msg, ok=false){alertEl.textContent=msg;alertEl.className= ok?'':'hidden'; alertEl.style.background= ok?'rgba(34,197,94,0.15)':'rgba(220,38,38,0.15)'; alertEl.style.color= ok?'#22c55e':'#f87171'; alertEl.style.border='1px solid '+(ok?'#22c55e':'#ef4444'); alertEl.classList.remove('hidden');}
+function isMobile(){return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth<768}
+async function checkAlreadyVerified(){
+  const token=localStorage.getItem('token');
+  if(!token){location.href='/login.html';return}
+  try{
+    const r=await fetch(API+'/professionals/me',{headers:authHeaders(),credentials:'include'});
+    const d=await r.json();
+    if(d.success && d.data && d.data.verificationStatus==='approved'){ showAlert('Ya estás verificado. Redirigiendo...',true); setTimeout(()=>location.href='/profile.html',1200); return}
+    // if pending but already has docs, still allow resubmit
+  }catch(e){}
+}
+checkAlreadyVerified();
+
+function bindPreview(fileId, prevId, okId, stepId){
+  const f=document.getElementById(fileId), img=document.getElementById(prevId), ok=document.getElementById(okId), step=document.getElementById(stepId);
+  f.addEventListener('change',()=>{
+    const file=f.files[0]; if(!file) return;
+    const url=URL.createObjectURL(file);
+    img.src=url; img.style.display='block';
+    ok.style.display='inline'; step.classList.add('done');
+    checkReady();
+  });
+}
+bindPreview('fileFront','prevFront','okFront','stepFront');
+bindPreview('fileBack','prevBack','okBack','stepBack');
+bindPreview('fileSelfie','prevSelfie','okSelfie','stepSelfie');
+
+function checkReady(){
+  const ready = document.getElementById('fileFront').files[0] && document.getElementById('fileBack').files[0] && document.getElementById('fileSelfie').files[0];
+  document.getElementById('btnSubmitDni').disabled = !ready;
+}
+
+document.getElementById('btnSubmitDni').addEventListener('click', async ()=>{
+  const btn=document.getElementById('btnSubmitDni');
+  btn.disabled=true; const old=btn.textContent; btn.textContent='Enviando...';
+  try{
+    const fd=new FormData();
+    fd.append('verificationDocuments', document.getElementById('fileFront').files[0]);
+    fd.append('verificationDocuments', document.getElementById('fileBack').files[0]);
+    fd.append('verificationDocuments', document.getElementById('fileSelfie').files[0]);
+    const res=await fetch(API+'/professionals/verification-documents',{method:'POST',headers:authHeaders(),body:fd,credentials:'include'});
+    const data=await res.json();
+    if(data.success){
+      showAlert('✓ DNI recibido. Quedás en revisión. Te avisamos pronto.',true);
+      setTimeout(()=>location.href='/profile.html',1500);
+    } else {
+      // fallback to resubmit endpoint if not allowed
+      if(/not allowed/i.test(data.error||'')){
+        const fd2=new FormData(); fd2.append('verificationDocuments', document.getElementById('fileFront').files[0]); fd2.append('verificationDocuments', document.getElementById('fileBack').files[0]); fd2.append('verificationDocuments', document.getElementById('fileSelfie').files[0]);
+        const r2=await fetch(API+'/professionals/resubmit-verification',{method:'POST',headers:authHeaders(),body:fd2,credentials:'include'}); const d2=await r2.json();
+        if(d2.success){ showAlert('✓ DNI recibido.',true); setTimeout(()=>location.href='/profile.html',1200); return}
+        showAlert(d2.error||'Error al enviar',false);
+      } else showAlert(data.error||'Error al enviar',false);
+    }
+  }catch(e){ showAlert('Error de conexión',false)}
+  btn.disabled=false; btn.textContent=old;
+});
+</script>
+</body>
+</html>

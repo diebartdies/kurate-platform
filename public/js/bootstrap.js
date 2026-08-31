@@ -86,6 +86,7 @@ export function initBootstrap() {
             'notas-interes.html': ['dashboard.html', 'profDashboard.html', 'profile.html', 'notas-interes.html', 'nota-interes.html'],
             'nota-interes.html': ['dashboard.html', 'profDashboard.html', 'profile.html', 'notas-interes.html', 'nota-interes.html'],
             'verify.html': ['register.html', 'login.html', 'verify.html'],
+            'captura-dni.html': ['profile.html', 'profDashboard.html', 'verify.html', 'login.html', 'captura-dni.html', 'index.html'],
             'register.html': ['index.html', 'login.html', 'register.html', 'dashboard.html', 'hogar.html', 'treasure.html'],
             'login.html': ['index.html', 'register.html', 'recover.html', 'login.html', 'dashboard.html', 'hogar.html', 'treasure.html'],
             'recover.html': ['login.html', 'recover.html'],
