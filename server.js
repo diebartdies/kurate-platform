@@ -197,6 +197,11 @@ app.get('/acompanantes/:provinceSlug/:areaSlug', seoController.renderLocationPag
 app.get('/acompanantes/:provinceSlug', seoController.renderLocationPage);
 app.get('/perfil/:alias', seoController.renderProfilePage);
 
+// Redirect bogus paths Google is crawling (410 Gone or 301)
+app.get('/hogar/professionals', (req, res) => res.redirect(301, '/hogar.html'));
+app.get('/professionals/search', (req, res) => res.redirect(301, '/hogar.html'));
+app.get('/categorias/electrohogar', (req, res) => res.redirect(301, '/categorias'));
+
 // SEO landing pages: actions, environments, categories
 app.get('/acciones', async (req, res) => {
   const lang = req.query.lang === 'en' ? 'en' : 'es';
@@ -264,6 +269,26 @@ app.get('/acciones/:slug', async (req, res) => {
   const topRated = await getTopRatedForSeo();
   res.type('html').send(buildSeoLandingPage('action', item, lang, topRated));
 });
+app.get('/entornos', async (req, res) => {
+  const lang = req.query.lang === 'en' ? 'en' : 'es';
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  const items = ENVIRONMENTS;
+  const t = lang === 'en' ? { title: 'Environments', desc: 'Find verified professionals for every environment in Argentina.', footer: '© 2026 KuraTe — Your fast and direct answer.' } : { title: 'Entornos', desc: 'Encontrá profesionales verificados para cada entorno en Argentina.', footer: '© 2026 KuraTe — Tu respuesta rápida y directa.' };
+  const cards = items.map(e => {
+    const eTitle = typeof e.title === 'object' ? (e.title[lang] || e.title.es) : e.title;
+    const eDesc  = typeof e.description === 'object' ? (e.description[lang] || e.description.es) : e.description;
+    return `<a href="/entornos/${e.slug}" style="text-decoration:none;background:#1a1a2e;border:1px solid #2a2a3e;border-radius:12px;padding:24px;display:block"><h2 style="color:#B8922E;font-size:1.3rem;margin:0 0 8px">${eTitle}</h2><p style="color:#999;font-size:0.95rem;margin:0;line-height:1.5">${eDesc}</p></a>`;
+  }).join('\n');
+  res.type('html').send(`<!DOCTYPE html>
+<html lang="${lang}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>${t.title} | KuraTe</title><meta name="description" content="${t.desc}"><meta name="robots" content="index, follow">
+<link rel="canonical" href="https://kurate.drsrv.net.ar/entornos">
+<link rel="alternate" hreflang="es" href="https://kurate.drsrv.net.ar/entornos"><link rel="alternate" hreflang="en" href="https://kurate.drsrv.net.ar/entornos?lang=en"><link rel="alternate" hreflang="x-default" href="https://kurate.drsrv.net.ar/entornos">
+<meta name="theme-color" content="#B8922E"><meta name="color-scheme" content="dark">
+<style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f0f1a;color:#e0e0e0;margin:0}.container{max-width:800px;margin:0 auto;padding:2rem 1.5rem}h1{color:#B8922E;font-size:2rem;margin-bottom:0.5rem}p{line-height:1.7;font-size:1.1rem;color:#ccc}.cards{display:grid;gap:16px;margin:2rem 0}footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid #333;color:#666;font-size:0.85rem;text-align:center}.lang-switch{position:fixed;top:12px;right:12px;z-index:100;display:flex;gap:4px}.lang-switch a{display:inline-block;padding:4px 8px;border-radius:4px;font-size:0.75rem;text-decoration:none;color:#ccc;background:rgba(255,255,255,0.1)}.lang-switch a.active{background:#B8922E;color:#fff}</style></head>
+<body><div class="lang-switch"><a href="/entornos" class="${lang==='es'?'active':''}">ES</a><a href="/entornos?lang=en" class="${lang==='en'?'active':''}">EN</a></div>
+<div class="container"><h1>${t.title}</h1><p>${t.desc}</p><div class="cards">${cards}</div><footer>${t.footer}</footer></div></body></html>`);
+});
 app.get('/entornos/:slug', async (req, res) => {
   const item = ENVIRONMENTS.find(e => e.slug === req.params.slug);
   if (!item) return res.status(404).send('Not found');
@@ -271,6 +296,26 @@ app.get('/entornos/:slug', async (req, res) => {
   res.setHeader('Cache-Control', 'public, max-age=3600');
   const topRated = await getTopRatedForSeo();
   res.type('html').send(buildSeoLandingPage('environment', item, lang, topRated));
+});
+app.get('/categorias', async (req, res) => {
+  const lang = req.query.lang === 'en' ? 'en' : 'es';
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  const items = CATEGORIES;
+  const t = lang === 'en' ? { title: 'Categories', desc: 'Find verified professionals for every category in Argentina.', footer: '© 2026 KuraTe — Your fast and direct answer.' } : { title: 'Categorías', desc: 'Encontrá profesionales verificados para cada categoría en Argentina.', footer: '© 2026 KuraTe — Tu respuesta rápida y directa.' };
+  const cards = items.map(c => {
+    const cTitle = typeof c.title === 'object' ? (c.title[lang] || c.title.es) : c.title;
+    const cDesc  = typeof c.description === 'object' ? (c.description[lang] || c.description.es) : c.description;
+    return `<a href="/categorias/${c.slug}" style="text-decoration:none;background:#1a1a2e;border:1px solid #2a2a3e;border-radius:12px;padding:24px;display:block"><h2 style="color:#B8922E;font-size:1.3rem;margin:0 0 8px">${cTitle}</h2><p style="color:#999;font-size:0.95rem;margin:0;line-height:1.5">${cDesc}</p></a>`;
+  }).join('\n');
+  res.type('html').send(`<!DOCTYPE html>
+<html lang="${lang}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>${t.title} | KuraTe</title><meta name="description" content="${t.desc}"><meta name="robots" content="index, follow">
+<link rel="canonical" href="https://kurate.drsrv.net.ar/categorias">
+<link rel="alternate" hreflang="es" href="https://kurate.drsrv.net.ar/categorias"><link rel="alternate" hreflang="en" href="https://kurate.drsrv.net.ar/categorias?lang=en"><link rel="alternate" hreflang="x-default" href="https://kurate.drsrv.net.ar/categorias">
+<meta name="theme-color" content="#B8922E"><meta name="color-scheme" content="dark">
+<style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f0f1a;color:#e0e0e0;margin:0}.container{max-width:800px;margin:0 auto;padding:2rem 1.5rem}h1{color:#B8922E;font-size:2rem;margin-bottom:0.5rem}p{line-height:1.7;font-size:1.1rem;color:#ccc}.cards{display:grid;gap:16px;margin:2rem 0}footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid #333;color:#666;font-size:0.85rem;text-align:center}.lang-switch{position:fixed;top:12px;right:12px;z-index:100;display:flex;gap:4px}.lang-switch a{display:inline-block;padding:4px 8px;border-radius:4px;font-size:0.75rem;text-decoration:none;color:#ccc;background:rgba(255,255,255,0.1)}.lang-switch a.active{background:#B8922E;color:#fff}</style></head>
+<body><div class="lang-switch"><a href="/categorias" class="${lang==='es'?'active':''}">ES</a><a href="/categorias?lang=en" class="${lang==='en'?'active':''}">EN</a></div>
+<div class="container"><h1>${t.title}</h1><p>${t.desc}</p><div class="cards">${cards}</div><footer>${t.footer}</footer></div></body></html>`);
 });
 app.get('/categorias/:slug', async (req, res) => {
   const item = CATEGORIES.find(c => c.slug === req.params.slug);
