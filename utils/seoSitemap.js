@@ -13,6 +13,7 @@ function baseUrlForNamedSite(site) {
 }
 
 const { getAllSeoUrls } = require('./seoLandingPages');
+const { getAllServiceUrls } = require('./seoServicePages');
 
 const STATIC_URLS = [
   { loc: '/', priority: 1.0, changefreq: 'weekly' },
@@ -28,7 +29,8 @@ function urlXml(baseUrl, entry) {
 
 async function buildSitemapForBase(baseUrl) {
   const seoUrls = getAllSeoUrls();
-  const allUrls = [...STATIC_URLS, ...seoUrls];
+  const serviceUrls = getAllServiceUrls();
+  const allUrls = [...STATIC_URLS, ...seoUrls, ...serviceUrls];
   const inner = allUrls.map(e => urlXml(baseUrl, e)).join('\n');
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${inner}\n</urlset>`;
   return { xml, urls: allUrls.map(e => ({ loc: baseUrl + e.loc })) };

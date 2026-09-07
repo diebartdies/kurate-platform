@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-26T02:05:48.276Z",
+  "generatedAt": "2026-09-07T04:11:10.404Z",
   "minProfessionals": 1,
-  "totalPages": 34,
+  "totalPages": 35,
   "pages": [
     {
       "provinceSlug": "buenos-aires",
@@ -11,7 +11,7 @@
       "areaType": "province",
       "path": "/acompanantes/buenos-aires",
       "count": 30,
-      "lastUpdated": "2026-08-06T05:01:47.927Z"
+      "lastUpdated": "2026-09-06T21:47:07.782Z"
     },
     {
       "provinceSlug": "buenos-aires",
@@ -21,7 +21,7 @@
       "areaType": "city",
       "path": "/acompanantes/buenos-aires/almirante-brown",
       "count": 2,
-      "lastUpdated": "2026-08-06T05:01:46.671Z"
+      "lastUpdated": "2026-09-06T21:47:07.776Z"
     },
     {
       "provinceSlug": "buenos-aires",
@@ -31,7 +31,7 @@
       "areaType": "city",
       "path": "/acompanantes/buenos-aires/avellaneda",
       "count": 2,
-      "lastUpdated": "2026-08-06T05:01:46.805Z"
+      "lastUpdated": "2026-09-06T21:47:07.776Z"
     },
     {
       "provinceSlug": "buenos-aires",
@@ -41,7 +41,7 @@
       "areaType": "city",
       "path": "/acompanantes/buenos-aires/florencio-varela",
       "count": 2,
-      "lastUpdated": "2026-08-06T05:01:47.243Z"
+      "lastUpdated": "2026-09-06T21:47:07.780Z"
     },
     {
       "provinceSlug": "buenos-aires",
@@ -51,7 +51,7 @@
       "areaType": "city",
       "path": "/acompanantes/buenos-aires/ituzaingo",
       "count": 2,
-      "lastUpdated": "2026-08-06T05:01:47.531Z"
+      "lastUpdated": "2026-09-06T21:47:07.780Z"
     },
     {
       "provinceSlug": "buenos-aires",
@@ -91,7 +91,7 @@
       "areaType": "city",
       "path": "/acompanantes/buenos-aires/malvinas-argentinas",
       "count": 1,
-      "lastUpdated": "2026-08-06T05:01:45.723Z"
+      "lastUpdated": "2026-09-06T21:47:07.772Z"
     },
     {
       "provinceSlug": "buenos-aires",
@@ -111,7 +111,7 @@
       "areaType": "city",
       "path": "/acompanantes/buenos-aires/moreno",
       "count": 2,
-      "lastUpdated": "2026-08-06T05:01:47.800Z"
+      "lastUpdated": "2026-09-06T21:47:07.781Z"
     },
     {
       "provinceSlug": "buenos-aires",
@@ -131,7 +131,7 @@
       "areaType": "city",
       "path": "/acompanantes/buenos-aires/quilmes",
       "count": 2,
-      "lastUpdated": "2026-08-06T05:01:47.105Z"
+      "lastUpdated": "2026-09-06T21:47:07.778Z"
     },
     {
       "provinceSlug": "buenos-aires",
@@ -141,7 +141,7 @@
       "areaType": "city",
       "path": "/acompanantes/buenos-aires/san-fernando",
       "count": 1,
-      "lastUpdated": "2026-08-06T05:01:46.117Z"
+      "lastUpdated": "2026-09-06T21:47:07.774Z"
     },
     {
       "provinceSlug": "buenos-aires",
@@ -171,7 +171,7 @@
       "areaType": "city",
       "path": "/acompanantes/buenos-aires/tigre",
       "count": 1,
-      "lastUpdated": "2026-08-06T05:01:46.256Z"
+      "lastUpdated": "2026-09-06T21:47:07.775Z"
     },
     {
       "provinceSlug": "buenos-aires",
@@ -181,7 +181,7 @@
       "areaType": "city",
       "path": "/acompanantes/buenos-aires/tres-de-febrero",
       "count": 2,
-      "lastUpdated": "2026-08-06T05:01:47.927Z"
+      "lastUpdated": "2026-09-06T21:47:07.782Z"
     },
     {
       "provinceSlug": "buenos-aires",
@@ -191,7 +191,7 @@
       "areaType": "city",
       "path": "/acompanantes/buenos-aires/vicente-lopez",
       "count": 1,
-      "lastUpdated": "2026-08-06T05:01:45.855Z"
+      "lastUpdated": "2026-09-06T21:47:07.773Z"
     },
     {
       "provinceSlug": "caba",
@@ -201,7 +201,17 @@
       "areaType": "province",
       "path": "/acompanantes/caba",
       "count": 60,
-      "lastUpdated": "2026-08-06T05:01:43.812Z"
+      "lastUpdated": "2026-09-06T21:47:07.768Z"
+    },
+    {
+      "provinceSlug": "caba",
+      "provinceName": "CABA",
+      "areaSlug": "villa-urquiza",
+      "areaName": "Villa Urquiza",
+      "areaType": "neighborhood",
+      "path": "/acompanantes/caba/villa-urquiza",
+      "count": 1,
+      "lastUpdated": "2026-09-06T21:47:07.733Z"
     },
     {
       "provinceSlug": "cordoba",
@@ -261,7 +271,7 @@
       "areaType": "province",
       "path": "/acompanantes/mendoza",
       "count": 2,
-      "lastUpdated": "2026-08-06T05:01:49.125Z"
+      "lastUpdated": "2026-09-06T21:47:07.789Z"
     },
     {
       "provinceSlug": "mendoza",
@@ -271,7 +281,7 @@
       "areaType": "city",
       "path": "/acompanantes/mendoza/godoy-cruz",
       "count": 2,
-      "lastUpdated": "2026-08-06T05:01:49.125Z"
+      "lastUpdated": "2026-09-06T21:47:07.789Z"
     },
     {
       "provinceSlug": "salta",
@@ -281,7 +291,7 @@
       "areaType": "province",
       "path": "/acompanantes/salta",
       "count": 1,
-      "lastUpdated": "2026-08-06T05:01:48.588Z"
+      "lastUpdated": "2026-09-06T21:47:07.783Z"
     },
     {
       "provinceSlug": "salta",
@@ -291,7 +301,7 @@
       "areaType": "city",
       "path": "/acompanantes/salta/cafayete",
       "count": 1,
-      "lastUpdated": "2026-08-06T05:01:48.588Z"
+      "lastUpdated": "2026-09-06T21:47:07.783Z"
     },
     {
       "provinceSlug": "santa-fe",
@@ -301,7 +311,7 @@
       "areaType": "province",
       "path": "/acompanantes/santa-fe",
       "count": 2,
-      "lastUpdated": "2026-08-06T05:01:48.990Z"
+      "lastUpdated": "2026-09-06T21:47:07.785Z"
     },
     {
       "provinceSlug": "santa-fe",
@@ -321,7 +331,7 @@
       "areaType": "city",
       "path": "/acompanantes/santa-fe/venado-tuerto",
       "count": 1,
-      "lastUpdated": "2026-08-06T05:01:48.990Z"
+      "lastUpdated": "2026-09-06T21:47:07.785Z"
     },
     {
       "provinceSlug": "tucuman",

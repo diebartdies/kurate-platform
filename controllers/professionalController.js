@@ -1913,6 +1913,9 @@ exports.getHogarProfessionals = async (req, res, next) => {
       reparar: ['Reparo', 'reparar'],
       arreglar: ['Reparo', 'arreglar'],
       componer: ['Reparo', 'componer'],
+      service: ['Reparo', 'service', 'servicio técnico'],
+      reparacion: ['Reparo', 'reparación', 'service'],
+      'servicio técnico': ['Reparo', 'service', 'servicio técnico'],
       instalar: ['Instalo', 'instalar'],
       colocar: ['Instalo', 'colocar'],
       montar: ['Instalo', 'montar'],
@@ -1958,20 +1961,59 @@ exports.getHogarProfessionals = async (req, res, next) => {
     if (req.query.brand && req.query.brand.trim()) {
       query['hogarProfile.services.brands'] = { $regex: req.query.brand.trim(), $options: 'i' };
     }
+    // geolocation: sort by distance when lat/lng provided
+    const userLat = parseFloat(req.query.lat) || null;
+    const userLng = parseFloat(req.query.lng) || null;
 
     const page = parseInt(req.query.page, 10) || 1;
     const parsedLimit = parseInt(req.query.limit, 10);
     const limit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 12;
     const skip = (page - 1) * limit;
 
-    const users = await User.find(query).select(
-      'name email hogarProfile.firstName hogarProfile.lastName hogarProfile.companyName ' +
-      'hogarProfile.action hogarProfile.area hogarProfile.category hogarProfile.specialty ' +
-      'hogarProfile.services hogarProfile.photos hogarProfile.availability hogarProfile.address ' +
-      'hogarProfile.contact'
-    ).skip(skip).limit(limit).lean();
+    const haversine = (lat1, lon1, lat2, lon2) => {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    };
 
-    const total = await User.countDocuments(query);
+    const needsDistance = userLat != null && userLng != null;
+
+    let users;
+    let total;
+    if (needsDistance) {
+      // Fetch all, sort by distance in-memory
+      const all = await User.find(query).select(
+        'name email professionalProfile.location.lat professionalProfile.location.lng ' +
+        'hogarProfile.firstName hogarProfile.lastName hogarProfile.companyName ' +
+        'hogarProfile.action hogarProfile.area hogarProfile.category hogarProfile.specialty ' +
+        'hogarProfile.services hogarProfile.photos hogarProfile.availability hogarProfile.address ' +
+        'hogarProfile.contact'
+      ).lean();
+      all.forEach(u => {
+        const pp = u.professionalProfile || {};
+        const loc = (pp.location && pp.location.lat && pp.location.lng) ? pp.location : (u.hogarProfile && u.hogarProfile.address);
+        if (loc && loc.lat && loc.lng) {
+          u._distance = Math.round(haversine(userLat, userLng, loc.lat, loc.lng) * 10) / 10;
+        } else {
+          u._distance = 99999;
+        }
+      });
+      all.sort((a, b) => a._distance - b._distance);
+      total = all.length;
+      users = all.slice(skip, skip + limit);
+    } else {
+      users = await User.find(query).select(
+        'name email professionalProfile.location.lat professionalProfile.location.lng ' +
+        'hogarProfile.firstName hogarProfile.lastName hogarProfile.companyName ' +
+        'hogarProfile.action hogarProfile.area hogarProfile.category hogarProfile.specialty ' +
+        'hogarProfile.services hogarProfile.photos hogarProfile.availability hogarProfile.address ' +
+        'hogarProfile.contact'
+      ).skip(skip).limit(limit).lean();
+      total = await User.countDocuments(query);
+    }
+
     const hasMore = skip + users.length < total;
 
     const data = users.map(u => {
@@ -2005,6 +2047,7 @@ exports.getHogarProfessionals = async (req, res, next) => {
         photo,
         photoUrl: photo,
         location: locationLine,
+        distance: u._distance != null && u._distance < 99999 ? u._distance : null,
         whatsapp: Boolean(hp.contact && hp.contact.whatsapp),
         telegram: Boolean(hp.contact && hp.contact.telegram),
         contact,

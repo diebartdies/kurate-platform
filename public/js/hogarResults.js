@@ -272,6 +272,28 @@ document.addEventListener('DOMContentLoaded', () => {
   const fQueryEl = document.getElementById('fQuery');
   if (fQueryEl) fQueryEl.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); loadHogar(readFilters()); } });
 
+  // "Cerca de mí" button — uses browser geolocation
+  const btnNearMe = document.getElementById('btnNearMe');
+  if (btnNearMe) {
+    btnNearMe.addEventListener('click', () => {
+      if (!navigator.geolocation) { alert('Tu navegador no soporta geolocalización'); return; }
+      btnNearMe.disabled = true;
+      btnNearMe.textContent = 'Buscando...';
+      navigator.geolocation.getCurrentPosition(pos => {
+        const params = readFilters();
+        params.lat = pos.coords.latitude;
+        params.lng = pos.coords.longitude;
+        loadHogar(params);
+        btnNearMe.disabled = false;
+        btnNearMe.textContent = '📍 Cerca de mí';
+      }, err => {
+        alert('No se pudo obtener tu ubicación. Activá los permisos de ubicación.');
+        btnNearMe.disabled = false;
+        btnNearMe.textContent = '📍 Cerca de mí';
+      }, { enableHighAccuracy: true, timeout: 10000 });
+    });
+  }
+
   const AREAS = [
     { value: '', label: 'Todas' },
     { value: 'hogar', label: 'Hogar' },

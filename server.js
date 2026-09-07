@@ -189,6 +189,7 @@ app.use((req, res, next) => {
 // SEO routes (must be registered before static files)
 const seoController = require('./controllers/seoController');
 const { ACTIONS, ENVIRONMENTS, CATEGORIES, buildSeoLandingPage } = require('./utils/seoLandingPages');
+const { buildServiceLandingPage, getAllServiceUrls } = require('./utils/seoServicePages');
 app.get('/robots.txt', seoController.robotsTxt);
 app.get('/sitemap.xml', seoController.sitemapXml);
 app.get('/sitemap-KuraTe.xml', seoController.sitemapKuraTeXml);
@@ -325,6 +326,28 @@ app.get('/categorias/:slug', async (req, res) => {
   const topRated = await getTopRatedForSeo();
   res.type('html').send(buildSeoLandingPage('category', item, lang, topRated));
 });
+
+// Service landing pages: /servicios/reparar-heladera, /servicios/instalar-smart-tv, etc.
+app.get('/servicios/:slug', (req, res) => {
+  const { ACTION_ALIASES, DEVICES_ES } = require('./utils/seoServicePages');
+  const slug = req.params.slug;
+  let actionSlug = null, deviceSlug = null;
+  // Match known device slugs (which may contain hyphens) at the end
+  for (const devId of Object.keys(DEVICES_ES)) {
+    const suffix = '-' + devId;
+    if (slug.endsWith(suffix)) {
+      deviceSlug = devId;
+      actionSlug = slug.slice(0, slug.length - suffix.length);
+      break;
+    }
+  }
+  if (!actionSlug || !deviceSlug) return res.status(404).send('Not found');
+  const page = buildServiceLandingPage(actionSlug, deviceSlug);
+  if (!page) return res.status(404).send('Not found');
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.type('html').send(page.html);
+});
+
 async function getTopRatedForSeo(){
   try{
     const { mergePublicListingFilter } = require('./utils/professionalVisibility');
