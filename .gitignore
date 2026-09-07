@@ -22,3 +22,5 @@ ios/*.xcworkspace
 *.apk
 *.aab
 *.ipa
+tmp_*.json
+.vscode/
