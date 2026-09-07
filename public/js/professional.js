@@ -190,8 +190,6 @@ export function renderProfessionalMainDashboardShell(content) {
                             <option value="Virtual Connection">Virtual Connection</option>
                         </select>
                         <label>Attributes</label><input type="text" id="upAttributes">
-                        <label>Measurements</label><input type="text" id="upMeasurements">
-                        <label>Height</label><input type="text" id="upHeight">
                     </div>
                 </div>
                 <button type="submit">Update Profile</button>
@@ -625,8 +623,6 @@ export function bindProfessionalProfileForm() {
             }
         }
 
-        formData.append('measurements', document.getElementById('upMeasurements')?.value || '');
-        formData.append('height', document.getElementById('upHeight')?.value || '');
         {
             const waDial = document.getElementById('upWaDial')?.value || '+54';
             const waLocal = document.getElementById('upWaInput')?.value || '';
@@ -1690,7 +1686,7 @@ export async function loadProfDashboard() {
             }
 
             if (allowResubmission) {
-                ['upFirstName', 'upSurname', 'upMiddleName', 'upAlias', 'upBirthDate', 'upHeight', 'upMeasurements',
+                ['upFirstName', 'upSurname', 'upMiddleName', 'upAlias', 'upBirthDate',
                     'upStreet', 'upStreetNumber', 'upFloor', 'upApartment', 'upPostCode', 'upProvince', 'upCity', 'upNeighborhood', 'upQuality',
                     'upAvailStart', 'upAvailEnd', 'upVacationStart', 'upVacationEnd', 'upBio'
                 ].forEach((id) => {
