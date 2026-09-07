@@ -53,7 +53,7 @@ export function redirectAfterLogin(user = {}) {
     if (intended) {
         window.location.replace(intended);
     } else if (user.role === 'professional') {
-        window.location.replace(appPath('profile.html'));
+        window.location.replace(appPath('profDashboard.html'));
     } else if (user.role === 'admin') {
         window.location.replace(appPath('dashboard.html'));
     } else {
@@ -238,7 +238,7 @@ function handleAgeGateEnter(btn) {
         targetUrl = appPath('dashboard.html');
     } else if (cachedUser && cachedUser.role === 'professional') {
         sessionStorage.removeItem('intended_destination');
-        targetUrl = appPath('profile.html');
+        targetUrl = appPath('profDashboard.html');
     } else if (intended) {
         sessionStorage.removeItem('intended_destination');
         targetUrl = intended;
@@ -457,7 +457,7 @@ if (verifyForm) {
                                     showAlert(pa,'Contraseña guardada. Redirigiendo...',false);
                                     setTimeout(()=>{
                                         const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||window.innerWidth<768;
-                                        window.location.replace(appPath(isMobile?'captura-dni.html':'profile.html'));
+                                        window.location.replace(appPath(isMobile?'captura-dni.html':'profDashboard.html'));
                                     },800);
                                 }catch(e){ showAlert(pa,'Error de conexión',true)}
                             });
@@ -482,7 +482,7 @@ if (verifyForm) {
                 if (intended) {
                     window.location.replace(intended);
                 } else if (data.user.role === 'professional') {
-                    window.location.replace(appPath('profile.html'));
+                    window.location.replace(appPath('profDashboard.html'));
                 } else if (data.user.role === 'admin') {
                     window.location.replace('/dashboard.html');
                 } else {
