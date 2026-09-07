@@ -19,6 +19,7 @@ const STATIC_URLS = [
   { loc: '/', priority: 1.0, changefreq: 'weekly' },
   { loc: '/home.html', priority: 0.8, changefreq: 'daily' },
   { loc: '/hogar.html', priority: 0.7, changefreq: 'daily' },
+  { loc: '/precios-aire-acondicionado', priority: 0.8, changefreq: 'monthly' },
   { loc: '/conciencia-vih.html', priority: 0.5, changefreq: 'yearly' },
   { loc: '/conciencia-cancer-mama.html', priority: 0.5, changefreq: 'yearly' }
 ];
@@ -46,6 +47,7 @@ Allow: /
 Allow: /index.html
 Allow: /home.html
 Allow: /hogar.html
+Allow: /precios-aire-acondicionado
 Allow: /conciencia-vih.html
 Allow: /conciencia-cancer-mama.html
 Disallow: /api/

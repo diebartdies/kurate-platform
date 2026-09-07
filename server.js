@@ -202,6 +202,7 @@ app.get('/perfil/:alias', seoController.renderProfilePage);
 app.get('/hogar/professionals', (req, res) => res.redirect(301, '/hogar.html'));
 app.get('/professionals/search', (req, res) => res.redirect(301, '/hogar.html'));
 app.get('/categorias/electrohogar', (req, res) => res.redirect(301, '/categorias'));
+app.get('/precios-aire-acondicionado', (req, res) => res.redirect(301, '/precios-aire-acondicionado.html'));
 
 // SEO landing pages: actions, environments, categories
 app.get('/acciones', async (req, res) => {
