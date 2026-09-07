@@ -1901,10 +1901,11 @@ exports.getHogarProfessionals = async (req, res, next) => {
     if (req.query.neighborhood && req.query.neighborhood.trim()) {
       query['hogarProfile.address.neighborhood'] = { $regex: req.query.neighborhood.trim(), $options: 'i' };
     }
-    // service filter: matches any selected service node path (prefix match)
+    // service filter: matches any selected service node path (contains match)
     if (req.query.service && req.query.service.trim()) {
       const svc = req.query.service.trim();
-      query['hogarProfile.services.path'] = { $regex: `^${svc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}` };
+      const escaped = svc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query['hogarProfile.services.path'] = { $regex: escaped, $options: 'i' };
     }
     // brand filter: matches any service's brands array
     if (req.query.brand && req.query.brand.trim()) {

@@ -13,7 +13,8 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const User = require('../models/User');
 
 async function run() {
-  await mongoose.connect(process.env.MONGODB_URI, {
+  const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
+  await mongoose.connect(uri, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     authSource: 'admin'
