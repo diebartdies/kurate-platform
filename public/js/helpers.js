@@ -57,21 +57,22 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
             .svc-sub.open > .svc-sub-header .svc-chevron { transform: rotate(90deg); }
             .svc-leaf { display: none; padding: 2px 0 2px 24px; }
             .svc-sub.open > .svc-leaf { display: block; }
-            .svc-leaf-item { display: flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 4px; cursor: pointer; transition: background 0.15s; }
-            .svc-leaf-item:hover { background: rgba(212,175,55,0.08); }
+            .svc-leaf-item { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid rgba(212,175,55,0.2); border-radius: 8px; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.03); margin: 3px 4px; }
+            .svc-leaf-item:hover { background: rgba(212,175,55,0.08); border-color: rgba(212,175,55,0.4); }
             .svc-leaf-item input[type="checkbox"] { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
             .svc-leaf-item input[type="checkbox"] + .svc-cb-box { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; min-width: 18px; border: 2px solid #555; border-radius: 4px; background: transparent; transition: all 0.2s; flex-shrink: 0; }
             .svc-leaf-item input[type="checkbox"]:checked + .svc-cb-box { background: #2563eb; border-color: #2563eb; }
             .svc-leaf-item input[type="checkbox"]:checked + .svc-cb-box::after { content: '✓'; color: #fff; font-size: 12px; font-weight: 700; line-height: 1; }
             .svc-leaf-item input[type="checkbox"]:focus-visible + .svc-cb-box { outline: 2px solid #2563eb; outline-offset: 2px; }
             .svc-leaf-item .svc-cb-label { font-size: 0.83rem; color: #aaa; line-height: 18px; }
-            .svc-leaf-item input:checked ~ .svc-cb-label { color: var(--primary-gold); }
+            .svc-leaf-item:has(input:checked) { border-color: #2563eb; background: rgba(37,99,235,0.08); }
+            .svc-leaf-item input:checked ~ .svc-cb-label { color: #fff; }
             .svc-empty { color: #555; font-size: 0.8rem; font-style: italic; padding: 8px 12px; }
             .svc-toggle-all { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; font-size: 0.75rem; color: var(--primary-gold); background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.2); border-radius: 4px; cursor: pointer; transition: background 0.2s; margin-bottom: 6px; }
             .svc-toggle-all:hover { background: rgba(212,175,55,0.15); }
             .svc-brands { border-left: 1px dashed rgba(212,175,55,0.15); margin-left: 8px; padding-top: 2px; }
-            .svc-brand-item { padding: 2px 4px !important; display:inline-flex; align-items:center; gap:4px; white-space:nowrap; }
-            .svc-brand-item:not(:last-child)::after { content:" - "; color:#555; margin-left:4px; font-size:0.8rem; }
+            .svc-brand-item { padding: 6px 12px !important; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+            .svc-brand-item:not(:last-child)::after { content: none; }
             .svc-brand-item:hover { background: rgba(212,175,55,0.05); }
             .svc-device { margin: 0 8px 4px 8px; border-left: 2px solid rgba(212,175,55,0.1); padding-left: 10px; }
             .svc-device.open > .svc-leaf { display: block; }
