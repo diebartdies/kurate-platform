@@ -174,6 +174,7 @@ function renderLoadMore(grid) {
 
 function readFilters() {
   return {
+    q: document.getElementById('fQuery') ? document.getElementById('fQuery').value.trim() : '',
     area: document.getElementById('fArea').value,
     action: document.getElementById('fAction').value,
     category: document.getElementById('fCategory').value,
@@ -264,10 +265,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('btnApply').addEventListener('click', () => loadHogar(readFilters()));
   document.getElementById('btnClear').addEventListener('click', () => {
-    ['fArea','fAction','fCategory','fAvailability','fProvince','fCity','fService','fBrand']
-      .forEach(id => { document.getElementById(id).value = ''; });
+    ['fQuery','fArea','fAction','fCategory','fAvailability','fProvince','fCity','fService','fBrand']
+      .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
     loadHogar({});
   });
+  const fQueryEl = document.getElementById('fQuery');
+  if (fQueryEl) fQueryEl.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); loadHogar(readFilters()); } });
 
   const AREAS = [
     { value: '', label: 'Todas' },

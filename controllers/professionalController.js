@@ -1907,6 +1907,51 @@ exports.getHogarProfessionals = async (req, res, next) => {
       const escaped = svc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       query['hogarProfile.services.path'] = { $regex: escaped, $options: 'i' };
     }
+    // free-text search (q): matches service name, path, action, area, bio — each word independently
+    // Verb synonyms map so "reparar", "arreglar" etc. match action "Reparo"
+    const VERB_MAP = {
+      reparar: ['Reparo', 'reparar'],
+      arreglar: ['Reparo', 'arreglar'],
+      componer: ['Reparo', 'componer'],
+      instalar: ['Instalo', 'instalar'],
+      mantener: ['Hago mantenimiento', 'mantener'],
+      mantenimiento: ['Hago mantenimiento', 'mantenimiento'],
+      revisar: ['Hago mantenimiento', 'revisar'],
+      chequear: ['Hago mantenimiento', 'chequear'],
+      verificar: ['Hago mantenimiento', 'verificar'],
+      inspeccionar: ['Hago mantenimiento', 'inspeccionar'],
+      certificar: ['Hago mantenimiento', 'certificar'],
+      vender: ['Vendo repuestos', 'vender'],
+      asesorar: ['Asesoro', 'asesorar']
+    };
+    if (req.query.q && req.query.q.trim()) {
+      const words = req.query.q.trim().split(/\s+/).filter(Boolean);
+      if (words.length > 0) {
+        query.$and = query.$and || [];
+        words.forEach(w => {
+          const lower = w.toLowerCase();
+          const orConditions = [];
+          // always match raw word
+          const rawEscaped = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const rawRe = new RegExp(rawEscaped, 'i');
+          orConditions.push({ 'hogarProfile.services.path': rawRe });
+          orConditions.push({ 'hogarProfile.services.name': rawRe });
+          orConditions.push({ 'hogarProfile.action': rawRe });
+          orConditions.push({ 'hogarProfile.area': rawRe });
+          orConditions.push({ 'hogarProfile.category': rawRe });
+          orConditions.push({ 'professionalProfile.bio': rawRe });
+          orConditions.push({ 'professionalProfile.alias': rawRe });
+          orConditions.push({ name: rawRe });
+          // if verb maps to action values, also match those
+          if (VERB_MAP[lower]) {
+            VERB_MAP[lower].forEach(actionVal => {
+              orConditions.push({ 'hogarProfile.action': actionVal });
+            });
+          }
+          query.$and.push({ $or: orConditions });
+        });
+      }
+    }
     // brand filter: matches any service's brands array
     if (req.query.brand && req.query.brand.trim()) {
       query['hogarProfile.services.brands'] = { $regex: req.query.brand.trim(), $options: 'i' };
