@@ -59,9 +59,13 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
             .svc-sub.open > .svc-leaf { display: block; }
             .svc-leaf-item { display: flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 4px; cursor: pointer; transition: background 0.15s; }
             .svc-leaf-item:hover { background: rgba(212,175,55,0.08); }
-            .svc-leaf-item input[type="checkbox"] { accent-color: var(--primary-gold); cursor: pointer; }
-            .svc-leaf-item span { font-size: 0.83rem; color: #aaa; }
-            .svc-leaf-item input:checked + span { color: var(--primary-gold); }
+            .svc-leaf-item input[type="checkbox"] { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+            .svc-leaf-item input[type="checkbox"] + .svc-cb-box { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; min-width: 18px; border: 2px solid #555; border-radius: 4px; background: transparent; transition: all 0.2s; flex-shrink: 0; }
+            .svc-leaf-item input[type="checkbox"]:checked + .svc-cb-box { background: #2563eb; border-color: #2563eb; }
+            .svc-leaf-item input[type="checkbox"]:checked + .svc-cb-box::after { content: '✓'; color: #fff; font-size: 12px; font-weight: 700; line-height: 1; }
+            .svc-leaf-item input[type="checkbox"]:focus-visible + .svc-cb-box { outline: 2px solid #2563eb; outline-offset: 2px; }
+            .svc-leaf-item .svc-cb-label { font-size: 0.83rem; color: #aaa; line-height: 18px; }
+            .svc-leaf-item input:checked ~ .svc-cb-label { color: var(--primary-gold); }
             .svc-empty { color: #555; font-size: 0.8rem; font-style: italic; padding: 8px 12px; }
             .svc-toggle-all { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; font-size: 0.75rem; color: var(--primary-gold); background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.2); border-radius: 4px; cursor: pointer; transition: background 0.2s; margin-bottom: 6px; }
             .svc-toggle-all:hover { background: rgba(212,175,55,0.15); }
@@ -106,10 +110,15 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
         cb.checked = pathSet.has(`${path}.${brand}`.toLowerCase());
         cb.className = 'dashboard-specialty-cb';
 
+        const box = document.createElement('span');
+        box.className = 'svc-cb-box';
+
         const sp = document.createElement('span');
+        sp.className = 'svc-cb-label';
         sp.textContent = brand;
 
         item.appendChild(cb);
+        item.appendChild(box);
         item.appendChild(sp);
         return item;
     }
