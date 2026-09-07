@@ -1914,6 +1914,8 @@ exports.getHogarProfessionals = async (req, res, next) => {
       arreglar: ['Reparo', 'arreglar'],
       componer: ['Reparo', 'componer'],
       instalar: ['Instalo', 'instalar'],
+      colocar: ['Instalo', 'colocar'],
+      montar: ['Instalo', 'montar'],
       mantener: ['Hago mantenimiento', 'mantener'],
       mantenimiento: ['Hago mantenimiento', 'mantenimiento'],
       revisar: ['Hago mantenimiento', 'revisar'],
