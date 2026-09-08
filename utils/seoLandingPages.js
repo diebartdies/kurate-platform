@@ -203,7 +203,7 @@ function buildSeoLandingPage(type, item, lang = 'es', topRated = []) {
   <meta name="description" content="${description}">
   <meta name="keywords" content="${keywords}">
   <meta name="robots" content="index, follow">
-  <link rel="canonical" href="${KURATE_BASE}/${basePath}/${item.slug}${canonicalLang}">
+  <link rel="canonical" href="${KURATE_BASE}/${basePath}/${item.slug}">
   <link rel="alternate" hreflang="es" href="${KURATE_BASE}/${basePath}/${item.slug}">
   <link rel="alternate" hreflang="en" href="${KURATE_BASE}/${basePath}/${item.slug}?lang=en">
   <link rel="alternate" hreflang="x-default" href="${KURATE_BASE}/${basePath}/${item.slug}">
@@ -279,7 +279,7 @@ function buildSeoLandingPage(type, item, lang = 'es', topRated = []) {
         `).join('')}
       </div>
     </div>` : ''}
-    <a href="${searchUrl}" class="cta">${t.searchCta}</a>
+    <a href="${searchUrl}" class="cta" rel="nofollow">${t.searchCta}</a>
     ${servicesHtml}
     ${faqHtml}
     <h2>${t.othersTitle(type)}</h2>

@@ -203,6 +203,7 @@ app.get('/hogar/professionals', (req, res) => res.redirect(301, '/hogar.html'));
 app.get('/professionals/search', (req, res) => res.redirect(301, '/hogar.html'));
 app.get('/categorias/electrohogar', (req, res) => res.redirect(301, '/categorias'));
 app.get('/precios-aire-acondicionado', (req, res) => res.redirect(301, '/precios-aire-acondicionado.html'));
+app.get('/avisos', (req, res) => res.redirect(301, '/avisos.html'));
 
 // SEO landing pages: actions, environments, categories
 app.get('/acciones', async (req, res) => {
@@ -415,6 +416,16 @@ app.use(express.static(path.join(__dirname, 'public'), {
     }
   }
 }));
+
+// SEO: Add noindex to static HTML pages with query parameters
+app.use((req, res, next) => {
+  if (req.method !== 'GET') return next();
+  if (Object.keys(req.query).length === 0) return next();
+  if (!req.path.endsWith('.html')) return next();
+  // Static HTML with query params → noindex to prevent duplicate content
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  next();
+});
 
 // APK download redirect — maps Google Play-style link to direct download
 app.get('/play', (req, res) => {
@@ -651,6 +662,31 @@ app.get('/api/v1/professionals/:alias/phone', professionalController.contactPhon
 const reviewsController = require('./controllers/reviewsController');
 app.get('/api/v1/professionals/:professionalId/reviews', reviewsController.getReviews);
 app.post('/api/v1/professionals/:professionalId/reviews', protect, reviewsController.addReview);
+
+// Aviso Routes
+const avisoController = require('./controllers/avisoController');
+app.get('/api/v1/avisos/public', avisoController.getPublicAvisos);
+app.get('/api/v1/avisos/mis-avisos', protect, authorize('professional'), avisoController.getMyAvisos);
+app.get('/api/v1/avisos/expiring', protect, authorize('professional'), avisoController.getExpiringAvisos);
+app.get('/api/v1/avisos/:id', avisoController.getAviso);
+app.post('/api/v1/avisos', protect, authorize('professional'), avisoController.createAviso);
+app.put('/api/v1/avisos/:id', protect, authorize('professional'), avisoController.updateAviso);
+app.delete('/api/v1/avisos/:id', protect, authorize('professional'), avisoController.cancelAviso);
+app.post('/api/v1/avisos/:id/payment', protect, authorize('professional'), upload.single('receipt'), avisoController.uploadPaymentReceipt);
+
+// Admin Aviso Routes
+app.get('/api/v1/admin/avisos', protect, authorize('admin'), avisoController.adminGetAllAvisos);
+app.post('/api/v1/admin/avisos/:id/approve', protect, authorize('admin'), avisoController.adminApproveAviso);
+app.post('/api/v1/admin/avisos/:id/reject', protect, authorize('admin'), avisoController.adminRejectAviso);
+app.post('/api/v1/admin/avisos/:id/renew', protect, authorize('admin'), avisoController.adminRenewAviso);
+
+// Click Tracking Routes
+const clickTrackingController = require('./controllers/clickTrackingController');
+app.post('/api/v1/track/:professionalId', clickTrackingController.trackClick);
+app.get('/api/v1/stats/professional', protect, authorize('professional'), clickTrackingController.getProfessionalStats);
+app.get('/api/v1/admin/stats', protect, authorize('admin'), clickTrackingController.getAdminStats);
+app.get('/api/v1/admin/stats/semestral', protect, authorize('admin'), clickTrackingController.getSemestralReport);
+app.get('/api/v1/admin/stats/anual', protect, authorize('admin'), clickTrackingController.getAnualReport);
 
 // Admin routes
 app.get('/api/v1/admin/verifications/pending', protect, authorize('admin'), adminController.getPendingVerifications);
@@ -1063,3 +1099,16 @@ setInterval(async () => {
     console.error('[Feedback Error]', err.message);
   }
 }, 60 * 60 * 1000);
+
+// Background Task: Check Aviso Expiry + Send Warnings (Runs every 12 hours)
+setInterval(async () => {
+  try {
+    const avisoController = require('./controllers/avisoController');
+    const result = await avisoController.checkExpiry();
+    if (result.expired > 0 || result.warningsSent > 0) {
+      console.log(`[Aviso Expiry] Expired: ${result.expired}, Warnings sent: ${result.warningsSent}`);
+    }
+  } catch (err) {
+    console.error('[Aviso Expiry Error]', err.message);
+  }
+}, 12 * 60 * 60 * 1000);
