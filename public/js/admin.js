@@ -1669,11 +1669,16 @@ export async function openAccessLogsModal() {
                     <h3 style="color:var(--primary-gold);margin:0;">🔒 Access Logs</h3>
                     <button id="closeAccessLogsBtn" style="background:none;border:none;color:#aaa;font-size:1.5rem;cursor:pointer;">&times;</button>
                 </div>
-                <div style="padding:12px 20px;border-bottom:1px solid #333;display:flex;gap:10px;flex-wrap:wrap;">
-                    <input type="text" id="alSearch" placeholder="Search path..." style="padding:6px 10px;background:#222;color:white;border:1px solid #444;border-radius:4px;flex:1;min-width:150px;">
-                    <input type="date" id="alFrom" style="padding:6px 10px;background:#222;color:white;border:1px solid #444;border-radius:4px;">
-                    <input type="date" id="alTo" style="padding:6px 10px;background:#222;color:white;border:1px solid #444;border-radius:4px;">
-                    <button id="alFilterBtn" style="padding:6px 14px;background:var(--primary-gold);color:#111;border:none;border-radius:4px;cursor:pointer;font-weight:bold;">Filter</button>
+                <div style="padding:12px 20px;border-bottom:1px solid #333;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                    <input type="text" id="alSearch" placeholder="Search path..." style="padding:6px 10px;background:#222;color:white;border:1px solid #444;border-radius:4px;flex:1;min-width:120px;font-size:0.82rem;">
+                    <div style="display:flex;gap:4px;">
+                        <button class="al-day-btn" data-days="0" style="padding:5px 10px;background:var(--primary-gold);color:#111;border:none;border-radius:4px;cursor:pointer;font-size:0.78rem;font-weight:600;">Hoy</button>
+                        <button class="al-day-btn" data-days="1" style="padding:5px 10px;background:#333;color:#ccc;border:none;border-radius:4px;cursor:pointer;font-size:0.78rem;">1 día</button>
+                        <button class="al-day-btn" data-days="7" style="padding:5px 10px;background:#333;color:#ccc;border:none;border-radius:4px;cursor:pointer;font-size:0.78rem;">7 días</button>
+                        <button class="al-day-btn" data-days="30" style="padding:5px 10px;background:#333;color:#ccc;border:none;border-radius:4px;cursor:pointer;font-size:0.78rem;">30 días</button>
+                        <button class="al-day-btn" data-days="90" style="padding:5px 10px;background:#333;color:#ccc;border:none;border-radius:4px;cursor:pointer;font-size:0.78rem;">90 días</button>
+                    </div>
+                    <button id="alClearBtn" style="padding:5px 10px;background:none;color:#888;border:1px solid #444;border-radius:4px;cursor:pointer;font-size:0.78rem;">Limpiar</button>
                 </div>
                 <div id="accessLogsContent" style="overflow-y:auto;flex:1;padding:10px 20px;font-size:0.85rem;"></div>
                 <div id="accessLogsPagination" style="padding:12px 20px;border-top:1px solid #333;display:flex;justify-content:center;gap:8px;"></div>
@@ -1682,7 +1687,36 @@ export async function openAccessLogsModal() {
         document.body.appendChild(modal);
         document.getElementById('closeAccessLogsBtn').addEventListener('click', () => modal.remove());
         modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
-        document.getElementById('alFilterBtn').addEventListener('click', () => loadAccessLogs(1));
+        document.querySelectorAll('.al-day-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.al-day-btn').forEach(b => { b.style.background = '#333'; b.style.color = '#ccc'; });
+                btn.style.background = 'var(--primary-gold)';
+                btn.style.color = '#111';
+                const days = parseInt(btn.dataset.days);
+                const now = new Date();
+                if (days === 0) {
+                    document.getElementById('alFrom').value = now.toISOString().slice(0, 10);
+                    document.getElementById('alTo').value = now.toISOString().slice(0, 10);
+                } else {
+                    const from = new Date(now);
+                    from.setDate(from.getDate() - days);
+                    document.getElementById('alFrom').value = from.toISOString().slice(0, 10);
+                    document.getElementById('alTo').value = now.toISOString().slice(0, 10);
+                }
+                loadAccessLogs(1);
+            });
+        });
+        document.getElementById('alClearBtn')?.addEventListener('click', () => {
+            document.getElementById('alSearch').value = '';
+            document.getElementById('alFrom').value = '';
+            document.getElementById('alTo').value = '';
+            document.querySelectorAll('.al-day-btn').forEach((b, i) => {
+                b.style.background = i === 0 ? 'var(--primary-gold)' : '#333';
+                b.style.color = i === 0 ? '#111' : '#ccc';
+            });
+            loadAccessLogs(1);
+        });
+        document.getElementById('alSearch')?.addEventListener('keydown', e => { if (e.key === 'Enter') loadAccessLogs(1); });
     }
     modal.style.display = 'flex';
     loadAccessLogs(1);
@@ -1699,7 +1733,7 @@ async function loadAccessLogs(page = 1) {
     content.innerHTML = '<p style="color:#aaa;text-align:center;padding:20px;">Loading...</p>';
     
     try {
-        const params = new URLSearchParams({ page, limit: 100 });
+        const params = new URLSearchParams({ page, limit: 200 });
         if (search) params.set('path', search);
         if (from) params.set('from', from);
         if (to) params.set('to', to);
@@ -1723,26 +1757,26 @@ async function loadAccessLogs(page = 1) {
         }
         
         content.innerHTML = `
-            <table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.78rem;">
                 <thead>
                     <tr style="border-bottom:1px solid #444;">
-                        <th style="padding:8px;text-align:left;color:var(--primary-gold);">Timestamp</th>
-                        <th style="padding:8px;text-align:left;color:var(--primary-gold);">Email</th>
-                        <th style="padding:8px;text-align:left;color:var(--primary-gold);">Method</th>
-                        <th style="padding:8px;text-align:left;color:var(--primary-gold);">Path</th>
-                        <th style="padding:8px;text-align:left;color:var(--primary-gold);">Status</th>
-                        <th style="padding:8px;text-align:left;color:var(--primary-gold);">IP</th>
+                        <th style="padding:5px 8px;text-align:left;color:var(--primary-gold);font-size:0.75rem;">Timestamp</th>
+                        <th style="padding:5px 8px;text-align:left;color:var(--primary-gold);font-size:0.75rem;">Email</th>
+                        <th style="padding:5px 8px;text-align:left;color:var(--primary-gold);font-size:0.75rem;">Method</th>
+                        <th style="padding:5px 8px;text-align:left;color:var(--primary-gold);font-size:0.75rem;">Path</th>
+                        <th style="padding:5px 8px;text-align:left;color:var(--primary-gold);font-size:0.75rem;">Status</th>
+                        <th style="padding:5px 8px;text-align:left;color:var(--primary-gold);font-size:0.75rem;">IP</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${data.data.map(log => `
-                        <tr style="border-bottom:1px solid #333;">
-                            <td style="padding:6px 8px;color:#ccc;white-space:nowrap;">${new Date(log.timestamp).toLocaleString('es-AR')}</td>
-                            <td style="padding:6px 8px;color:#aaa;">${log.email || log.user?.email || '—'}</td>
-                            <td style="padding:6px 8px;"><span style="padding:2px 6px;border-radius:3px;font-size:0.75rem;font-weight:bold;${log.method === 'GET' ? 'background:#1a4a1a;color:#4caf50;' : 'background:#4a3a1a;color:#ff9800;'}">${log.method}</span></td>
-                            <td style="padding:6px 8px;color:#ccc;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${log.path}">${log.path}</td>
-                            <td style="padding:6px 8px;"><span style="padding:2px 6px;border-radius:3px;font-size:0.75rem;${log.status < 400 ? 'background:#1a4a1a;color:#4caf50;' : 'background:#4a1a1a;color:#f44336;'}">${log.status}</span></td>
-                            <td style="padding:6px 8px;color:#888;">${log.ip || '—'}</td>
+                        <tr style="border-bottom:1px solid #2a2a3e;">
+                            <td style="padding:3px 8px;color:#ccc;white-space:nowrap;font-size:0.75rem;">${new Date(log.timestamp).toLocaleString('es-AR')}</td>
+                            <td style="padding:3px 8px;color:#aaa;font-size:0.75rem;">${log.email || log.user?.email || '—'}</td>
+                            <td style="padding:3px 8px;"><span style="padding:1px 5px;border-radius:3px;font-size:0.7rem;font-weight:bold;${log.method === 'GET' ? 'background:#1a4a1a;color:#4caf50;' : 'background:#4a3a1a;color:#ff9800;'}">${log.method}</span></td>
+                            <td style="padding:3px 8px;color:#ccc;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.75rem;" title="${log.path}">${log.path}</td>
+                            <td style="padding:3px 8px;"><span style="padding:1px 5px;border-radius:3px;font-size:0.7rem;${log.status < 400 ? 'background:#1a4a1a;color:#4caf50;' : 'background:#4a1a1a;color:#f44336;'}">${log.status}</span></td>
+                            <td style="padding:3px 8px;color:#888;font-size:0.75rem;">${log.ip || '—'}</td>
                         </tr>
                     `).join('')}
                 </tbody>
