@@ -549,6 +549,8 @@ export async function loadDashboard() {
                                 <button id="btnPaymentVerifications" class="admin-nav-btn">💳 Payment Verifications</button>
                                 <button id="btnSupportMessages" class="admin-nav-btn">📩 ${t('Support messages')}</button>
                                 <button id="btnInterestNotes" class="admin-nav-btn">📰 ${t('Notes of Interest')}</button>
+                                <button id="btnAvisos" class="admin-nav-btn">📋 Avisos</button>
+                                <button id="btnStats" class="admin-nav-btn">📊 Estadísticas KPI</button>
                                 <button id="btnDashboardConfig" class="admin-nav-btn">⚙️ ${t('Dashboard Config')}</button>
                             </div>
                         </div>
@@ -611,6 +613,8 @@ export async function loadDashboard() {
                 document.getElementById('btnPaymentVerifications').addEventListener('click', openPaymentVerificationsModal);
                 document.getElementById('btnSupportMessages').addEventListener('click', openSupportMessagesModal);
                 document.getElementById('btnInterestNotes').addEventListener('click', openInterestNotesAdminModal);
+                document.getElementById('btnAvisos').addEventListener('click', openAvisosModal);
+                document.getElementById('btnStats').addEventListener('click', openStatsModal);
                 
                 document.getElementById('btnProfProfileAdmin').addEventListener('click', () => {
                     document.getElementById('adminGridContainer').scrollIntoView({ behavior: 'smooth' });
@@ -2574,20 +2578,22 @@ export async function openPaymentVerificationsModal() {
         });
 
         container.innerHTML = `
-            <h2 class="gold-text" style="margin-bottom: 20px;">Payment Verifications</h2>
+            <h2 class="gold-text" style="margin-bottom: 20px;">Pagos Pendientes</h2>
             <div style="overflow-x: auto;">
                 <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
                     <thead>
                         <tr style="border-bottom: 1px solid var(--primary-gold);">
-                            <th style="padding: 10px;">Name</th>
-                            <th style="padding: 10px;">Surname</th>
+                            <th style="padding: 10px;">Nombre</th>
+                            <th style="padding: 10px;">Apellido</th>
                             <th style="padding: 10px;">Alias</th>
-                            <th style="padding: 10px;">Receipt</th>
-                            <th style="padding: 10px;">Processed</th>
+                            <th style="padding: 10px;">Tipo</th>
+                            <th style="padding: 10px;">Monto</th>
+                            <th style="padding: 10px;">Comprobante</th>
+                            <th style="padding: 10px;">Acción</th>
                         </tr>
                     </thead>
                     <tbody id="paymentsTableBody">
-                        <tr><td colspan="5" style="padding: 10px; text-align: center;">Loading...</td></tr>
+                        <tr><td colspan="7" style="padding: 10px; text-align: center;">Cargando...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -2605,10 +2611,9 @@ export async function openPaymentVerificationsModal() {
 
 export async function loadPaymentVerifications() {
     const tbody = document.getElementById('paymentsTableBody');
-    tbody.innerHTML = '<tr><td colspan="5" style="padding: 10px; text-align: center;">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="padding: 10px; text-align: center;">Cargando...</td></tr>';
     
     try {
-        const token = localStorage.getItem('token');
         const res = await fetch(`${API_URL}/admin/payments/pending`, { 
             headers: authHeaders(),
             credentials: 'include'
@@ -2618,58 +2623,60 @@ export async function loadPaymentVerifications() {
         if (data.success) {
             tbody.innerHTML = '';
             if (data.data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="padding: 10px; text-align: center;">No pending payments.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="padding: 10px; text-align: center; color: #888;">No hay pagos pendientes.</td></tr>';
                 return;
             }
             
-            data.data.forEach(prof => {
-                const p = prof.professionalProfile || {};
-                const alias = p.alias || 'Unknown';
-                const firstName = p.firstName || '';
-                const lastName = p.lastName || '';
-                const receiptUrl = p.paymentReceiptUrl || '';
+            data.data.forEach(item => {
+                const typeLabel = item.type === 'aviso' ? '📋 Aviso' : '👤 Suscripción';
+                const typeColor = item.type === 'aviso' ? '#a855f7' : '#3b82f6';
+                const priceText = item.price ? `$${item.price.toLocaleString('es-AR')}` : '-';
+                const receiptIsPdf = item.receiptType === 'pdf' || item.receiptUrl?.endsWith('.pdf');
 
                 const tr = document.createElement('tr');
                 tr.style.borderBottom = '1px solid #333';
                 tr.innerHTML = `
-                    <td style="padding: 10px;">${firstName}</td>
-                    <td style="padding: 10px;">${lastName}</td>
-                    <td style="padding: 10px;">${alias}</td>
+                    <td style="padding: 10px;">${item.firstName || ''}</td>
+                    <td style="padding: 10px;">${item.lastName || ''}</td>
+                    <td style="padding: 10px; color: var(--primary-gold); font-weight: 600;">${item.alias || '-'}</td>
+                    <td style="padding: 10px;"><span style="font-size: 0.8rem; padding: 2px 8px; border-radius: 4px; background: ${typeColor}22; color: ${typeColor}; font-weight: 600;">${typeLabel}</span></td>
+                    <td style="padding: 10px; font-weight: 600;">${priceText}</td>
                     <td style="padding: 10px; text-align: center;">
-                        <a href="${receiptUrl}" target="_blank" style="color: var(--primary-gold); text-decoration: none; font-size: 1.2rem;" title="${t('View Receipt')}" aria-label="${t('View receipt')}">📄</a>
+                        ${item.receiptUrl ? `<a href="${item.receiptUrl}" target="_blank" style="color: var(--primary-gold); text-decoration: none; font-size: 1.2rem;" title="Ver comprobante">${receiptIsPdf ? '📄' : '🖼️'}</a>` : '<span style="color: #666;">-</span>'}
                     </td>
-                    <td style="padding: 10px;">
-                        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
-                            <input type="checkbox" class="process-payment-cb" data-id="${prof._id}">
-                            Processed
-                        </label>
+                    <td style="padding: 10px; text-align: center;">
+                        <button class="ack-payment-btn" data-id="${item._id}" data-type="${item.type}" style="padding: 5px 12px; background: #22c55e; color: white; border: none; border-radius: 4px; font-size: 0.8rem; cursor: pointer; font-weight: 600;">✓ Aprobar</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
 
-            document.querySelectorAll('.process-payment-cb').forEach(cb => {
-                cb.onchange = (e) => {
-                    if (e.target.checked) {
-                        acknowledgePayment(e.target.getAttribute('data-id'));
-                    }
+            document.querySelectorAll('.ack-payment-btn').forEach(btn => {
+                btn.onclick = (e) => {
+                    approvePayment(btn.getAttribute('data-id'), btn.getAttribute('data-type'));
                 };
             });
-            applyStaticTranslations(tbody);
 
         } else {
-            tbody.innerHTML = `<tr><td colspan="5" style="padding: 10px; color: var(--accent-red);">Error: ${data.error}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" style="padding: 10px; color: var(--accent-red);">Error: ${data.error}</td></tr>`;
         }
     } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="5" style="padding: 10px; color: var(--accent-red);">${err.message || t('Network Error')}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="padding: 10px; color: var(--accent-red);">${err.message || 'Error de red'}</td></tr>`;
     }
 }
 
-export async function acknowledgePayment(id) {
+export async function approvePayment(id, type) {
     try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(`${API_URL}/admin/payments/${id}/acknowledge`, {
-            method: 'PUT',
+        let url, method;
+        if (type === 'aviso') {
+            url = `${API_URL}/admin/avisos/${id}/approve`;
+            method = 'POST';
+        } else {
+            url = `${API_URL}/admin/payments/${id}/acknowledge`;
+            method = 'PUT';
+        }
+        const res = await fetch(url, {
+            method,
             headers: { 
                 'Content-Type': 'application/json',
                 ...authHeaders()
@@ -2680,10 +2687,10 @@ export async function acknowledgePayment(id) {
         if (data.success) {
             loadPaymentVerifications(); 
         } else {
-            announceMessage(data.error || 'Failed to acknowledge payment');
+            announceMessage(data.error || 'Error al aprobar pago');
         }
     } catch (err) {
-        announceMessage(adminConnectionErrorMessage(err));
+        announceMessage(err.message || 'Error de red');
     }
 }
 
@@ -5411,6 +5418,317 @@ export async function openDashboardConfigModal() {
 
     openAdminOverlay(modal);
     await Promise.all([loadWhatsAppConfigPanel(), loadLaunchCurtainConfigPanel()]);
+}
+
+async function openAvisosModal() {
+    let modal = document.getElementById('avisosModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'avisosModal';
+        modal.className = 'admin-overlay-modal hidden';
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(modal);
+    }
+
+    const closeBar = createAdminModalCloseBar({
+        label: 'Avisos',
+        onClick: () => closeAdminOverlay(modal)
+    });
+
+    modal.innerHTML = `
+        ${closeBar}
+        <div style="max-width: 1100px; margin: 60px auto; padding: 20px;">
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
+                <select id="avisoFilterStatus" style="padding: 8px 12px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;">
+                    <option value="">Todos los estados</option>
+                    <option value="pending_payment">⏳ Pendiente pago</option>
+                    <option value="active">✅ Activo</option>
+                    <option value="expiring">⚠️ Por expirar</option>
+                    <option value="expired">❌ Expirado</option>
+                    <option value="rejected">🚫 Rechazado</option>
+                </select>
+                <select id="avisoFilterEnv" style="padding: 8px 12px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;">
+                    <option value="">Todos los entornos</option>
+                    <option value="hogar">🏠 Hogar</option>
+                    <option value="oficina">🏢 Oficina</option>
+                    <option value="pime">🏬 Pyme</option>
+                    <option value="industria">🏭 Industria</option>
+                </select>
+                <button id="btnRefreshAvisos" style="padding: 8px 16px; background: var(--primary-gold); color: #0f0f1a; border: none; border-radius: 4px; font-weight: 600; cursor: pointer;">🔄 Actualizar</button>
+            </div>
+            <div id="avisosAdminList" style="color: #ccc;">Cargando...</div>
+        </div>
+    `;
+
+    const ENV_LABELS = { hogar: '🏠 Hogar', oficina: '🏢 Oficina', pime: '🏬 Pyme', industria: '🏭 Industria' };
+    const STATUS_LABELS = { pending_payment: '⏳ Pendiente', active: '✅ Activo', expiring: '⚠️ Expirando', expired: '❌ Expirado', rejected: '🚫 Rechazado', cancelled: '🚫 Cancelado' };
+    const STATUS_COLORS = { pending_payment: '#eab308', active: '#22c55e', expiring: '#f97316', expired: '#ef4444', rejected: '#ef4444', cancelled: '#888' };
+
+    async function loadAvisos() {
+        const status = document.getElementById('avisoFilterStatus')?.value || '';
+        const env = document.getElementById('avisoFilterEnv')?.value || '';
+        const list = document.getElementById('avisosAdminList');
+        if (!list) return;
+
+        let url = '/api/v1/admin/avisos?';
+        if (status) url += `status=${status}&`;
+        if (env) url += `environment=${env}&`;
+
+        try {
+            const r = await fetch(url, { headers: { 'Authorization': 'Bearer ' + getToken() } });
+            const d = await r.json();
+            const avisos = d.data || [];
+
+            if (avisos.length === 0) {
+                list.innerHTML = '<p style="color: #888; text-align: center; padding: 30px;">No se encontraron avisos.</p>';
+                return;
+            }
+
+            list.innerHTML = avisos.map(a => {
+                const color = STATUS_COLORS[a.status] || '#888';
+                const profName = a._professionalName || '';
+                const profAlias = a._professionalAlias || '';
+                const profEmail = a._professionalEmail || '';
+                const hasReceipt = !!a.paymentReceiptUrl;
+
+                let actions = '';
+                if (a.status === 'pending_payment') {
+                    actions = `
+                        <button class="aviso-admin-approve" data-id="${a._id}" style="padding: 5px 10px; background: #22c55e; color: white; border: none; border-radius: 4px; font-size: 0.8rem; cursor: pointer; font-weight: 600;">✅ Aprobar</button>
+                        <button class="aviso-admin-reject" data-id="${a._id}" style="padding: 5px 10px; background: #ef4444; color: white; border: none; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">🚫 Rechazar</button>`;
+                } else if (a.status === 'expired' || a.status === 'expiring') {
+                    actions = `
+                        <button class="aviso-admin-renew" data-id="${a._id}" style="padding: 5px 10px; background: #22c55e; color: white; border: none; border-radius: 4px; font-size: 0.8rem; cursor: pointer; font-weight: 600;">🔄 Renovar</button>
+                        <button class="aviso-admin-reject" data-id="${a._id}" style="padding: 5px 10px; background: #ef4444; color: white; border: none; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">🚫 Rechazar</button>`;
+                }
+
+                return `
+                    <div style="border: 1px solid rgba(var(--gold-rgb), 0.2); border-radius: 8px; padding: 14px; margin-bottom: 10px; background: rgba(255,255,255,0.03);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+                            <div style="flex: 1; min-width: 200px;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                    <span style="font-weight: 700; color: white;">${ENV_LABELS[a.environment] || a.environment}</span>
+                                    <span style="font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; background: ${color}22; color: ${color}; font-weight: 600;">${STATUS_LABELS[a.status] || a.status}</span>
+                                    ${hasReceipt ? '<span style="font-size: 0.75rem; color: #22c55e;">📄 Pago subido</span>' : ''}
+                                </div>
+                                <div style="font-size: 0.85rem; color: #ccc; margin-bottom: 4px;">
+                                    <strong>${profName}</strong> (${profAlias}) &mdash; ${profEmail}
+                                </div>
+                                <div style="font-size: 0.8rem; color: #888;">
+                                    ${new Date(a.startDate).toLocaleDateString('es-AR')} — ${new Date(a.endDate).toLocaleDateString('es-AR')} | $${(a.price || 0).toLocaleString('es-AR')}
+                                    ${a.text ? ` | ${a.text.substring(0, 80)}${a.text.length > 80 ? '...' : ''}` : ''}
+                                </div>
+                                ${a.rejectionReason ? `<div style="font-size: 0.8rem; color: #ef4444; margin-top: 4px;">Motivo: ${a.rejectionReason}</div>` : ''}
+                                ${a.paymentReceiptUrl ? `<div style="font-size: 0.8rem; margin-top: 4px;"><a href="${a.paymentReceiptUrl}" target="_blank" style="color: var(--primary-gold);">📄 Ver comprobante</a></div>` : ''}
+                            </div>
+                            <div style="display: flex; gap: 6px; flex-shrink: 0; align-items: center;">
+                                ${actions}
+                            </div>
+                        </div>
+                    </div>`;
+            }).join('');
+
+            // Wire action buttons
+            list.querySelectorAll('.aviso-admin-approve').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const notes = prompt('Notas (opcional):') || '';
+                    await fetch(`/api/v1/admin/avisos/${btn.dataset.id}/approve`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+                        body: JSON.stringify({ adminNotes: notes })
+                    });
+                    loadAvisos();
+                });
+            });
+
+            list.querySelectorAll('.aviso-admin-reject').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const reason = prompt('Motivo de rechazo (obligatorio):');
+                    if (!reason) return;
+                    const notes = prompt('Notas (opcional):') || '';
+                    await fetch(`/api/v1/admin/avisos/${btn.dataset.id}/reject`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+                        body: JSON.stringify({ rejectionReason: reason, adminNotes: notes })
+                    });
+                    loadAvisos();
+                });
+            });
+
+            list.querySelectorAll('.aviso-admin-renew').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    if (!confirm('¿Renovar este aviso por 30 días más?')) return;
+                    const notes = prompt('Notas (opcional):') || '';
+                    await fetch(`/api/v1/admin/avisos/${btn.dataset.id}/renew`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+                        body: JSON.stringify({ adminNotes: notes })
+                    });
+                    loadAvisos();
+                });
+            });
+
+        } catch (err) {
+            list.innerHTML = '<p style="color: #ef4444;">Error al cargar avisos.</p>';
+        }
+    }
+
+    document.getElementById('btnRefreshAvisos').addEventListener('click', loadAvisos);
+    document.getElementById('avisoFilterStatus').addEventListener('change', loadAvisos);
+    document.getElementById('avisoFilterEnv').addEventListener('change', loadAvisos);
+
+    openAdminOverlay(modal);
+    await loadAvisos();
+}
+
+async function openStatsModal() {
+    let modal = document.getElementById('statsModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'statsModal';
+        modal.className = 'admin-overlay-modal hidden';
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(modal);
+    }
+
+    const closeBar = createAdminModalCloseBar({
+        label: 'Estadísticas KPI',
+        onClick: () => closeAdminOverlay(modal)
+    });
+
+    modal.innerHTML = `
+        ${closeBar}
+        <div style="max-width: 1100px; margin: 60px auto; padding: 20px;">
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
+                <select id="statsPeriod" style="padding: 8px 12px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;">
+                    <option value="12">Últimos 12 meses</option>
+                    <option value="6">Últimos 6 meses</option>
+                    <option value="3">Últimos 3 meses</option>
+                </select>
+                <button id="btnRefreshStats" style="padding: 8px 16px; background: var(--primary-gold); color: #0f0f1a; border: none; border-radius: 4px; font-weight: 600; cursor: pointer;">🔄 Actualizar</button>
+                <button id="btnExportStats" style="padding: 8px 16px; background: transparent; border: 1px solid var(--primary-gold); color: var(--primary-gold); border-radius: 4px; cursor: pointer;">📥 Exportar CSV</button>
+            </div>
+            <div id="statsSummary" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px;"></div>
+            <div id="statsChart" style="margin-bottom: 24px;"></div>
+            <div id="statsTopProfs"></div>
+        </div>
+    `;
+
+    async function loadStats() {
+        const months = document.getElementById('statsPeriod')?.value || '12';
+        const summary = document.getElementById('statsSummary');
+        const chart = document.getElementById('statsChart');
+        const topProfs = document.getElementById('statsTopProfs');
+
+        try {
+            const r = await fetch(`/api/v1/admin/stats?months=${months}`, {
+                headers: { 'Authorization': 'Bearer ' + getToken() }
+            });
+            const d = await r.json();
+            const data = d.data;
+
+            // Summary cards
+            summary.innerHTML = `
+                <div style="background: rgba(var(--gold-rgb), 0.1); border: 1px solid rgba(var(--gold-rgb), 0.3); border-radius: 8px; padding: 16px; text-align: center;">
+                    <div style="font-size: 2rem; font-weight: 700; color: var(--primary-gold);">${data.totalClicks}</div>
+                    <div style="font-size: 0.85rem; color: #aaa;">Total Clicks</div>
+                </div>
+                <div style="background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); border-radius: 8px; padding: 16px; text-align: center;">
+                    <div style="font-size: 2rem; font-weight: 700; color: #60a5fa;">${data.byType.profile_card}</div>
+                    <div style="font-size: 0.85rem; color: #aaa;">👤 Perfil</div>
+                </div>
+                <div style="background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); border-radius: 8px; padding: 16px; text-align: center;">
+                    <div style="font-size: 2rem; font-weight: 700; color: #4ade80;">${data.byType.phone}</div>
+                    <div style="font-size: 0.85rem; color: #aaa;">📞 Teléfono</div>
+                </div>
+                <div style="background: rgba(37,211,102,0.1); border: 1px solid rgba(37,211,102,0.3); border-radius: 8px; padding: 16px; text-align: center;">
+                    <div style="font-size: 2rem; font-weight: 700; color: #25d366;">${data.byType.whatsapp}</div>
+                    <div style="font-size: 0.85rem; color: #aaa;">💬 WhatsApp</div>
+                </div>
+                <div style="background: rgba(0,136,204,0.1); border: 1px solid rgba(0,136,204,0.3); border-radius: 8px; padding: 16px; text-align: center;">
+                    <div style="font-size: 2rem; font-weight: 700; color: #0088cc;">${data.byType.telegram}</div>
+                    <div style="font-size: 0.85rem; color: #aaa;">✈️ Telegram</div>
+                </div>
+            `;
+
+            // Bar chart (simple HTML/CSS)
+            const maxTotal = Math.max(...Object.values(data.byMonth).map(m => m.total), 1);
+            const months = data.months || [];
+            chart.innerHTML = `
+                <h4 style="color: var(--gold-light); margin-bottom: 12px;">Clicks por mes</h4>
+                <div style="display: flex; align-items: flex-end; gap: 4px; height: 200px; padding: 10px 0; border-bottom: 1px solid #333;">
+                    ${months.map(m => {
+                        const monthData = data.byMonth[m] || { total: 0 };
+                        const h = Math.max((monthData.total / maxTotal) * 160, 2);
+                        const label = m.split('-')[1] + '/' + m.split('-')[0].slice(2);
+                        return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;">
+                            <div style="font-size:0.65rem;color:#aaa;margin-bottom:2px;">${monthData.total}</div>
+                            <div style="width:100%;max-width:40px;height:${h}px;background:var(--primary-gold);border-radius:3px 3px 0 0;transition:height 0.3s;"></div>
+                            <div style="font-size:0.6rem;color:#666;margin-top:4px;transform:rotate(-45deg);white-space:nowrap;">${label}</div>
+                        </div>`;
+                    }).join('')}
+                </div>
+            `;
+
+            // Top professionals
+            const top = data.topProfessionals || [];
+            topProfs.innerHTML = `
+                <h4 style="color: var(--gold-light); margin-bottom: 12px;">Top Profesionales</h4>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid #333; color: var(--gold-light);">
+                                <th style="padding: 8px; text-align: left;">#</th>
+                                <th style="padding: 8px; text-align: left;">Alias</th>
+                                <th style="padding: 8px; text-align: right;">Perfil</th>
+                                <th style="padding: 8px; text-align: right;">Teléfono</th>
+                                <th style="padding: 8px; text-align: right;">WhatsApp</th>
+                                <th style="padding: 8px; text-align: right;">Telegram</th>
+                                <th style="padding: 8px; text-align: right;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${top.map((p, i) => `
+                                <tr style="border-bottom: 1px solid #222;">
+                                    <td style="padding: 8px; color: #888;">${i + 1}</td>
+                                    <td style="padding: 8px; color: #fff; font-weight: 600;">${p.alias || p.email}</td>
+                                    <td style="padding: 8px; text-align: right; color: #60a5fa;">${p.profile_card}</td>
+                                    <td style="padding: 8px; text-align: right; color: #4ade80;">${p.phone}</td>
+                                    <td style="padding: 8px; text-align: right; color: #25d366;">${p.whatsapp}</td>
+                                    <td style="padding: 8px; text-align: right; color: #0088cc;">${p.telegram}</td>
+                                    <td style="padding: 8px; text-align: right; color: var(--primary-gold); font-weight: 700;">${p.total}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+        } catch (err) {
+            summary.innerHTML = '<p style="color: #ef4444;">Error al cargar estadísticas.</p>';
+        }
+    }
+
+    document.getElementById('btnRefreshStats').addEventListener('click', loadStats);
+    document.getElementById('btnExportStats').addEventListener('click', () => {
+        // Simple CSV export
+        const table = document.querySelector('#statsTopProfs table');
+        if (!table) return;
+        const rows = [...table.querySelectorAll('tr')];
+        const csv = rows.map(r => {
+            const cells = [...r.querySelectorAll('th, td')];
+            return cells.map(c => c.textContent.trim()).join(',');
+        }).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'kurate_stats.csv'; a.click();
+        URL.revokeObjectURL(url);
+    });
+    document.getElementById('statsPeriod').addEventListener('change', loadStats);
+
+    openAdminOverlay(modal);
+    await loadStats();
 }
 
 window.openImageModal = openImageModal;

@@ -490,16 +490,56 @@ exports.verifyProfessional = async (req, res, next) => {
 // @access  Private/Admin
 exports.getPendingPayments = async (req, res, next) => {
   try {
-    const pending = await User.find({
+    const Aviso = require('../models/Aviso');
+
+    // 1. Old system: professionals with subscription payment receipts pending
+    const pendingSubs = await User.find({
       role: 'professional',
       'professionalProfile.paymentReceiptUrl': { $exists: true, $ne: null },
       'professionalProfile.paymentProcessed': { $ne: true }
-    }).select('email professionalProfile.alias professionalProfile.firstName professionalProfile.lastName professionalProfile.paymentReceiptUrl createdAt');
+    }).select('email professionalProfile.alias professionalProfile.firstName professionalProfile.lastName professionalProfile.photo professionalProfile.paymentReceiptUrl createdAt');
+
+    const subsPayments = pendingSubs.map(u => ({
+      _id: u._id,
+      type: 'subscription',
+      firstName: u.professionalProfile?.firstName || '',
+      lastName: u.professionalProfile?.lastName || '',
+      alias: u.professionalProfile?.alias || '',
+      photo: u.professionalProfile?.photo || '',
+      receiptUrl: u.professionalProfile.paymentReceiptUrl,
+      receiptType: u.professionalProfile.paymentReceiptUrl?.endsWith('.pdf') ? 'pdf' : 'image',
+      createdAt: u.createdAt,
+      price: null
+    }));
+
+    // 2. Aviso system: avisos with pending_payment that have a receipt uploaded
+    const pendingAvisos = await Aviso.find({
+      status: 'pending_payment',
+      paymentReceiptUrl: { $exists: true, $ne: null }
+    }).populate('professional', 'email professionalProfile.alias professionalProfile.firstName professionalProfile.lastName professionalProfile.photo');
+
+    const avisoPayments = pendingAvisos.map(a => ({
+      _id: a._id,
+      type: 'aviso',
+      firstName: a.professional?.professionalProfile?.firstName || '',
+      lastName: a.professional?.professionalProfile?.lastName || '',
+      alias: a.professional?.professionalProfile?.alias || '',
+      photo: a.professional?.professionalProfile?.photo || '',
+      receiptUrl: a.paymentReceiptUrl,
+      receiptType: a.paymentReceiptType || (a.paymentReceiptUrl?.endsWith('.pdf') ? 'pdf' : 'image'),
+      createdAt: a.createdAt,
+      price: a.price,
+      environment: a.environment,
+      text: a.text,
+      endDate: a.endDate
+    }));
+
+    const all = [...subsPayments, ...avisoPayments].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     res.status(200).json({
       success: true,
-      count: pending.length,
-      data: pending
+      count: all.length,
+      data: all
     });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
