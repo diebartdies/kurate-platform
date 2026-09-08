@@ -317,7 +317,7 @@
       card.style.position = 'relative';
       card.style.cursor = 'pointer';
       if (tech._id) {
-        card.addEventListener('click', () => { window.location.href = '/hogar-detail.html?id=' + encodeURIComponent(tech._id); });
+        card.addEventListener('click', () => { sessionStorage.setItem('hogarReturnUrl', window.location.href); window.location.href = '/hogar-detail.html?id=' + encodeURIComponent(tech._id); });
       }
       const imgContainer = el('div', 'treasure-img-container');
       imgContainer.style.cursor = 'pointer';
@@ -423,7 +423,7 @@
     function renderSearchCard(grid, p) {
       const card = el('div', 'hogar-card');
       card.style.cursor = 'pointer';
-      if (p.id) card.addEventListener('click', () => { window.location.href = '/hogar-detail.html?id=' + encodeURIComponent(p.id); });
+      if (p.id) card.addEventListener('click', () => { sessionStorage.setItem('hogarReturnUrl', window.location.href); window.location.href = '/hogar-detail.html?id=' + encodeURIComponent(p.id); });
       const imgContainer = el('div', 'treasure-img-container');
       imgContainer.style.position = 'relative';
       const img = el('img', 'treasure-img');
