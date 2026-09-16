@@ -224,14 +224,14 @@ export function initGlobalTopBar() {
     const langSwitcher = document.createElement('div');
     langSwitcher.className = 'lang-switcher';
 
-    const makeLangBtn = (lang, flagUrl, label) => {
+    const makeLangBtn = (lang, label, displayText) => {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.title = label;
         btn.setAttribute('aria-label', lang === 'es' ? t('Switch to Spanish') : t('Switch to English'));
         btn.setAttribute('aria-pressed', currentLang === lang ? 'true' : 'false');
         btn.className = currentLang === lang ? 'lang-active' : 'lang-inactive';
-        btn.innerHTML = `<img class="preserve-brand-colors" src="${flagUrl}" width="28" height="21" alt="">`;
+        btn.textContent = displayText;
         btn.addEventListener('click', () => {
             if (currentLang === lang) return;
             localStorage.setItem('platform_lang', lang);
@@ -241,9 +241,8 @@ export function initGlobalTopBar() {
         return btn;
     };
 
-    langSwitcher.appendChild(makeLangBtn('es', 'https://flagcdn.com/w40/ar.png', 'Español'));
-    langSwitcher.appendChild(makeLangBtn('en', 'https://flagcdn.com/w40/us.png', 'English'));
-    langSwitcher.appendChild(makeLangBtn('zh', 'https://flagcdn.com/w40/cn.png', '中文'));
+    langSwitcher.appendChild(makeLangBtn('es', 'Español', 'SP'));
+    langSwitcher.appendChild(makeLangBtn('en', 'English', 'EN'));
 
     if (!isLoggedIn) {
         const authLinks = document.createElement('div');

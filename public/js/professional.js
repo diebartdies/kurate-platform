@@ -1,8 +1,8 @@
 import { BASE_ORIGIN, API_URL, CATEGORY_META, resolvePhotoSrc, appPath } from './globals.js';
 import { showAlert, getPendingApprovalBannerHtml, getResubmissionBannerHtml, getGeneralRejectionBannerHtml } from './uiHelpers.js';
 import { t, applyStaticTranslations } from './i18n.js';
-import { activateAccessibleModal, deactivateAccessibleModal, announceMessage, confirmDialog } from './a11y.js';
-import { renderSpecialtyDropdown, setupLocationDropdowns } from './helpers.js';
+import { activateAccessibleModal, deactivateAccessibleModal, announceMessage, confirmDialog, fixUnassociatedLabels } from './a11y.js';
+import { renderSpecialtyDropdown, setupLocationDropdowns, initCpaAutofill, collectTreeServices, renderProfessionsPicker, collectProfessions } from './helpers.js';
 import { beginDashboardLoad, finishDashboardLoad, failDashboardLoad } from './dashboardShell.js';
 import { navigateBack } from './ui.js';
 import { logoutToEntrance } from './navReturn.js';
@@ -27,6 +27,24 @@ import {
     phonePickerHtml,
     initPhonePicker
 } from './phoneCountryCodes.js';
+
+function collectHogarServices() {
+    const result = collectTreeServices('upServices');
+    console.log('[KuraTe] collectHogarServices:', JSON.stringify(result));
+    return result.length > 0 ? result : null;
+}
+
+// Build request headers with the bearer token only when it is a real value.
+// Sending "Bearer null"/"Bearer undefined" makes the server prefer the broken
+// header over the valid auth cookie and reply 401 Not authorized.
+function profAuthHeaders(extra = {}) {
+    const token = localStorage.getItem('token');
+    const headers = { ...extra };
+    if (token && token !== 'null' && token !== 'undefined') {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
+}
 
 let currentPaymentInstructions = DEFAULT_PAYMENT_INSTRUCTIONS;
 
@@ -118,6 +136,11 @@ export function mountProfessionalPaymentOverlays() {
     attachOverlayToBody('paymentModalOverlay');
     attachOverlayToBody('howToPayOverlay');
     attachOverlayToBody('deleteProfileOverlay');
+    attachOverlayToBody('crearAvisoOverlay');
+    // Aviso overlays live inside #dashboardOverlays.hidden — move them to
+    // <body> too, otherwise removing their own `hidden` never shows them.
+    attachOverlayToBody('pagoAvisoOverlay');
+    attachOverlayToBody('avisoDetailOverlay');
 
     const sidebar = document.getElementById('profPaymentSidebar');
     const paymentSection = document.getElementById('paymentSection');
@@ -168,6 +191,8 @@ export function renderProfessionalMainDashboardShell(content) {
                             <div><label>ID Number</label><input type="text" id="upIdNumber"></div>
                             <div><label>Birth Date</label><input type="date" id="upBirthDate"></div>
                             <div><label>Age</label><input type="text" id="upAge" readonly></div>
+                            <div><label>Company Name *</label><input type="text" id="upCompanyName" placeholder="Nombre de la empresa o monotributista"></div>
+                            <div><label>Tax ID (CUIT/DNI) *</label><input type="text" id="upTaxId" placeholder="XX-XXXXXXXX-X"></div>
                         </div>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
                             <div><label>Mobile</label>${phonePickerHtml('upMobile', '', 'upMobilePhone')}</div>
@@ -196,6 +221,7 @@ export function renderProfessionalMainDashboardShell(content) {
             </form>
         </div>
     `;
+    fixUnassociatedLabels(content);
 }
 
 /** Welcome guide, billing reminders, and payment upload UI — professionals only (not admin). */
@@ -593,7 +619,9 @@ export function bindProfessionalProfileForm() {
         
         const dashboardSpecCbs = document.querySelectorAll('.dashboard-specialty-cb');
         if (dashboardSpecCbs.length > 0) {
-            const selectedSpecs = Array.from(dashboardSpecCbs).filter(cb => cb.checked).map(cb => cb.value).join(',');
+            const selectedSpecs = Array.from(dashboardSpecCbs)
+                .filter(cb => cb.checked && !cb.value.endsWith('.__todas__'))
+                .map(cb => cb.value).join(',');
             formData.set('services', selectedSpecs);
         } else {
             const upServicesEl = document.getElementById('upServices');
@@ -696,13 +724,10 @@ export function bindProfessionalProfileForm() {
         }
 
         try {
-            const token = localStorage.getItem('token');
             const ctrl = new AbortController(); const tmo=setTimeout(()=>ctrl.abort(),15000);
             const res = await fetch(`${API_URL}/professionals/updateprofile`, {
                 method: 'PUT',
-                headers: { 
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: profAuthHeaders(),
                 credentials: 'include',
                 body: formData,
                 signal: ctrl.signal
@@ -727,6 +752,39 @@ export function bindProfessionalProfileForm() {
                     const personalSection = document.getElementById('profPersonalInfoSection');
                     if (personalSection) personalSection.style.boxShadow = '';
                 }
+                // Save structured hogar services with actions
+                try {
+                    const hogarSvc = collectHogarServices();
+                    if (hogarSvc) {
+                        console.log('[KuraTe] Saving hogar services:', JSON.stringify(hogarSvc));
+                        const companyName = document.getElementById('upCompanyName')?.value || '';
+                        const taxId = document.getElementById('upTaxId')?.value || '';
+                        const svcRes = await fetch(`${API_URL}/professionals/hogar/services`, {
+                            method: 'PUT',
+                            headers: profAuthHeaders({ 'Content-Type': 'application/json' }),
+                            credentials: 'include',
+                            body: JSON.stringify({ services: hogarSvc, companyName, taxId })
+                        });
+                        const svcData = await svcRes.json();
+                        console.log('[KuraTe] hogar/services response:', JSON.stringify(svcData));
+                    } else {
+                        console.log('[KuraTe] No hogar services to save (collectHogarServices returned null)');
+                    }
+                    const profSlugs = typeof collectProfessions === 'function' ? collectProfessions() : [];
+                    if (profSlugs.length > 0 || document.querySelector('#upProfessions')) {
+                        console.log('[KuraTe] Saving professions:', JSON.stringify(profSlugs));
+                        try {
+                            const profRes = await fetch(`${API_URL}/professionals/professions`, {
+                                method: 'PUT',
+                                headers: profAuthHeaders({ 'Content-Type': 'application/json' }),
+                                credentials: 'include',
+                                body: JSON.stringify({ professions: profSlugs })
+                            });
+                            const profData = await profRes.json();
+                            console.log('[KuraTe] professions response:', JSON.stringify(profData));
+                        } catch (err) { console.error('[KuraTe] Error saving professions:', err); }
+                    }
+                } catch (err) { console.error('[KuraTe] Error saving hogar services:', err); }
             }
             if (!silent) {
                 if (data.success) {
@@ -1404,17 +1462,6 @@ export async function loadProfDashboard() {
                 ${renderCompletionChecklist(user)}
                 ${resubmitSectionHtml}
                 
-                <!-- 1. Statistics Top Frame -->
-                <div class="card fileteado-section" style="margin-bottom: 20px; border: 1px solid var(--primary-gold);">
-                    <h3 class="gold-text" style="margin-bottom: 10px; font-size: 1rem;">Estadísticas</h3>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; text-align: center;">
-                        <div style="padding: 8px; background: rgba(212,175,55,0.05); border-radius: 6px;"><div style="font-size: 1.5rem; color: var(--primary-gold); font-weight: bold;">${stats.photoCount || 0}</div><div style="font-size: 0.7rem; color: #aaa;">Fotos vistos</div></div>
-                        <div style="padding: 8px; background: rgba(212,175,55,0.05); border-radius: 6px;"><div style="font-size: 1.5rem; color: var(--primary-gold); font-weight: bold;">${stats.whatsappcCount || 0}</div><div style="font-size: 0.7rem; color: #aaa;">WhatsApp</div></div>
-                        <div style="padding: 8px; background: rgba(212,175,55,0.05); border-radius: 6px;"><div style="font-size: 1.5rem; color: var(--primary-gold); font-weight: bold;">${stats.callCount || 0}</div><div style="font-size: 0.7rem; color: #aaa;">Llamadas</div></div>
-                        <div style="padding: 8px; background: rgba(212,175,55,0.05); border-radius: 6px;"><div style="font-size: 1.5rem; color: var(--primary-gold); font-weight: bold;">0</div><div style="font-size: 0.7rem; color: #aaa;">Visitas hora pico</div></div>
-                    </div>
-                </div>
-                
                 <input type="hidden" id="upBirthDateBackup" value="${prof.birthDate ? new Date(prof.birthDate).toISOString().split('T')[0] : ''}">
                 <input type="checkbox" id="upIsExposed" style="display:none;" ${prof.isExposed !== false ? 'checked' : ''}>
                 <input type="checkbox" id="upPaysMonthly" style="display:none;" ${prof.paysMonthlyCharges !== false ? 'checked' : ''}>
@@ -1466,6 +1513,15 @@ export async function loadProfDashboard() {
                     <h3 class="gold-text" style="margin-bottom: 5px;">${t('Especialidades')}</h3>
                     <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 12px;">${t('The specialties you offer. Choose them well to appear in the right searches.')}</p>
                     <div id="upServices"></div>
+                </div>
+
+                <!-- Profesiones -->
+                <div class="card fileteado-section" style="margin-bottom: 20px; border: 1px solid var(--primary-gold);">
+                    <h3 class="gold-text" style="margin-bottom: 5px;">${t('Profesiones')}</h3>
+                    <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 12px;">${t('The trades you practice (e.g. Plomero, Electricista, Cerrajero). They appear on your profile so clients can find you by profession.')}</p>
+                    <div id="upProfessions" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        <span style="color:#888; font-size:0.85rem;">${t('Cargando profesiones...')}</span>
+                    </div>
                 </div>
 
                 <!-- Service Description -->
@@ -1583,14 +1639,14 @@ export async function loadProfDashboard() {
                 
                 <div id="updateAlert" class="alert hidden" style="padding: 10px; border-radius: 4px; border: 1px solid transparent; margin-bottom: 20px;"></div>
 
+                <button type="button" id="explicitSaveBtn" class="hidden" style="background: #25D366; color: white; font-weight: bold; width: 100%; padding: 12px; border-radius: 4px; border: none; cursor: pointer; margin-bottom: 15px;">💾 Save Changes</button>
+                <button type="button" id="bottomBackBtn" style="background: var(--primary-gold); color: var(--dark-bg); font-weight: bold; width: 100%; padding: 12px; border-radius: 4px; border: none; cursor: pointer;">&#8592; Back to Main Dashboard</button>
+
                 <div class="card fileteado-section" style="margin-top: 20px; margin-bottom: 20px; border: 1px solid var(--accent-red);">
                     <h3 style="color: var(--accent-red); margin-bottom: 10px;">${t('Leave the platform')}</h3>
                     <p style="color: #ccc; font-size: 0.9rem; margin-bottom: 16px;">${t('If you no longer wish to remain on KuraTe, you can permanently delete your profile and all associated data.')}</p>
                     <button type="button" id="btnOpenDeleteProfile" style="width: 100%; padding: 12px; background: transparent; border: 1px solid var(--accent-red); color: var(--accent-red); font-weight: bold; border-radius: 4px; cursor: pointer;">${t('Delete my profile')}</button>
                 </div>
-
-                <button type="button" id="explicitSaveBtn" class="hidden" style="background: #25D366; color: white; font-weight: bold; width: 100%; padding: 12px; border-radius: 4px; border: none; cursor: pointer; margin-bottom: 15px;">💾 Save Changes</button>
-                <button type="button" id="bottomBackBtn" style="background: var(--primary-gold); color: var(--dark-bg); font-weight: bold; width: 100%; padding: 12px; border-radius: 4px; border: none; cursor: pointer;">&#8592; Back to Main Dashboard</button>
             `;
 
             // Logic to populate the components
@@ -1607,8 +1663,12 @@ export async function loadProfDashboard() {
             renderAvailabilityDayControls(daysContainer, prof.workingDays);
 
             setupLocationDropdowns('upProvince', 'upCity', 'upNeighborhood', false, prof.location || {});
+            initCpaAutofill({ streetId: 'upStreet', numberId: 'upStreetNumber', provinceId: 'upProvince', cityId: 'upCity', postCodeId: 'upPostCode' });
 
-            renderSpecialtyDropdown('upServices', prof.services || []);
+            renderSpecialtyDropdown('upServices', (user.hogarProfile && user.hogarProfile.services) || prof.services || []);
+
+            renderProfessionsPicker('upProfessions',
+                (user.hogarProfile && user.hogarProfile.professions) || prof.professions || []);
 
             initPhonePicker('upMobile');
             initPhonePicker('upWa');
@@ -1753,7 +1813,8 @@ export async function loadProfDashboard() {
             // Show Save Button on any form modification to avoid focus-out issues
             const markDirty = (e) => {
                 if (e.target.matches('input, select, textarea')) {
-                    document.getElementById('explicitSaveBtn').classList.remove('hidden');
+                    const btn = document.getElementById('explicitSaveBtn');
+                    if (btn) { btn.classList.remove('hidden'); btn.disabled = false; }
                 }
             };
             formObj.addEventListener('input', markDirty);
@@ -1800,7 +1861,7 @@ export async function loadProfDashboard() {
             const explicitSaveBtn = document.getElementById('explicitSaveBtn');
             let editMode = false;
             const readOnlyFields = ['upFirstName', 'upSurname', 'upMiddleName', 'upIdNumber', 'upBirthDate'];
-            const editableFields = ['upAlias', 'upMobilePhone', 'upWaInput', 'upProvince', 'upCity', 'upNeighborhood', 'upStreet', 'upStreetNumber', 'upBio', 'upQuality', 'upUsesWhatsApp', 'upUsesTelegram'];
+            const editableFields = ['upAlias', 'upMobilePhone', 'upWaInput', 'upProvince', 'upCity', 'upNeighborhood', 'upStreet', 'upStreetNumber', 'upBio', 'upQuality', 'upUsesWhatsApp', 'upUsesTelegram', 'upCompanyName', 'upTaxId'];
             
             function setEditMode(enabled) {
                 editMode = enabled;
@@ -1816,6 +1877,12 @@ export async function loadProfDashboard() {
                 });
                 // Day checkboxes
                 document.querySelectorAll('.day-toggle-cb, .half-day-cb').forEach(cb => cb.disabled = !enabled);
+                // Service tree: checkboxes + action chips
+                document.querySelectorAll('#upServices .dashboard-specialty-cb').forEach(cb => cb.disabled = !enabled);
+                document.querySelectorAll('#upServices .svc-action-chip').forEach(chip => {
+                    chip.style.pointerEvents = enabled ? '' : 'none';
+                    chip.style.opacity = enabled ? '' : '0.5';
+                });
                 // Show/hide save button
                 if (explicitSaveBtn) {
                     explicitSaveBtn.classList.toggle('hidden', !enabled);
@@ -1838,6 +1905,8 @@ export async function loadProfDashboard() {
 
             // Start in read-only mode
             setEditMode(false);
+            // Re-apply after async service tree renders
+            setTimeout(() => setEditMode(false), 1500);
 
             // Calculate age from birth date
             function calculateAge(birthDate) {
@@ -1866,6 +1935,9 @@ export async function loadProfDashboard() {
             if (deleteOverlay) applyStaticTranslations(deleteOverlay);
             finishDashboardLoad('profDashboardLayout', 'loader');
             applyStaticTranslations(layout);
+            fixUnassociatedLabels(layout);
+            const deleteOverlayStatic = document.getElementById('deleteProfileOverlay');
+            if (deleteOverlayStatic) fixUnassociatedLabels(deleteOverlayStatic);
         } else {
             window.location.href = '/index.html';
         }

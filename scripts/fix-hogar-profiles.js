@@ -23,7 +23,7 @@ async function run() {
 
   const users = await User.find({
     role: 'professional',
-    professionalType: 'hogar'
+    'hogarProfile.firstName': { $exists: true, $ne: null, $ne: '' }
   }).lean();
 
   console.log(`Found ${users.length} hogar professionals`);

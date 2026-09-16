@@ -666,6 +666,18 @@ exports.updateProfessionalProfile = async (req, res, next) => {
       }
     }
 
+    // Hogar professional services (structured: [{ path, name, actions, brands }])
+    // — the admin edit modal persists these here since it targets the edited user,
+    // not the admin's own account (the pro dashboard uses /professionals/hogar/services).
+    if (req.body.hogarProfile && user.hogarProfile) {
+      const hp = user.hogarProfile;
+      if (req.body.hogarProfile.companyName !== undefined) hp.companyName = req.body.hogarProfile.companyName;
+      if (req.body.hogarProfile.taxId !== undefined) hp.taxId = req.body.hogarProfile.taxId;
+      if (req.body.hogarProfile.services !== undefined) hp.services = req.body.hogarProfile.services || [];
+      if (req.body.hogarProfile.professions !== undefined) hp.professions = req.body.hogarProfile.professions || [];
+      user.hogarProfile = hp;
+    }
+
     await user.save();
 
     // Best-effort SMS notices for admin-driven transitions (never block the save).

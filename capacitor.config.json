@@ -1,7 +1,7 @@
 {
   "appId": "com.kurate.app",
   "appName": "KuraTe",
-  "webDir": "kurate-app/dist",
+  "webDir": "public",
   "bundledWebRuntime": false,
   "server": {
     "url": "https://kurate.drsrv.net.ar",
@@ -16,7 +16,7 @@
     "StatusBar": {
       "style": "DARK",
       "backgroundColor": "#0f0f1a",
-      "overlaysWebView": true
+      "overlaysWebView": false
     }
   }
 }

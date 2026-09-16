@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-07T04:11:10.404Z",
+  "generatedAt": "2026-09-16T09:56:03.299Z",
   "minProfessionals": 1,
-  "totalPages": 35,
+  "totalPages": 38,
   "pages": [
     {
       "provinceSlug": "buenos-aires",
@@ -200,8 +200,38 @@
       "areaName": null,
       "areaType": "province",
       "path": "/acompanantes/caba",
-      "count": 60,
+      "count": 61,
       "lastUpdated": "2026-09-06T21:47:07.768Z"
+    },
+    {
+      "provinceSlug": "caba",
+      "provinceName": "CABA",
+      "areaSlug": "balvanera",
+      "areaName": "Balvanera",
+      "areaType": "neighborhood",
+      "path": "/acompanantes/caba/balvanera",
+      "count": 1,
+      "lastUpdated": "2026-09-06T21:47:07.766Z"
+    },
+    {
+      "provinceSlug": "caba",
+      "provinceName": "CABA",
+      "areaSlug": "belgrano",
+      "areaName": "Belgrano",
+      "areaType": "neighborhood",
+      "path": "/acompanantes/caba/belgrano",
+      "count": 1,
+      "lastUpdated": "2026-09-06T21:47:07.758Z"
+    },
+    {
+      "provinceSlug": "caba",
+      "provinceName": "CABA",
+      "areaSlug": "palermo",
+      "areaName": "Palermo",
+      "areaType": "neighborhood",
+      "path": "/acompanantes/caba/palermo",
+      "count": 1,
+      "lastUpdated": "2026-08-06T05:01:38.439Z"
     },
     {
       "provinceSlug": "caba",
@@ -210,7 +240,7 @@
       "areaName": "Villa Urquiza",
       "areaType": "neighborhood",
       "path": "/acompanantes/caba/villa-urquiza",
-      "count": 1,
+      "count": 2,
       "lastUpdated": "2026-09-06T21:47:07.733Z"
     },
     {

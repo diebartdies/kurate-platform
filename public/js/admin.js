@@ -1,11 +1,10 @@
 import { BASE_ORIGIN, API_URL, CATEGORY_META, getVerificationGesture, appPath } from './globals.js';
 import { showAlert, getPendingApprovalBannerHtml, getResubmissionBannerHtml, getGeneralRejectionBannerHtml } from './uiHelpers.js';
 import { t, applyStaticTranslations, formatOpeningDateTime, currentLang } from './i18n.js';
-import { activateAccessibleModal, deactivateAccessibleModal, announceMessage, confirmDialog } from './a11y.js';
+import { activateAccessibleModal, deactivateAccessibleModal, announceMessage, confirmDialog, fixUnassociatedLabels } from './a11y.js';
 import { beginDashboardLoad, finishDashboardLoad, failDashboardLoad } from './dashboardShell.js';
-import { renderSpecialtyDropdown, setupLocationDropdowns } from './helpers.js';
+import { renderSpecialtyDropdown, setupLocationDropdowns, initCpaAutofill, collectTreeServices, renderProfessionsPicker } from './helpers.js';
 import { addPhotoToGrid, openPendingConnectionsModal, bindProfessionalProfileForm, hideProfessionalPaymentOverlays, renderProfessionalMainDashboardShell, injectProfessionalDashboardGuides, renderAvailabilityDayControls } from './professional.js';
-import { buildCategoryQueue, resetLazyCategoryLoader, startLazyCategoryLoader } from './lazyCategoryLoader.js';
 
 import {
     buildFullPhoneNumber,
@@ -107,18 +106,92 @@ function createAdminModalCloseBar({ maxWidth = '1000px', label, onClick } = {}) 
     return closeBar;
 }
 
-function renderAdminCategorySection(content, cat, items, eagerImages = false) {
-    const meta = CATEGORY_META[cat];
+function buildAdminProfCard(p, eagerImages = false) {
+    const card = document.createElement('div');
+    card.className = 'admin-prof-card';
 
-    const catSection = document.createElement('div');
-    catSection.className = 'fileteado-section admin-prof-category';
-    catSection.innerHTML = `
+    const alias = p.professionalProfile?.alias || 'No Alias';
+    const photo = (p.professionalProfile?.photos && p.professionalProfile.photos.length > 0) ? p.professionalProfile.photos[0] : '/images/no-photo.svg';
+    const vStatus = p.verificationStatus || 'pending';
+    const statusColor = vStatus === 'approved' ? 'green' : (vStatus === 'rejected' ? 'red' : 'orange');
+    const thumbWrap = document.createElement('div');
+    thumbWrap.className = 'admin-prof-thumb';
+    const thumbImg = document.createElement('img');
+    thumbImg.src = photo;
+    thumbImg.className = 'admin-prof-thumb-img';
+    if (!eagerImages) thumbImg.loading = 'lazy';
+    const statusBadge = document.createElement('div');
+    statusBadge.className = 'admin-prof-status-badge';
+    statusBadge.style.background = statusColor;
+    statusBadge.textContent = t(vStatus) || vStatus.toUpperCase();
+    thumbWrap.appendChild(thumbImg);
+    thumbWrap.appendChild(statusBadge);
+
+    const aliasEl = document.createElement('div');
+    aliasEl.className = 'admin-prof-alias';
+    aliasEl.textContent = alias;
+    const emailEl = document.createElement('div');
+    emailEl.className = 'admin-prof-email';
+    emailEl.textContent = p.email;
+
+    const actions = document.createElement('div');
+    actions.className = 'admin-prof-actions';
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'edit-btn admin-icon-btn';
+    editBtn.setAttribute('aria-label', t('Edit'));
+    editBtn.title = t('Edit');
+    editBtn.textContent = '✏️';
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'delete-btn admin-icon-btn';
+    deleteBtn.setAttribute('aria-label', t('Delete professional'));
+    deleteBtn.title = t('Delete');
+    deleteBtn.textContent = '🗑️';
+    actions.appendChild(editBtn);
+    actions.appendChild(deleteBtn);
+
+    card.appendChild(thumbWrap);
+    card.appendChild(aliasEl);
+    card.appendChild(emailEl);
+    card.appendChild(actions);
+
+    // Whole card navigates to the professional's details; action buttons stop propagation.
+    const goToDetails = () => openEditProfessionalModal(p);
+    card.style.cursor = 'pointer';
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('aria-label', `${t('View details')} — ${alias}`);
+    card.onclick = () => goToDetails();
+    card.onkeydown = (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            goToDetails();
+        }
+    };
+
+    editBtn.onclick = (e) => {
+        if (e) e.stopPropagation();
+        openEditProfessionalModal(p);
+    };
+
+    deleteBtn.onclick = (e) => {
+        if (e) e.stopPropagation();
+        handleDeleteProfessional(p, card);
+    };
+
+    return card;
+}
+
+function renderAdminAllGrid(content, items, eagerImages = false) {
+    const section = document.createElement('div');
+    section.className = 'fileteado-section admin-prof-category admin-prof-all';
+    section.innerHTML = `
         <div class="category-section-header">
             <div style="display: flex; align-items: center; gap: 15px;">
-                <div style="color: var(--primary-gold); width: 24px; text-align: center;">${meta.logo}</div>
                 <div>
                     <h4 style="color: var(--primary-gold); margin: 0;">
-                        ${t(meta.name)} <span style="font-size: 0.8rem; color: #aaa; font-weight: normal; font-family: sans-serif;">${t(meta.desc)}</span>
+                        ${t('All professionals')} <span style="font-size: 0.8rem; color: #aaa; font-weight: normal; font-family: sans-serif;">(${items.length})</span>
                     </h4>
                 </div>
             </div>
@@ -129,68 +202,11 @@ function renderAdminCategorySection(content, cat, items, eagerImages = false) {
     grid.className = 'five-column-grid admin-prof-grid';
 
     items.forEach(p => {
-        const card = document.createElement('div');
-        card.className = 'admin-prof-card';
-
-        const alias = p.professionalProfile?.alias || 'No Alias';
-        const photo = (p.professionalProfile?.photos && p.professionalProfile.photos.length > 0) ? p.professionalProfile.photos[0] : '/images/no-photo.svg';
-        const vStatus = p.verificationStatus || 'pending';
-        const statusColor = vStatus === 'approved' ? 'green' : (vStatus === 'rejected' ? 'red' : 'orange');
-        const thumbWrap = document.createElement('div');
-        thumbWrap.className = 'admin-prof-thumb';
-        const thumbImg = document.createElement('img');
-        thumbImg.src = photo;
-        thumbImg.className = 'admin-prof-thumb-img';
-        if (!eagerImages) thumbImg.loading = 'lazy';
-        const statusBadge = document.createElement('div');
-        statusBadge.className = 'admin-prof-status-badge';
-        statusBadge.style.background = statusColor;
-        statusBadge.textContent = t(vStatus) || vStatus.toUpperCase();
-        thumbWrap.appendChild(thumbImg);
-        thumbWrap.appendChild(statusBadge);
-
-        const aliasEl = document.createElement('div');
-        aliasEl.className = 'admin-prof-alias';
-        aliasEl.textContent = alias;
-        const emailEl = document.createElement('div');
-        emailEl.className = 'admin-prof-email';
-        emailEl.textContent = p.email;
-
-        const actions = document.createElement('div');
-        actions.className = 'admin-prof-actions';
-        const editBtn = document.createElement('button');
-        editBtn.type = 'button';
-        editBtn.className = 'edit-btn admin-icon-btn';
-        editBtn.setAttribute('aria-label', t('Edit'));
-        editBtn.title = t('Edit');
-        editBtn.textContent = '✏️';
-        const deleteBtn = document.createElement('button');
-        deleteBtn.type = 'button';
-        deleteBtn.className = 'delete-btn admin-icon-btn';
-        deleteBtn.setAttribute('aria-label', t('Delete professional'));
-        deleteBtn.title = t('Delete');
-        deleteBtn.textContent = '🗑️';
-        actions.appendChild(editBtn);
-        actions.appendChild(deleteBtn);
-
-        card.appendChild(thumbWrap);
-        card.appendChild(aliasEl);
-        card.appendChild(emailEl);
-        card.appendChild(actions);
-
-        editBtn.onclick = () => {
-            openEditProfessionalModal(p);
-        };
-
-        deleteBtn.onclick = () => {
-            handleDeleteProfessional(p, card);
-        };
-
-        grid.appendChild(card);
+        grid.appendChild(buildAdminProfCard(p, eagerImages));
     });
 
-    catSection.appendChild(grid);
-    content.appendChild(catSection);
+    section.appendChild(grid);
+    content.appendChild(section);
 }
 
 // Permanently delete a professional from the admin grid, with confirmation.
@@ -265,7 +281,6 @@ export async function renderAdminGrid(container) {
 
 export async function loadAdminGridData() {
     const content = document.getElementById('adminGridContent');
-    resetLazyCategoryLoader();
     content.innerHTML = '<p>Loading...</p>';
     try {
         const token = localStorage.getItem('token');
@@ -345,13 +360,15 @@ export async function loadAdminGridData() {
             return true;
         });
 
-        // Order by categories (quality)
-        const categories = { 'verificados': [], 'Premium': [], 'Gold': [], 'Silver': [], 'Standard': [], 'Uncategorized': [] };
-        profs.forEach(p => {
+        // One single grid for all (no per-category sections). Keep quality
+        // ordering so Premium/verified surface first, then sort by alias.
+        const qualityRank = (p) => {
             const q = p.professionalProfile?.quality || 'Uncategorized';
-            if (categories[q]) categories[q].push(p);
-            else categories['Uncategorized'].push(p);
-        });
+            const i = ADMIN_CATEGORY_ORDER.indexOf(q);
+            return i === -1 ? ADMIN_CATEGORY_ORDER.length : i;
+        };
+        const aliasOf = (p) => String(p.professionalProfile?.alias || p.email || '').toLowerCase();
+        profs.sort((a, b) => (qualityRank(a) - qualityRank(b)) || (aliasOf(a) < aliasOf(b) ? -1 : aliasOf(a) > aliasOf(b) ? 1 : 0));
 
         content.innerHTML = '';
 
@@ -361,25 +378,11 @@ export async function loadAdminGridData() {
             return;
         }
 
-        const queue = buildCategoryQueue(categories, ADMIN_CATEGORY_ORDER);
-
-        startLazyCategoryLoader(
-            content,
-            queue,
-            (entry, ctx) => {
-                renderAdminCategorySection(content, entry.cat, entry.items, ctx.eagerImages);
-                applyStaticTranslations(content);
-            },
-            {
-                onAllComplete: () => {
-                    applyStaticTranslations(content);
-                    highlightFindMeCard();
-                }
-            }
-        );
+        renderAdminAllGrid(content, profs, true);
+        applyStaticTranslations(content);
+        highlightFindMeCard();
 
     } catch (err) {
-        resetLazyCategoryLoader();
         content.innerHTML = `<p style="color: var(--accent-red);">${t('Error connecting to the vault:')} ${err.message}</p>`;
     }
 }
@@ -635,6 +638,7 @@ export async function loadDashboard() {
                 
                 finishDashboardLoad('dashboardContent', 'loader');
                 applyStaticTranslations(content);
+                fixUnassociatedLabels(content);
                 maybeWarnWhatsAppDisconnected();
                 return; // Stop execution to prevent loading professional specific data
             }
@@ -869,7 +873,7 @@ export async function loadDashboard() {
             // Make non-editable fields grey and build Profile UI
             if (user.role === 'professional') {
                 // Only Address and Connection blocks remain editable
-                const readOnlyFields = ['upFirstName', 'upSurname', 'upMiddleName', 'upIdNumber', 'upBirthDate', 'upAlias', 'upMeasurements', 'upHeight'];
+                const readOnlyFields = ['upFirstName', 'upSurname', 'upMiddleName', 'upIdNumber', 'upBirthDate'];
                 readOnlyFields.forEach(id => {
                     const el = document.getElementById(id);
                     if (el) {
@@ -1103,6 +1107,11 @@ export async function loadDashboard() {
 
             setVal('upAlias', prof.alias || '');
             setVal('upBio', prof.bio || '');
+
+            // Populate hogarProfile fields (companyName, taxId)
+            const hp = user.hogarProfile || {};
+            setVal('upCompanyName', hp.companyName || '');
+            setVal('upTaxId', hp.taxId || '');
             
             // Update read-only quality display instead of dropdown
             const displayQuality = document.getElementById('displayQuality');
@@ -1133,8 +1142,6 @@ export async function loadDashboard() {
             }
             // Render specialties dropdown
             renderSpecialtyDropdown('upServices', prof.services || []);
-            setVal('upMeasurements', prof.measurements || '');
-            setVal('upHeight', prof.height || '');
             setVal('upWhatsapp', prof.whatsappNumber || '');
             
             setVal('upWorkingHoursStart', prof.workingHours?.start || '00:00');
@@ -1151,6 +1158,7 @@ export async function loadDashboard() {
             }
             
             setupLocationDropdowns('upProvince', 'upCity', 'upNeighborhood', false, prof.location || {});
+            initCpaAutofill({ streetId: 'upStreet', numberId: 'upStreetNumber', provinceId: 'upProvince', cityId: 'upCity', postCodeId: 'upPostCode' });
 
             const photoGrid = document.getElementById('photoGrid');
             const newPhotoInput = document.getElementById('newPhotoInput');
@@ -1295,6 +1303,7 @@ export async function loadDashboard() {
 
             finishDashboardLoad('dashboardContent', 'loader');
             applyStaticTranslations(content);
+            fixUnassociatedLabels(content);
         } else {
             console.error('Dashboard auth error:', data.error);
             content.innerHTML = `
@@ -4010,6 +4019,23 @@ export async function openEditProfessionalModal(prof = null) {
     }
 
     openAdminOverlay(modal);
+    // Single always-visible back button (sticky close bar): same appearance
+    // as the former in-form button, mode-aware (back to list or dashboard).
+    const backBtn = modal.querySelector('.modal-close-bar button');
+    if (backBtn) {
+        const toList = editModalReturnMode !== 'dashboard';
+        backBtn.innerHTML = `&larr; ${toList ? t('Back to List') : t('Back to Dashboard')}`;
+        backBtn.style.cssText = 'padding: 6px 12px; background: transparent; border: 1px solid var(--primary-gold); color: var(--primary-gold); border-radius: 4px; cursor: pointer; transition: background 0.3s ease; min-height: 0; min-width: 0;';
+        backBtn.onmouseover = () => { backBtn.style.background = 'rgba(212, 175, 55, 0.1)'; };
+        backBtn.onmouseout = () => { backBtn.style.background = 'transparent'; };
+        backBtn.onclick = () => {
+            if (editModalReturnMode === 'dashboard') {
+                closeAdminEditModalToDashboard();
+            } else {
+                renderProfessionalList();
+            }
+        };
+    }
     const container = document.getElementById('editProfContainer');
     container.innerHTML = 'Loading...';
 
@@ -4103,16 +4129,25 @@ export async function renderProfessionalList(aliasSearch = '') {
     }
 }
 
-export function renderEditForm(prof) {
+export async function renderEditForm(prof) {
     const container = document.getElementById('editProfContainer');
+    // The list endpoint only returns the cover photo and may omit newer
+    // profile fields, so load the complete record before rendering the
+    // editor (which mirrors the professional profile form field-for-field).
+    container.innerHTML = '<p>Loading...</p>';
+    try {
+        const res = await fetch(`${API_URL}/admin/professionals/${prof._id}`, {
+            headers: authHeaders(),
+            credentials: 'include'
+        });
+        const data = await parseAdminApiResponse(res);
+        if (data.success && data.data) prof = { ...prof, ...data.data };
+    } catch (err) { /* fall back to the list item */ }
     const profile = prof.professionalProfile || {};
     const servicesStr = (profile.services || []).join(', ');
 
-        container.style.position = 'relative';
-
     container.innerHTML = `
-            <button id="backToListBtn" style="position: absolute; top: 20px; right: 20px; padding: 6px 12px; background: transparent; border: 1px solid var(--primary-gold); color: var(--primary-gold); border-radius: 4px; cursor: pointer; transition: background 0.3s ease; z-index: 10;" onmouseover="this.style.background='rgba(212, 175, 55, 0.1)'" onmouseout="this.style.background='transparent'">&larr; ${editModalReturnMode === 'dashboard' ? t('Back to Dashboard') : t('Back to List')}</button>
-            <h2 class="gold-text" style="margin-bottom: 20px; padding-right: 120px;">Edit Professional: ${profile.alias || prof.email}</h2>
+            <h2 class="gold-text" style="margin-bottom: 20px;">Edit Professional: ${profile.alias || prof.email}</h2>
         <form id="adminEditProfForm" style="display: flex; flex-direction: column; gap: 15px;"> <div id="adminEditAlert" class="alert hidden" style="padding: 10px; border-radius: 4px; border: 1px solid transparent;"></div>
             <label>Email</label>
             <input type="email" id="adminEditEmail" value="${prof.email}" required style="padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;">
@@ -4127,9 +4162,11 @@ export function renderEditForm(prof) {
             <h4 style="margin-bottom: 5px; border-bottom: 1px solid #444; padding-bottom: 5px; color: var(--primary-gold);">Identity & Contact</h4>
             <div style="display:flex; gap:10px; flex-wrap: wrap; margin-bottom: 10px;">
                 <div style="flex:1;"><label>First Name</label><input type="text" id="adminEditFirstName" value="${profile.firstName || ''}" style="width:100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
-                <div style="flex:1;"><label>Last Name</label><input type="text" id="adminEditLastName" value="${profile.lastName || ''}" style="width:100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
+                <div style="flex:1;"><label>Last Name</label><input type="text" id="adminEditLastName" value="${profile.surname || ''}" style="width:100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
+                <div style="flex:1;"><label>Middle Name</label><input type="text" id="adminEditMiddleName" value="${profile.middleName || ''}" style="width:100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
                 <div style="flex:1;"><label>DNI</label><input type="text" id="adminEditIdNumber" value="${profile.idNumber || ''}" style="width:100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
                 <div style="flex:1;"><label>Birth Date</label><input type="date" id="adminEditBirthDate" value="${profile.birthDate ? profile.birthDate.substring(0,10) : ''}" style="width:100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
+                <div style="flex:1;"><label>Age</label><input type="text" id="adminEditAge" value="${profile.age || ''}" readonly style="width:100%; padding: 8px; background: #333; color: var(--primary-gold); border: 1px solid #444; border-radius: 4px; font-weight: bold; text-align: center;"></div>
             </div>
             <div style="display:flex; gap:10px; flex-wrap: wrap; margin-bottom: 15px;">
                 <div style="flex:1; min-width:220px;"><label>${t('Mobile phone')}</label>${phonePickerHtml('adminEditMobile', profile.mobilePhone, 'adminEditMobilePhone')}</div>
@@ -4156,7 +4193,13 @@ export function renderEditForm(prof) {
             </select>
 
             <label>Bio</label>
-            <textarea id="adminEditBio" rows="4" style="padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;">${profile.bio || ''}</textarea>
+            <textarea id="adminEditBio" rows="6" maxlength="500" style="padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px; resize: vertical; box-sizing: border-box; min-height: 120px;">${profile.bio || ''}</textarea>
+
+            <h4 style="margin-bottom: 5px; border-bottom: 1px solid #444; padding-bottom: 5px; color: var(--primary-gold);">${t('Profesiones')}</h4>
+            <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 12px;">${t('The trades you practice (e.g. Plomero, Electricista, Cerrajero). They appear on your profile so clients can find you by profession.')}</p>
+            <div id="adminEditProfessions" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                <span style="color:#888; font-size:0.85rem;">${t('Cargando profesiones...')}</span>
+            </div>
 
             <div style="display:flex; gap:10px;">
                 <div style="flex:1;"><label>Start Time (HH:mm)</label><input type="time" id="adminEditWStart" value="${profile.workingHours?.start || '00:00'}" style="width:100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
@@ -4165,6 +4208,11 @@ export function renderEditForm(prof) {
             
             <label>${t('Working Days')}</label>
             <div id="adminEditWDays" style="display: flex; gap: 15px; flex-wrap: wrap; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
+
+            <div style="display:flex; gap:10px; margin-top: 10px;">
+                <div style="flex:1;"><label>${t('Vacaciones desde')}</label><input type="date" id="adminEditVacStart" value="${profile.vacation?.startDate ? String(profile.vacation.startDate).substring(0,10) : ''}" style="width:100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
+                <div style="flex:1;"><label>${t('Vacaciones hasta')}</label><input type="date" id="adminEditVacEnd" value="${profile.vacation?.endDate ? String(profile.vacation.endDate).substring(0,10) : ''}" style="width:100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
+            </div>
 
             <label>Visibility / Exposure</label>
             <div style="display: flex; align-items: center; gap: 10px;">
@@ -4185,17 +4233,52 @@ export function renderEditForm(prof) {
                 <input type="text" id="adminEditNeigh" style="flex:1; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;" placeholder="Neighborhood...">
             </div>
 
+            <h4 style="margin-bottom: 5px; border-bottom: 1px solid #444; padding-bottom: 5px; color: var(--primary-gold);">Presupuesto y Tiempo de Respuesta</h4>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 12px;">
+                <div style="flex: 1; min-width: 180px;">
+                    <label for="adminEditBudgetType">¿Cobrás presupuesto?</label>
+                    <select id="adminEditBudgetType" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;">
+                        <option value="sin_cargo" ${profile.budgetType !== 'con_cargo' ? 'selected' : ''}>No — Presupuesto sin cargo</option>
+                        <option value="con_cargo" ${profile.budgetType === 'con_cargo' ? 'selected' : ''}>Sí — Con cargo</option>
+                    </select>
+                </div>
+                <div id="adminEditBudgetAmountWrap" style="flex: 1; min-width: 150px; display: ${profile.budgetType === 'con_cargo' ? 'block' : 'none'};">
+                    <label for="adminEditBudgetAmount">Monto del presupuesto (ARS)</label>
+                    <input type="number" id="adminEditBudgetAmount" min="0" step="100" placeholder="Ej: 5000" value="${profile.budgetAmount || ''}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;">
+                </div>
+                <div style="flex: 1; min-width: 180px;">
+                    <label for="adminEditResponseSpeed">Velocidad de respuesta</label>
+                    <select id="adminEditResponseSpeed" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;">
+                        <option value="inmediata" ${profile.responseSpeed === 'inmediata' ? 'selected' : ''}>Inmediata — urgencias</option>
+                        <option value="24hs" ${!profile.responseSpeed || profile.responseSpeed === '24hs' ? 'selected' : ''}>24 hs — mantenimiento</option>
+                        <option value="48hs" ${profile.responseSpeed === '48hs' ? 'selected' : ''}>48 hs — reparación programada</option>
+                        <option value="72hs" ${profile.responseSpeed === '72hs' ? 'selected' : ''}>72 hs — programada</option>
+                    </select>
+                </div>
+            </div>
+
+            ${prof.hogarProfile ? `
+            <h4 style="margin-bottom: 5px; border-bottom: 1px solid #444; padding-bottom: 5px; color: var(--primary-gold);">Hogar Business Data</h4>
+            <div style="display:flex; gap:10px; margin-bottom: 10px;">
+                <div style="flex:1;"><label>Company Name</label><input type="text" id="adminEditCompanyName" value="${prof.hogarProfile.companyName || ''}" style="width:100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
+                <div style="flex:1;"><label>Tax ID (CUIT/DNI)</label><input type="text" id="adminEditTaxId" value="${prof.hogarProfile.taxId || ''}" style="width:100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
+            </div>
+            ` : ''}
             <label>Services</label>
             <div id="adminEditServices"></div>
 
             <label>${t('WhatsApp Number')}</label>
             ${phonePickerHtml('adminEditWa', profile.whatsappNumber, 'adminEditWhatsapp')}
-
-            <label>Measurements</label>
-            <input type="text" id="adminEditMeasurements" value="${profile.measurements || ''}" style="padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;">
-
-            <label>Height</label>
-            <input type="text" id="adminEditHeight" value="${profile.height || ''}" style="padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;">
+            <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid #444;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #ccc; font-size: 0.9rem;">
+                    <input type="checkbox" id="adminEditUsesWhatsApp" ${profile.usesWhatsApp !== false ? 'checked' : ''}>
+                    WhatsApp
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #ccc; font-size: 0.9rem;">
+                    <input type="checkbox" id="adminEditUsesTelegram" ${profile.usesTelegram ? 'checked' : ''}>
+                    Telegram
+                </label>
+            </div>
 
             <div class="card fileteado-section" style="margin-bottom: 15px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -4214,7 +4297,45 @@ export function renderEditForm(prof) {
     `;
 
     setupLocationDropdowns('adminEditProvince', 'adminEditCity', 'adminEditNeigh', false, profile.location || {});
-    renderSpecialtyDropdown('adminEditServices', profile.services || []);
+    initCpaAutofill({ streetId: 'adminEditStreet', numberId: 'adminEditStreetNumber', provinceId: 'adminEditProvince', cityId: 'adminEditCity', postCodeId: 'adminEditPostCode' });
+    renderSpecialtyDropdown('adminEditServices', (prof.hogarProfile && prof.hogarProfile.services) || profile.services || []);
+    renderProfessionsPicker('adminEditProfessions', (prof.hogarProfile && prof.hogarProfile.professions) || profile.professions || []);
+
+    // Age auto-compute from birth date (mirrors the professional dashboard).
+    const adminBirthEl = document.getElementById('adminEditBirthDate');
+    const adminAgeEl = document.getElementById('adminEditAge');
+    if (adminBirthEl && adminAgeEl) {
+        adminBirthEl.addEventListener('change', () => {
+            if (adminBirthEl.value) {
+                const dob = new Date(adminBirthEl.value);
+                adminAgeEl.value = Math.abs(new Date(Date.now() - dob.getTime()).getUTCFullYear() - 1970);
+            } else {
+                adminAgeEl.value = '';
+            }
+        });
+    }
+
+    // Toggle budget amount visibility (mirrors the professional dashboard).
+    const adminBudgetTypeEl = document.getElementById('adminEditBudgetType');
+    const adminBudgetWrap = document.getElementById('adminEditBudgetAmountWrap');
+    if (adminBudgetTypeEl && adminBudgetWrap) {
+        adminBudgetTypeEl.addEventListener('change', () => {
+            adminBudgetWrap.style.display = adminBudgetTypeEl.value === 'con_cargo' ? 'block' : 'none';
+        });
+    }
+
+    // Vacation range guard: end date cannot be before start date.
+    const adminVacStart = document.getElementById('adminEditVacStart');
+    const adminVacEnd = document.getElementById('adminEditVacEnd');
+    if (adminVacStart && adminVacEnd) {
+        const clampVacation = () => {
+            if (adminVacStart.value && adminVacEnd.value && adminVacEnd.value < adminVacStart.value) {
+                adminVacEnd.value = adminVacStart.value;
+            }
+        };
+        adminVacStart.addEventListener('change', clampVacation);
+        adminVacEnd.addEventListener('change', clampVacation);
+    }
 
     initPhonePicker('adminEditMobile');
     initPhonePicker('adminEditWa');
@@ -4272,13 +4393,8 @@ export function renderEditForm(prof) {
 
     renderAvailabilityDayControls(document.getElementById('adminEditWDays'), profile.workingDays);
 
-    document.getElementById('backToListBtn').onclick = () => {
-        if (editModalReturnMode === 'dashboard') {
-            closeAdminEditModalToDashboard();
-        } else {
-            renderProfessionalList();
-        }
-    };
+    // Associate bare labels with their fields (a11y audit compliance).
+    fixUnassociatedLabels(container);
 
     applyStaticTranslations(container);
 
@@ -4329,22 +4445,49 @@ export function renderEditForm(prof) {
             document.getElementById('adminEditWhatsapp')?.value || ''
         );
 
+        // Map checked profession slugs to { slug, name } (mirrors updateMyProfessions).
+        // Undefined = taxonomy unreachable, leave stored professions untouched.
+        let adminProfessions;
+        try {
+            const checkedSlugs = [...new Set(Array.from(document.querySelectorAll('#adminEditProfessions input[data-profession-slug]:checked')).map(i => String(i.dataset.professionSlug || '').trim().toLowerCase()).filter(Boolean))];
+            if (checkedSlugs.length === 0) {
+                adminProfessions = [];
+            } else {
+                const taxRes = await fetch(`${API_URL}/professions`, { headers: authHeaders(), credentials: 'include' });
+                const taxData = await taxRes.json().catch(() => ({}));
+                const nameBySlug = new Map();
+                if (taxData && Array.isArray(taxData.data)) taxData.data.forEach(p => { if (p && p.slug) nameBySlug.set(String(p.slug).toLowerCase(), p.name || p.slug); });
+                adminProfessions = checkedSlugs.map(s => ({ slug: s, name: nameBySlug.get(s) || s }));
+            }
+        } catch (err) { adminProfessions = undefined; }
+
         const payload = {
             email: document.getElementById('adminEditEmail').value,
             verificationStatus: document.getElementById('adminEditStatus').value,
+            ...(prof.hogarProfile ? {
+                hogarProfile: {
+                    companyName: document.getElementById('adminEditCompanyName')?.value || '',
+                    taxId: document.getElementById('adminEditTaxId')?.value || '',
+                    services: collectTreeServices('adminEditServices'),
+                    ...(adminProfessions !== undefined ? { professions: adminProfessions } : {})
+                }
+            } : {}),
             professionalProfile: {
                     firstName: document.getElementById('adminEditFirstName').value,
-                    lastName: document.getElementById('adminEditLastName').value,
+                    surname: document.getElementById('adminEditLastName').value,
+                    middleName: document.getElementById('adminEditMiddleName')?.value || '',
                     idNumber: document.getElementById('adminEditIdNumber').value,
                     birthDate: document.getElementById('adminEditBirthDate').value ? new Date(document.getElementById('adminEditBirthDate').value).toISOString() : undefined,
                     age: document.getElementById('adminEditBirthDate').value ? Math.abs(new Date(Date.now() - new Date(document.getElementById('adminEditBirthDate').value).getTime()).getUTCFullYear() - 1970) : undefined,
                     mobilePhone: adminMobPhone,
                     instagram: document.getElementById('adminEditInstagram')?.value || '',
                     facebook: document.getElementById('adminEditFacebook')?.value || '',
+                    usesWhatsApp: document.getElementById('adminEditUsesWhatsApp')?.checked || false,
+                    usesTelegram: document.getElementById('adminEditUsesTelegram')?.checked || false,
                 alias: document.getElementById('adminEditAlias').value,
                 quality: document.getElementById('adminEditQuality').value,
                 bio: document.getElementById('adminEditBio').value,
-                services: (()=>{ const el=document.getElementById('adminEditServices'); if(el.tagName==='SELECT') return Array.from(el.selectedOptions).map(opt=>opt.value); const cbs=el.querySelectorAll('.dashboard-specialty-cb:checked'); if(cbs.length) return Array.from(cbs).map(cb=>cb.value); return (el.value||'').split(',').map(s=>s.trim()).filter(Boolean); })(),
+                services: (()=>{ const el=document.getElementById('adminEditServices'); if(el.tagName==='SELECT') return Array.from(el.selectedOptions).map(opt=>opt.value); const cbs=el.querySelectorAll('.dashboard-specialty-cb:checked'); if(cbs.length) return Array.from(cbs).filter(cb=>!cb.value.endsWith('.__todas__')).map(cb=>cb.value); return (el.value||'').split(',').map(s=>s.trim()).filter(Boolean); })(),
                 whatsappNumber: adminWaPhone || adminMobPhone,
                 workingHours: {
                     start: document.getElementById('adminEditWStart').value,
@@ -4353,6 +4496,18 @@ export function renderEditForm(prof) {
                 workingDays: Array.from(document.querySelectorAll('#adminEditWDays .avail-day-cb:checked')).map(cb => cb.value),
                 isExposed: document.getElementById('adminEditIsExposed').checked,
                 paysMonthlyCharges: document.getElementById('adminEditPaysMonthly').checked,
+                budgetType: document.getElementById('adminEditBudgetType')?.value || 'sin_cargo',
+                budgetAmount: (() => { const v = document.getElementById('adminEditBudgetAmount')?.value; return (v === '' || v == null) ? undefined : Number(v); })(),
+                responseSpeed: document.getElementById('adminEditResponseSpeed')?.value || '24hs',
+                vacation: (() => {
+                    const s = document.getElementById('adminEditVacStart')?.value || '';
+                    const e = document.getElementById('adminEditVacEnd')?.value || '';
+                    const out = {};
+                    if (s) out.startDate = new Date(s).toISOString();
+                    if (e) out.endDate = new Date(e).toISOString();
+                    return out;
+                })(),
+                ...(adminProfessions !== undefined ? { professions: adminProfessions } : {}),
                 location: {
                     province: document.getElementById('adminEditProvince')?.value || '',
                     city: (document.getElementById('adminEditProvince')?.value || '').trim().toLowerCase() === 'caba' ? '' : (document.getElementById('adminEditCity')?.value || ''),
@@ -4363,8 +4518,6 @@ export function renderEditForm(prof) {
                         apartment: document.getElementById('adminEditApartment')?.value || '',
                         postalCode: document.getElementById('adminEditPostCode')?.value || ''
                 },
-                measurements: document.getElementById('adminEditMeasurements').value,
-                height: document.getElementById('adminEditHeight').value,
                 photos: remainingPhotos
             }
         };
@@ -4455,6 +4608,7 @@ export async function openEditPricingModal(currentPricing) {
         modal.appendChild(container);
         document.body.appendChild(modal);
         applyStaticTranslations(modal);
+        fixUnassociatedLabels(modal);
 
         document.getElementById('editPricingForm').onsubmit = async (e) => {
             e.preventDefault();
@@ -5475,7 +5629,7 @@ async function openAvisosModal() {
         if (env) url += `environment=${env}&`;
 
         try {
-            const r = await fetch(url, { headers: { 'Authorization': 'Bearer ' + getToken() } });
+            const r = await fetch(url, { headers: authHeaders() });
             const d = await r.json();
             const avisos = d.data || [];
 
@@ -5519,7 +5673,7 @@ async function openAvisosModal() {
                                     ${a.text ? ` | ${a.text.substring(0, 80)}${a.text.length > 80 ? '...' : ''}` : ''}
                                 </div>
                                 ${a.rejectionReason ? `<div style="font-size: 0.8rem; color: #ef4444; margin-top: 4px;">Motivo: ${a.rejectionReason}</div>` : ''}
-                                ${a.paymentReceiptUrl ? `<div style="font-size: 0.8rem; margin-top: 4px;"><a href="${a.paymentReceiptUrl}" target="_blank" style="color: var(--primary-gold);">📄 Ver comprobante</a></div>` : ''}
+                                ${a.paymentReceiptUrl ? `<div style="font-size: 0.8rem; margin-top: 4px;"><a href="${a.paymentReceiptUrl}" target="_blank" style="color: var(--primary-gold);">📄 Ver comprobante</a>${a.paymentMethod ? ` <span style="color: #888;">(${a.paymentMethod === 'mercadopago' ? 'Mercado Pago' : 'Transferencia'})</span>` : ''}</div>` : ''}
                             </div>
                             <div style="display: flex; gap: 6px; flex-shrink: 0; align-items: center;">
                                 ${actions}
@@ -5534,7 +5688,7 @@ async function openAvisosModal() {
                     const notes = prompt('Notas (opcional):') || '';
                     await fetch(`/api/v1/admin/avisos/${btn.dataset.id}/approve`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+                        headers: { 'Content-Type': 'application/json', ...authHeaders() },
                         body: JSON.stringify({ adminNotes: notes })
                     });
                     loadAvisos();
@@ -5548,7 +5702,7 @@ async function openAvisosModal() {
                     const notes = prompt('Notas (opcional):') || '';
                     await fetch(`/api/v1/admin/avisos/${btn.dataset.id}/reject`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+                        headers: { 'Content-Type': 'application/json', ...authHeaders() },
                         body: JSON.stringify({ rejectionReason: reason, adminNotes: notes })
                     });
                     loadAvisos();
@@ -5561,7 +5715,7 @@ async function openAvisosModal() {
                     const notes = prompt('Notas (opcional):') || '';
                     await fetch(`/api/v1/admin/avisos/${btn.dataset.id}/renew`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+                        headers: { 'Content-Type': 'application/json', ...authHeaders() },
                         body: JSON.stringify({ adminNotes: notes })
                     });
                     loadAvisos();
@@ -5622,7 +5776,7 @@ async function openStatsModal() {
 
         try {
             const r = await fetch(`/api/v1/admin/stats?months=${months}`, {
-                headers: { 'Authorization': 'Bearer ' + getToken() }
+                headers: authHeaders()
             });
             const d = await r.json();
             const data = d.data;
@@ -5653,11 +5807,11 @@ async function openStatsModal() {
 
             // Bar chart (simple HTML/CSS)
             const maxTotal = Math.max(...Object.values(data.byMonth).map(m => m.total), 1);
-            const months = data.months || [];
+            const monthLabels = data.months || [];
             chart.innerHTML = `
                 <h4 style="color: var(--gold-light); margin-bottom: 12px;">Clicks por mes</h4>
                 <div style="display: flex; align-items: flex-end; gap: 4px; height: 200px; padding: 10px 0; border-bottom: 1px solid #333;">
-                    ${months.map(m => {
+                    ${monthLabels.map(m => {
                         const monthData = data.byMonth[m] || { total: 0 };
                         const h = Math.max((monthData.total / maxTotal) * 160, 2);
                         const label = m.split('-')[1] + '/' + m.split('-')[0].slice(2);

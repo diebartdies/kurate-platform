@@ -1,5 +1,5 @@
 /**
- * Blueprint Grid design system — KuraTe
+ * Blueprint Grid design system — SexAppeal
  * Option 3: technical grid, gold frames, uppercase UI, status-line banner
  */
 
@@ -967,20 +967,6 @@ body.blueprint-theme.blueprint-auth-page .reg-date-picker-btn {
   color: var(--primary-gold);
 }
 
-body.blueprint-theme .phone-picker-btn {
-  border-right: 1px solid var(--blueprint-border) !important;
-  filter: none !important;
-}
-
-body.blueprint-theme .phone-picker-input {
-  background: rgba(0, 0, 0, 0.45) !important;
-}
-
-body.blueprint-theme .phone-picker-menu {
-  border: 1px solid var(--blueprint-border);
-  background: var(--blueprint-panel);
-}
-
 body.blueprint-theme.blueprint-auth-page .reg-inline-link,
 body.blueprint-theme.blueprint-auth-page .recovery-resend-link,
 body.blueprint-theme.blueprint-auth-page a[href*="index"],
@@ -1358,7 +1344,7 @@ body.blueprint-theme.blueprint-treasure-page #treasureBioSection {
   }
 }
 
-/* ---- Static / content pages (detalles, awareness, para-profesionals) ---- */
+/* ---- Static / content pages (detalles, awareness, para-modelos) ---- */
 body.blueprint-theme.blueprint-static-page.landing-page {
   padding-top: calc(55px + env(safe-area-inset-top, 0px));
 }
@@ -1481,7 +1467,7 @@ body.blueprint-theme.blueprint-static-page .landing-advantages-cta-muted {
   color: #8fdfb0 !important;
 }
 
-/* KuraTe outreach landing */
+/* SelfAppeal outreach landing */
 body.blueprint-theme.blueprint-model-landing-page .model-landing-brand h1 {
   font-family: var(--blueprint-font-ui);
   font-size: 0.95rem !important;
@@ -1644,6 +1630,55 @@ body.blueprint-theme .admin-overlay-modal .admin-pending-table-wrap {
   overflow-x: auto;
 }
 
+/* ---- W3C / KuraTe compliance footer ---- */
+.sa-footer {
+  border-top: 1px solid var(--blueprint-border);
+  background: rgba(8, 10, 14, 0.96);
+  padding: 16px max(16px, env(safe-area-inset-right)) 18px max(16px, env(safe-area-inset-left));
+  text-align: center;
+  font-family: var(--blueprint-font-mono);
+}
+.sa-footer-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px 18px;
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #777;
+}
+.sa-footer-copy { color: #666; }
+.sa-footer-links { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; }
+.sa-footer-links a { color: #777; text-decoration: none; border-bottom: 1px solid transparent; }
+.sa-footer-links a:hover { color: var(--primary-gold); border-bottom-color: var(--primary-gold); }
+.w3c-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid rgba(184, 146, 46, 0.55);
+  border-radius: 4px;
+  background: rgba(184, 146, 46, 0.1);
+  color: var(--primary-gold) !important;
+  font-weight: 700;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none !important;
+  white-space: nowrap;
+  line-height: 1;
+}
+.w3c-badge:hover { background: rgba(184, 146, 46, 0.18); border-color: rgba(184, 146, 46, 0.75); }
+.w3c-badge-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #2ecc71; box-shadow: 0 0 6px rgba(46, 204, 113, 0.6);
+  flex-shrink: 0;
+}
+
 body.blueprint-theme .admin-overlay-modal p,
 body.blueprint-theme .admin-overlay-modal .recovery-step-text {
   font-family: var(--blueprint-font-mono);
@@ -1661,3 +1696,7 @@ body.blueprint-theme .admin-overlay-modal .recovery-step-text {
     padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)) !important;
   }
 }
+
+.fm-lang-btn span { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.05em; }
+.fm-lang-btn.active span { color: #B8922E; }
+.fm-lang-btn.inactive span { color: #888; }

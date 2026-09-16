@@ -2428,6 +2428,25 @@ body.small-grid-mode #treasureGrid .treasure-card {
     max-width: 72px;
 }
 
+/* Text badge replacing the former logo images (no external assets needed). */
+.how-to-pay-brand {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 6px;
+    font-weight: 800;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.how-to-pay-brand-mp {
+    background: #00a6fb;
+    color: #fff;
+}
+
 .how-to-pay-details {
     margin: 0;
 }

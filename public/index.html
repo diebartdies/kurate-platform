@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KuraTe — ¿Qué necesitás? | Profesionales verificados en Argentina</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/blueprint.css">
+    <link rel="stylesheet" href="/css/style.css?v=8.31">
+    <link rel="stylesheet" href="/css/blueprint.css?v=8.31">
     <script src="/js/autoFill.js"></script>
     <meta name="description" content="KuraTe te conecta con profesionales verificados en Argentina. Reparación de electrodomésticos, climatización, gas, plomería, electricidad y más. Presupuesto sin cargo.">
     <meta name="robots" content="index, follow">
@@ -41,7 +41,10 @@
             .fm-back { padding: 0.4rem 0.7rem; font-size: 0.78rem; }
             .fm-exit-btn { padding: 0.4rem 0.7rem; font-size: 0.78rem; }
             .fm-publish-btn { padding: 0.4rem 0.7rem; font-size: 0.78rem; }
-            .fm-lang-btn img { width: 22px; height: 17px; }
+            .fm-lang-btn { background: transparent; border: none; border-bottom: 2px solid transparent; padding: 4px 8px; cursor: pointer; transition: opacity 0.2s, border-color 0.2s; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; color: #ccc; border-radius: 4px; }
+        .fm-lang-btn.active { border-bottom-color: #B8922E; opacity: 1; color: #B8922E; }
+        .fm-lang-btn.inactive { opacity: 0.4; }
+        .fm-lang-btn:hover { opacity: 1; }
             .fm-top-bar { gap: 0.4rem; flex-wrap: wrap; }
             .fm-top-left, .fm-top-right { gap: 0.35rem; }
         }
@@ -51,11 +54,6 @@
             .fm-publish-btn { padding: 0.35rem 0.55rem; font-size: 0.72rem; }
             .fm-back-text { display: none; }
         }
-        .fm-lang-btn { background: transparent; border: none; border-bottom: 2px solid transparent; padding: 4px 4px 2px; cursor: pointer; line-height: 0; transition: opacity 0.2s, border-color 0.2s; }
-        .fm-lang-btn.active { border-bottom-color: #B8922E; opacity: 1; }
-        .fm-lang-btn.inactive { opacity: 0.4; }
-        .fm-lang-btn:hover { opacity: 1; }
-        .fm-lang-btn img { border-radius: 2px; display: block; width: 28px; height: 21px; }
 
         .fm-header { text-align: center; margin-bottom: 2rem; }
         .fm-header h1 { font-size: 1.8rem; margin: 0 0 0.3rem; color: #B8922E; }
@@ -188,9 +186,9 @@
             <div class="fm-top-right" role="navigation" aria-label="Idioma y sesión">
                 <button type="button" class="fm-publish-btn" id="loginBtnTop" onclick="window.location.href='/login.html'">Ingresar</button>
                 <button type="button" class="fm-publish-btn" id="publishBtn">Crear aviso</button>
-                <button type="button" class="fm-lang-btn active" id="langEs" title="Español" role="switch" aria-checked="true" aria-label="Español"><img src="https://flagcdn.com/w40/ar.png" alt="ES"></button>
-                <button type="button" class="fm-lang-btn inactive" id="langEn" title="English" role="switch" aria-checked="false" aria-label="English"><img src="https://flagcdn.com/w40/us.png" alt="EN"></button>
-                <button type="button" class="fm-lang-btn inactive" id="langZh" title="中文" role="switch" aria-checked="false" aria-label="中文"><img src="https://flagcdn.com/w40/cn.png" alt="CN"></button>
+                <button type="button" class="fm-lang-btn active" id="langEs" title="Español" role="switch" aria-checked="true" aria-label="Español">ES</button>
+                <button type="button" class="fm-lang-btn inactive" id="langEn" title="English" role="switch" aria-checked="false" aria-label="English">EN</button>
+                <button type="button" class="fm-lang-btn inactive" id="langZh" title="中文" role="switch" aria-checked="false" aria-label="中文">ZH</button>
             </div>
         </div>
 
@@ -208,6 +206,8 @@
                     <option value="reparar">Reparar / Arreglar</option>
                     <option value="instalar">Instalar</option>
                     <option value="mantener">Mantener</option>
+                    <option value="verificar">Verificar</option>
+                    <option value="desinstalar">Desinstalar</option>
                     <option value="mejorar">Mejorar</option>
                     <option value="disenar">Diseñar</option>
                     <option value="descartar">Descartar</option>
@@ -225,6 +225,10 @@
                     <div style="flex:1;min-width:0;">
                         <select id="fAreaDevice" class="fm-select" required>
                             <option value="">Entorno...</option>
+                            <option value="Casa de Campo">Casa de Campo</option>
+                            <option value="Hogar">Hogar</option>
+                            <option value="Industria">Industria</option>
+                            <option value="Oficina">Oficina</option>
                         </select>
                         <div class="fm-field-step"><span class="fm-step-num">1</span> Elegí entorno<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
                     </div>
@@ -253,7 +257,7 @@
 
             <div class="fm-card">
                 <label for="provincia">3. ¿Dónde lo necesitás?</label>
-                <button type="button" id="useMyLocation" class="fm-btn fm-btn-block" style="height:38px;font-size:0.8rem;text-transform:none;letter-spacing:0;margin-bottom:0.5rem;background:#1a1a2e;border:1px solid #B8922E;color:#B8922E;">
+                <button type="button" id="useMyLocation" class="fm-btn fm-btn-block" style="height:38px;font-size:0.8rem;text-transform:none;letter-spacing:0;margin-bottom:0.5rem;background:#1a1a2e;border:1px solid #B8922E;">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg>
                     Usar ubicación del dispositivo
                 </button>
@@ -281,13 +285,14 @@
             <div style="text-align:center;margin-top:1.25rem;">
                 <button type="submit" class="fm-btn fm-btn-block" id="searchBtn">Buscar profesionales</button>
                 <a href="/hogar.html" class="fm-btn fm-btn-block" style="margin-top:0.75rem;background:transparent;border:1px solid #B8922E;color:#B8922E;text-decoration:none;display:block;padding:0.75rem;border-radius:8px;">Ver técnicos registrados</a>
+                <a href="/avisos.html" class="fm-btn fm-btn-block" style="margin-top:0.5rem;background:transparent;border:1px solid #B8922E;color:#B8922E;text-decoration:none;display:block;padding:0.75rem;border-radius:8px;">📋 Ver avisos de servicios</a>
             </div>
         </form>
 
         <div id="resultsArea" class="fm-results" style="display:none;" aria-live="polite" aria-atomic="true"></div>
 
         <div class="fm-professional-cta">
-            <p style="color:#B8922E;font-weight:600;">¿Sos profesional y querés recibir consultas?</p>
+            <p style="font-weight:600;">¿Sos profesional y querés recibir consultas?</p>
             <p>Registrate gratis — primer mes sin costo.</p>
             <button class="fm-btn fm-btn-outline" id="registerCTA">Quiero registrarme</button>
         </div>
@@ -295,8 +300,12 @@
         <footer class="fm-footer">
             <a href="/login.html">Iniciar sesión</a>
             <a href="/discover.html">Explorar profesionales</a>
-            <div style="margin-top:0.75rem;display:flex;align-items:center;justify-content:center;gap:6px;">
-                <a href="https://www.w3.org/WAI/WCAG21/quickref/" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;font-size:0.7rem;color:#888;text-decoration:none;border:1px solid #333;border-radius:4px;padding:3px 8px;" aria-label="Cumple WCAG 2.1 nivel AA">
+            <div style="margin-top:0.75rem;display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;">
+                <a href="https://validator.w3.org/nu/?doc=https%3A%2F%2Fkurate.drsrv.net.ar%2F" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;font-size:0.7rem;text-decoration:none;border:1px solid #333;border-radius:4px;padding:3px 8px;" aria-label="W3C Valid HTML5">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B8922E" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
+                    W3C Valid HTML5
+                </a>
+                <a href="https://www.w3.org/WAI/WCAG21/quickref/" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;font-size:0.7rem;text-decoration:none;border:1px solid #333;border-radius:4px;padding:3px 8px;" aria-label="Cumple WCAG 2.1 nivel AA">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B8922E" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
                     WCAG 2.1 AA
                 </a>
@@ -682,14 +691,8 @@
 
         fetch('/api/v1/services').then(r => r.json()).then(resp => {
             servicesTree = resp.data || {};
-            const areas = Object.keys(servicesTree);
-            areas.forEach(a => {
-                const opt = document.createElement('option');
-                opt.value = a; opt.textContent = a;
-                fAreaDevice.appendChild(opt);
-            });
             restoreFilters();
-        });
+        }).catch(err => { console.error('Failed to load services:', err); });
 
         fAreaDevice.addEventListener('change', function() {
             const area = this.value;
@@ -750,7 +753,8 @@
                 provinciaSel.innerHTML = '<option value="">' + _t('Provincia / CABA...') + '</option>';
                 provinces.forEach(p => { provinciaSel.innerHTML += `<option value="${p.name}">${p.name}</option>`; });
                 restoreFilters();
-            });
+            })
+            .catch(err => { console.error('Failed to load provinces:', err); });
 
         provinciaSel.addEventListener('change', function() {
             const prov = this.value;
@@ -833,7 +837,7 @@
             var sugHtml = '';
             if (suggestions && suggestions.length > 0) {
                 sugHtml = '<div style="margin-top:1rem;text-align:left;">' +
-                    '<p style="color:#888;font-size:0.85rem;margin:0 0 0.5rem;">Podés flexibilizar la búsqueda:</p>';
+                    '<p style="font-size:0.85rem;margin:0 0 0.5rem;">Podés flexibilizar la búsqueda:</p>';
                 suggestions.forEach(function (s) {
                     sugHtml += '<button class="kurate-sug-btn" data-type="' + s.type + '" style="display:block;width:100%;text-align:left;background:#0f0f1a;color:#e0e0e0;border:1px solid #333;padding:0.5rem 0.8rem;border-radius:6px;cursor:pointer;font-size:0.85rem;margin-bottom:0.4rem;transition:border 0.2s;" onmouseover="this.style.borderColor=\'#B8922E\'" onmouseout="this.style.borderColor=\'#333\'">\uD83D\uDD04 ' + s.label + '</button>';
                 });
@@ -843,8 +847,8 @@
             div.id = 'kurate-no-results';
             div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:1001;display:flex;align-items:center;justify-content:center;padding:1rem;';
             div.innerHTML = '<div style="background:#1a1a2e;border:1px solid #B8922E;border-radius:12px;padding:1.5rem;max-width:460px;width:100%;text-align:center;">' +
-                '<h3 style="color:#B8922E;margin:0 0 0.5rem;">No encontramos resultados</h3>' +
-                '<p style="color:#888;font-size:0.85rem;margin:0 0 0.75rem;">No hay profesionales que coincidan exactamente con tu búsqueda.</p>' +
+                '<h3 style="margin:0 0 0.5rem;">No encontramos resultados</h3>' +
+                '<p style="font-size:0.85rem;margin:0 0 0.75rem;">No hay profesionales que coincidan exactamente con tu búsqueda.</p>' +
                 sugHtml +
                 '<button onclick="this.closest(\'#kurate-no-results\').remove()" style="margin-top:0.75rem;background:transparent;color:#666;border:1px solid #333;padding:0.5rem 1.2rem;border-radius:6px;cursor:pointer;font-size:0.8rem;">Cerrar</button>' +
                 '</div>';
@@ -1196,7 +1200,7 @@
                 const data = await r.json();
                 const clientId = data.success && data.data?.googleClientId ? data.data.googleClientId : '';
                 if (!clientId) { mount.innerHTML = ''; return; }
-                mount.innerHTML = '<p style="color:#888;font-size:0.85rem;margin-bottom:0.5rem;">O verificá con Google</p><div id="googleBtnMount"></div>';
+                mount.innerHTML = '<p style="font-size:0.85rem;margin-bottom:0.5rem;">O verificá con Google</p><div id="googleBtnMount"></div>';
                 await loadGoogleSdk();
                 window.handleGooglePrereg = async (response) => {
                     const err = document.getElementById('preregStep3Error');
@@ -1237,7 +1241,7 @@
                 const filled = side === 'front' ? dniFront : dniBack;
                 return `
                     <div style="margin-bottom:1.5rem;">
-                        <p style="color:#B8922E;font-weight:600;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 0.5rem;">${label}</p>
+                        <p style="font-weight:600;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 0.5rem;">${label}</p>
                         <div style="border:2px dashed #2a2a3e;border-radius:12px;padding:0.5rem;background:#0f0f1a;text-align:center;min-height:140px;display:flex;align-items:center;justify-content:center;transition:border-color 0.2s;" class="dni-frame" data-side="${side}">
                             ${filled ? `<img src="${filled}" style="max-width:100%;max-height:200px;border-radius:8px;display:block;">` : `<span style="color:#555;font-size:0.85rem;">Toque para tomar foto</span>`}
                         </div>
@@ -1283,19 +1287,19 @@
                 actions.innerHTML = `
                     <p style="color:#2ecc71;font-size:0.85rem;margin-bottom:0.75rem;">DNI escaneado correctamente. Completá tu perfil.</p>
                     <div style="margin-bottom:0.75rem;">
-                        <label style="color:#888;font-size:0.8rem;">Contraseña</label>
+                        <label style="font-size:0.8rem;">Contraseña</label>
                         <input type="password" id="preregFinalPassword" placeholder="Mínimo 6 caracteres" style="width:100%;padding:0.6rem;border:1px solid #2a2a3e;border-radius:8px;background:#0f0f1a;color:#fff;font-size:0.9rem;box-sizing:border-box;">
                     </div>
                     <div style="margin-bottom:0.75rem;">
-                        <label style="color:#888;font-size:0.8rem;">Confirmar contraseña</label>
+                        <label style="font-size:0.8rem;">Confirmar contraseña</label>
                         <input type="password" id="preregFinalPasswordConfirm" placeholder="Repetí la contraseña" style="width:100%;padding:0.6rem;border:1px solid #2a2a3e;border-radius:8px;background:#0f0f1a;color:#fff;font-size:0.9rem;box-sizing:border-box;">
                     </div>
                     <div style="margin-bottom:0.75rem;">
-                        <label style="color:#888;font-size:0.8rem;">Alias (mostrado públicamente)</label>
+                        <label style="font-size:0.8rem;">Alias (mostrado públicamente)</label>
                         <input type="text" id="preregFinalAlias" placeholder="Tu nombre de fantasía" style="width:100%;padding:0.6rem;border:1px solid #2a2a3e;border-radius:8px;background:#0f0f1a;color:#fff;font-size:0.9rem;box-sizing:border-box;">
                     </div>
                     <div style="margin-bottom:0.75rem;">
-                        <label style="color:#888;font-size:0.8rem;">Tipo de cuenta</label>
+                        <label style="font-size:0.8rem;">Tipo de cuenta</label>
                         <select id="preregFinalRole" style="width:100%;padding:0.6rem;border:1px solid #2a2a3e;border-radius:8px;background:#0f0f1a;color:#fff;font-size:0.9rem;box-sizing:border-box;">
                             <option value="professional">Profesional</option>
                             <option value="user">Usuario</option>
@@ -1345,7 +1349,7 @@
                             renderDniUi();
                             // Validate front via OCR
                             const status = document.getElementById('dniStatus');
-                            status.innerHTML = '<p style="color:#888;font-size:0.85rem;">Analizando DNI...</p>';
+                            status.innerHTML = '<p style="font-size:0.85rem;">Analizando DNI...</p>';
                             try {
                                 const r = await fetch('/api/v1/public/pre-register/scan-dni', {
                                     method: 'POST',

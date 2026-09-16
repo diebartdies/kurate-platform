@@ -5,6 +5,7 @@ const config = require('../config/appConfig');
 const ActivityLog = require('../models/ActivityLog');
 const sendEmail = require('../sendEmail');
 const Specialty = require('../models/Specialty');
+const Profession = require('../models/Profession');
 const Statistic = require('../models/Statistic');
 const Review = require('../models/Review');
 const { assignGpsToLocation } = require('../utils/cityCoordinates');
@@ -202,25 +203,36 @@ exports.searchProfessionals = async (req, res, next) => {
     const uLat = parseFloat(userLat) || null;
     const uLng = parseFloat(userLng) || null;
 
-    const baseFilter = mergePublicListingFilter();
-    // Match professionals with either professionalProfile or hogarProfile
-    delete baseFilter['professionalProfile.isExposed'];
+    const baseFilter = {
+      role: 'professional',
+      accountDeletedAt: null,
+      $or: [
+        { verificationStatus: 'approved' },
+        { verificationStatus: { $exists: false } },
+        { verificationStatus: null }
+      ]
+    };
     baseFilter.$and = baseFilter.$and || [];
     baseFilter.$and.push({
       $or: [
-        { 'professionalProfile.alias': { $exists: true, $ne: '' } },
-        { 'hogarProfile.firstName': { $exists: true, $ne: '' } }
+        { 'professionalProfile.alias': { $exists: true, $ne: '' }, 'professionalProfile.services': { $exists: true, $not: { $size: 0 } } },
+        { 'hogarProfile.firstName': { $exists: true, $ne: '' }, 'hogarProfile.services': { $exists: true, $not: { $size: 0 } } }
       ]
     });
 
     if (provincia && provincia.trim()) {
+      const provRaw = provincia.trim();
+      const provLower = provRaw.toLowerCase();
+      const provRegexes = [{ $regex: provRaw, $options: 'i' }];
+      if (provLower === 'caba') provRegexes.push({ $regex: 'Ciudad Autónoma de Buenos Aires', $options: 'i' });
+      if (provLower.includes('ciudad autónoma')) provRegexes.push({ $regex: '^CABA$', $options: 'i' });
+      const provOr = [];
+      for (const pr of provRegexes) {
+        provOr.push({ 'professionalProfile.location.province': pr });
+        provOr.push({ 'hogarProfile.address.province': pr });
+      }
       baseFilter.$and = baseFilter.$and || [];
-      baseFilter.$and.push({
-        $or: [
-          { 'professionalProfile.location.province': { $regex: provincia.trim(), $options: 'i' } },
-          { 'hogarProfile.address.province': { $regex: provincia.trim(), $options: 'i' } }
-        ]
-      });
+      baseFilter.$and.push({ $or: provOr });
     }
     if (ciudad && ciudad.trim()) {
       baseFilter.$and = baseFilter.$and || [];
@@ -230,6 +242,18 @@ exports.searchProfessionals = async (req, res, next) => {
           { 'hogarProfile.address.city': { $regex: ciudad.trim(), $options: 'i' } }
         ]
       });
+    }
+    if (req.query.profession && req.query.profession.trim()) {
+      const profRaw = String(req.query.profession).trim();
+      const profSlug = profRaw.toLowerCase().replace(/\s+/g, '-');
+      const orProf = [
+        { 'professionalProfile.professions.slug': profSlug },
+        { 'hogarProfile.professions.slug': profSlug },
+        { 'professionalProfile.professions.name': { $regex: profRaw, $options: 'i' } },
+        { 'hogarProfile.professions.name': { $regex: profRaw, $options: 'i' } }
+      ];
+      baseFilter.$and = baseFilter.$and || [];
+      baseFilter.$and.push({ $or: orProf });
     }
     const isCabaBarrio = ciudad && ciudad.trim() && provincia && provincia.trim().toLowerCase() === 'caba';
 
@@ -243,7 +267,9 @@ exports.searchProfessionals = async (req, res, next) => {
       parts.forEach(p => { if (p) searchTerms.add(p.replace(/-/g, ' ')); });
       patterns = [...searchTerms].map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
 
-      const svcRegex = service.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const svcNorm = service.trim().replace(/\s+/g, '-');
+      const svcRegexRaw = svcNorm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const svcRegex = svcRegexRaw.replace(/-/g, '[- ]');
       baseFilter.$and = baseFilter.$and || [];
       baseFilter.$and.push({
         $or: [
@@ -281,6 +307,7 @@ exports.searchProfessionals = async (req, res, next) => {
         'professionalProfile.bio': 1,
         'professionalProfile.location': 1,
         'professionalProfile.services': 1,
+        'professionalProfile.professions': 1,
         'professionalProfile.photos': 1,
         'professionalProfile.whatsappNumber': 1,
         'hogarProfile.firstName': 1,
@@ -289,6 +316,7 @@ exports.searchProfessionals = async (req, res, next) => {
         'hogarProfile.area': 1,
         'hogarProfile.action': 1,
         'hogarProfile.services': 1,
+        'hogarProfile.professions': 1,
         'hogarProfile.photos': 1,
         'hogarProfile.availability': 1,
         'hogarProfile.address': 1,
@@ -465,8 +493,8 @@ exports.searchProfessionals = async (req, res, next) => {
         lng: pLng || null,
         distance,
         services: svcs,
+        professions: pp.professions && pp.professions.length ? pp.professions : (p.hogarProfile && p.hogarProfile.professions) || [],
         photo: firstPhoto,
-        phone: pp.whatsappNumber || pp.contact?.phone || null,
         email: p.email,
         telegram: !!(p.hogarProfile && p.hogarProfile.contact && p.hogarProfile.contact.telegram),
         onCall: !!(p.hogarProfile && p.hogarProfile.onCall),
@@ -593,7 +621,7 @@ exports.searchProfessionals = async (req, res, next) => {
             location: [pp.location?.city || pp.address?.city, pp.location?.province || pp.address?.province].filter(Boolean).join(', '),
             lat: pp.location?.lat || null, lng: pp.location?.lng || null, distance: dist || null,
             services: svcs, photo: photos[0] || null,
-            phone: pp.whatsappNumber || pp.contact?.phone || null, email: p.email,
+            email: p.email,
             telegram: !!(p.hogarProfile && p.hogarProfile.contact && p.hogarProfile.contact.telegram),
             averageRating: avgRating, brandMatched: false, brandGeneric: false,
             modelMatched: false, modelGeneric: false, mustMatch: false
@@ -783,6 +811,17 @@ exports.getProfessionalByAlias = async (req, res, next) => {
         isGuest: false
       });
 
+      // KPI tracking - profile card click
+      const ClickEvent = require('../models/ClickEvent');
+      const clickMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+      await ClickEvent.create({
+        professional: professional._id,
+        type: 'profile_card',
+        visitorIp: clientIp,
+        userAgent: (req.headers['user-agent'] || '').substring(0, 300),
+        month: clickMonth
+      });
+
     } catch(err) { console.error('Activity log error:', err.message); }
 
     // Fetch dynamic pricing
@@ -868,6 +907,17 @@ exports.contactWhatsApp = async (req, res, next) => {
         { $inc: { whatsappcCount: 1 }, $set: { time: new Date() } },
         { upsert: true, new: true, setDefaultsOnInsert: true }
       );
+
+      // KPI tracking
+      const ClickEvent = require('../models/ClickEvent');
+      const clickMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+      await ClickEvent.create({
+        professional: professional._id,
+        type: 'whatsapp',
+        visitorIp: clientIp,
+        userAgent: (req.headers['user-agent'] || '').substring(0, 300),
+        month: clickMonth
+      });
     } catch(err) { console.error('Activity log error:', err.message); }
 
     res.redirect(waUrl);
@@ -1633,6 +1683,17 @@ exports.contactPhone = async (req, res, next) => {
         { $inc: { callCount: 1 }, $set: { time: new Date() } },
         { upsert: true, new: true, setDefaultsOnInsert: true }
       );
+
+      // KPI tracking
+      const ClickEvent = require('../models/ClickEvent');
+      const clickMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+      await ClickEvent.create({
+        professional: professional._id,
+        type: 'phone',
+        visitorIp: clientIp,
+        userAgent: (req.headers['user-agent'] || '').substring(0, 300),
+        month: clickMonth
+      });
     } catch(err) { console.error('Activity log error:', err.message); }
 
     res.redirect(phoneUrl);
@@ -1712,7 +1773,8 @@ exports.deleteMyProfile = async (req, res, next) => {
 exports.getServiceTree = async (req, res) => {
   try {
     const serviceTree = require('../data/serviceTree');
-    res.json({ success: true, data: serviceTree });
+    const { DEFAULT_ACTIONS } = require('../data/serviceTree');
+    res.json({ success: true, data: serviceTree, actions: DEFAULT_ACTIONS });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -1729,10 +1791,10 @@ exports.updateHogarServices = async (req, res) => {
       birthDate, activityStartDate,
       address,
       contact,
-      category, action, actionDetails, area, specialty, availability, description
+      action, actionDetails, area, specialty, availability, description
     } = req.body;
     const user = await User.findById(req.user.id);
-    if (!user || user.role !== 'professional' || user.professionalType !== 'hogar') {
+    if (!user || user.role !== 'professional' || !user.hogarProfile) {
       return res.status(400).json({ success: false, error: 'Hogar professional not found' });
     }
 
@@ -1742,6 +1804,7 @@ exports.updateHogarServices = async (req, res) => {
     if (lastName !== undefined) hp.lastName = lastName;
     if (companyName !== undefined) hp.companyName = companyName;
     if (taxId !== undefined) hp.taxId = taxId;
+
     if (birthDate !== undefined && birthDate) hp.birthDate = new Date(birthDate);
     if (activityStartDate !== undefined && activityStartDate) hp.activityStartDate = new Date(activityStartDate);
     if (address !== undefined) {
@@ -1765,7 +1828,6 @@ exports.updateHogarServices = async (req, res) => {
         telegram: Boolean(contact.telegram)
       };
     }
-    if (category !== undefined) hp.category = category;
     if (action !== undefined) hp.action = action;
     if (actionDetails !== undefined) hp.actionDetails = actionDetails;
     if (area !== undefined) hp.area = area;
@@ -1773,7 +1835,10 @@ exports.updateHogarServices = async (req, res) => {
     if (availability !== undefined) hp.availability = availability;
     if (description !== undefined) hp.description = description;
 
-    if (services !== undefined) hp.services = services || [];
+    if (services !== undefined) {
+      console.log('[KuraTe] updateHogarServices saving:', JSON.stringify(services));
+      hp.services = services || [];
+    }
     if (photos !== undefined) hp.photos = photos || [];
     if (scope) hp.scope = scope;
     if (experience !== undefined) hp.experience = experience;
@@ -1787,15 +1852,79 @@ exports.updateHogarServices = async (req, res) => {
   }
 };
 
-function tryDeleteUploadFile(storedPath) {
-  if (!isUploadPath(storedPath)) return;
-  const absolutePath = path.join(config.root, 'public', storedPath.replace(/^\//, ''));
+// @desc    Public list of professions (trades taxonomy)
+// @route   GET /api/v1/professions
+// @access  Public
+exports.getProfessions = async (req, res, next) => {
   try {
-    if (fs.existsSync(absolutePath)) fs.unlinkSync(absolutePath);
-  } catch (err) {
-    console.error('Failed to delete upload file:', err.message);
+    const professions = await Profession.find({ active: true })
+      .select('slug name image description')
+      .sort({ name: 1 })
+      .lean();
+    res.json({ success: true, count: professions.length, data: professions });
+  } catch (error) {
+    next(error);
   }
-}
+};
+
+// @desc    Save which trade(s) the professional exercises on their profile.
+//          Accepts [{ slug }] or [{ slug, name }]. Stores { slug, name } on both
+//          professionalProfile and hogarProfile so searches find it either way.
+// @route   PUT /api/v1/professionals/professions
+// @access  Private/Professional
+exports.updateMyProfessions = async (req, res, next) => {
+  try {
+    const raw = req.body.professions;
+    if (!Array.isArray(raw)) {
+      return res.status(400).json({ success: false, error: 'professions must be an array' });
+    }
+
+    const slugs = raw.map(p => (typeof p === 'string' ? p : p.slug)).filter(Boolean).map(s => String(s).trim().toLowerCase());
+    const uniqueSlugs = [...new Set(slugs)];
+
+    const valid = await Profession.find({ active: true, slug: { $in: uniqueSlugs } }).select('slug name').lean();
+    const chosen = valid.map(p => ({ slug: p.slug, name: p.name }));
+
+    const user = await User.findById(req.user.id);
+    if (!user || user.role !== 'professional') {
+      return res.status(404).json({ success: false, error: 'Professional not found' });
+    }
+
+    if (user.professionalProfile) user.professionalProfile.professions = chosen;
+    if (user.hogarProfile) user.hogarProfile.professions = chosen;
+    await user.save();
+
+    res.json({ success: true, data: chosen });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Save hogar payment data (CBU/CVU)
+// @route   PUT /api/v1/hogar/payment
+// @access  Private/Professional
+exports.updateHogarPayment = async (req, res) => {
+  try {
+    const { wantsAppPayment, cbu, cvu, alias, accountNumber, bankName } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user || user.role !== 'professional' || !user.hogarProfile) {
+      return res.status(400).json({ success: false, error: 'Hogar professional not found' });
+    }
+    const hp = user.hogarProfile || {};
+    hp.payment = hp.payment || {};
+    if (wantsAppPayment !== undefined) hp.payment.wantsAppPayment = Boolean(wantsAppPayment);
+    if (cbu !== undefined) hp.payment.cbu = String(cbu).replace(/\D/g, '').slice(0, 22);
+    if (cvu !== undefined) hp.payment.cvu = String(cvu).replace(/\D/g, '').slice(0, 22);
+    if (alias !== undefined) hp.payment.alias = String(alias).trim().slice(0, 30);
+    if (accountNumber !== undefined) hp.payment.accountNumber = String(accountNumber).trim().slice(0, 40);
+    if (bankName !== undefined) hp.payment.bankName = String(bankName).trim().slice(0, 40);
+    user.hogarProfile = hp;
+    await user.save();
+    res.json({ success: true, data: hp.payment });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+};
 
 // @desc    User-initiated profile deletion — hidden from public; data retained server-side
 // @route   DELETE /api/v1/professionals/me
@@ -1862,32 +1991,62 @@ exports.getHogarProfessionals = async (req, res, next) => {
     const b64 = (v) => (v ? Buffer.from(String(v)).toString('base64') : '');
     const query = {
       role: 'professional',
-      professionalType: 'hogar',
       accountDeletedAt: null,
       isVerified: true,
-      verificationStatus: 'approved'
+      $or: [
+        { verificationStatus: 'approved' },
+        { verificationStatus: { $exists: false } },
+        { verificationStatus: null }
+      ]
     };
 
+    // Professionals with hogarProfile serve only their registered area
+    // Professionals WITHOUT hogarProfile serve ALL environments
     if (req.query.area && req.query.area.trim()) {
-      query['hogarProfile.area'] = req.query.area.trim();
-    }
-    if (req.query.action && req.query.action.trim()) {
-      query['hogarProfile.action'] = req.query.action.trim();
-    }
-    if (req.query.category && req.query.category.trim()) {
-      query['hogarProfile.category'] = req.query.category.trim();
-    }
-    if (req.query.availability && req.query.availability.trim()) {
-      query['hogarProfile.availability'] = req.query.availability.trim();
-    }
-    if (req.query.province && req.query.province.trim()) {
-      const provRegex = { $regex: req.query.province.trim(), $options: 'i' };
+      const areaRegex = { $regex: '^' + req.query.area.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', $options: 'i' };
       query.$and = query.$and || [];
       query.$and.push({ $or: [
-        { 'hogarProfile.address.province': provRegex },
-        { 'professionalProfile.location.province': provRegex },
-        { 'province': provRegex }
+        { 'hogarProfile.area': areaRegex },
+        { 'hogarProfile.firstName': { $exists: false } }
       ]});
+    }
+    if (req.query.action && req.query.action.trim()) {
+      const actRaw = req.query.action.trim();
+      const actLower = actRaw.toLowerCase();
+      const actMap = { 'reparar':'Reparo','arreglar':'Reparo','arregla':'Reparo','reparo':'Reparo','instalar':'Instalo','instalo':'Instalo','mantenimiento':'Hago mantenimiento','mantener':'Hago mantenimiento','hago mantenimiento':'Hago mantenimiento','vendo repuestos':'Vendo repuestos','vender':'Vendo repuestos','asesoro':'Asesoro','aprender':'Asesoro','mejorar':'Reparo','disenar':'Asesoro','diseñar':'Asesoro','descartar':'Vendo repuestos','busco':'Instalo','comprar':'Vendo repuestos','donar':'Vendo repuestos','recibir-donaciones':'Vendo repuestos' };
+      const actNorm = actMap[actLower] || actRaw;
+      const actRegex = { $regex: '^' + actNorm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', $options: 'i' };
+      query.$and = query.$and || [];
+      query.$and.push({ $or: [
+        { 'hogarProfile.action': actRegex },
+        { 'hogarProfile.firstName': { $exists: false } }
+      ]});
+    }
+    if (req.query.category && req.query.category.trim()) {
+      query.professionalType = { $regex: '^' + req.query.category.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', $options: 'i' };
+    }
+    if (req.query.availability && req.query.availability.trim()) {
+      const availRegex = { $regex: '^' + req.query.availability.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', $options: 'i' };
+      query.$and = query.$and || [];
+      query.$and.push({ $or: [
+        { 'hogarProfile.availability': availRegex },
+        { 'hogarProfile.firstName': { $exists: false } }
+      ]});
+    }
+    if (req.query.province && req.query.province.trim()) {
+      const provRaw = req.query.province.trim();
+      const provLower = provRaw.toLowerCase();
+      const provRegexes = [{ $regex: provRaw, $options: 'i' }];
+      if (provLower === 'caba') provRegexes.push({ $regex: 'Ciudad Autónoma de Buenos Aires', $options: 'i' });
+      if (provLower.includes('ciudad autónoma')) provRegexes.push({ $regex: '^CABA$', $options: 'i' });
+      const provOr = [];
+      for (const pr of provRegexes) {
+        provOr.push({ 'hogarProfile.address.province': pr });
+        provOr.push({ 'professionalProfile.location.province': pr });
+        provOr.push({ 'province': pr });
+      }
+      query.$and = query.$and || [];
+      query.$and.push({ $or: provOr });
     }
     if (req.query.city && req.query.city.trim()) {
       const cityRegex = { $regex: req.query.city.trim(), $options: 'i' };
@@ -1899,13 +2058,38 @@ exports.getHogarProfessionals = async (req, res, next) => {
       ]});
     }
     if (req.query.neighborhood && req.query.neighborhood.trim()) {
-      query['hogarProfile.address.neighborhood'] = { $regex: req.query.neighborhood.trim(), $options: 'i' };
+      const hoodRegex = { $regex: req.query.neighborhood.trim(), $options: 'i' };
+      query.$and = query.$and || [];
+      query.$and.push({ $or: [
+        { 'hogarProfile.address.neighborhood': hoodRegex },
+        { 'hogarProfile.firstName': { $exists: false } }
+      ]});
     }
-    // service filter: matches any selected service node path (contains match)
+    if (req.query.profession && req.query.profession.trim()) {
+      const profRaw = String(req.query.profession).trim();
+      const profSlug = profRaw.toLowerCase().replace(/\s+/g, '-');
+      query.$and = query.$and || [];
+      query.$and.push({ $or: [
+        { 'hogarProfile.professions.slug': profSlug },
+        { 'hogarProfile.professions.name': { $regex: profRaw, $options: 'i' } },
+        { 'professionalProfile.professions.slug': profSlug },
+        { 'professionalProfile.professions.name': { $regex: profRaw, $options: 'i' } },
+        { 'hogarProfile.services.name': { $regex: profRaw, $options: 'i' } },
+        { 'professionalProfile.services': { $regex: profRaw, $options: 'i' } }
+      ]});
+    }
+    // service filter: matches any selected service node path (contains match) — normalize separators so
+    // "hogar/linea-blanca/heladera" (web tree) matches DB "hogar.linea-blanca.heladera", and spaces/dashes are interchangeable
     if (req.query.service && req.query.service.trim()) {
-      const svc = req.query.service.trim();
-      const escaped = svc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      query['hogarProfile.services.path'] = { $regex: escaped, $options: 'i' };
+      const svcRaw = req.query.service.trim();
+      const svcNorm = svcRaw.replace(/\s+/g, '-');
+      const escaped = svcNorm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      // treat /, ., - and space interchangeably as path separators
+      const flexible = escaped
+        .replace(/\//g, '[./]')
+        .replace(/\\\./g, '[./]')
+        .replace(/-/g, '[- ]');
+      query['hogarProfile.services.path'] = { $regex: flexible, $options: 'i' };
     }
     // free-text search (q): matches service name, path, action, area, bio — each word independently
     // Verb synonyms map so "reparar", "arreglar" etc. match action "Reparo"
@@ -1923,9 +2107,12 @@ exports.getHogarProfessionals = async (req, res, next) => {
       mantenimiento: ['Hago mantenimiento', 'mantenimiento'],
       revisar: ['Hago mantenimiento', 'revisar'],
       chequear: ['Hago mantenimiento', 'chequear'],
-      verificar: ['Hago mantenimiento', 'verificar'],
-      inspeccionar: ['Hago mantenimiento', 'inspeccionar'],
-      certificar: ['Hago mantenimiento', 'certificar'],
+      verificar: ['verificar', 'Verificar'],
+      inspeccionar: ['verificar', 'inspeccionar'],
+      certificar: ['verificar', 'certificar'],
+      desinstalar: ['desinstalar', 'Desinstalar'],
+      quitar: ['desinstalar', 'quitar'],
+      retirar: ['desinstalar', 'retirar'],
       vender: ['Vendo repuestos', 'vender'],
       asesorar: ['Asesoro', 'asesorar']
     };
@@ -1941,9 +2128,11 @@ exports.getHogarProfessionals = async (req, res, next) => {
           const rawRe = new RegExp(rawEscaped, 'i');
           orConditions.push({ 'hogarProfile.services.path': rawRe });
           orConditions.push({ 'hogarProfile.services.name': rawRe });
+          orConditions.push({ 'hogarProfile.professions.name': rawRe });
+          orConditions.push({ 'professionalProfile.professions.name': rawRe });
           orConditions.push({ 'hogarProfile.action': rawRe });
           orConditions.push({ 'hogarProfile.area': rawRe });
-          orConditions.push({ 'hogarProfile.category': rawRe });
+          orConditions.push({ 'professionalType': rawRe });
           orConditions.push({ 'professionalProfile.bio': rawRe });
           orConditions.push({ 'professionalProfile.alias': rawRe });
           orConditions.push({ name: rawRe });
@@ -1960,6 +2149,10 @@ exports.getHogarProfessionals = async (req, res, next) => {
     // brand filter: matches any service's brands array
     if (req.query.brand && req.query.brand.trim()) {
       query['hogarProfile.services.brands'] = { $regex: req.query.brand.trim(), $options: 'i' };
+    }
+    // action filter: matches any service's actions array (device-level)
+    if (req.query.action && req.query.action.trim()) {
+      query['hogarProfile.services.actions'] = { $regex: req.query.action.trim(), $options: 'i' };
     }
     // geolocation: sort by distance when lat/lng provided
     const userLat = parseFloat(req.query.lat) || null;
@@ -1985,10 +2178,10 @@ exports.getHogarProfessionals = async (req, res, next) => {
     if (needsDistance) {
       // Fetch all, sort by distance in-memory
       const all = await User.find(query).select(
-        'name email professionalProfile.location.lat professionalProfile.location.lng ' +
+        'name email professionalType professionalProfile.location.lat professionalProfile.location.lng professionalProfile.alias professionalProfile.photos professionalProfile.professions ' +
         'hogarProfile.firstName hogarProfile.lastName hogarProfile.companyName ' +
-        'hogarProfile.action hogarProfile.area hogarProfile.category hogarProfile.specialty ' +
-        'hogarProfile.services hogarProfile.photos hogarProfile.availability hogarProfile.address ' +
+        'hogarProfile.action hogarProfile.area hogarProfile.specialty ' +
+        'hogarProfile.services hogarProfile.professions hogarProfile.photos hogarProfile.availability hogarProfile.address ' +
         'hogarProfile.contact'
       ).lean();
       all.forEach(u => {
@@ -2005,10 +2198,10 @@ exports.getHogarProfessionals = async (req, res, next) => {
       users = all.slice(skip, skip + limit);
     } else {
       users = await User.find(query).select(
-        'name email professionalProfile.location.lat professionalProfile.location.lng ' +
+        'name email professionalType professionalProfile.location.lat professionalProfile.location.lng professionalProfile.alias professionalProfile.photos professionalProfile.professions ' +
         'hogarProfile.firstName hogarProfile.lastName hogarProfile.companyName ' +
-        'hogarProfile.action hogarProfile.area hogarProfile.category hogarProfile.specialty ' +
-        'hogarProfile.services hogarProfile.photos hogarProfile.availability hogarProfile.address ' +
+        'hogarProfile.action hogarProfile.area hogarProfile.specialty ' +
+        'hogarProfile.services hogarProfile.professions hogarProfile.photos hogarProfile.availability hogarProfile.address ' +
         'hogarProfile.contact'
       ).skip(skip).limit(limit).lean();
       total = await User.countDocuments(query);
@@ -2020,7 +2213,7 @@ exports.getHogarProfessionals = async (req, res, next) => {
       const hp = u.hogarProfile || {};
       const services = hp.services || [];
       const primary = services[0] || {};
-      const photo = (hp.photos && hp.photos[0]) ? hp.photos[0] : null;
+      const photo = (hp.photos && hp.photos[0]) ? hp.photos[0] : ((u.professionalProfile && u.professionalProfile.photos && u.professionalProfile.photos[0]) || null);
       const loc = hp.address || {};
       const locationLine = (loc.province || '').toLowerCase() === 'caba'
         ? [loc.neighborhood, 'CABA'].filter(Boolean).join(', ')
@@ -2035,15 +2228,18 @@ exports.getHogarProfessionals = async (req, res, next) => {
       };
       return {
         _id: u._id,
+        alias: (u.professionalProfile && u.professionalProfile.alias) || '',
         name: hp.firstName ? `${hp.firstName} ${hp.lastName || ''}`.trim() : (u.name || 'Técnico'),
         action: hp.action || '',
         actionDetails: hp.actionDetails || '',
         area: hp.area || '',
-        category: hp.category || '',
+        category: u.professionalType || '',
         specialty: hp.specialty || '',
         availability: hp.availability || '',
         serviceName: primary.name || '',
         brands: primary.brands || [],
+        actions: primary.actions || [],
+        professions: hp.professions && hp.professions.length ? hp.professions : ((u.professionalProfile && u.professionalProfile.professions) || []),
         photo,
         photoUrl: photo,
         location: locationLine,
@@ -2074,11 +2270,16 @@ exports.getHogarProfessionalById = async (req, res, next) => {
     const user = await User.findOne({
       _id: req.params.id,
       role: 'professional',
-      professionalType: 'hogar',
       accountDeletedAt: null,
-      isVerified: true,
-      verificationStatus: 'approved'
-    }).select('name email hogarProfile professionalProfile').lean();
+      $or: [
+        { verificationStatus: 'approved' },
+        { verificationStatus: { $exists: false } },
+        { verificationStatus: null }
+      ]
+    }).select('name email hogarProfile professionalProfile professionalType').lean();
+    if (user && !user.hogarProfile?.firstName && !user.hogarProfile?.services?.length) {
+      // No hogar data, try to ensure at least some profile exists
+    }
 
     if (!user) {
       return res.status(404).json({ success: false, error: 'Técnico no encontrado' });
@@ -2093,7 +2294,7 @@ exports.getHogarProfessionalById = async (req, res, next) => {
       email: b64(rawContact.email),
       telegramId: b64(rawContact.telegram)
     };
-    const photos = (hp.photos && hp.photos.length) ? hp.photos : [];
+    const photos = (hp.photos && hp.photos.length) ? hp.photos : (user.professionalProfile && user.professionalProfile.photos && user.professionalProfile.photos.length) ? user.professionalProfile.photos : [];
 
     try {
       const clientIp = req.headers['x-forwarded-for']

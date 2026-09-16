@@ -406,6 +406,16 @@ app.get('/favicon.ico', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'favicon.svg'));
 });
 
+// SEO: Add noindex to static HTML pages with query parameters
+app.use((req, res, next) => {
+  if (req.method !== 'GET') return next();
+  if (Object.keys(req.query).length === 0) return next();
+  if (req.path.endsWith('.html')) {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  }
+  next();
+});
+
 // Set static folder
 app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders: (res, filePath) => {
@@ -416,16 +426,6 @@ app.use(express.static(path.join(__dirname, 'public'), {
     }
   }
 }));
-
-// SEO: Add noindex to static HTML pages with query parameters
-app.use((req, res, next) => {
-  if (req.method !== 'GET') return next();
-  if (Object.keys(req.query).length === 0) return next();
-  if (!req.path.endsWith('.html')) return next();
-  // Static HTML with query params → noindex to prevent duplicate content
-  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
-  next();
-});
 
 // APK download redirect — maps Google Play-style link to direct download
 app.get('/play', (req, res) => {
@@ -532,6 +532,10 @@ app.get('/api/v1/locations/provinces', locationController.getProvinces);
 app.get('/api/v1/locations/provinces/name/:provinceName/cities', locationController.getCitiesByProvinceName);
 app.get('/api/v1/locations/provinces/:provinceId/sublocations', locationController.getSublocations);
 
+// Código Postal Argentino (CPA) lookup — proxies Correo Argentino's public web service
+const cpaController = require('./controllers/cpaController');
+app.post('/api/v1/cpa/lookup', cpaController.lookup);
+
 // Services tree routes (Public)
 const Service = require('./models/Service');
 app.get('/api/v1/services', async (req, res) => {
@@ -634,7 +638,10 @@ app.get('/api/v1/professionals/me', protect, authorize('professional', 'admin'),
 app.put('/api/v1/professionals/updateprofile', protect, authorize('professional'), upload.array('photos', 10), professionalController.updateProfile);
 // Service Tree Routes (Hogar)
 app.get('/api/v1/service-tree', professionalController.getServiceTree);
+app.get('/api/v1/professions', professionalController.getProfessions);
+app.put('/api/v1/professionals/professions', protect, authorize('professional'), professionalController.updateMyProfessions);
 app.put('/api/v1/professionals/hogar/services', protect, authorize('professional'), professionalController.updateHogarServices);
+app.put('/api/v1/hogar/payment', protect, authorize('professional'), professionalController.updateHogarPayment);
 app.get('/api/v1/hogar/professionals', professionalController.getHogarProfessionals);
 app.get('/api/v1/hogar/professionals/:id', professionalController.getHogarProfessionalById);
 app.delete('/api/v1/professionals/me', protect, authorize('professional'), professionalController.deleteMyProfile);
@@ -666,6 +673,7 @@ app.post('/api/v1/professionals/:professionalId/reviews', protect, reviewsContro
 // Aviso Routes
 const avisoController = require('./controllers/avisoController');
 app.get('/api/v1/avisos/public', avisoController.getPublicAvisos);
+app.get('/api/v1/avisos/available-service-lines', protect, authorize('professional'), avisoController.getAvailableServiceLines);
 app.get('/api/v1/avisos/mis-avisos', protect, authorize('professional'), avisoController.getMyAvisos);
 app.get('/api/v1/avisos/expiring', protect, authorize('professional'), avisoController.getExpiringAvisos);
 app.get('/api/v1/avisos/:id', avisoController.getAviso);

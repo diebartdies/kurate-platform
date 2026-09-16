@@ -19,10 +19,9 @@ function el(tag, cls, text) {
   return e;
 }
 
-// Render a single technician card
+// Render a single technician card — identical markup to the SexAppeal treasure card.
 function renderHogarCard(grid, tech) {
-  const variant = window.HOGAR_CARD_VARIANT || 'violet';
-  const card = el('div', `card treasure-card hogar-card hogar-card--${variant}`);
+  const card = el('div', 'card treasure-card');
   card.style.position = 'relative';
 
   const imgContainer = el('div', 'treasure-img-container');
@@ -37,41 +36,30 @@ function renderHogarCard(grid, tech) {
 
   const btnRow = el('div');
   Object.assign(btnRow.style, {
-    position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '6px', zIndex: '2'
+    position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '6px'
   });
-  function contactIcon(src, title) {
-    const img = el('img');
-    img.src = src;
-    img.alt = title;
-    img.title = title;
-    Object.assign(img.style, {
-      width: '26px', height: '26px', borderRadius: '50%',
-      background: 'rgba(15,15,26,0.85)', padding: '3px', boxSizing: 'border-box',
-      boxShadow: '0 1px 4px rgba(0,0,0,0.5)', objectFit: 'contain'
-    });
-    img.onerror = () => { img.style.display = 'none'; };
-    return img;
+  if (tech.whatsapp) {
+    const w = el('span', null, '💬');
+    w.title = 'WhatsApp';
+    btnRow.appendChild(w);
   }
-  if (tech.whatsapp) btnRow.appendChild(contactIcon('/images/whatsapp.png', 'WhatsApp'));
-  if (tech.telegram) btnRow.appendChild(contactIcon('/images/Telegram.png', 'Telegram'));
+  if (tech.telegram) {
+    const tg = el('span', null, '✈️');
+    tg.title = 'Telegram';
+    btnRow.appendChild(tg);
+  }
   if (btnRow.childElementCount) imgContainer.appendChild(btnRow);
 
   const caption = el('div', 'treasure-caption');
   const aliasEl = el('span', 'treasure-caption-alias', tech.name || 'Técnico');
   caption.appendChild(aliasEl);
-  const sub = [tech.action, tech.serviceName].filter(Boolean).join(' · ');
+  const actionTags = (tech.actions && tech.actions.length > 0) ? ` · ${tech.actions.join(', ')}` : '';
+  const sub = [tech.action, tech.serviceName, actionTags].filter(Boolean).join(' · ');
   if (tech.location) {
     const locEl = el('span', 'treasure-caption-location', tech.location);
     caption.appendChild(locEl);
   }
-  var badges = [];
-  if (tech.nearBarrio) badges.push('Barrios cercanos');
-  if (tech.distance != null) badges.push(tech.distance + ' km');
-  if (tech.averageRating > 0) badges.push('★ ' + tech.averageRating.toFixed(1));
-  if (tech.pct != null) badges.push(tech.pct + '%');
-  if (badges.length) {
-    caption.appendChild(el('span', 'treasure-caption-specialty', badges.join(' · ')));
-  } else if (sub) {
+  if (sub) {
     const specEl = el('span', 'treasure-caption-specialty', sub);
     caption.appendChild(specEl);
   }
@@ -119,33 +107,16 @@ async function loadHogar(params = {}, append = false) {
 
     if (!append) grid.innerHTML = '';
 
-    // Actualizar encabezado para no decir "en CABA" si hay de GBA — texto correcto
-    const titleEl = document.querySelector('.categories-frame-center h2.main-title');
-    if (titleEl && !append) {
-      const prov = currentParams.province || '';
-      const total = data.pagination ? data.pagination.total : techs.length;
-      if (prov && prov.toLowerCase() === 'caba' && techs.length) {
-        const cabaCount = techs.filter(t => (t.location||'').toLowerCase().includes('caba')).length;
-        const gbaCount = techs.length - cabaCount;
-        if (gbaCount>0) titleEl.textContent = `${total} profesionales — ${cabaCount} en CABA + ${gbaCount} en GBA`;
-        else titleEl.textContent = `${total} profesionales en CABA`;
-      } else if (total) {
-        titleEl.textContent = `${total} profesionales encontrados`;
-      } else {
-        titleEl.textContent = 'Técnicos disponibles';
-      }
-    }
     if (techs.length === 0 && !append) {
       grid.innerHTML = `<div class="card" style="grid-column:1/-1;text-align:center;">
-        <h3 style="color:#D9BC6A;font-weight:600;" data-i18n="Sin resultados">Sin resultados</h3>
-        <p style="color:#aaa;" data-i18n="Probá ampliar los filtros.">Probá ampliar los filtros.</p>
+        <h3 class="gold-text">Sin resultados</h3>
+        <p>Probá ampliar los filtros.</p>
       </div>`;
     } else {
       techs.forEach(t => renderHogarCard(grid, t));
     }
 
     renderLoadMore(grid);
-    if (typeof window._kurateReTranslate === 'function') window._kurateReTranslate();
   } catch (err) {
     if (loader) loader.style.display = 'none';
     grid.classList.remove('hidden');
@@ -163,7 +134,6 @@ function renderLoadMore(grid) {
   moreBtn = el('button', 'sa-btn sa-btn--ghost', 'Cargar más');
   moreBtn.id = 'loadMoreBtn';
   moreBtn.type = 'button';
-  moreBtn.setAttribute('data-i18n', 'Cargar más');
   Object.assign(moreBtn.style, { display: 'block', margin: '20px auto', gridColumn: '1/-1' });
   moreBtn.addEventListener('click', () => {
     currentPage += 1;
@@ -174,7 +144,6 @@ function renderLoadMore(grid) {
 
 function readFilters() {
   return {
-    q: document.getElementById('fQuery') ? document.getElementById('fQuery').value.trim() : '',
     area: document.getElementById('fArea').value,
     action: document.getElementById('fAction').value,
     category: document.getElementById('fCategory').value,
@@ -196,7 +165,7 @@ function initFilterDrawer() {
   drawer.setAttribute('aria-hidden', 'true');
   Object.assign(drawer.style, {
     position: 'fixed', top: '0', left: '-100%', width: '320px', maxWidth: '88vw',
-    height: '100vh', backgroundColor: 'rgba(15,15,26,0.98)', backdropFilter: 'blur(15px)',
+    height: '100vh', backgroundColor: 'rgba(10,10,10,0.98)', backdropFilter: 'blur(15px)',
     borderRight: '1px solid var(--primary-gold)', zIndex: '10000',
     transition: 'left 0.3s cubic-bezier(0.4,0,0.2,1)', overflowY: 'auto',
     padding: '20px', paddingTop: '70px', boxSizing: 'border-box'
@@ -206,7 +175,7 @@ function initFilterDrawer() {
   header.style.justifyContent = 'space-between';
   header.style.alignItems = 'center';
   header.style.marginBottom = '20px';
-  header.innerHTML = '<h3 style="margin:0;font-size:1.2rem;color:#D9BC6A;font-weight:600;">Filtros</h3>';
+  header.innerHTML = '<h3 class="gold-text" style="margin:0;font-size:1.2rem;">Filtros</h3>';
   const closeBtn = document.createElement('button');
   closeBtn.type = 'button';
   closeBtn.textContent = '×';
@@ -228,13 +197,13 @@ function initFilterDrawer() {
   });
   document.body.appendChild(overlay);
 
-  const open = () => {
+  let open = () => {
     drawer.style.left = '0';
     overlay.style.display = 'block';
     setTimeout(() => overlay.style.opacity = '1', 10);
     document.body.style.overflow = 'hidden';
   };
-  const close = () => {
+  let close = () => {
     drawer.style.left = '-100%';
     overlay.style.opacity = '0';
     setTimeout(() => overlay.style.display = 'none', 300);
@@ -243,19 +212,42 @@ function initFilterDrawer() {
   closeBtn.onclick = close;
   overlay.onclick = close;
 
-  // Hamburger button in the center frame header
-  const title = document.querySelector('.categories-frame-center h2');
+  // Hamburger button (three lines filter menu) — visible on ALL grid pages and all viewports
+  const title = document.querySelector('.categories-frame-center h1, .categories-frame-center h2');
   if (title) {
+    // wrap title + burger in flex row so hamburger sits inline with H1
+    let headerRow = title.parentNode.querySelector('.hogar-grid-header-row');
+    if (!headerRow) {
+      headerRow = document.createElement('div');
+      headerRow.className = 'hogar-grid-header-row';
+      Object.assign(headerRow.style, { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' });
+      title.parentNode.insertBefore(headerRow, title);
+      headerRow.appendChild(title);
+      title.style.margin = '0';
+    }
     const burger = document.createElement('button');
     burger.type = 'button';
-    burger.textContent = '☰';
-    burger.setAttribute('aria-label', 'Filtros');
+    burger.id = 'hogarFilterBurger';
+    burger.setAttribute('aria-label', 'Abrir filtros');
+    burger.setAttribute('aria-expanded', 'false');
+    burger.setAttribute('aria-controls', 'hogarFilterDrawer');
+    // three lines (hamburger) icon — accessible, no emoji dependency
+    burger.innerHTML = '<span aria-hidden="true" style="display:inline-flex;flex-direction:column;gap:4px;"><span style="display:block;width:18px;height:2px;background:currentColor;border-radius:2px;"></span><span style="display:block;width:18px;height:2px;background:currentColor;border-radius:2px;"></span><span style="display:block;width:18px;height:2px;background:currentColor;border-radius:2px;"></span></span>';
     Object.assign(burger.style, {
-      background: 'transparent', border: '1px solid var(--primary-gold)', color: 'var(--primary-gold)',
-      borderRadius: '6px', fontSize: '1.1rem', cursor: 'pointer', marginRight: '12px', padding: '4px 10px'
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      background: 'rgba(184,146,46,0.12)', border: '1px solid var(--primary-gold)', color: 'var(--primary-gold)',
+      borderRadius: '6px', cursor: 'pointer', padding: '8px 10px', minWidth: '44px', minHeight: '44px', flexShrink: '0'
     });
-    burger.onclick = open;
-    title.parentNode.insertBefore(burger, title);
+    burger.addEventListener('click', () => {
+      const expanded = burger.getAttribute('aria-expanded') === 'true';
+      burger.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+      open();
+    });
+    const origClose = close;
+    close = () => { burger.setAttribute('aria-expanded', 'false'); origClose(); };
+    closeBtn.onclick = close;
+    overlay.onclick = close;
+    headerRow.insertBefore(burger, title);
   }
 }
 
@@ -265,34 +257,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('btnApply').addEventListener('click', () => loadHogar(readFilters()));
   document.getElementById('btnClear').addEventListener('click', () => {
-    ['fQuery','fArea','fAction','fCategory','fAvailability','fProvince','fCity','fService','fBrand']
-      .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    ['fArea','fAction','fCategory','fAvailability','fProvince','fCity','fService','fBrand']
+      .forEach(id => { document.getElementById(id).value = ''; });
     loadHogar({});
   });
-  const fQueryEl = document.getElementById('fQuery');
-  if (fQueryEl) fQueryEl.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); loadHogar(readFilters()); } });
-
-  // "Cerca de mí" button — uses browser geolocation
-  const btnNearMe = document.getElementById('btnNearMe');
-  if (btnNearMe) {
-    btnNearMe.addEventListener('click', () => {
-      if (!navigator.geolocation) { alert('Tu navegador no soporta geolocalización'); return; }
-      btnNearMe.disabled = true;
-      btnNearMe.textContent = 'Buscando...';
-      navigator.geolocation.getCurrentPosition(pos => {
-        const params = readFilters();
-        params.lat = pos.coords.latitude;
-        params.lng = pos.coords.longitude;
-        loadHogar(params);
-        btnNearMe.disabled = false;
-        btnNearMe.textContent = '📍 Cerca de mí';
-      }, err => {
-        alert('No se pudo obtener tu ubicación. Activá los permisos de ubicación.');
-        btnNearMe.disabled = false;
-        btnNearMe.textContent = '📍 Cerca de mí';
-      }, { enableHighAccuracy: true, timeout: 10000 });
-    });
-  }
 
   const AREAS = [
     { value: '', label: 'Todas' },
@@ -306,12 +274,17 @@ document.addEventListener('DOMContentLoaded', () => {
   AREAS.forEach(a => {
     const chip = document.createElement('button');
     chip.type = 'button';
-    chip.className = 'area-chip' + (a.value === '' ? ' is-active' : '');
     chip.textContent = a.label;
+    Object.assign(chip.style, {
+      padding: '8px 10px', borderRadius: '8px', border: '1px solid rgba(184,146,46,0.4)',
+      background: 'transparent', color: '#ccc', cursor: 'pointer', fontSize: '0.9rem', textAlign: 'left'
+    });
+    if (a.value === '') chip.style.color = 'var(--primary-gold)';
     chip.addEventListener('click', () => {
       fArea.value = a.value;
-      [...chipWrap.children].forEach(c => c.classList.remove('is-active'));
-      chip.classList.add('is-active');
+      [...chipWrap.children].forEach(c => { c.style.background = 'transparent'; c.style.color = '#ccc'; });
+      chip.style.background = 'rgba(184,146,46,0.15)';
+      chip.style.color = 'var(--primary-gold)';
       loadHogar(readFilters());
     });
     chipWrap.appendChild(chip);

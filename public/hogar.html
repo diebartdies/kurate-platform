@@ -83,11 +83,10 @@
     .fm-back { display: inline-flex; align-items: center; gap: 6px; padding: 0.5rem 1rem; background: transparent; color: #888; border: 1px solid #333; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-decoration: none; }
     .fm-back:hover { color: var(--primary-gold); border-color: var(--primary-gold); }
     .fm-top-right { display: flex; align-items: center; gap: 0.5rem; }
-    .fm-lang-btn { background: transparent; border: none; border-bottom: 2px solid transparent; padding: 4px 4px 2px; cursor: pointer; line-height: 0; transition: opacity 0.2s, border-color 0.2s; }
-    .fm-lang-btn.active { border-bottom-color: var(--primary-gold); opacity: 1; }
+    .fm-lang-btn { background: transparent; border: none; border-bottom: 2px solid transparent; padding: 4px 8px; cursor: pointer; transition: opacity 0.2s, border-color 0.2s; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; color: #ccc; border-radius: 4px; }
+    .fm-lang-btn.active { border-bottom-color: var(--primary-gold); opacity: 1; color: var(--primary-gold); }
     .fm-lang-btn.inactive { opacity: 0.4; }
     .fm-lang-btn:hover { opacity: 1; }
-    .fm-lang-btn img { border-radius: 2px; display: block; width: 28px; height: 21px; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: #0f0f1a; color: #e0e0e0; margin: 0;
@@ -181,6 +180,7 @@
       .area-chip { width: auto; flex: 1 1 calc(50% - 8px); text-align: center; }
     }
     @media (max-width: 480px) { .area-chip { flex: 1 1 100%; } }
+  </style>
   <style>
     .apk-banner { display: none; background: linear-gradient(135deg, #B8922E 0%, #8a6a1e 100%); color: #fff; padding: 0.4rem 0.75rem; border-radius: 8px; margin-bottom: 0.75rem; position: relative; box-shadow: 0 2px 12px rgba(184,146,46,0.25); align-items: center; gap: 0.5rem; font-size: 0.8rem; }
     .apk-banner.show { display: flex; }
@@ -201,22 +201,22 @@
       <button class="apk-banner-close" id="apkBannerClose">&times;</button>
     </div>
 
-    <div class="fm-top-bar">
+    <header class="fm-top-bar">
       <a href="/index.html" class="fm-back">← <span class="fm-back-text">Volver</span></a>
       <div class="fm-top-right">
-        <button class="fm-lang-btn active" id="langEs" title="Español" role="switch" aria-checked="true" aria-label="Español"><img src="https://flagcdn.com/w40/ar.png" alt="ES"></button>
-        <button class="fm-lang-btn inactive" id="langEn" title="English" role="switch" aria-checked="false" aria-label="English"><img src="https://flagcdn.com/w40/us.png" alt="EN"></button>
-        <button class="fm-lang-btn inactive" id="langZh" title="中文" role="switch" aria-checked="false" aria-label="中文"><img src="https://flagcdn.com/w40/cn.png" alt="CN"></button>
+        <button class="fm-lang-btn active" id="langEs" title="Español" role="switch" aria-checked="true" aria-label="Español">ES</button>
+        <button class="fm-lang-btn inactive" id="langEn" title="English" role="switch" aria-checked="false" aria-label="English">EN</button>
+        <button class="fm-lang-btn inactive" id="langZh" title="中文" role="switch" aria-checked="false" aria-label="中文">ZH</button>
       </div>
-    </div>
-    <div class="categories-shell" role="main" id="main-content">
+    </header>
+    <main class="categories-shell" id="main-content">
       <aside class="categories-frame categories-frame-side categories-frame-left" aria-label="Filtros">
         <a href="index.html" class="categories-brand-logo"><img src="/KuraTe_logo_black.png" alt="KuraTe Logo" class="page-logo"></a>
         <div class="card" id="hogarFilters" style="margin-top:18px; width:100%;">
           <h3 class="sub-title" data-i18n="Filtros">Filtros</h3>
           <div class="filter-group"><label for="fQuery" data-i18n="Buscar">Buscar</label><input type="text" id="fQuery" placeholder="reparar heladera, instalar aire..." data-i18n-placeholder="reparar heladera, instalar aire..."></div>
           <div class="filter-group"><label for="fArea" data-i18n="Área">Área</label><select id="fArea"><option value="" data-i18n="Todas">Todas</option><option value="hogar" data-i18n="Hogar">Hogar</option><option value="oficina" data-i18n="Oficina">Oficina</option><option value="pime" data-i18n="PIME">PIME</option><option value="industria" data-i18n="Industria">Industria</option></select></div>
-          <div class="filter-group"><label for="fAction" data-i18n="Acción">Acción</label><select id="fAction"><option value="" data-i18n="Todas">Todas</option><option value="Reparo">Reparo</option><option value="Instalo">Instalo</option><option value="Hago mantenimiento">Hago mantenimiento</option><option value="Vendo repuestos">Vendo repuestos</option><option value="Asesoro">Asesoro</option></select></div>
+          <div class="filter-group"><label for="fAction" data-i18n="Acción">Acción</label><select id="fAction"><option value="" data-i18n="Todas">Todas</option><option value="aprender">Aprender</option><option value="reparar">Reparar / Arreglar</option><option value="instalar">Instalar</option><option value="mantener">Mantener</option><option value="verificar">Verificar</option><option value="desinstalar">Desinstalar</option><option value="mejorar">Mejorar</option><option value="disenar">Diseñar</option><option value="descartar">Descartar</option><option value="busco">Busco</option><option value="vender">Vender</option><option value="comprar">Comprar</option><option value="donar">Donar</option><option value="recibir-donaciones">Recibir donaciones</option></select></div>
           <div class="filter-group"><label for="fCategory" data-i18n="Categoría">Categoría</label><select id="fCategory"><option value="" data-i18n="Todas">Todas</option><option value="profesional_matriculado">Profesional matriculado</option><option value="tecnico_matriculado">Técnico matriculado</option><option value="tecnico_no_matriculado">Técnico no matriculado</option><option value="idoneo">Idóneo</option></select></div>
           <div class="filter-group"><label for="fAvailability" data-i18n="Disponibilidad">Disponibilidad</label><select id="fAvailability"><option value="" data-i18n="Todas">Todas</option><option value="inmediata">Inmediata</option><option value="rapida">Rápida (&lt;2 días)</option><option value="puedo_esperar">2–4 días</option><option value="sin_apuro">&gt;4 días</option></select></div>
           <div class="filter-group"><label for="fProvince" data-i18n="Provincia">Provincia</label><select id="fProvince"><option value="" data-i18n="Todas">Todas</option><option value="CABA">CABA</option><option value="Buenos Aires">Buenos Aires</option><option value="Catamarca">Catamarca</option><option value="Chaco">Chaco</option><option value="Chubut">Chubut</option><option value="Córdoba">Córdoba</option><option value="Corrientes">Corrientes</option><option value="Entre Ríos">Entre Ríos</option><option value="Formosa">Formosa</option><option value="Jujuy">Jujuy</option><option value="La Pampa">La Pampa</option><option value="La Rioja">La Rioja</option><option value="Mendoza">Mendoza</option><option value="Misiones">Misiones</option><option value="Neuquén">Neuquén</option><option value="Río Negro">Río Negro</option><option value="Salta">Salta</option><option value="San Juan">San Juan</option><option value="San Luis">San Luis</option><option value="Santa Cruz">Santa Cruz</option><option value="Santa Fe">Santa Fe</option><option value="Santiago del Estero">Santiago del Estero</option><option value="Tierra del Fuego">Tierra del Fuego</option><option value="Tucumán">Tucumán</option></select></div>
@@ -232,10 +232,13 @@
       </aside>
 
       <section class="categories-frame categories-frame-center" data-module="DIR-01" style="padding:14px 12px 24px; min-width:0; background:rgba(8,8,8,0.72); border-color:rgba(var(--gold-rgb),0.55);">
-        <h2 class="main-title" data-i18n="Técnicos disponibles">Técnicos disponibles</h2>
-        <button onclick="document.querySelector('details').setAttribute('open','');document.querySelector('.categories-frame-right').scrollIntoView({behavior:'smooth',block:'start'});" style="display:inline-flex;align-items:center;gap:6px;margin:0 0 12px;padding:8px 14px;background:linear-gradient(135deg,rgba(184,146,46,0.15),rgba(184,146,46,0.05));border:1px solid rgba(184,146,46,0.4);border-radius:8px;color:var(--primary-gold);font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='linear-gradient(135deg,rgba(184,146,46,0.25),rgba(184,146,46,0.1))';this.style.borderColor='var(--primary-gold)';" onmouseout="this.style.background='linear-gradient(135deg,rgba(184,146,46,0.15),rgba(184,146,46,0.05))';this.style.borderColor='rgba(184,146,46,0.4)';" data-i18n="cta-guide">
+        <h1 class="main-title" style="font-size:1.3rem;" data-i18n="Técnicos disponibles">Técnicos disponibles</h1>
+        <button onclick="document.getElementById('guideModal').style.display='flex'" style="display:inline-flex;align-items:center;gap:6px;margin:0 0 12px;padding:8px 14px;background:linear-gradient(135deg,rgba(184,146,46,0.15),rgba(184,146,46,0.05));border:1px solid rgba(184,146,46,0.4);border-radius:8px;color:var(--primary-gold);font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='linear-gradient(135deg,rgba(184,146,46,0.25),rgba(184,146,46,0.1))';this.style.borderColor='var(--primary-gold)';" onmouseout="this.style.background='linear-gradient(135deg,rgba(184,146,46,0.15),rgba(184,146,46,0.05))';this.style.borderColor='rgba(184,146,46,0.4)';" data-i18n="cta-guide">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg>
           Si me conocés mejor, te voy a ayudar mucho más
+        </button>
+        <button onclick="openPaymentWizard()" style="display:inline-flex;align-items:center;gap:6px;margin:0 0 12px 8px;padding:8px 14px;background:rgba(255,255,255,0.04);border:1px solid #333;border-radius:8px;color:#aaa;font-size:0.82rem;font-weight:600;cursor:pointer;">
+          💳 Cómo pagar
         </button>
         <div class="treasure-grid-slot">
           <div id="hogarLoader" class="loader">Preparando el directorio...</div>
@@ -255,54 +258,104 @@
             <span data-i18n="Si no muestra ninguno, usá email o teléfono.">Si no muestra ninguno, usá email o teléfono.</span>
           </p>
           <hr class="gold-rule">
-          <details style="margin-top:8px;">
-            <summary style="cursor:pointer;color:var(--primary-gold);font-weight:600;font-size:0.9rem;list-style:none;display:flex;align-items:center;gap:6px;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg>
-              <span data-i18n="Cómo leer las tarjetas">Cómo leer las tarjetas</span>
-            </summary>
-            <div style="margin-top:10px;font-size:0.8rem;color:#aaa;line-height:1.6;" data-i18n-content="guide">
-              <div style="background:#1a1a2e;border:1px solid #333;border-radius:10px;padding:12px;margin-bottom:12px;">
-                <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
-                  <div style="width:48px;height:48px;border-radius:8px;background:#2a2a3e;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">👨‍🔧</div>
-                  <div>
-                    <div style="color:#e0e0e0;font-weight:600;font-size:0.85rem;">Carlos Méndez</div>
-                    <div style="color:#888;font-size:0.75rem;">CABA · Palermo</div>
-                  </div>
-                </div>
-                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
-                  <span style="background:rgba(34,197,94,0.15);color:#22c55e;font-size:0.7rem;padding:2px 8px;border-radius:9999px;">★ 4.8</span>
-                  <span style="background:rgba(59,130,246,0.15);color:#3b82f6;font-size:0.7rem;padding:2px 8px;border-radius:9999px;">92%</span>
-                  <span style="background:rgba(168,85,247,0.15);color:#a855f7;font-size:0.7rem;padding:2px 8px;border-radius:9999px;">3.2 km</span>
-                </div>
-                <div style="display:flex;flex-wrap:wrap;gap:4px;">
-                  <span style="background:rgba(184,146,46,0.15);color:#B8922E;font-size:0.65rem;padding:2px 6px;border-radius:4px;">Marca exacta</span>
-                  <span style="background:rgba(184,146,46,0.1);color:#D9BC6A;font-size:0.65rem;padding:2px 6px;border-radius:4px;">🔧 Reparo</span>
-                </div>
-              </div>
-              <p style="margin:0 0 8px;"><strong style="color:var(--primary-gold);">★ 4.8 Calificación</strong><br>
-              Promedio de estrellas de clientes anteriores. 5.0 = excelente. Sin estrellas = sin reseñas aún.</p>
-              <p style="margin:0 0 8px;"><strong style="color:var(--primary-gold);">92% Coincidencia</strong><br>
-              Qué tan bien coincide con tu búsqueda. 100% = servicio exacto + misma marca.</p>
-              <p style="margin:0 0 8px;"><strong style="color:var(--primary-gold);">3.2 km Distancia</strong><br>
-              Qué tan cerca está. Menor distancia = llega más rápido.</p>
-              <p style="margin:0 0 8px;"><strong style="color:var(--primary-gold);">🏷️ Marca exacta</strong><br>
-              Trabaja con la marca que necesitás. Mejor para garantía.</p>
-              <p style="margin:0 0 8px;"><strong style="color:var(--primary-gold);">💡 Consejo:</strong><br>
-              Los primeros resultados combinan mejor distancia + servicio + calificación.</p>
-            </div>
-          </details>
+          <button onclick="document.getElementById('guideModal').style.display='flex'" style="width:100%;margin-top:8px;padding:8px 12px;background:linear-gradient(135deg,rgba(184,146,46,0.15),rgba(184,146,46,0.05));border:1px solid rgba(184,146,46,0.4);border-radius:8px;color:var(--primary-gold);font-size:0.85rem;font-weight:600;cursor:pointer;text-align:left;display:flex;align-items:center;gap:6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg>
+            <span data-i18n="Cómo leer las tarjetas">Cómo leer las tarjetas</span>
+          </button>
         </div>
       </aside>
-    </div>
+    </main>
     <footer style="text-align:center;padding:1.5rem 1rem;border-top:1px solid #222;color:#666;font-size:0.8rem;">
       <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:0.5rem;">
-        <a href="https://www.w3.org/WAI/WCAG21/quickref/" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;font-size:0.7rem;color:#888;text-decoration:none;border:1px solid #333;border-radius:4px;padding:3px 8px;" aria-label="Cumple WCAG 2.1 nivel AA">
+        <a href="https://www.w3.org/WAI/WCAG21/quickref/" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;font-size:0.7rem;text-decoration:none;border:1px solid #333;border-radius:4px;padding:3px 8px;" aria-label="Cumple WCAG 2.1 nivel AA">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B8922E" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
           WCAG 2.1 AA
         </a>
       </div>
       &copy; 2026 KuraTe — Tu respuesta rápida y directa.
     </footer>
+  </div>
+
+  <!-- Modal Cómo Pagar: logos + wizard 3 pasos -->
+  <div id="paymentWizardOverlay" class="hidden" role="dialog" aria-modal="true" aria-label="Cómo pagar" onclick="if(event.target===this)this.classList.add('hidden')" style="position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,0.85);display:none;justify-content:center;align-items:center;padding:20px;">
+    <div style="background:#1a1a2e;border:1px solid #333;border-radius:12px;max-width:640px;width:100%;max-height:85vh;overflow-y:auto;padding:24px;position:relative;">
+      <button onclick="document.getElementById('paymentWizardOverlay').style.display='none';document.getElementById('paymentWizardOverlay').classList.add('hidden')" aria-label="Cerrar" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:1.5rem;cursor:pointer;line-height:1;">&times;</button>
+      <h3 style="color:var(--primary-gold);margin:0 0 12px;font-size:1.2rem;">Cómo pagar — KuraTe</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center;margin-bottom:16px;padding:10px;background:rgba(255,255,255,0.04);border-radius:8px;">
+        <span style="padding:4px 8px;background:#fff;color:#1a1a2e;border-radius:4px;font-weight:800;font-size:0.7rem;">VISA</span>
+        <span style="padding:4px 8px;background:#fff;color:#c00;border-radius:4px;font-weight:800;font-size:0.7rem;">Mastercard</span>
+        <span style="padding:4px 8px;background:#fff;color:#006;color:#0066cc;border-radius:4px;font-weight:800;font-size:0.7rem;">AMEX</span>
+        <span style="padding:4px 8px;background:#009ee3;color:#fff;border-radius:4px;font-weight:700;font-size:0.7rem;">Mercado Pago</span>
+        <span style="padding:4px 8px;background:#00a650;color:#fff;border-radius:4px;font-weight:700;font-size:0.7rem;">CBU/CVU</span>
+        <span style="padding:4px 8px;background:#ff3b30;color:#fff;border-radius:4px;font-weight:700;font-size:0.7rem;">Modo</span>
+        <span style="padding:4px 8px;background:#6a0dad;color:#fff;border-radius:4px;font-weight:700;font-size:0.7rem;">Ualá</span>
+      </div>
+      <div id="payStep1">
+        <h4 style="margin:0 0 8px;">Paso 1 · Elegí cómo pagar</h4>
+        <p style="color:#aaa;font-size:0.85rem;">Podés pagar <strong style="color:#fff;">por la app</strong> (sin efectivo, contrato inpostergable al contactar) o por <strong style="color:#fff;">transferencia/billetera</strong> fuera de la app.</p>
+        <div style="display:flex;gap:10px;margin-top:12px;">
+          <button onclick="showPayStep(2)" style="flex:1;padding:10px;background:var(--primary-gold);color:#0f0f1a;border:none;border-radius:6px;font-weight:700;cursor:pointer;">Pagar por la app (recomendado mayores)</button>
+          <button onclick="showPayStep(3)" style="flex:1;padding:10px;background:transparent;border:1px solid var(--primary-gold);color:var(--primary-gold);border-radius:6px;cursor:pointer;">Transferir por fuera</button>
+        </div>
+        <p style="font-size:0.75rem;margin-top:10px;">Si elegís por la app, te guiamos a registrarte (necesitamos tus datos para el contrato). Si es por fuera, te pedimos el comprobante.</p>
+      </div>
+      <div id="payStep2" style="display:none;">
+        <h4 style="margin:0 0 8px;">Paso 2 · Pago por la app</h4>
+        <ol style="color:#aaa;font-size:0.85rem;margin:0 0 12px 18px;line-height:1.6;">
+          <li>Registrate / ingresá (guest o profesional)</li>
+          <li>Confirmá el monto del servicio</li>
+          <li>Al contactar al profesional se genera el <strong style="color:#fff;">contrato inpostergable</strong> usuario-profesional</li>
+          <li>El pago queda asentado sin mover efectivo</li>
+        </ol>
+        <button onclick="window.location.href='/register.html?type=guest'" style="width:100%;padding:10px;background:var(--primary-gold);color:#0f0f1a;border:none;border-radius:6px;font-weight:700;cursor:pointer;">Registrarme para pagar por la app</button>
+        <button onclick="showPayStep(1)" style="width:100%;margin-top:8px;padding:8px;background:transparent;border:1px solid #444;color:#aaa;border-radius:6px;cursor:pointer;">Volver</button>
+      </div>
+      <div id="payStep3" style="display:none;">
+        <h4 style="margin:0 0 8px;">Paso 3 · Transferencia por fuera</h4>
+        <p style="color:#aaa;font-size:0.85rem;">Transferí al <strong style="color:#fff;">Alias / CBU / CVU</strong> del profesional (lo ves al contactar) desde tu banco o billetera (Modo, Ualá, Naranja X, Cuenta DNI). Luego subí el comprobante.</p>
+        <p style="font-size:0.75rem;">Solo en este caso pedimos comprobante. Por la app no hace falta.</p>
+        <button onclick="document.getElementById('paymentWizardOverlay').style.display='none';document.getElementById('paymentWizardOverlay').classList.add('hidden')" style="width:100%;padding:10px;background:transparent;border:1px solid var(--primary-gold);color:var(--primary-gold);border-radius:6px;cursor:pointer;">Entendido</button>
+        <button onclick="showPayStep(1)" style="width:100%;margin-top:8px;padding:8px;background:transparent;border:1px solid #444;color:#aaa;border-radius:6px;cursor:pointer;">Volver</button>
+      </div>
+    </div>
+  </div>
+  <script>function showPayStep(n){document.getElementById('payStep1').style.display=n===1?'block':'none';document.getElementById('payStep2').style.display=n===2?'block':'none';document.getElementById('payStep3').style.display=n===3?'block':'none';} function openPaymentWizard(){var m=document.getElementById('paymentWizardOverlay');m.style.display='flex';m.classList.remove('hidden');showPayStep(1);}</script>
+
+  <div id="guideModal" role="dialog" aria-modal="true" aria-label="Cómo leer las tarjetas" onclick="if(event.target===this)this.style.display='none'" style="display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,0.85);justify-content:center;align-items:center;padding:20px;">
+    <div style="background:#1a1a2e;border:1px solid #333;border-radius:12px;max-width:500px;width:100%;max-height:85vh;overflow-y:auto;padding:24px;position:relative;">
+      <button onclick="document.getElementById('guideModal').style.display='none'" aria-label="Cerrar" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:1.5rem;cursor:pointer;line-height:1;">&times;</button>
+      <h3 style="color:var(--primary-gold);margin:0 0 16px;font-size:1.1rem;" data-i18n="Cómo leer las tarjetas">Cómo leer las tarjetas</h3>
+      <div style="font-size:0.85rem;color:#aaa;line-height:1.6;" data-i18n-content="guide">
+        <div style="background:#1a1a2e;border:1px solid #333;border-radius:10px;padding:12px;margin-bottom:12px;">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+            <div style="width:48px;height:48px;border-radius:8px;background:#2a2a3e;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">👨‍🔧</div>
+            <div>
+              <div style="color:#e0e0e0;font-weight:600;font-size:0.85rem;">Carlos Méndez</div>
+              <div style="font-size:0.75rem;">CABA · Palermo</div>
+            </div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+            <span style="background:rgba(34,197,94,0.15);color:#22c55e;font-size:0.7rem;padding:2px 8px;border-radius:9999px;">★ 4.8</span>
+            <span style="background:rgba(59,130,246,0.15);color:#3b82f6;font-size:0.7rem;padding:2px 8px;border-radius:9999px;">92%</span>
+            <span style="background:rgba(168,85,247,0.15);color:#a855f7;font-size:0.7rem;padding:2px 8px;border-radius:9999px;">3.2 km</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;">
+            <span style="background:rgba(184,146,46,0.15);font-size:0.65rem;padding:2px 6px;border-radius:4px;">Marca exacta</span>
+            <span style="background:rgba(184,146,46,0.1);color:#D9BC6A;font-size:0.65rem;padding:2px 6px;border-radius:4px;">🔧 Reparo</span>
+          </div>
+        </div>
+        <p style="margin:0 0 8px;"><strong style="color:var(--primary-gold);">★ 4.8 Calificación</strong><br>
+        Promedio de estrellas de clientes anteriores. 5.0 = excelente. Sin estrellas = sin reseñas aún.</p>
+        <p style="margin:0 0 8px;"><strong style="color:var(--primary-gold);">92% Coincidencia</strong><br>
+        Qué tan bien coincide con tu búsqueda. 100% = servicio exacto + misma marca.</p>
+        <p style="margin:0 0 8px;"><strong style="color:var(--primary-gold);">3.2 km Distancia</strong><br>
+        Qué tan cerca está. Menor distancia = llega más rápido.</p>
+        <p style="margin:0 0 8px;"><strong style="color:var(--primary-gold);">🏷️ Marca exacta</strong><br>
+        Trabaja con la marca que necesitás. Mejor para garantía.</p>
+        <p style="margin:0 0 8px;"><strong style="color:var(--primary-gold);">💡 Consejo:</strong><br>
+        Los primeros resultados combinan mejor distancia + servicio + calificación.</p>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -386,6 +439,11 @@
       grid.classList.add('hidden');
       if (loader) { loader.style.display = 'block'; loader.textContent = 'Buscando profesionales...'; }
       const params = getSearchParams();
+      // Propagate URL params to filter dropdowns
+      if (params.get('accion')) document.getElementById('fAction').value = params.get('accion');
+      if (params.get('provincia')) document.getElementById('fProvince').value = params.get('provincia');
+      if (params.get('ciudad')) { document.getElementById('fCity').value = params.get('ciudad'); document.getElementById('fCity').disabled = false; }
+      if (params.get('service')) document.getElementById('fService').value = params.get('service');
       const url = new URL(apiBase() + '/professionals/search');
       for (const [k, v] of params.entries()) { if (v) url.searchParams.set(k, v); }
       try {
@@ -462,7 +520,7 @@
       info.style.cssText = 'padding:10px 12px;';
       if (p.brandMatched) {
         const b = el('span', '', 'Marca exacta');
-        b.style.cssText = 'font-size:0.7rem;padding:2px 8px;border-radius:9999px;background:rgba(184,146,46,0.15);color:#B8922E;display:inline-block;margin-bottom:6px;';
+        b.style.cssText = 'font-size:0.7rem;padding:2px 8px;border-radius:9999px;background:rgba(184,146,46,0.15);display:inline-block;margin-bottom:6px;';
         info.appendChild(b);
       } else if (p.brandGeneric) {
         const b = el('span', '', 'Repara categoría');
@@ -603,7 +661,8 @@
         'Contactar': 'Contact',
         'Enviar mensaje': 'Send message',
         'Llamar': 'Call',
-        'Ver perfil': 'View profile'
+        'Ver perfil': 'View profile',
+        'Close': 'Close'
       };
       const dictZh = {
         'Volver': '返回',
@@ -656,7 +715,8 @@
         'Contactar': '联系',
         'Enviar mensaje': '发送消息',
         'Llamar': '拨打电话',
-        'Ver perfil': '查看资料'
+        'Ver perfil': '查看资料',
+        'Close': '关闭'
       };
       const lang = localStorage.getItem('platform_lang') || 'es';
       const esBtn = document.getElementById('langEs');
@@ -679,9 +739,9 @@
         document.querySelectorAll('[data-i18n-content="guide"]').forEach(el => {
           if (l === 'en') {
             el.innerHTML = '<div style="background:#1a1a2e;border:1px solid #333;border-radius:10px;padding:12px;margin-bottom:12px;">' +
-              '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;"><div style="width:48px;height:48px;border-radius:8px;background:#2a2a3e;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">👨‍🔧</div><div><div style="color:#e0e0e0;font-weight:600;font-size:0.85rem;">Carlos Méndez</div><div style="color:#888;font-size:0.75rem;">CABA · Palermo</div></div></div>' +
+              '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;"><div style="width:48px;height:48px;border-radius:8px;background:#2a2a3e;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">👨‍🔧</div><div><div style="color:#e0e0e0;font-weight:600;font-size:0.85rem;">Carlos Méndez</div><div style="font-size:0.75rem;">CABA · Palermo</div></div></div>' +
               '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;"><span style="background:rgba(34,197,94,0.15);color:#22c55e;font-size:0.7rem;padding:2px 8px;border-radius:9999px;">★ 4.8</span><span style="background:rgba(59,130,246,0.15);color:#3b82f6;font-size:0.7rem;padding:2px 8px;border-radius:9999px;">92%</span><span style="background:rgba(168,85,247,0.15);color:#a855f7;font-size:0.7rem;padding:2px 8px;border-radius:9999px;">3.2 km</span></div>' +
-              '<div style="display:flex;flex-wrap:wrap;gap:4px;"><span style="background:rgba(184,146,46,0.15);color:#B8922E;font-size:0.65rem;padding:2px 6px;border-radius:4px;">Exact brand</span><span style="background:rgba(184,146,46,0.1);color:#D9BC6A;font-size:0.65rem;padding:2px 6px;border-radius:4px;">🔧 I repair</span></div></div>' +
+              '<div style="display:flex;flex-wrap:wrap;gap:4px;"><span style="background:rgba(184,146,46,0.15);font-size:0.65rem;padding:2px 6px;border-radius:4px;">Exact brand</span><span style="background:rgba(184,146,46,0.1);color:#D9BC6A;font-size:0.65rem;padding:2px 6px;border-radius:4px;">🔧 I repair</span></div></div>' +
               '<p style="margin:0 0 8px;"><strong style="color:var(--primary-gold);">★ 4.8 Rating</strong><br>Average star rating from previous clients. 5.0 = excellent. No stars = no reviews yet.</p>' +
               '<p style="margin:0 0 8px;"><strong style="color:var(--primary-gold);">92% Match</strong><br>How well they match your search. 100% = exact service + same brand.</p>' +
               '<p style="margin:0 0 8px;"><strong style="color:var(--primary-gold);">3.2 km Distance</strong><br>How far from you. Shorter = faster arrival.</p>' +
@@ -689,9 +749,9 @@
               '<p style="margin:0 0 8px;"><strong style="color:var(--primary-gold);">💡 Tip:</strong><br>First results combine best distance + service + rating.</p>';
           } else {
             el.innerHTML = '<div style="background:#1a1a2e;border:1px solid #333;border-radius:10px;padding:12px;margin-bottom:12px;">' +
-              '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;"><div style="width:48px;height:48px;border-radius:8px;background:#2a2a3e;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">👨‍🔧</div><div><div style="color:#e0e0e0;font-weight:600;font-size:0.85rem;">Carlos Méndez</div><div style="color:#888;font-size:0.75rem;">CABA · Palermo</div></div></div>' +
+              '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;"><div style="width:48px;height:48px;border-radius:8px;background:#2a2a3e;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">👨‍🔧</div><div><div style="color:#e0e0e0;font-weight:600;font-size:0.85rem;">Carlos Méndez</div><div style="font-size:0.75rem;">CABA · Palermo</div></div></div>' +
               '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;"><span style="background:rgba(34,197,94,0.15);color:#22c55e;font-size:0.7rem;padding:2px 8px;border-radius:9999px;">★ 4.8</span><span style="background:rgba(59,130,246,0.15);color:#3b82f6;font-size:0.7rem;padding:2px 8px;border-radius:9999px;">92%</span><span style="background:rgba(168,85,247,0.15);color:#a855f7;font-size:0.7rem;padding:2px 8px;border-radius:9999px;">3.2 km</span></div>' +
-              '<div style="display:flex;flex-wrap:wrap;gap:4px;"><span style="background:rgba(184,146,46,0.15);color:#B8922E;font-size:0.65rem;padding:2px 6px;border-radius:4px;">Marca exacta</span><span style="background:rgba(184,146,46,0.1);color:#D9BC6A;font-size:0.65rem;padding:2px 6px;border-radius:4px;">🔧 Reparo</span></div></div>' +
+              '<div style="display:flex;flex-wrap:wrap;gap:4px;"><span style="background:rgba(184,146,46,0.15);font-size:0.65rem;padding:2px 6px;border-radius:4px;">Marca exacta</span><span style="background:rgba(184,146,46,0.1);color:#D9BC6A;font-size:0.65rem;padding:2px 6px;border-radius:4px;">🔧 Reparo</span></div></div>' +
               '<p style="margin:0 0 8px;"><strong style="color:var(--primary-gold);">★ 4.8 Calificación</strong><br>Promedio de estrellas de clientes anteriores. 5.0 = excelente. Sin estrellas = sin reseñas aún.</p>' +
               '<p style="margin:0 0 8px;"><strong style="color:var(--primary-gold);">92% Coincidencia</strong><br>Qué tan bien coincide con tu búsqueda. 100% = servicio exacto + misma marca.</p>' +
               '<p style="margin:0 0 8px;"><strong style="color:var(--primary-gold);">3.2 km Distancia</strong><br>Qué tan cerca está. Menor distancia = llega más rápido.</p>' +

@@ -1,0 +1,174 @@
+=== Casa de Campo ===
+  Baño y Sanidad de Campo
+    Balanzas Digitales y Secadores (Eficiencia Energetica A+) [casa-de-campo/baño-y-sanidad-de-campo/balanzas-digitales-y-secadores-eficiencia-energetica-a]
+      Brands: Aspen, Atma, Babyliss, Bellissima, Beurer, Braun, GA.MA Italy, Huawei, Liliana, Omron, Oster, Peabody, Philco, Philips, Remington, Revlon, Silfab, Smartlife, Ultracomb, Xiaomi
+    Bombas Presurizadoras y Elevadoras de Agua [casa-de-campo/baño-y-sanidad-de-campo/bombas-presurizadoras-y-elevadoras-de-agua]
+      Brands: Czerweny, Ebara, Flotec, Grundfos, Ksb, Leo, L घटा, Lowara, Motorarg, Pedrollo, Pluvius, Rowa, Salmson, Shurflo, Speroni, Tromen, Turbion, Udaondo, Vulcano, Zenit
+    Duchas y Sistemas Termostaticos (Aptos Baja Presion) [casa-de-campo/baño-y-sanidad-de-campo/duchas-y-sistemas-termostaticos-aptos-baja-presion]
+      Brands: Aqualia, Ariston, Clever, Decca, Delta, FV (Franz Viegener), Genebre, Gheco, Grohe, Hansgrohe, Hydra, Hydro, Kohler, Moen, Peirano, Piazza, Roca, Stiebel Eltron, Teka, Vasser
+    Extractores de Aire de Baño (Bajo Consumo / 12V) [casa-de-campo/baño-y-sanidad-de-campo/extractores-de-aire-de-baño-bajo-consumo-12v]
+      Brands: Axel, Cata, Gralf, Hydra, Janis, KDK, Liliana, Maraldi, Martin y Martin, Panasonic, Protalia, S&P (Soler & Palau), Sodeca, Spar, TST, Vents, Ventrex, Vornado, Winco, Yelmo
+    Inodoros y Bidets (Bajo Consumo Hidrico / Aptos Pozo) [casa-de-campo/baño-y-sanidad-de-campo/inodoros-y-bidets-bajo-consumo-hidrico-aptos-pozo]
+      Brands: Aqualia, Ariel, Ariston, Bari, Capea, Deca, Derpla, Duravit, Eskabe, Ferrum, Incepa, Jacuzzi, Laufen, Peirano, Piazza, Pringles, Roca, Stone, Toto, Vasser
+  Calentamiento de Agua de Campo
+    Termotanques Solares y Multi-gas [casa-de-campo/calentamiento-de-agua-de-campo/termotanques-solares-y-multigas]
+      Brands: Ariston, Ciroc, Coppens, Domec, Enertik, Escorial, Eskabe, Eter Sol, Goodenergy, Heliotropo, Longvie, Orbis, Rheem, Saiar, Señorial, Sherman, Soleventus, Splendid, Termonic, Volcan
+  Climatizacion de Campo
+    Aires Inverter y Ventiladores de Techo [casa-de-campo/climatizacion-de-campo/aires-inverter-y-ventiladores-de-techo]
+      Brands: Atma, Axel, BGH, Carrier, Hisense, Hitachi, LG, Martin y Martin, Midea, Noblex, Philco, Protalia, Samsung, Sansei, Siam, Surrey, TCL, Whirlpool, Yelmo, York
+    Estufas a Leña y Salamandras Eficientes [casa-de-campo/climatizacion-de-campo/estufas-a-leña-y-salamandras-eficientes]
+      Brands: Amesti, Axel, Bosca, Calden, Coppens, Domec, Emege, Eskabe, Filfer, Herom, Istilart, Lepanto, Liliana, Longvie, Ñuke, Orbis, Peabody, Qutral, Tromen, Volcan
+  Linea Blanca de Campo
+    Cocinas Multi-gas y Semi-Industriales [casa-de-campo/linea-blanca-de-campo/cocinas-multigas-y-semiindustriales]
+      Brands: Bosch, Domec, Drean, Escorial, Florencia, Forza, Llanos, Longvie, Macom, Martiri, Morelli, Orbis, Patrick, Philco, Siam, Smeg, Sol Real, Signo de Oro, Volcan, Whirlpool
+    Freezer Horizontal y Heladeras Duales/12V [casa-de-campo/linea-blanca-de-campo/freezer-horizontal-y-heladeras-duales12v]
+      Brands: Bambi, Briket, Columbia, Drean, Eslabón de Lujo, Frare, Gafa, Hisense, Inelro, Koh-i-noor, Lacar, LG, Midea, Patrick, Philco, Samsung, Siam, Teora, Vondom, Whirlpool
+  Linea Gris (Informatica y Conectividad)
+    Antenas Satelitales y Routers 4G Rurales [casa-de-campo/linea-gris-informatica-y-conectividad/antenas-satelitales-y-routers-4g-rurales]
+      Brands: Alcatel, Amphenol, Asus Rogue, Cisco Small Business, D-Link, Elsys, Huawei Rural, Kozumi, LigoWave, Linksys, Mercusys, MikroTik LTE, Netgear Nighthawk, Nisuta, Starlink SpaceX, Tenda High Power, TP-Link 4G, Ubiquiti AirMax, ZTE, Zyxel
+    Impresoras de Sistema Continuo [casa-de-campo/linea-gris-informatica-y-conectividad/impresoras-de-sistema-continuo]
+      Brands: Anycubic, Bixolon, Brother InkBenefit, Canon MegaTank, Canon Selphy, Creality, Epson EcoTank, Fujifilm, Hellbot, Honeywell, HP Smart Tank, HP Sprocket, Kodak, Lexmark, Pantun, Polaroid, Ricoh, Samsung, Xerox, Zebra
+    Micro-Servers y Almacenamiento Local [casa-de-campo/linea-gris-informatica-y-conectividad/microservers-y-almacenamiento-local]
+      Brands: Adata Durapro, Asustor, Buffalo, Crucial, Dell PowerEdge, HPE MicroServer, Kingston Rugged, LaCie, Lenovo ThinkSystem, Netgear, QNAP, Samsung T-Series, SanDisk Pro, Seagate Expansion, Silicon Power, Synology, TerraMaster, Toshiba Canvio, Verbatim, Western Digital
+    Notebooks Robustas y Equipos Bajo Consumo [casa-de-campo/linea-gris-informatica-y-conectividad/notebooks-robustas-y-equipos-bajo-consumo]
+      Brands: Acer Enduro, Apple MacBook Air, ASUS TUF, Bangho Robust, CX Advance, Dell Rugged, Enova Notebooks, Exo Mobile, Getac, Gigabyte, HP EliteBook, Intel NUC, Lenovo ThinkPad, Microsoft Surface Go, Panasonic Toughbook, Positivo BGH, Raspberry Pi, Samsung Galaxy Tab, Xiaomi Pad, Lenovo Yoga
+  Linea Marron de Campo
+    Radios Multibanda y Audio a Bateria [casa-de-campo/linea-marron-de-campo/radios-multibanda-y-audio-a-bateria]
+      Brands: Aiwa, Bose, Daewoo, Edifier, JBL, Ken Brown, LG, Logitech, Noblex, Panacom, Philco, Philips, Pioneer, Siam, Sony, Stromberg, Suono, Thonet and Vander, Winco, Xiaomi
+    Smart TV y Receptores Satelitales [casa-de-campo/linea-marron-de-campo/smart-tv-y-receptores-satelitales]
+      Brands: Admiral, BGH, Enova, Hisense, Hitachi, JVC, LG, Noblex, Philco, Philips, Quint, RCA, Samsung, Sansei, Sanyo, Skyworth, Sony, TCL, Telefunken, Xiaomi
+
+=== Hogar ===
+  Baño, Sanitarios y Cuidado Personal
+    Balanzas Digitales (Smart / Bioimpedancia) [hogar/baño-sanitarios-y-cuidado-personal/balanzas-digitales-smart-bioimpedancia]
+      Brands: Aspen, Atma, Beurer, Braun, Etekcity, Fitbit, Garmin, Huawei, Kretz, Liliana, Omron, Oster, Peabody, Philco, Philips, Renpho, San Up, Silfab, Smartlife, Xiaomi
+    Duchas y Sistemas Termostaticos [hogar/baño-sanitarios-y-cuidado-personal/duchas-y-sistemas-termostaticos]
+      Brands: Aqualia, Ariston, Clever, Decca, Delta, FV (Franz Viegener), Genebre, Gheco, Grohe, Hansgrohe, Hydra, Hydro, Kohler, Moen, Peirano, Piazza, Roca, Stiebel Eltron, Teka, Vasser
+    Extractores de Aire de Baño [hogar/baño-sanitarios-y-cuidado-personal/extractores-de-aire-de-baño]
+      Brands: Axel, Cata, Gralf, Hydra, Janis, KDK, Liliana, Maraldi, Martin y Martin, Panasonic, Protalia, S&P (Soler & Palau), Sodeca, Spar, TST, Vents, Ventrex, Vornado, Winco, Yelmo
+    Hidromasajes y Jacuzzis [hogar/baño-sanitarios-y-cuidado-personal/hidromasajes-y-jacuzzis]
+      Brands: Aquaglass, Buckingham, Calypso, Duravit, Ferrum, Hydra, Idro, Intex, Jacuzzi, Kohler, Laufen, Motorarg, Niza, Plomyplas, Roca, Sanycer, Schneider, Toto, Vulcano, Zenith
+    Inodoros y Bidets [hogar/baño-sanitarios-y-cuidado-personal/inodoros-y-bidets]
+      Brands: Aqualia, Ariel, Ariston, Bari, Capea, Deca, Derpla, Duravit, Eskabe, Ferrum, Incepa, Jacuzzi, Laufen, Peirano, Piazza, Pringles, Roca, Stone, Toto, Vasser
+    Lavamanos y Bachas [hogar/baño-sanitarios-y-cuidado-personal/lavamanos-y-bachas]
+      Brands: Aqualia, Bari, Capea, Deca, Derpla, Duravit, Ferrum, FV, Incepa, Kohler, Laufen, Marmolina, Peirano, Piazza, Pringles, Roca, Schneider, Stone, Toto, Vasser
+    Secadores de Pelo y Estilizadores [hogar/baño-sanitarios-y-cuidado-personal/secadores-de-pelo-y-estilizadores]
+      Brands: Atma, Babyliss, Bellissima, Braun, Conair, Dyson, GA.MA Italy, Heineken, Oster, Panasonic, Peabody, Philco, Philips, Remington, Revlon, Smartlife, Taiff, Ultracomb, Valera, Yelmo
+  Calentamiento de Agua
+    Termotanque y Calefon [hogar/calentamiento-de-agua/termotanque-y-calefon]
+      Brands: Ariston, BGH, Coppens, Domec, Escorial, Eskabe, Fogata, Gorenje, Heineken, Longvie, Orbis, Peabody, Philco, Rheem, Rinnai, Saiar, Señorial, Sherman, Termonic, Volcan
+  Climatizacion
+    Aire Acondicionado [hogar/climatizacion/aire-acondicionado]
+      Brands: BGH, Carrier, Coventry, Daitsu, Electra, Fedders, Hisense, Hitachi, LG, Midea, Noblex, Philco, Rheem, Samsung, Sansei, Siam, Surrey, TCL, Whirlpool, York
+    Calefactores y Estufas [hogar/climatizacion/calefactores-y-estufas]
+      Brands: Atma, Axel, BGH, Calden, Coppens, DeLonghi, Domec, Emege, Eskabe, Klarstein, Lepanto, Liliana, Longvie, Magic Click, Orbis, Peabody, Philco, Rheem, Tromen, Volcan
+  Linea Blanca
+    Cocina y Horno [hogar/linea-blanca/cocina-y-horno]
+      Brands: Ariston, Balay, Bertazzoni, Bosch, Candy, Domec, Drean, Escorial, Florencia, Llanos, Longvie, Martiri, Morelli, Orbis, Patrick, Philco, Siam, Smeg, TST, Whirlpool
+    Freezer [hogar/linea-blanca/freezer]
+      Brands: Bambi, Briket, Columbia, Drean, Electrolux, Eslabón de Lujo, Frate, Gafa, Hisense, Inelro, Koh-i-noor, LG, Midea, Nebba, Patrick, Philco, Siam, Teora, Vondom, Whirlpool
+    Heladera [hogar/linea-blanca/heladera]
+      Brands: Ariston, Bambi, Bosch, Briket, Columbia, Drean, Electrolux, Eslabón de Lujo, Gafa, Hisense, Koh-i-noor, LG, Midea, Patrick, Philco, Samsung, Siam, Smartlife, Vondom, Whirlpool
+    Lavarropas [hogar/linea-blanca/lavarropas]
+      Brands: Alladio, Ariston, Aurora, Beko, Candy, Codini, Columbia, Drean, Electrolux, Enova, Eslabón de Lujo, Koh-i-noor, LG, Longvie, Midea, Patrick, Philco, Samsung, Siam, Whirlpool
+    Microondas [hogar/linea-blanca/microondas]
+      Brands: Atma, BGH, Candy, Daewoo, Jeluz, Ken Brown, LG, Liliana, Midea, Noblex, Oster, Peabody, Philco, RICA, Samsung, Sansei, Siam, Smartlife, Ultracomb, Whirlpool
+  Linea Gris (Informatica y Conectividad)
+    Consolas de Videojuegos y Streaming [hogar/linea-gris-informatica-y-conectividad/consolas-de-videojuegos-y-streaming]
+      Brands: Amazon Fire, Apple TV, Asus ROG, Atari, Dynacom, Google Chromecast, Lenovo Legion, Microsoft Xbox, MSI Claw, Nintendo, Nvidia Shield, PC Engine, Razer, Realme, Roku, Sega, Sony PlayStation, Steam Valve, Xiaomi Mi Box
+    Dispositivos de Red y Routers Wi-Fi [hogar/linea-gris-informatica-y-conectividad/dispositivos-de-red-y-routers-wifi]
+      Brands: Arris, Asus, Belkin, Cisco Small Business, D-Link, Eero, Google Nest, Huawei, Kozumi, Linksys, Mercusys, MikroTik, Motorola, Nisuta, Tenda, TP-Link, Ubiquiti, Xiaomi, Zyxel
+    Impresoras Domesticas y Multifuncion [hogar/linea-gris-informatica-y-conectividad/impresoras-domesticas-y-multifuncion]
+      Brands: Anycubic, Brother, Canon, Creality, Dremel, Epson, FlashForge, Fujifilm, Hellbot, HP, Instax, Kodak, Lexmark, Pantun, Polaroid, Prusa, Ricoh, Samsung, Trilab, Xerox
+    PCs de Escritorio y Notebooks [hogar/linea-gris-informatica-y-conectividad/pcs-de-escritorio-y-notebooks]
+      Brands: Acer, Apple, ASUS, Bangho, Corsair, CX, Dell, Enova, Exo, Gigabyte, HP, Huawei, Lenovo, MSI, Noblex, Overtech, Positivo BGH, Razer, Samsung, Xiaomi
+    Servidores Domesticos y Almacenamiento NAS [hogar/linea-gris-informatica-y-conectividad/servidores-domesticos-y-almacenamiento-nas]
+      Brands: Adata, Asustor, Buffalo, Crucial, Dell, Drobo, HP, Kingston, Lenovo, Netgear, Pny, QNAP, Samsung, SanDisk, Seagate, Synology, Verbatim, Western Digital
+  Linea Marron
+    Secarropa [hogar/linea-marron/secarropa]
+      Brands: Ariete, Atma, Black and Decker, Braun, Cecotec, Confort, Daewoo, Everest, Imaco, Keefe, LG, Liliana, Midea, Oster, Panasonic, Peabody, Philco, Philips, Scarlett, Tefal, Ultracomb, Winco, Xiaomi
+    Sistemas de Audio y Parlantes [hogar/linea-marron/sistemas-de-audio-y-parlantes]
+      Brands: Aiwa, Bose, Daewoo, Edifier, JBL, Ken Brown, LG, Logitech, Noblex, Panacom, Philco, Philips, Pioneer, Samsung, Siam, Sony, Stromberg, Suono, Thonet and Vander, Winco
+    Smart TV [hogar/linea-marron/smart-tv]
+      Brands: Admiral, BGH, Enova, Hisense, Hitachi, JVC, LG, Noblex, Philco, Philips, Quint, RCA, Samsung, Sansei, Sanyo, Skyworth, Sony, TCL, Telefunken, Xiaomi
+
+=== Industria ===
+  Calentamiento de Agua / Vapor Industrial
+    Calderas Humotubulares y Termotanques Alta Potencia [industria/calentamiento-de-agua-vapor-industrial/calderas-humotubulares-y-termotanques-alta-potencia]
+      Brands: A.O. Smith Pro, Ariston High Power, Baxi Industrial, Bosch Thermotechnology, Bradford White, Caldaia, Eskabe Max, Fimaco, Fontanet, Lochinvar, Longvie Comercial, Navien Industrial, Orbis Pro, Rheem Commercial, Rinnai Commercial, Salcor Cavi, Spiro, Vaillant Group, Viessmann, Zilmet
+  Climatizacion Industrial (HVAC)
+    Cortinas de Aire y Ventilacion Axial [industria/climatizacion-industrial-hvac/cortinas-de-aire-y-ventilacion-axial]
+      Brands: Axel Industrial, Blauberg, Casals, Cata, Dynair, Eurovent, FlaktGroup, Gralf, Kruger, Maico, Martin y Martin, Ostberg, Protalia, S&P (Soler & Palau), Sodeca, Systemair, Ventrex, Vents, Zilmet
+    Sistemas VRF, Chillers y Roof-Tops [industria/climatizacion-industrial-hvac/sistemas-vrf-chillers-y-rooftops]
+      Brands: BGH Eco Smart, Carrier, Clivet, Daikin, Dunham-Bush, Fujitsu VRF, Gree Commercial, Haier HVAC, Hitachi Industrial, Lennox, LG Chiller, McQuay, Midea Commercial, Mitsubishi Electric, Rhoss, Samsung DVM, Surrey Industrial, Toshiba HVAC, Trane, York
+  Linea Blanca Industrial / Gastronomia
+    Cocinas Industriales y Hornos Convectores [industria/linea-blanca-industrial-gastronomia/cocinas-industriales-y-hornos-convectores]
+      Brands: Anvil, Bari, Blodgett, Fineschi, Forza, Gapan, Garland, Frymaster, Hobart, Ingenieria Gastronomica, L gastronomic, Macom, Marva, Morelli, Pauna, Rational, Santini, Sol Real, Tecno calor, UnoX
+    Refrigeracion Comercial y Camaras Frigorificas [industria/linea-blanca-industrial-gastronomia/refrigeracion-comercial-y-camaras-frigorificas]
+      Brands: Arneg, Blaybar, Bonano, Briket, Carrier Transicold, Costan, Criotec, Fogel, Frare, Frimont, Friomax, Inelro, Koxka, Metalfrio, Midea Commercial, Nebba, Refriworld, Teora, Thermo King, Zilmet
+  Linea Gris (Informatica y Conectividad Industrial)
+    Computadoras Industriales (IPC) y Paneles Tactiles IP65 [industria/linea-gris-informatica-y-conectividad-industrial/computadoras-industriales-ipc-y-paneles-tactiles-ip65]
+      Brands: Aaeon (Asus), Advantech, Axiomtek, B&R Industrial, Beckhoff, Dell Rugged, Elo Touch Industrial, Getac, Honeywell Industrial, IEI Integration, Kontron, Moxa, Nexcom, Omron, Pepperl+Fuchs, Rockwell Automation, Schneider Electric Magelis, Siemens Simatic IPC, Winmate, Yokogawa
+    Impresoras Industriales de Codigo de Barras [industria/linea-gris-informatica-y-conectividad-industrial/impresoras-industriales-de-codigo-de-barras]
+      Brands: Brady, Brother Industrial, Canon Production, Citizen Systems, Dominó, Dymo Industrial, Epson LabelWorks, Fujitsu Industrial, Honeywell Datamax, Konica Minolta Accurio, Kyocera TaskAlfa, Lexmark Enterprise, Printronix, Ricoh Industrial, Sato, Toshiba TEC, TSC Auto ID, Xerox Production, Zebra Technologies
+    Servidores de Planta Rugerizados y Racks IP [industria/linea-gris-informatica-y-conectividad-industrial/servidores-de-planta-rugerizados-y-racks-ip]
+      Brands: APC NetShelter IP, Advantech Server, Cisco UCS Industrial, Dell PowerEdge XR, Eaton Industrial, Furukawa Industrial, HPE Edgeline, Hirschmann, IBM Power Systems, Lenovo ThinkSystem SE350, Moxa Industrial Server, Oracle Engineered, QNAP Industrial NAS, Rittal Racks, Schneider Electric, Siemens Simatic Server, Supermicro IoT, Synology RackStation, Tripp Lite Industrial, Vertiv Knurr
+    Switches Industriales DIN-Rail y Firewalls OT [industria/linea-gris-informatica-y-conectividad-industrial/switches-industriales-dinrail-y-firewalls-ot]
+      Brands: Antaira Technologies, Check Point Quantum Rugged, Cisco Industrial IE, Claroty, Fortinet FortiGate Rugged, Hirschmann Belden, MikroTik Industrial, Moxa, Nozomi Networks, Omron Industrial, Phoenix Contact, Red Lion Controls, Rockwell Allen-Bradley, Schneider ConneXium, Siemens Scalance, Trend Micro TXOne, Ubiquiti EdgeMax, Weidmüller, Westermo, Yokogawa
+  Linea Marron Industrial / Señalizacion
+    Pantallas de Carteleria y Monitores Industriales [industria/linea-marron-industrial-señalizacion/pantallas-de-carteleria-y-monitores-industriales]
+      Brands: Acer Pro, Advantech, AOC Professional, Asus ProArt, Barco, BenQ Pro, Christie, Dell Commercial, Elo Touch, HP Enterprise, LG Information Display, Lenovo ThinkVision, NEC Display, Panasonic Industry, Philips Signage, Planar, Samsung Business, Sharp Pro, Sony Professional, TCL Commercial
+    Sistemas de Audio Evacuacion y Megafonia IP [industria/linea-marron-industrial-señalizacion/sistemas-de-audio-evacuacion-y-megafonia-ip]
+      Brands: Audac, Axis Communications, B&S Audio, Behringer Pro, Biamp, Bose Professional, Bosch Security, Crown, Electro-Voice, Harman Pro, Inter-M, JBL Commercial, Mackie, Peavey Commercial, QSC, RCF, Sennheiser Business, Shure Pro, TOA Electronics, Yamaha Commercial
+  Sanidad, Vestuarios y Seguridad de Planta
+    Duchas de Emergencia y Estaciones Lavaojos de Seguridad [industria/sanidad-vestuarios-y-seguridad-de-planta/duchas-de-emergencia-y-estaciones-lavaojos-de-seguridad]
+      Brands: Aero, Aqualia, Ariston, Clever, Delta, Encon, FV, Haws, Hughes Safety, Hydra, Hydro, Kohler, Melisam, Moen, Piazza, Roca, Sloan, Speakman, Vasser, Zenith
+    Estaciones de Sanitizacion y Dispensers Industriales IP [industria/sanidad-vestuarios-y-seguridad-de-planta/estaciones-de-sanitizacion-y-dispensers-industriales-ip]
+      Brands: Biork, Care, Dany, Elite, Gojo, Gralf, Humma, Jofel, Kimberly-Clark, Kretz, Mediclinics, Nisuta, Peabody, Philco, Purell, Rubbermaid, Smartlife, Tork, Vasser, Xiaomi
+    Inodoros, Mingitorios y Fluxometros Pesados (Aptos Alto Transito) [industria/sanidad-vestuarios-y-seguridad-de-planta/inodoros-mingitorios-y-fluxometros-pesados-aptos-alto-transito]
+      Brands: Aqualia, Bari, Capea, Deca, Derpla, Duravit, Ferrum, FV (Fluxómetros), Incepa, Jacuzzi, Laufen, Peirano, Piazza, Pringles, Roca, Sloan, Stone, Toto, Vasser, Zenith
+    Lavamanos de Accionamiento Mecanico (Pedal / Rodilla) y Bachas de Inox [industria/sanidad-vestuarios-y-seguridad-de-planta/lavamanos-de-accionamiento-mecanico-pedal-rodilla-y-bachas-de-inox]
+      Brands: Abrasivos Argentinos, Bari, Blaybar, Briket, Escorial, Ferrum, Fineschi, Forza, FV, Ingenieria Gastronomica, L gastronomic, Macom, Morelli, Piazza, Pringles, Roca, Sol Real, Tecno calor, Vasser, Zenith
+    Secadores de Manos Antivandalicos (Uso Intensivo) [industria/sanidad-vestuarios-y-seguridad-de-planta/secadores-de-manos-antivandalicos-uso-intensivo]
+      Brands: Axel Industrial, Cata, Dyson, Excel Dryer, Hydra, Inelro, Jofel, Klarstein, Liliana, Maraldi, Mediclinics, Oster, Panasonic, Peabody, San Up, Smartlife, Spar, Valera, Vents, Winco
+
+=== Oficina ===
+  Baño y Sanidad de Oficina
+    Dispensers Automaticos (Jabón y Sanitizante con Sensor) [oficina/baño-y-sanidad-de-oficina/dispensers-automaticos-jabón-y-sanitizante-con-sensor]
+      Brands: Biork, Care, Dany, Elite, Gojo, Gralf, Humma, Jofel, Kimberly-Clark, Kretz, Mediclinics, Nisuta, Peabody, Philco, Purell, Rubbermaid, Smartlife, Tork, Vasser, Xiaomi
+    Extractores de Aire Industriales y Forzadores [oficina/baño-y-sanidad-de-oficina/extractores-de-aire-industriales-y-forzadores]
+      Brands: Axel Industrial, Cata, Gralf, Hydra, KDK, Maraldi, Martin y Martin, Panasonic Industry, Protalia, S&P (Soler & Palau), Sodeca, Spar, Systemair, TST, Ventrex, Vents, Vornado, Winco, Yelmo, Zilmet
+    Griferias Electronicas con Sensor de Presencia [oficina/baño-y-sanidad-de-oficina/griferias-electronicas-con-sensor-de-presencia]
+      Brands: Aqualia, Clever, Decca, Delta, FV (Franz Viegener), Genebre, Gheco, Grohe, Hansgrohe, Hydra, Hydro, Kohler, Moen, Peirano, Piazza, Roca, Sloan, Teka, Toto, Vasser
+    Inodoros, Mingitorios y Fluxometros con Sensor [oficina/baño-y-sanidad-de-oficina/inodoros-mingitorios-y-fluxometros-con-sensor]
+      Brands: Aqualia, Bari, Capea, Deca, Derpla, Duravit, Ferrum, FV (Fluxómetros), Incepa, Jacuzzi, Laufen, Peirano, Piazza, Pringles, Roca, Sloan, Stone, Toto, Vasser, Zenith
+    Secadores de Manos por Aire (Soplado de Alta Velocidad) [oficina/baño-y-sanidad-de-oficina/secadores-de-manos-por-aire-soplado-de-alta-velocidad]
+      Brands: Axel, Cata, Dyson, Excel Dryer, Hydra, In拋部, Jofel, Klarstein, Liliana, Maraldi, Mediclinics, Oster, Panasonic, Peabody, San Up, Smartlife, Spar, Valera, Vents, Winco
+  Calentamiento de Agua de Oficina
+    Dispensers de Agua y Termotanques [oficina/calentamiento-de-agua-de-oficina/dispensers-de-agua-y-termotanques]
+      Brands: Ariston, Atma, BGH, Columbia, Domec, Escorial, Eskabe, Humma, Longvie, Orbis, Peabody, Philco, Rheem, Saiar, Señorial, Sherman, Spar, Tabureto, Volcan, Waterplast
+  Climatizacion de Oficina
+    Aire Acondicionado (Cassette y Baja Silueta) [oficina/climatizacion-de-oficina/aire-acondicionado-cassette-y-baja-silueta]
+      Brands: BGH, Carrier, Coventry, Daikin, Electra, Fedders, Fujitsu VRF, Hisense, Hitachi, LG, Midea, Mitsubishi Electric, Noblex, Philco, Samsung, Sansei, Siam, Surrey, TCL, York
+    Calefaccion Corporativa y Paneles [oficina/climatizacion-de-oficina/calefaccion-corporativa-y-paneles]
+      Brands: Atma, Axel, BGH, Calden, Coppens, DeLonghi, Domec, EcoLogic, Emege, Eskabe, Klarstein, Liliana, Longvie, Magic Click, Orbis, Peabody, Philco, Rheem, Tromen, Volcan
+  Linea Blanca de Oficina
+    Cafeteras Profesionales y de Capsula [oficina/linea-blanca-de-oficina/cafeteras-profesionales-y-de-capsula]
+      Brands: Atma, Bialetti, Black and Decker, DeLonghi, Dolce Gusto, Electrolux, Gaggia, Hamilton Beach, Krups, Liliana, Moulinex, Nespresso, Oster, Peabody, Philips, Saeco, Sanremo, Smartlife, Ultracomb, Winco
+    Frigobar y Exhibidoras [oficina/linea-blanca-de-oficina/frigobar-y-exhibidoras]
+      Brands: Atma, Bambi, Briket, Drean, Gafa, Hisense, Inelro, Klimatic, Koh-i-noor, LG, Midea, Nebba, Patrick, Philco, Samsung, Siam, Smartlife, Teora, Vondom, Whirlpool
+  Linea Gris (Informatica y Conectividad)
+    Dispositivos de Red y Switches Administrables [oficina/linea-gris-informatica-y-conectividad/dispositivos-de-red-y-switches-administrables]
+      Brands: Allied Telesis, Aruba (HPE), Check Point, Cisco Systems, D-Link Business, Extreme Networks, Fortinet, Huawei Enterprise, Juniper Networks, Linksys Business, MikroTik, Netgear Insight, Palo Alto Networks, Ruckus (CommScope), SonicWall, Sophos, TP-Link Omada, Ubiquiti UniFi, WatchGuard, Zyxel Networks
+    Impresoras Corporativas y Fotocopiadoras [oficina/linea-gris-informatica-y-conectividad/impresoras-corporativas-y-fotocopiadoras]
+      Brands: Bixolon, Brother, Canon ImageRunner, Citizen, Epson EcoTank, Fujitsu Scanners, Honeywell, HP LaserJet, Kodak Alaris, Konica Minolta, Kyocera, Lexmark, Pantun Pro, Ricoh, Sato, Sharp, Star Micronics, Toshiba, Xerox, Zebra
+    PCs Corporativas y Thin Clients [oficina/linea-gris-informatica-y-conectividad/pcs-corporativas-y-thin-clients]
+      Brands: Acer TravelMate, Aopen, Apple Mac, ASUS ExpertBook, Bangho Professional, CX Corp, Dell Latitude, Elo Touch, Exo Corporate, Fujitsu, Gigabyte Brix, HP ProDesk, Huawei MateBook, Intel NUC, Lenovo ThinkPad, Microsoft Surface, MSI Pro, Positivo BGH Pro, Samsung Galaxy Book, Toshiba Dynabook
+    Servidores Empresariales y Racks [oficina/linea-gris-informatica-y-conectividad/servidores-empresariales-y-racks]
+      Brands: APC (Schneider Electric), Asustor Lockerstor, Bangho ProServer, Cisco UCS, Dell PowerEdge, Eaton, Exo Server, Fujitsu Primergy, Furukawa, HPE (Hewlett Packard Enterprise), Huawei FusionServer, IBM, Inspur, Lenovo ThinkSystem, Oracle, QNAP Enterprise, Supermicro, Synology RackStation, Tripp Lite, Vertiv
+  Linea Marron de Oficina
+    Monitores y Pantallas de Proyeccion [oficina/linea-marron-de-oficina/monitores-y-pantallas-de-proyeccion]
+      Brands: Acer, AOC, ASUS, Bangho, BenQ, Dell, Enova, Epson, Gigabyte, HP, Hisense, Lenovo, LG, MSI, Noblex, Philips, Samsung, Sony, TCL, ViewSonic
+    Sistemas de Videoconferencia y Audio [oficina/linea-marron-de-oficina/sistemas-de-videoconferencia-y-audio]
+      Brands: Anker, Aver, Bose, Cisco, Jabra, JBL, Logitech, Microsoft, Owl Labs, Panacom, Philips, Poly, Redragon, Sennheiser, Shure, Sony, Stromberg, Thonet and Vander, Yamaha, Yealink
+

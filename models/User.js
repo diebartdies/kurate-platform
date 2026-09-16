@@ -29,8 +29,8 @@ const UserSchema = new mongoose.Schema({
   },
   professionalType: {
     type: String,
-    enum: ['companion', 'hogar'],
-    default: 'companion'
+    enum: ['profesional_matriculado', 'tecnico_matriculado', 'tecnico_no_matriculado', 'idoneo'],
+    default: 'tecnico_no_matriculado'
   },
   isEmailVerified: {
     type: Boolean,
@@ -193,6 +193,12 @@ const UserSchema = new mongoose.Schema({
       type: String,
       index: true
     }],
+    // Trades/professions the professional exercises (e.g. "Plomero", "Cerrajero").
+    // Each entry mirrors the professions taxonomy collection: { slug, name }.
+    professions: [{
+      slug: { type: String, index: true },
+      name: { type: String, index: true }
+    }],
     whatsappNumber: String,
     photos: [String],
     location: {
@@ -332,12 +338,6 @@ const UserSchema = new mongoose.Schema({
       whatsapp: { type: Boolean, default: false },
       telegram: { type: Boolean, default: false }
     },
-    // Category / maturity of the professional
-    category: {
-      type: String,
-      enum: ['profesional_matriculado', 'tecnico_matriculado', 'tecnico_no_matriculado', 'idoneo'],
-      default: 'tecnico_no_matriculado'
-    },
     // Ad: single action + single area
     action: String,
     actionDetails: String,
@@ -349,7 +349,14 @@ const UserSchema = new mongoose.Schema({
     services: [{
       path: { type: String, required: true },
       name: { type: String, required: true },
+      actions: [{ type: String }],
       brands: [String]
+    }],
+    // Trades/professions the professional exercises (e.g. "Plomero", "Cerrajero").
+    // Each entry mirrors the professions taxonomy collection: { slug, name }.
+    professions: [{
+      slug: { type: String, index: true },
+      name: { type: String, index: true }
     }],
     photos: [String],
     specialty: String,
@@ -387,6 +394,15 @@ const UserSchema = new mongoose.Schema({
     budgetPrice: {
       type: { type: String, enum: ['sin_cargo', 'con_cargo'], default: 'sin_cargo' },
       amount: { type: Number }
+    },
+    // Cobro por app: el profesional facilita que el cliente pague vía KuraTe sin efectivo
+    payment: {
+      wantsAppPayment: { type: Boolean, default: false },
+      cbu: { type: String, trim: true, maxlength: 22 },
+      cvu: { type: String, trim: true, maxlength: 22 },
+      alias: { type: String, trim: true, maxlength: 30 },
+      accountNumber: { type: String, trim: true },
+      bankName: { type: String, trim: true }
     }
   },
   resetPasswordToken: String,

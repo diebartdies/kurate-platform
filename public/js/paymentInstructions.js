@@ -79,7 +79,7 @@ export function renderHowToPayHtml(paymentInstructions) {
         <div class="how-to-pay-grid">
             <section class="how-to-pay-card">
                 <div class="how-to-pay-heading">
-                    <img src="/images/mercadopago.svg" alt="Mercado Pago" class="how-to-pay-logo how-to-pay-logo-mp" width="140" height="32">
+                    <span class="how-to-pay-brand how-to-pay-brand-mp" aria-hidden="true">MP</span>
                     <strong>${escapePaymentHtml(t('Mercado Pago:'))}</strong>
                 </div>
                 <dl class="how-to-pay-details">
@@ -90,7 +90,6 @@ export function renderHowToPayHtml(paymentInstructions) {
             <section class="how-to-pay-card">
                 <div class="how-to-pay-heading">
                     <span class="how-to-pay-bank-label">${escapePaymentHtml(t('Bank:'))}</span>
-                    <img src="/images/bbva.svg" alt="${escapePaymentHtml(bankName)}" class="how-to-pay-logo how-to-pay-logo-bbva" width="72" height="32">
                     <strong>${escapePaymentHtml(bankName)}</strong>
                 </div>
                 <dl class="how-to-pay-details">

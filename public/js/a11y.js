@@ -293,6 +293,57 @@ export function initA11y() {
     ensureLiveRegion();
 }
 
+/**
+ * Associate bare <label> elements (no `for`, no nested control) with their
+ * field, or demote pure group descriptors to <span> so accessibility
+ * checkers stop reporting "label isn't associated with a form field".
+ * Safe to call after any dashboard/modal render; idempotent.
+ */
+export function fixUnassociatedLabels(root = document) {
+    if (!root || !root.querySelectorAll) return;
+    const CONTROL_SEL = 'input:not([type="hidden"]), select, textarea';
+    root.querySelectorAll('label:not([for])').forEach((label) => {
+        // Already associated by nesting.
+        if (label.querySelector(CONTROL_SEL)) return;
+
+        // Sibling control right after the label (e.g. <label>Email</label><input id=...>).
+        const next = label.nextElementSibling;
+        if (next && next.matches && next.matches(CONTROL_SEL) && next.id) {
+            label.setAttribute('for', next.id);
+            return;
+        }
+
+        // Sibling wrapper holding exactly one visible control
+        // (e.g. phone picker, single checkbox rows).
+        if (next && next.querySelectorAll) {
+            const inner = Array.from(next.querySelectorAll(CONTROL_SEL));
+            if (inner.length === 1 && inner[0].id) {
+                label.setAttribute('for', inner[0].id);
+                return;
+            }
+        }
+
+        // Same small wrapper as its only control (e.g. <div><label>Street</label><input></div>).
+        const parent = label.parentElement;
+        if (parent && !/^(FORM|FIELDSET|BODY|MAIN|SECTION|ARTICLE)$/.test(parent.tagName)) {
+            const siblings = Array.from(parent.querySelectorAll(CONTROL_SEL));
+            if (siblings.length === 1 && siblings[0].id) {
+                label.setAttribute('for', siblings[0].id);
+                return;
+            }
+        }
+
+        // Pure group descriptor (Services, Location, …): a <label> with no
+        // single field is invalid — demote to <span>, visuals unchanged.
+        const span = document.createElement('span');
+        for (const attr of Array.from(label.attributes)) {
+            span.setAttribute(attr.name, attr.value);
+        }
+        while (label.firstChild) span.appendChild(label.firstChild);
+        label.replaceWith(span);
+    });
+}
+
 if (typeof document !== 'undefined' && document.documentElement) {
     syncDocumentLang();
 }

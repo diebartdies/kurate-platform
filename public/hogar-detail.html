@@ -20,11 +20,10 @@
     .fm-back { display: inline-flex; align-items: center; gap: 6px; padding: 0.5rem 1rem; background: transparent; color: #888; border: 1px solid #333; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-decoration: none; }
     .fm-back:hover { color: var(--primary-gold); border-color: var(--primary-gold); }
     .fm-top-right { display: flex; align-items: center; gap: 0.5rem; }
-    .fm-lang-btn { background: transparent; border: none; border-bottom: 2px solid transparent; padding: 4px 4px 2px; cursor: pointer; line-height: 0; transition: opacity 0.2s, border-color 0.2s; }
-    .fm-lang-btn.active { border-bottom-color: var(--primary-gold); opacity: 1; }
+    .fm-lang-btn { background: transparent; border: none; border-bottom: 2px solid transparent; padding: 4px 8px; cursor: pointer; transition: opacity 0.2s, border-color 0.2s; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; color: #ccc; border-radius: 4px; }
+    .fm-lang-btn.active { border-bottom-color: var(--primary-gold); opacity: 1; color: var(--primary-gold); }
     .fm-lang-btn.inactive { opacity: 0.4; }
     .fm-lang-btn:hover { opacity: 1; }
-    .fm-lang-btn img { border-radius: 2px; display: block; width: 28px; height: 21px; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f0f1a; color: #e0e0e0; margin: 0; }
     .container { max-width: 860px; margin: 0 auto; padding: 16px 16px 48px; }
     a.back { display: inline-flex; align-items: center; gap: 6px; color: var(--gold-light); text-decoration: none; font-size: 0.9rem; margin-bottom: 16px; }
@@ -64,24 +63,27 @@
   </style>
 </head>
 <body>
+  <a href="#detail" class="skip-link" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;padding:8px 16px;background:var(--primary-gold);color:#0f0f1a;font-weight:700;text-decoration:none;border-radius:0 0 8px 0;">Saltar al contenido</a>
   <div class="container">
-    <div class="fm-top-bar">
+    <header class="fm-top-bar">
       <a href="/hogar.html" class="fm-back" id="backBtn">← <span class="fm-back-text">Volver</span></a>
       <div class="fm-top-right">
-        <button class="fm-lang-btn active" id="langEs" title="Español"><img src="https://flagcdn.com/w40/ar.png" alt="ES"></button>
-        <button class="fm-lang-btn inactive" id="langEn" title="English"><img src="https://flagcdn.com/w40/us.png" alt="EN"></button>
-        <button class="fm-lang-btn inactive" id="langZh" title="中文"><img src="https://flagcdn.com/w40/cn.png" alt="CN"></button>
+        <button class="fm-lang-btn active" id="langEs" title="Español">ES</button>
+        <button class="fm-lang-btn inactive" id="langEn" title="English">EN</button>
+        <button class="fm-lang-btn inactive" id="langZh" title="中文">ZH</button>
       </div>
-    </div>
+    </header>
+    <main>
     <div class="apk-banner" id="apkBanner" style="display:none;background:linear-gradient(135deg,#B8922E 0%,#8a6a1e 100%);color:#fff;padding:0.4rem 0.75rem;border-radius:8px;margin-bottom:0.75rem;box-shadow:0 2px 12px rgba(184,146,46,0.25);align-items:center;gap:0.5rem;font-size:0.8rem;">
       <img src="/images/apks_android_IOS.png" alt="APK" style="height:22px;width:auto;flex-shrink:0;">
       <span id="apkBannerText">KuraTe funciona mejor en la app</span>
-      <a href="/play" id="apkDownloadBtn" style="display:none;background:#fff;color:#B8922E;border:none;border-radius:5px;padding:0.3rem 0.7rem;font-weight:700;font-size:0.75rem;cursor:pointer;white-space:nowrap;text-decoration:none;">Descargar</a>
+      <a href="/play" id="apkDownloadBtn" style="display:none;background:#fff;border:none;border-radius:5px;padding:0.3rem 0.7rem;font-weight:700;font-size:0.75rem;cursor:pointer;white-space:nowrap;text-decoration:none;">Descargar</a>
       <button onclick="document.getElementById('apkBanner').style.display='none';sessionStorage.setItem('apkBannerDismissed','1');" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:1.1rem;cursor:pointer;padding:0 0.2rem;line-height:1;margin-left:auto;">&times;</button>
     </div>
     <div id="detail">
       <div class="loader" data-i18n="Cargando detalle...">Cargando detalle...</div>
     </div>
+    </main>
   </div>
 
   <script>
@@ -141,6 +143,7 @@
       const availability = hp.availability || '';
       const action = hp.action || '';
       const actionDetails = hp.actionDetails || '';
+      const professions = hp.professions || pp.professions || [];
       const commercialDesc = hp.commercialDescription || hp.description || pp.commercialDescription || '';
       const workingDays = hp.workingDays || pp.workingDays || [];
       const workingHours = hp.workingHours || pp.workingHours || {};
@@ -168,7 +171,7 @@
       if (contact.mobilePhone) otherContacts.push('<a class="contact-btn" href="tel:' + encodeURIComponent(String(contact.mobilePhone).replace(/[^0-9+]/g, '')) + '">Teléfono</a>');
 
       const gallery = photos.map((p, i) => {
-        const img = '<img src="' + resolvePhoto(p) + '" alt="Foto" onerror="this.src=\'' + NO_PHOTO + '\'">';
+        const img = '<img src="' + resolvePhoto(p) + '" alt="Foto del profesional" onerror="this.src=\'' + NO_PHOTO + '\'">';
         if (i === 0) return img;
         return '<div class="gallery-item">' + img + '<div class="wm">KuraTe</div></div>';
       }).join('');
@@ -186,10 +189,11 @@
               <div class="area">${esc(categoryLabel(category))} · ${esc(labelArea(hp.area))}</div>
               <div class="spec">${esc(bio || services.map(s => s.name || s.path || s).join(', '))}</div>
               <div class="badges">${badges.join('')}</div>
+              <button onclick="openPaymentWizard()" style="margin-top:10px;padding:8px 14px;background:rgba(255,255,255,0.04);border:1px solid #333;border-radius:8px;color:#aaa;font-size:0.82rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">💳 Cómo pagar</button>
             </div>
           </div>
 
-          ${action ? `<div class="section"><h2 data-i18n="Qué hace">Qué hace</h2><div class="row"><div><strong>${esc(action)}</strong>${actionDetails ? ' — ' + esc(actionDetails) : ''}</div></div></div>` : ''}
+          ${professions.length || action ? `<div class="section"><h2 data-i18n="Qué hace">Qué hace</h2><div class="row"><div>${professions.length ? `<strong>${esc(professions.map(p => p.name).join(', '))}</strong>` : ''}${professions.length && action ? ' — ' : ''}${action ? `<strong>${esc(action)}</strong>${actionDetails ? ' — ' + esc(actionDetails) : ''}` : ''}</div></div></div>` : ''}
 
           <div class="section"><h2 data-i18n="Detalles">Detalles</h2><div class="row">
             ${hp.companyName ? `<div><span class="k" data-i18n="Empresa">Empresa</span>${esc(hp.companyName)}</div>` : ''}
@@ -206,7 +210,7 @@
 
           ${budget.type === 'con_cargo' && budget.amount ? `<div class="section"><h2 data-i18n="Presupuesto">Presupuesto</h2><div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:10px;padding:14px 16px;">
             <div style="font-size:1.4rem;font-weight:700;color:#22c55e;margin-bottom:6px;">$ ${Number(budget.amount).toLocaleString('es-AR')}</div>
-            <div style="color:#888;font-size:0.78rem;margin-top:6px;font-style:italic;">Se abona anticipadamente para reservar el turno</div>
+            <div style="font-size:0.78rem;margin-top:6px;font-style:italic;">Se abona anticipadamente para reservar el turno</div>
           </div></div>` : ''}
           ${budget.type === 'sin_cargo' ? `<div class="section"><h2 data-i18n="Presupuesto">Presupuesto</h2><div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:10px;padding:14px 16px;">
             <div style="font-size:1.1rem;font-weight:600;color:#22c55e;">Sin cargo — consulta gratuita</div>
@@ -334,6 +338,49 @@
         }
     })();
   </script>
+  <!-- Modal Cómo Pagar: logos + wizard 3 pasos -->
+  <div id="paymentWizardOverlay" class="hidden" role="dialog" aria-modal="true" aria-label="Cómo pagar" onclick="if(event.target===this)this.classList.add('hidden');this.style.display='none'" style="position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,0.85);display:none;justify-content:center;align-items:center;padding:20px;">
+    <div style="background:#1a1a2e;border:1px solid #333;border-radius:12px;max-width:640px;width:100%;max-height:85vh;overflow-y:auto;padding:24px;position:relative;">
+      <button onclick="document.getElementById('paymentWizardOverlay').style.display='none';document.getElementById('paymentWizardOverlay').classList.add('hidden')" aria-label="Cerrar" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:1.5rem;cursor:pointer;line-height:1;">&times;</button>
+      <h3 style="color:var(--primary-gold);margin:0 0 12px;font-size:1.2rem;">Cómo pagar — KuraTe</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center;margin-bottom:16px;padding:10px;background:rgba(255,255,255,0.04);border-radius:8px;">
+        <span style="padding:4px 8px;background:#fff;color:#1a1a2e;border-radius:4px;font-weight:800;font-size:0.7rem;">VISA</span>
+        <span style="padding:4px 8px;background:#fff;color:#c00;border-radius:4px;font-weight:800;font-size:0.7rem;">Mastercard</span>
+        <span style="padding:4px 8px;background:#fff;color:#0066cc;border-radius:4px;font-weight:800;font-size:0.7rem;">AMEX</span>
+        <span style="padding:4px 8px;background:#009ee3;color:#fff;border-radius:4px;font-weight:700;font-size:0.7rem;">Mercado Pago</span>
+        <span style="padding:4px 8px;background:#00a650;color:#fff;border-radius:4px;font-weight:700;font-size:0.7rem;">CBU/CVU</span>
+        <span style="padding:4px 8px;background:#ff3b30;color:#fff;border-radius:4px;font-weight:700;font-size:0.7rem;">Modo</span>
+        <span style="padding:4px 8px;background:#6a0dad;color:#fff;border-radius:4px;font-weight:700;font-size:0.7rem;">Ualá</span>
+      </div>
+      <div id="payStep1">
+        <h4 style="margin:0 0 8px;">Paso 1 · Elegí cómo pagar</h4>
+        <p style="color:#aaa;font-size:0.85rem;">Podés pagar <strong style="color:#fff;">por la app</strong> (sin efectivo, contrato inpostergable al contactar) o por <strong style="color:#fff;">transferencia/billetera</strong> fuera de la app.</p>
+        <div style="display:flex;gap:10px;margin-top:12px;">
+          <button onclick="showPayStep(2)" style="flex:1;padding:10px;background:var(--primary-gold);color:#0f0f1a;border:none;border-radius:6px;font-weight:700;cursor:pointer;">Pagar por la app</button>
+          <button onclick="showPayStep(3)" style="flex:1;padding:10px;background:transparent;border:1px solid var(--primary-gold);color:var(--primary-gold);border-radius:6px;cursor:pointer;">Transferir por fuera</button>
+        </div>
+        <p style="font-size:0.75rem;margin-top:10px;">Por la app no pedimos comprobante. Por fuera sí.</p>
+      </div>
+      <div id="payStep2" style="display:none;">
+        <h4 style="margin:0 0 8px;">Paso 2 · Pago por la app</h4>
+        <ol style="color:#aaa;font-size:0.85rem;margin:0 0 12px 18px;line-height:1.6;">
+          <li>Registrate / ingresá</li>
+          <li>Confirmá el monto</li>
+          <li>Al contactar se genera el <strong style="color:#fff;">contrato inpostergable</strong></li>
+          <li>Sin movimiento de efectivo</li>
+        </ol>
+        <button onclick="window.location.href='/register.html?type=guest'" style="width:100%;padding:10px;background:var(--primary-gold);color:#0f0f1a;border:none;border-radius:6px;font-weight:700;cursor:pointer;">Registrarme para pagar por la app</button>
+        <button onclick="showPayStep(1)" style="width:100%;margin-top:8px;padding:8px;background:transparent;border:1px solid #444;color:#aaa;border-radius:6px;cursor:pointer;">Volver</button>
+      </div>
+      <div id="payStep3" style="display:none;">
+        <h4 style="margin:0 0 8px;">Paso 3 · Transferencia por fuera</h4>
+        <p style="color:#aaa;font-size:0.85rem;">Transferí al Alias/CBU/CVU del profesional desde tu banco o billetera y subí el comprobante.</p>
+        <button onclick="document.getElementById('paymentWizardOverlay').style.display='none';document.getElementById('paymentWizardOverlay').classList.add('hidden')" style="width:100%;padding:10px;background:transparent;border:1px solid var(--primary-gold);color:var(--primary-gold);border-radius:6px;cursor:pointer;">Entendido</button>
+        <button onclick="showPayStep(1)" style="width:100%;margin-top:8px;padding:8px;background:transparent;border:1px solid #444;color:#aaa;border-radius:6px;cursor:pointer;">Volver</button>
+      </div>
+    </div>
+  </div>
+  <script>function showPayStep(n){document.getElementById('payStep1').style.display=n===1?'block':'none';document.getElementById('payStep2').style.display=n===2?'block':'none';document.getElementById('payStep3').style.display=n===3?'block':'none';} function openPaymentWizard(){var m=document.getElementById('paymentWizardOverlay');m.style.display='flex';m.classList.remove('hidden');showPayStep(1);}</script>
   <script>
     (function() {
       var saved = sessionStorage.getItem('hogarReturnUrl');

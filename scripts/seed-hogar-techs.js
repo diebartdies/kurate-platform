@@ -163,13 +163,13 @@ async function main() {
       email: t.email,
       password: hash,
       role: 'professional',
-      professionalType: 'hogar',
+      professionalType: t.category || 'tecnico_no_matriculado',
       isEmailVerified: true,
       isVerified: true,
       verificationStatus: 'approved',
       hogarProfile: {
         firstName: t.firstName, lastName: t.lastName, companyName: t.companyName, taxId: t.taxId,
-        category: t.category, area: t.area, action: t.action, actionDetails: t.actionDetails,
+        area: t.area, action: t.action, actionDetails: t.actionDetails,
         services: t.services, specialty: t.specialty, availability: t.availability,
         contact: t.contact, address: t.address,
         photos: [t.photo]

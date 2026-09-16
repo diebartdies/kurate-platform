@@ -95,8 +95,10 @@ function getCityCoordinates(city) {
 }
 
 function assignGpsToLocation(location) {
-  if (!location || location.lat || !location.city) return location;
-  const coords = getCityCoordinates(location.city);
+  if (!location || location.lat) return location;
+  const lookup = location.city || location.neighborhood || '';
+  if (!lookup) return location;
+  const coords = getCityCoordinates(lookup);
   if (!coords) return location;
   const offsetLat = (Math.random() - 0.5) * 0.005;
   const offsetLng = (Math.random() - 0.5) * 0.005;

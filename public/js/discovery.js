@@ -448,8 +448,19 @@ export async function loadTreasureDetails() {
                     </div>
 
                     <div class="tag-list" style="justify-content: flex-start; margin-top: 10px; margin-bottom: 20px;">
-                        <strong>Specialties:</strong> 
-                        ${(prof.services || []).map(s => `<span class="tag">${s}</span>`).join('')}
+                        <strong>Especialidades:</strong> 
+                        ${((treasure.hogarProfile && treasure.hogarProfile.services) || prof.services || []).map(s => {
+                            if (typeof s === 'string') return `<span class="tag">${s}</span>`;
+                            if (s && s.brands && Array.isArray(s.brands)) {
+                                const actions = (s.actions && Array.isArray(s.actions)) ? s.actions : [];
+                                const actionStr = actions.length > 0 ? ` · ${actions.join(', ')}` : '';
+                                return s.brands.map(b => {
+                                    const bName = typeof b === 'string' ? b : b.name;
+                                    return `<span class="tag">${s.name || ''} — ${bName}${actionStr}</span>`;
+                                }).join('');
+                            }
+                            return '';
+                        }).join('')}
                     </div>
 
                     <div id="treasureBioSection" style="margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1);">

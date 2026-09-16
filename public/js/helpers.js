@@ -19,19 +19,45 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
         if (Array.isArray(preselectedServices)) preselectedArr = preselectedServices;
         else if (typeof preselectedServices === 'string') preselectedArr = preselectedServices.split(',');
     }
-    preselectedArr = preselectedArr.map(s => (s || '').trim()).filter(Boolean);
+    preselectedArr = preselectedArr.map(s => {
+        if (typeof s === 'string') return s.trim();
+        if (s && s.path) return s;
+        return '';
+    }).filter(Boolean);
 
     let tree = [];
+    let defaultActions = [];
     try {
         const res = await fetch(`${API_URL}/service-tree`);
         const data = await res.json();
         if (data.success && data.data) tree = data.data;
+        if (data.actions) defaultActions = data.actions;
+        window._serviceTree = tree;
+        window._defaultActions = defaultActions;
     } catch (e) {
         container.innerHTML = '<p style="color:var(--accent-red);">Error loading services.</p>';
         return;
     }
 
-    const pathSet = new Set(preselectedArr.map(s => s.toLowerCase()));
+    // Build pathSet for brand pre-checking
+    const pathSet = new Set(preselectedArr.map(s => {
+        if (typeof s === 'string') return s.toLowerCase();
+        if (s && s.path && s.brands) {
+            return s.brands.map(b => {
+                const bName = typeof b === 'string' ? b : b.name;
+                return `${s.path}.${bName}`.toLowerCase();
+            });
+        }
+        return '';
+    }).flat().filter(Boolean));
+
+    // Build actionsMap: { "hogar.linea-blanca.heladera": ["instalar","reparar"] }
+    const actionsMap = {};
+    preselectedArr.forEach(s => {
+        if (s && s.path && Array.isArray(s.actions) && s.actions.length > 0) {
+            actionsMap[s.path.toLowerCase()] = s.actions;
+        }
+    });
 
     if (!document.getElementById('serviceTreeStyles')) {
         const style = document.createElement('style');
@@ -78,6 +104,13 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
             .svc-device.open > .svc-leaf { display: block; }
             .svc-brands-leaf { display:none; flex-wrap:wrap; gap:2px 0; align-items:center; padding: 2px 0 2px 24px; }
             .svc-device.open > .svc-brands-leaf { display:flex; }
+            .svc-brand-wrapper { display: contents; }
+            .svc-actions { display: none; flex-wrap: wrap; gap: 4px; padding: 2px 0 6px 24px; align-items: center; }
+            .svc-device.open > .svc-actions { display: flex; }
+            .svc-actions-info { width: 100%; font-size: 0.7rem; color: #888; font-style: italic; margin-bottom: 2px; }
+            .svc-action-chip { display: inline-flex; align-items: center; gap: 3px; padding: 3px 10px; border: 1px solid rgba(212,175,55,0.25); border-radius: 12px; cursor: pointer; font-size: 0.72rem; color: #999; background: rgba(255,255,255,0.03); transition: all 0.2s; user-select: none; }
+            .svc-action-chip:hover { background: rgba(212,175,55,0.1); border-color: rgba(212,175,55,0.5); }
+            .svc-action-chip.active { background: rgba(212,175,55,0.18); border-color: var(--primary-gold); color: var(--primary-gold); font-weight: 600; }
         `;
         document.head.appendChild(style);
     }
@@ -126,7 +159,7 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
 
     function renderDevice(device, parentPath) {
         const path = `${parentPath}.${device.id}`;
-        const isOpen = matchesPreselected(path);
+        const isOpen = false;
 
         const wrap = document.createElement('div');
         wrap.className = 'svc-device' + (isOpen ? ' open' : '');
@@ -162,10 +195,84 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
         if (device.brands && device.brands.length > 0) {
             const brandContainer = document.createElement('div');
             brandContainer.className = 'svc-brands-leaf';
+            // Opción "Todas" — selecciona todas las marcas de este dispositivo
+            const allItem = document.createElement('label');
+            allItem.className = 'svc-leaf-item svc-brand-item';
+            allItem.style.fontWeight = '700';
+            allItem.style.borderStyle = 'dashed';
+            const allCb = document.createElement('input');
+            allCb.type = 'checkbox';
+            allCb.value = path + '.__todas__';
+            allCb.className = 'dashboard-specialty-cb';
+            const allChecked = device.brands.every(b => pathSet.has(`${path}.${b}`.toLowerCase()));
+            allCb.checked = allChecked;
+            const allBox = document.createElement('span'); allBox.className = 'svc-cb-box';
+            const allSp = document.createElement('span'); allSp.className = 'svc-cb-label'; allSp.textContent = 'Todas';
+            allItem.appendChild(allCb); allItem.appendChild(allBox); allItem.appendChild(allSp);
+            allCb.addEventListener('change', () => {
+                const target = allCb.checked;
+                const cbs = brandContainer.querySelectorAll('input.dashboard-specialty-cb:not([value$=".__todas__"])');
+                cbs.forEach(cb => { cb.checked = target; cb.dispatchEvent(new Event('change', { bubbles: true })); });
+                updateDeviceActionsVisibility();
+                brandContainer.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+            brandContainer.appendChild(allItem);
             device.brands.forEach(brand => {
-                brandContainer.appendChild(renderBrand(brand, path));
+                const el = renderBrand(brand, path);
+                const cb = el.querySelector('input');
+                if (cb) cb.addEventListener('change', () => {
+                    const all = brandContainer.querySelectorAll('input.dashboard-specialty-cb:not([value$=".__todas__"])');
+                    const checked = brandContainer.querySelectorAll('input.dashboard-specialty-cb:not([value$=".__todas__"]):checked');
+                    allCb.checked = all.length > 0 && checked.length === all.length;
+                    updateDeviceActionsVisibility();
+                    brandContainer.dispatchEvent(new Event('change', { bubbles: true }));
+                });
+                brandContainer.appendChild(el);
             });
             wrap.appendChild(brandContainer);
+
+            // Action chips at device level (shared across all brands)
+            const actionsContainer = document.createElement('div');
+            actionsContainer.className = 'svc-actions';
+            const infoText = document.createElement('div');
+            infoText.className = 'svc-actions-info';
+            infoText.textContent = 'Seleccioná solo las acciones que sepas realizar en este dispositivo.';
+            actionsContainer.appendChild(infoText);
+
+            const preselectedActions = actionsMap[path.toLowerCase()] || [];
+
+            defaultActions.forEach(action => {
+                const chip = document.createElement('span');
+                chip.className = 'svc-action-chip';
+                chip.dataset.action = action.id;
+                chip.dataset.devicePath = path;
+                chip.textContent = action.name;
+                if (preselectedActions.includes(action.id)) {
+                    chip.classList.add('active');
+                }
+                chip.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    chip.classList.toggle('active');
+                    treeEl.dispatchEvent(new Event('change', { bubbles: true }));
+                });
+                actionsContainer.appendChild(chip);
+            });
+            wrap.appendChild(actionsContainer);
+
+            // Show/hide actions based on whether any brand is checked
+            const updateDeviceActionsVisibility = () => {
+                const anyChecked = brandContainer.querySelectorAll('input.dashboard-specialty-cb:not([value$=".__todas__"]):checked').length > 0;
+                if (anyChecked) {
+                    wrap.classList.add('device-checked');
+                } else {
+                    wrap.classList.remove('device-checked');
+                }
+            };
+            // Store on wrap so brand change handlers can call it
+            wrap._updateActions = updateDeviceActionsVisibility;
+            // Initial state
+            updateDeviceActionsVisibility();
         }
 
         return wrap;
@@ -173,7 +280,7 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
 
     function renderCategory(cat, parentPath) {
         const path = `${parentPath}.${cat.id}`;
-        const isOpen = matchesPreselected(path);
+        const isOpen = false;
 
         const wrap = document.createElement('div');
         wrap.className = 'svc-sub' + (isOpen ? ' open' : '');
@@ -219,7 +326,7 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
     }
 
     tree.forEach(area => {
-        const isOpen = matchesPreselected(area.id);
+        const isOpen = false;
         const areaEl = document.createElement('div');
         areaEl.className = 'svc-area' + (isOpen ? ' open' : '');
 
@@ -262,6 +369,52 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
 
         treeEl.appendChild(areaEl);
     });
+
+    function recalcAllCounts() {
+        treeEl.querySelectorAll('.svc-area').forEach(areaEl => {
+            const catCountEl = areaEl.querySelector(':scope > .svc-area-header .svc-count');
+            if (!catCountEl) return;
+            const catContainer = areaEl.querySelector(':scope > .svc-children');
+            if (!catContainer) return;
+            const brandCbs = catContainer.querySelectorAll('.dashboard-specialty-cb:not([value$=".__todas__"]):checked');
+            const selectedBrands = brandCbs.length;
+            let totalActions = 0;
+            catContainer.querySelectorAll('.svc-action-chip.active').forEach(() => totalActions++);
+            if (selectedBrands > 0) {
+                catCountEl.textContent = `${selectedBrands} marcas`;
+                if (totalActions > 0) catCountEl.textContent += ` · ${totalActions} acciones`;
+                catCountEl.style.color = 'var(--primary-gold)';
+                catCountEl.style.fontWeight = '700';
+            } else {
+                catCountEl.textContent = `${catContainer.querySelectorAll('.svc-sub').length} categorías`;
+                catCountEl.style.color = '';
+                catCountEl.style.fontWeight = '';
+            }
+        });
+        treeEl.querySelectorAll('.svc-sub').forEach(catEl => {
+            const devCountEl = catEl.querySelector(':scope > .svc-sub-header .svc-count');
+            if (!devCountEl) return;
+            const deviceContainer = catEl.querySelector(':scope > .svc-leaf');
+            if (!deviceContainer) return;
+            const brandCbs = deviceContainer.querySelectorAll('.dashboard-specialty-cb:not([value$=".__todas__"]):checked');
+            const selectedBrands = brandCbs.length;
+            let totalActions = 0;
+            deviceContainer.querySelectorAll('.svc-action-chip.active').forEach(() => totalActions++);
+            if (selectedBrands > 0) {
+                devCountEl.textContent = `${selectedBrands} marcas`;
+                if (totalActions > 0) devCountEl.textContent += ` · ${totalActions} acciones`;
+                devCountEl.style.color = 'var(--primary-gold)';
+                devCountEl.style.fontWeight = '700';
+            } else {
+                devCountEl.textContent = `${deviceContainer.querySelectorAll('.svc-device').length} dispositivos`;
+                devCountEl.style.color = '';
+                devCountEl.style.fontWeight = '';
+            }
+        });
+    }
+
+    treeEl.addEventListener('change', recalcAllCounts);
+    recalcAllCounts();
 }
 
 // Populates location dropdowns dynamically based on current API relationships
@@ -473,4 +626,152 @@ export async function setupLocationDropdowns(provinceId, cityId, neighborhoodId,
     
     // Always execute once on setup to clear any default "Loading..." text from sub-dropdowns
     await loadSublocations();
+}
+
+// Auto-fill "Código Postal" (CPA) from the entered address using the Correo
+// Argentino web service (proxied by the backend). The field is only filled when
+// it is empty or still holds a previous auto-filled value, so manually typed
+// codes are never overwritten. Re-triggers as the address changes.
+export function initCpaAutofill({ streetId, numberId, provinceId, cityId, postCodeId }, delay = 700) {
+    const streetEl = document.getElementById(streetId);
+    const numberEl = document.getElementById(numberId);
+    const provinceEl = document.getElementById(provinceId);
+    const cityEl = document.getElementById(cityId);
+    const postEl = document.getElementById(postCodeId);
+    if (!streetEl || !numberEl || !provinceEl || !postEl) return;
+    if (postEl.dataset.cpaBound === '1') return;
+    postEl.dataset.cpaBound = '1';
+
+    let timer = null;
+    let lastAuto = '';
+
+    const trigger = () => {
+        clearTimeout(timer);
+        timer = setTimeout(async () => {
+            const street = (streetEl.value || '').trim();
+            const number = (numberEl.value || '').trim();
+            const province = (provinceEl.value || '').trim();
+            const city = (cityEl && cityEl.value || '').trim();
+            if (!street || !number || !province) return;
+            const current = postEl.value || '';
+            if (current && current !== lastAuto) return; // respect manual entry
+            try {
+                const res = await fetch(`${API_URL}/cpa/lookup`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ province, city, street, number })
+                });
+                const data = await res.json();
+                if (data.success && data.cpa) {
+                    lastAuto = data.cpa;
+                    postEl.value = data.cpa;
+                }
+            } catch (e) {
+                /* lookup unavailable -> leave the field editable */
+            }
+        }, delay);
+    };
+
+    [streetEl, numberEl, provinceEl, cityEl].forEach(el => el && el.addEventListener('change', trigger));
+    [streetEl, numberEl].forEach(el => el && el.addEventListener('input', trigger));
+    postEl.addEventListener('input', () => { if (postEl.value !== lastAuto) lastAuto = ''; });
+}
+
+// Reads the rendered service tree and returns structured services
+// [{ path, name, actions, brands }] for checked device/brand leaves, mirroring
+// the shape stored in professionalProfile.hogarProfile.services.
+export function collectTreeServices(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return [];
+    const devices = container.querySelectorAll('.svc-device');
+    const result = [];
+    devices.forEach(deviceEl => {
+        const brandCbs = deviceEl.querySelectorAll('.svc-brands-leaf input.dashboard-specialty-cb:not([value$=".__todas__"]):checked');
+        if (!brandCbs.length) return;
+        const brands = [];
+        brandCbs.forEach(cb => {
+            const parts = cb.value.split('.');
+            brands.push(parts[parts.length - 1]);
+        });
+        const firstVal = brandCbs[0].value;
+        const devicePath = firstVal.substring(0, firstVal.lastIndexOf('.'));
+        const tree = window._serviceTree || [];
+        let deviceName = devicePath.split('.').pop();
+        for (const area of tree) {
+            for (const cat of (area.categories || [])) {
+                for (const dev of (cat.devices || [])) {
+                    if (`${area.id}.${cat.id}.${dev.id}` === devicePath) {
+                        deviceName = dev.name;
+                        break;
+                    }
+                }
+            }
+        }
+        const actions = [];
+        deviceEl.querySelectorAll('.svc-actions .svc-action-chip.active').forEach(chip => {
+            actions.push(chip.dataset.action);
+        });
+        result.push({ path: devicePath, name: deviceName, actions, brands });
+    });
+    return result;
+}
+
+export async function renderProfessionsPicker(containerId, preselected = []) {
+    let container = document.getElementById(containerId);
+    if (!container) return;
+
+    const preselectedMap = new Map();
+    (preselected || []).forEach(p => {
+        const slug = typeof p === 'string' ? p : (p && p.slug);
+        const name = typeof p === 'string' ? p : (p && p.name);
+        if (slug) preselectedMap.set(slug.toLowerCase(), name || slug);
+    });
+
+    let professions = [];
+    try {
+        const res = await fetch(`${API_URL}/professions`);
+        const data = await res.json();
+        if (data.success && Array.isArray(data.data)) professions = data.data;
+    } catch (e) {
+        container.innerHTML = '<p style="color:var(--accent-red);">Error cargando profesiones.</p>';
+        return;
+    }
+
+    if (professions.length === 0) {
+        container.innerHTML = '<span style="color:#888; font-size:0.85rem;">Sin profesiones disponibles.</span>';
+        return;
+    }
+
+    function render() {
+        container.innerHTML = professions.map(p => {
+            const checked = preselectedMap.has(p.slug.toLowerCase());
+            return `
+                <label class="svc-leaf-item" style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border:1px solid rgba(212,175,55,0.2); border-radius:8px; cursor:pointer; background:rgba(255,255,255,0.03);">
+                    <input type="checkbox" data-profession-slug="${p.slug}" ${checked ? 'checked' : ''} style="position:absolute; opacity:0; width:0; height:0; pointer-events:none;">
+                    <span class="svc-cb-box" style="display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; min-width:18px; border:2px solid #555; border-radius:4px; background:transparent; flex-shrink:0;"></span>
+                    <span class="svc-cb-label" style="font-size:0.83rem; color:#aaa;">${p.name}</span>
+                </label>
+            `;
+        }).join('');
+    }
+    render();
+
+    container.querySelectorAll('input[data-profession-slug]').forEach(input => {
+        input.addEventListener('change', () => {
+            if (input.checked) {
+                const p = professions.find(x => x.slug === input.dataset.professionSlug);
+                if (p) preselectedMap.set(p.slug.toLowerCase(), p.name);
+            } else {
+                preselectedMap.delete(input.dataset.professionSlug.toLowerCase());
+            }
+        });
+    });
+}
+
+export function collectProfessions() {
+    const slugs = new Set();
+    document.querySelectorAll('#upProfessions input[data-profession-slug]:checked').forEach(input => {
+        slugs.add(input.dataset.professionSlug);
+    });
+    return [...slugs];
 }

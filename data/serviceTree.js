@@ -214,4 +214,14 @@ const serviceTree = [
   }
 ];
 
+const DEFAULT_ACTIONS = [
+  { id: 'instalar', name: 'Instalar' },
+  { id: 'reparar', name: 'Reparar / Arreglar' },
+  { id: 'mantener', name: 'Mantener' },
+  { id: 'desinstalar', name: 'Desinstalar' },
+  { id: 'verificar', name: 'Verificar' },
+  { id: 'configurar', name: 'Configurar' }
+];
+
 module.exports = serviceTree;
+module.exports.DEFAULT_ACTIONS = DEFAULT_ACTIONS;

@@ -23,7 +23,8 @@ export function getProfileCompletionChecklist(user = {}) {
     if (!prof.desiredQuality) missing.push({ key: 'desiredQuality', label: 'Categoría', section: 'personal' });
     if (!prof.bio) missing.push({ key: 'bio', label: 'Descripción de servicios (bio)', section: 'bio' });
     if (!prof.location?.province) missing.push({ key: 'province', label: 'Provincia', section: 'address' });
-    if (!prof.location?.city) missing.push({ key: 'city', label: 'Ciudad', section: 'address' });
+    const isCaba = (prof.location?.province || '').trim().toLowerCase() === 'caba';
+    if (!prof.location?.city && !(isCaba && prof.location?.neighborhood)) missing.push({ key: 'city', label: isCaba ? 'Barrio' : 'Ciudad', section: 'address' });
     if (!prof.location?.street) missing.push({ key: 'street', label: 'Calle', section: 'address' });
     if (!prof.location?.number) missing.push({ key: 'number', label: 'Número', section: 'address' });
     if (!prof.photos || prof.photos.length === 0) missing.push({ key: 'photos', label: 'Al menos 1 foto', section: 'photos' });

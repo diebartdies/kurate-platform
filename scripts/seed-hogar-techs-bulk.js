@@ -145,7 +145,7 @@ async function main() {
       email,
       password: hash,
       role: 'professional',
-      professionalType: 'hogar',
+      professionalType: 'tecnico_no_matriculado',
       isEmailVerified: true,
       isVerified: true,
       verificationStatus: 'approved',

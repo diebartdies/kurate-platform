@@ -288,7 +288,7 @@ async function seed() {
       user.accountDeletedAt = null;
       user.verificationStatus = pro.verified ? 'approved' : 'pending';
       user.isVerified = true;
-      user.professionalType = 'hogar';
+      user.professionalType = pro.category || 'tecnico_no_matriculado';
       await user.save();
       updated++;
     } else {
@@ -315,7 +315,7 @@ async function seed() {
         accountDeletedAt: null,
         verificationStatus: pro.verified ? 'approved' : 'pending',
         isVerified: true,
-        professionalType: 'hogar'
+        professionalType: pro.category || 'tecnico_no_matriculado'
       });
       created++;
     }
