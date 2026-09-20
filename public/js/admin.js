@@ -4060,12 +4060,14 @@ export async function renderProfessionalList(aliasSearch = '') {
                     <tr style="border-bottom: 1px solid var(--primary-gold);">
                         <th style="padding: 10px;">Email</th>
                         <th style="padding: 10px;">Alias</th>
+                        <th style="padding: 10px;">Empresa</th>
+                        <th style="padding: 10px;">CUIT</th>
                         <th style="padding: 10px;">Status</th>
                         <th style="padding: 10px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="profTableBody">
-                    <tr><td colspan="4" style="padding: 10px; text-align: center;">Loading...</td></tr>
+                    <tr><td colspan="6" style="padding: 10px; text-align: center;">Loading...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -4092,7 +4094,7 @@ export async function renderProfessionalList(aliasSearch = '') {
 
         if (data.success) {
             if (data.data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="padding: 10px; text-align: center;">No professionals found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="padding: 10px; text-align: center;">No professionals found.</td></tr>';
                 return;
             }
             
@@ -4105,6 +4107,8 @@ export async function renderProfessionalList(aliasSearch = '') {
                 tr.innerHTML = `
                     <td style="padding: 10px;">${prof.email}</td>
                     <td style="padding: 10px;">${prof.professionalProfile?.alias || 'N/A'}${deletedBadge}</td>
+                    <td style="padding: 10px;">${prof.hogarProfile?.companyName || '-'}</td>
+                    <td style="padding: 10px;">${prof.hogarProfile?.taxId || '-'}</td>
                     <td style="padding: 10px;">${prof.verificationStatus}</td>
                     <td style="padding: 10px;">
                         <button class="edit-prof-btn" data-id="${prof._id}" style="padding: 5px 10px;">Edit</button>
