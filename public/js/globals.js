@@ -1,5 +1,8 @@
 // --- Global Constants ---
-export const BASE_ORIGIN = window.location.protocol === 'file:' ? 'http://localhost:5000' : window.location.origin;
+export const PROD_ORIGIN = 'https://kurate.drsrv.net.ar';
+export const BASE_ORIGIN = (window.location.protocol === 'file:' || window.location.protocol === 'capacitor:' || window.location.protocol === 'ionic:')
+  ? PROD_ORIGIN
+  : window.location.origin;
 export const API_URL = `${BASE_ORIGIN}/api/v1`;
 
 /**
