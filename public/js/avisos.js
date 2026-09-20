@@ -133,7 +133,7 @@
   }
 
   // Crear aviso
-  function setupCrearAviso() {
+  async function setupCrearAviso() {
     const btnCrear = $('#btnCrearAviso');
     const overlay = $('#crearAvisoOverlay');
     const form = $('#crearAvisoForm');
@@ -144,6 +144,30 @@
     const lineSelect = $('#avisoServiceLine');
 
     if (!btnCrear || !overlay) return;
+
+    // Dynamically populate environments from the professional's hogarProfile services
+    if (envSelect) {
+      try {
+        const r = await fetch('/api/v1/professionals/me', { headers: authHeaders() });
+        const d = await r.json();
+        const prof = d.data || {};
+        const hp = prof.hogarProfile || {};
+        const svcPaths = (hp.services || []).map(s => s.path || '');
+        const envSet = new Set();
+        svcPaths.forEach(p => {
+          const env = p.split('/')[0];
+          if (env) envSet.add(env);
+        });
+        if (envSet.size > 0) {
+          const envLabels = { hogar: '🏠 Hogar', oficina: '🏢 Oficina', pime: '🏬 Pyme', industria: '🏭 Industria' };
+          const envPrices = { hogar: 5000, oficina: 10000, pime: 10000, industria: 20000 };
+          envSelect.innerHTML = '<option value="">Seleccionar entorno...</option>' +
+            [...envSet].map(e => `<option value="${e}">${envLabels[e] || e} — $${(envPrices[e] || 0).toLocaleString('es-AR')}/mes</option>`).join('');
+        }
+      } catch (err) {
+        // Keep the hardcoded options as fallback
+      }
+    }
 
     btnCrear.addEventListener('click', () => overlay.classList.remove('hidden'));
     $('#closeCrearAvisoModal').addEventListener('click', () => overlay.classList.add('hidden'));

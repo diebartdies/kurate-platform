@@ -68,8 +68,12 @@ exports.createAviso = async (req, res) => {
     }
 
     const hogar = user.hogarProfile || {};
-    const declaredAreas = hogar.area ? [hogar.area] : [];
-    if (!declaredAreas.includes(environment)) {
+    const svcPaths = (hogar.services || []).map(s => s.path || '');
+    const declaredEnvs = new Set(svcPaths.map(p => p.split('/')[0]).filter(Boolean));
+    // Also check professionalProfile.services (dot-separated)
+    const pp = user.professionalProfile || {};
+    (pp.services || []).forEach(p => { const e = p.split('.')[0]; if (e) declaredEnvs.add(e); });
+    if (!declaredEnvs.has(environment)) {
       return res.status(400).json({ success: false, error: `Environment "${environment}" is not declared in your profile` });
     }
 
@@ -538,7 +542,39 @@ exports.getAvailableServiceLines = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Invalid area' });
     }
 
-    const allLines = (areaNode.categories || []).map(c => ({ id: c.id, name: c.name }));
+    const user = await User.findById(req.user.id).select('hogarProfile.services professionalProfile.services');
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    // Extract unique service lines from the professional's hogarProfile.services for this environment
+    const declaredLines = new Set();
+    const hp = user.hogarProfile || {};
+    (hp.services || []).forEach(function(svc) {
+      const path = svc.path || '';
+      const parts = path.split('/');
+      if (parts.length >= 2 && parts[0] === environment) {
+        declaredLines.add(parts[1]);
+      }
+    });
+    // Also check professionalProfile.services (dot-separated format)
+    const pp = user.professionalProfile || {};
+    (pp.services || []).forEach(function(path) {
+      const parts = path.split('.');
+      if (parts.length >= 2 && parts[0] === environment) {
+        declaredLines.add(parts[1]);
+      }
+    });
+
+    // If no declared lines, fall back to all categories
+    let candidateLines;
+    if (declaredLines.size > 0) {
+      candidateLines = (areaNode.categories || [])
+        .filter(c => declaredLines.has(c.id))
+        .map(c => ({ id: c.id, name: c.name }));
+    } else {
+      candidateLines = (areaNode.categories || []).map(c => ({ id: c.id, name: c.name }));
+    }
 
     const usedLines = await Aviso.distinct('serviceLine', {
       professional: req.user.id,
@@ -547,7 +583,7 @@ exports.getAvailableServiceLines = async (req, res) => {
     });
     const usedSet = new Set(usedLines);
 
-    const available = allLines.filter(l => !usedSet.has(l.id));
+    const available = candidateLines.filter(l => !usedSet.has(l.id));
 
     res.json({ success: true, data: available, used: [...usedSet] });
   } catch (err) {

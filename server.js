@@ -197,6 +197,7 @@ app.get('/sitemap-KuraTe.xml', seoController.sitemapKuraTeXml);
 app.get('/acompanantes/:provinceSlug/:areaSlug', seoController.renderLocationPage);
 app.get('/acompanantes/:provinceSlug', seoController.renderLocationPage);
 app.get('/perfil/:alias', seoController.renderProfilePage);
+app.get('/sitemap-services.xml', seoController.getServiceSitemap);
 
 // Redirect bogus paths Google is crawling (410 Gone or 301)
 app.get('/hogar/professionals', (req, res) => res.redirect(301, '/hogar.html'));
@@ -204,6 +205,9 @@ app.get('/professionals/search', (req, res) => res.redirect(301, '/hogar.html'))
 app.get('/categorias/electrohogar', (req, res) => res.redirect(301, '/categorias'));
 app.get('/precios-aire-acondicionado', (req, res) => res.redirect(301, '/precios-aire-acondicionado.html'));
 app.get('/avisos', (req, res) => res.redirect(301, '/avisos.html'));
+
+// Redirect old heladera-con-freezer paths to heladera
+app.get('/hogar/linea-blanca/heladera-con-freezer/:action', (req, res) => res.redirect(301, '/hogar/linea-blanca/heladera/' + req.params.action));
 
 // SEO landing pages: actions, environments, categories
 app.get('/acciones', async (req, res) => {
@@ -818,6 +822,10 @@ if (process.env.NODE_ENV !== 'production') {
 app.get('/', (req, res) => {
   res.redirect('/index.html');
 });
+
+// SEO service pages: /hogar/linea-blanca/heladera/reparar etc.
+// Must be AFTER all API routes to avoid catching /api/v1/... paths
+app.get('/:environment/:category/:device/:action', seoController.handleServiceSeoPage);
 
 // Always return JSON for API errors (prevents admin UI "Network Error" on HTML 502 pages).
 app.use('/api', (err, req, res, next) => {

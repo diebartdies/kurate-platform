@@ -14,6 +14,28 @@ function baseUrlForNamedSite(site) {
 
 const { getAllSeoUrls } = require('./seoLandingPages');
 const { getAllServiceUrls } = require('./seoServicePages');
+const serviceTree = require('../data/serviceTree');
+
+const ENV_NAMES = { hogar: 'Hogar', oficina: 'Oficina', 'casa-campo': 'Casa de Campo', industria: 'Industria' };
+const SEO_ACTIONS = ['reparar', 'instalar', 'mantener', 'verificar'];
+
+function getAllServicePages() {
+  const urls = [];
+  for (const env of serviceTree) {
+    for (const cat of env.categories) {
+      for (const device of cat.devices) {
+        for (const action of SEO_ACTIONS) {
+          urls.push({
+            loc: '/' + env.id + '/' + cat.id + '/' + device.id + '/' + action,
+            priority: 0.8,
+            changefreq: 'weekly'
+          });
+        }
+      }
+    }
+  }
+  return urls;
+}
 
 const STATIC_URLS = [
   { loc: '/', priority: 1.0, changefreq: 'weekly' },
@@ -32,7 +54,8 @@ function urlXml(baseUrl, entry) {
 async function buildSitemapForBase(baseUrl) {
   const seoUrls = getAllSeoUrls();
   const serviceUrls = getAllServiceUrls();
-  const allUrls = [...STATIC_URLS, ...seoUrls, ...serviceUrls];
+  const dynamicServicePages = getAllServicePages();
+  const allUrls = [...STATIC_URLS, ...seoUrls, ...serviceUrls, ...dynamicServicePages];
   const inner = allUrls.map(e => urlXml(baseUrl, e)).join('\n');
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${inner}\n</urlset>`;
   return { xml, urls: allUrls.map(e => ({ loc: baseUrl + e.loc })) };
@@ -65,6 +88,7 @@ Disallow: /discover.html
 Disallow: /hogar-detail.html
 
 Sitemap: ${baseUrl}/sitemap.xml
+Sitemap: ${baseUrl}/sitemap-services.xml
 `;
 }
 

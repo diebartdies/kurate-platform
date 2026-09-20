@@ -582,6 +582,10 @@ export function bindProfessionalProfileForm() {
     updateProfileForm.dataset.bound = '1';
 
     let isSaving = false;
+    let _blurSaveTimer = null;
+    
+    window._cancelBlurSave = () => { if (_blurSaveTimer) { clearTimeout(_blurSaveTimer); _blurSaveTimer = null; } };
+    window._resetSaving = () => { isSaving = false; };
     
     window.saveProfessionalProfile = async (silent = false) => {
         if (isSaving) return;
@@ -814,7 +818,7 @@ export function bindProfessionalProfileForm() {
     const formInputs = updateProfileForm.querySelectorAll('input, select, textarea');
     formInputs.forEach(input => {
         if (input.type === 'file') return; // Handled specially by addPhotoToGrid
-        input.addEventListener('blur', () => window.saveProfessionalProfile(true));
+        input.addEventListener('blur', () => { _blurSaveTimer = setTimeout(() => window.saveProfessionalProfile(true), 300); });
         if (input.type === 'checkbox' || input.type === 'radio' || input.tagName === 'SELECT') {
             input.addEventListener('change', () => window.saveProfessionalProfile(true));
         }
@@ -1822,6 +1826,8 @@ export async function loadProfDashboard() {
 
             document.getElementById('explicitSaveBtn').onclick = async () => {
                 if (typeof window.saveProfessionalProfile === 'function') {
+                    window._cancelBlurSave();
+                    window._resetSaving();
                     const btn = document.getElementById('explicitSaveBtn');
                     const alertEl=document.getElementById('updateAlert');
                     btn.textContent = t('Saving...');

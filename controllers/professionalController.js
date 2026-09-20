@@ -21,6 +21,7 @@ const { getClientIp } = require('../utils/clientIp');
 const { mergePublicListingFilter, isAccountDeleted } = require('../utils/professionalVisibility');
 const { hasInappropriateWords, matchCategories, extractKeywords } = require('../utils/needMatching');
 const { analyzeQuery, buildSearchPlan } = require('../utils/aiSearch');
+const Aviso = require('../models/Aviso');
 
 const ALIAS_LOOKUP_FILTER = { role: 'professional', accountDeletedAt: null };
 const DEFAULT_WORKING_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -85,7 +86,22 @@ function checkIsActive(profile) {
 // @access  Public
 exports.getProfessionals = async (req, res, next) => {
   try {
-    let query = mergePublicListingFilter();
+    let query = {
+      role: 'professional',
+      accountDeletedAt: null,
+      $or: [
+        { verificationStatus: 'approved' },
+        { verificationStatus: { $exists: false } },
+        { verificationStatus: null }
+      ]
+    };
+
+    // Only professionals with an active/expiring aviso
+    const activeAvisoProfessionals = await Aviso.distinct('professional', { status: { $in: ['active', 'expiring'] } });
+    if (activeAvisoProfessionals.length === 0) {
+      return res.status(200).json({ success: true, count: 0, pagination: { page: 1, limit: 0, total: 0, hasMore: false }, data: [] });
+    }
+    query._id = { $in: activeAvisoProfessionals };
 
     // Filter by Quality (formerly Tier)
     if (req.query.quality && req.query.quality.trim()) {
@@ -97,24 +113,49 @@ exports.getProfessionals = async (req, res, next) => {
       query['professionalProfile.alias'] = { $regex: req.query.alias.trim(), $options: 'i' };
     }
 
-    // Filter by Specialty (searches the services array)
+    // Filter by Specialty (searches both professionalProfile.services and hogarProfile.services)
     if (req.query.specialty && req.query.specialty.trim()) {
       const specialties = req.query.specialty.trim().split(',').map(s => s.trim()).filter(Boolean);
       if (specialties.length > 0) {
-        // Case-insensitive match for each selected specialty
-        query['professionalProfile.services'] = { $in: specialties.map(s => new RegExp('^' + s + '$', 'i')) };
+        // Use flexible matching: treat . and / as interchangeable path separators
+        const specialtyRegexes = specialties.map(s => {
+          const flexible = s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+            .replace(/\\\./g, '[./]')
+            .replace(/\\\//g, '[./]');
+          return new RegExp('^' + flexible, 'i');
+        });
+        query.$and = query.$and || [];
+        query.$and.push({ $or: [
+          { 'professionalProfile.services': { $in: specialtyRegexes } },
+          { 'hogarProfile.services.path': { $in: specialtyRegexes } }
+        ]});
       }
     }
 
-    // Hierarchical Location Search
+    // Hierarchical Location Search (checks both professionalProfile.location and hogarProfile.address)
     if (req.query.province && req.query.province.trim()) {
-      query['professionalProfile.location.province'] = { $regex: req.query.province.trim(), $options: 'i' };
+      const provRegex = { $regex: req.query.province.trim(), $options: 'i' };
+      query.$and = query.$and || [];
+      query.$and.push({ $or: [
+        { 'professionalProfile.location.province': provRegex },
+        { 'hogarProfile.address.province': provRegex }
+      ]});
     }
     if (req.query.city && req.query.city.trim()) {
-      query['professionalProfile.location.city'] = { $regex: req.query.city.trim(), $options: 'i' };
+      const cityRegex = { $regex: req.query.city.trim(), $options: 'i' };
+      query.$and = query.$and || [];
+      query.$and.push({ $or: [
+        { 'professionalProfile.location.city': cityRegex },
+        { 'hogarProfile.address.city': cityRegex }
+      ]});
     }
     if (req.query.neighborhood && req.query.neighborhood.trim()) {
-      query['professionalProfile.location.neighborhood'] = { $regex: req.query.neighborhood.trim(), $options: 'i' };
+      const hoodRegex = { $regex: req.query.neighborhood.trim(), $options: 'i' };
+      query.$and = query.$and || [];
+      query.$and.push({ $or: [
+        { 'professionalProfile.location.neighborhood': hoodRegex },
+        { 'hogarProfile.address.neighborhood': hoodRegex }
+      ]});
     }
 
     const page = parseInt(req.query.page, 10) || 1;
@@ -141,7 +182,20 @@ exports.getProfessionals = async (req, res, next) => {
       'professionalProfile.photos': 1,
       'professionalProfile.budgetType': 1,
       'professionalProfile.budgetAmount': 1,
-      'professionalProfile.responseSpeed': 1
+      'professionalProfile.responseSpeed': 1,
+      'hogarProfile.firstName': 1,
+      'hogarProfile.lastName': 1,
+      'hogarProfile.companyName': 1,
+      'hogarProfile.services': 1,
+      'hogarProfile.action': 1,
+      'hogarProfile.area': 1,
+      'hogarProfile.availability': 1,
+      'hogarProfile.photos': 1,
+      'hogarProfile.professions': 1,
+      'hogarProfile.address': 1,
+      'hogarProfile.contact': 1,
+      'name': 1,
+      'professionalType': 1
     };
 
     if (req.query.minimal === 'true') {
@@ -267,9 +321,8 @@ exports.searchProfessionals = async (req, res, next) => {
       parts.forEach(p => { if (p) searchTerms.add(p.replace(/-/g, ' ')); });
       patterns = [...searchTerms].map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
 
-      const svcNorm = service.trim().replace(/\s+/g, '-');
-      const svcRegexRaw = svcNorm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const svcRegex = svcRegexRaw.replace(/-/g, '[- ]');
+      // Build flexible regex: treat /, ., - and space as interchangeable separators
+      const svcRegex = parts.filter(Boolean).map(p => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/-/g, '[- ]')).join('[- /.]+');
       baseFilter.$and = baseFilter.$and || [];
       baseFilter.$and.push({
         $or: [
@@ -1999,6 +2052,10 @@ exports.getHogarProfessionals = async (req, res, next) => {
         { verificationStatus: null }
       ]
     };
+
+    // Only professionals with an active/expiring aviso
+    const activeAvisoProfessionals = await Aviso.distinct('professional', { status: { $in: ['active', 'expiring'] } });
+    query._id = { $in: activeAvisoProfessionals };
 
     // Professionals with hogarProfile serve only their registered area
     // Professionals WITHOUT hogarProfile serve ALL environments
