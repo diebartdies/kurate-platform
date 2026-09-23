@@ -9,12 +9,12 @@ set "ANDROID_DIR=D:\FullMinent\android"
 set "APK=%ANDROID_DIR%\app\build\outputs\apk\debug\app-debug.apk"
 
 echo ============================================
-echo  KuraTe APK Deploy  (build + install via ADB)
+echo  KuraTe APK Deploy  (sync + build + install)
 echo ============================================
 
 REM --- 1. Check a phone is connected ---
 echo.
-echo [1/3] Checking connected devices...
+echo [1/4] Checking connected devices...
 adb devices | findstr /r "device$" >nul
 if errorlevel 1 (
   echo ERROR: No Android device found.
@@ -24,9 +24,20 @@ if errorlevel 1 (
 )
 adb devices
 
-REM --- 2. Build the debug APK ---
+REM --- 2. Sync web assets to Android ---
 echo.
-echo [2/3] Building debug APK (gradlew assembleDebug)...
+echo [2/4] Syncing web assets (npx cap sync android)...
+cd /d "D:\FullMinent"
+call npx cap sync android
+if errorlevel 1 (
+  echo ERROR: Cap sync failed.
+  pause
+  exit /b 1
+)
+
+REM --- 3. Build the debug APK ---
+echo.
+echo [3/4] Building debug APK (gradlew assembleDebug)...
 cd /d "%ANDROID_DIR%"
 call gradlew.bat assembleDebug
 if errorlevel 1 (
@@ -35,9 +46,9 @@ if errorlevel 1 (
   exit /b 1
 )
 
-REM --- 3. Install on the connected phone ---
+REM --- 4. Install on the connected phone ---
 echo.
-echo [3/3] Installing on device...
+echo [4/4] Installing on device...
 adb install -r "%APK%"
 if errorlevel 1 (
   echo ERROR: Install failed.
