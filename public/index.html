@@ -1336,45 +1336,61 @@
                 } catch (e) { err.textContent = 'Error de conexión.'; err.style.display = 'block'; btn.disabled = false; btn.textContent = 'Crear cuenta'; }
             }
 
+            function _resizeImg(file, maxW, maxH, quality) {
+                return new Promise(function(resolve) {
+                    var img = new Image();
+                    img.onload = function() {
+                        var w = img.width, h = img.height;
+                        if (w > maxW) { h = h * maxW / w; w = maxW; }
+                        if (h > maxH) { w = w * maxH / h; h = maxH; }
+                        var c = document.createElement('canvas'); c.width = w; c.height = h;
+                        c.getContext('2d').drawImage(img, 0, 0, w, h);
+                        c.toBlob(function(b) { resolve(URL.createObjectURL(b)); }, 'image/jpeg', quality);
+                    };
+                    img.src = URL.createObjectURL(file);
+                });
+            }
+
             async function captureDni(side) {
                 const inp = document.createElement('input');
                 inp.type = 'file'; inp.accept = 'image/*'; inp.capture = 'environment';
                 inp.onchange = function(e) {
                     const file = e.target.files[0];
                     if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = async function(ev) {
-                        if (side === 'front') {
-                            dniFront = ev.target.result;
-                            renderDniUi();
-                            // Validate front via OCR
-                            const status = document.getElementById('dniStatus');
-                            status.innerHTML = '<p style="font-size:0.85rem;">Analizando DNI...</p>';
-                            try {
-                                const r = await fetch('/api/v1/public/pre-register/scan-dni', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ id: preregId, image: dniFront })
-                                });
-                                const data = await r.json();
-                                if (!r.ok) {
-                                    dniFront = null;
-                                    status.innerHTML = `<p style="color:#e74c3c;font-size:0.85rem;">${data.error}</p>`;
-                                    renderDniUi();
-                                    return;
+                    _resizeImg(file, 1600, 1200, 0.85).then(function(resizedUrl) {
+                        var reader = new FileReader();
+                        reader.onload = async function(ev) {
+                            if (side === 'front') {
+                                dniFront = ev.target.result;
+                                renderDniUi();
+                                const status = document.getElementById('dniStatus');
+                                status.innerHTML = '<p style="font-size:0.85rem;">Analizando DNI...</p>';
+                                try {
+                                    const r = await fetch('/api/v1/public/pre-register/scan-dni', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ id: preregId, image: dniFront })
+                                    });
+                                    const data = await r.json();
+                                    if (!r.ok) {
+                                        dniFront = null;
+                                        status.innerHTML = '<p style="color:#e74c3c;font-size:0.85rem;">' + data.error + '</p>';
+                                        renderDniUi();
+                                        return;
+                                    }
+                                    const dni = data.dni || {};
+                                    status.innerHTML = '<p style="color:#2ecc71;font-size:0.85rem;">DNI escaneado: ' + (dni.apellido || '') + ', ' + (dni.nombre || '') + ' (DNI ' + (dni.dni || '') + ')</p>';
+                                    renderCompleteForm();
+                                } catch (err) {
+                                    status.innerHTML = '<p style="color:#e74c3c;font-size:0.85rem;">Error al validar el DNI.</p>';
                                 }
-                                const dni = data.dni || {};
-                                status.innerHTML = '<p style="color:#2ecc71;font-size:0.85rem;">DNI escaneado: ' + (dni.apellido || '') + ', ' + (dni.nombre || '') + ' (DNI ' + (dni.dni || '') + ')</p>';
-                                renderCompleteForm();
-                            } catch (err) {
-                                status.innerHTML = '<p style="color:#e74c3c;font-size:0.85rem;">Error al validar el DNI.</p>';
+                            } else {
+                                dniBack = ev.target.result;
+                                renderDniUi();
                             }
-                        } else {
-                            dniBack = ev.target.result;
-                            renderDniUi();
-                        }
-                    };
-                    reader.readAsDataURL(file);
+                        };
+                        fetch(resizedUrl).then(function(r){return r.blob()}).then(function(blob){reader.readAsDataURL(blob)});
+                    });
                 };
                 inp.click();
             }
