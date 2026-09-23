@@ -201,7 +201,7 @@
           }
 
           lineSelect.innerHTML = '<option value="">Seleccionar línea de servicio...</option>' +
-            lines.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+            lines.map(l => `<option value="${l.id}">${l.name}${l.examples ? ' — ' + l.examples : ''}</option>`).join('');
           lineSelect.disabled = false;
         } catch (err) {
           lineSelect.innerHTML = '<option value="">Error al cargar líneas</option>';

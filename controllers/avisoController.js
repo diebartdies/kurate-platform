@@ -571,9 +571,15 @@ exports.getAvailableServiceLines = async (req, res) => {
     if (declaredLines.size > 0) {
       candidateLines = (areaNode.categories || [])
         .filter(c => declaredLines.has(c.id))
-        .map(c => ({ id: c.id, name: c.name }));
+        .map(c => {
+          const devices = (c.devices || []).map(d => d.name);
+          return { id: c.id, name: c.name, examples: devices.slice(0, 4).join(', ') + (devices.length > 4 ? ' y más' : '') };
+        });
     } else {
-      candidateLines = (areaNode.categories || []).map(c => ({ id: c.id, name: c.name }));
+      candidateLines = (areaNode.categories || []).map(c => {
+        const devices = (c.devices || []).map(d => d.name);
+        return { id: c.id, name: c.name, examples: devices.slice(0, 4).join(', ') + (devices.length > 4 ? ' y más' : '') };
+      });
     }
 
     const usedLines = await Aviso.distinct('serviceLine', {
