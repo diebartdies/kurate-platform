@@ -433,7 +433,8 @@ if (verifyForm) {
                 if (data.user) localStorage.setItem('user', JSON.stringify(data.user));
                 
                 // Para profesionales: pedir contraseña por duplicado antes de ir al DNI (PC->móvil handoff)
-                if (data.user && data.user.role === 'professional' && data.user.verificationStatus !== 'approved') {
+                // Skip if they already set a password during registration (express mode)
+                if (data.user && data.user.role === 'professional' && data.user.verificationStatus !== 'approved' && data.user.registrationMode !== 'express') {
                     const vf = document.getElementById('verifyForm');
                     const pf = document.getElementById('setPasswordForm');
                     if (vf && pf) {
