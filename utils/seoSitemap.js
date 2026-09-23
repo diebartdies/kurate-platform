@@ -55,7 +55,31 @@ async function buildSitemapForBase(baseUrl) {
   const seoUrls = getAllSeoUrls();
   const serviceUrls = getAllServiceUrls();
   const dynamicServicePages = getAllServicePages();
-  const allUrls = [...STATIC_URLS, ...seoUrls, ...serviceUrls, ...dynamicServicePages];
+
+  // Add profile pages for approved professionals
+  let profileUrls = [];
+  try {
+    const User = require('../models/User');
+    const profiles = await User.find({
+      role: 'professional',
+      verificationStatus: 'approved',
+      accountDeletedAt: null,
+      'professionalProfile.alias': { $exists: true, $ne: '' },
+      'professionalProfile.isExposed': { $ne: false }
+    }).select('professionalProfile.alias').lean();
+    profileUrls = profiles
+      .map(p => p.professionalProfile?.alias)
+      .filter(Boolean)
+      .map(alias => ({
+        loc: '/perfil/' + encodeURIComponent(alias),
+        priority: 0.6,
+        changefreq: 'weekly'
+      }));
+  } catch (err) {
+    console.error('Failed to load profiles for sitemap:', err.message);
+  }
+
+  const allUrls = [...STATIC_URLS, ...seoUrls, ...serviceUrls, ...dynamicServicePages, ...profileUrls];
   const inner = allUrls.map(e => urlXml(baseUrl, e)).join('\n');
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${inner}\n</urlset>`;
   return { xml, urls: allUrls.map(e => ({ loc: baseUrl + e.loc })) };
