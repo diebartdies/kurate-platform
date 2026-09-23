@@ -210,6 +210,11 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
             const allSp = document.createElement('span'); allSp.className = 'svc-cb-label'; allSp.textContent = 'Todas';
             allItem.appendChild(allCb); allItem.appendChild(allBox); allItem.appendChild(allSp);
             allCb.addEventListener('change', () => {
+                if (allCb.checked && !hasActiveAction()) {
+                    allCb.checked = false;
+                    noActionWarning.style.display = 'block';
+                    return;
+                }
                 const target = allCb.checked;
                 const cbs = brandContainer.querySelectorAll('input.dashboard-specialty-cb:not([value$=".__todas__"])');
                 cbs.forEach(cb => { cb.checked = target; cb.dispatchEvent(new Event('change', { bubbles: true })); });
@@ -221,6 +226,11 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
                 const el = renderBrand(brand, path);
                 const cb = el.querySelector('input');
                 if (cb) cb.addEventListener('change', () => {
+                    if (cb.checked && !hasActiveAction()) {
+                        cb.checked = false;
+                        noActionWarning.style.display = 'block';
+                        return;
+                    }
                     const all = brandContainer.querySelectorAll('input.dashboard-specialty-cb:not([value$=".__todas__"])');
                     const checked = brandContainer.querySelectorAll('input.dashboard-specialty-cb:not([value$=".__todas__"]):checked');
                     allCb.checked = all.length > 0 && checked.length === all.length;
@@ -241,6 +251,17 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
 
             const preselectedActions = actionsMap[path.toLowerCase()] || [];
 
+            // Warning element for no-action-selected
+            const noActionWarning = document.createElement('div');
+            noActionWarning.className = 'svc-no-action-warning';
+            noActionWarning.style.cssText = 'color:#f59e0b;font-size:0.8rem;margin-top:4px;display:none';
+            noActionWarning.textContent = '⚠ Elegí al menos una acción antes de seleccionar marcas.';
+            actionsContainer.appendChild(noActionWarning);
+
+            function hasActiveAction() {
+                return actionsContainer.querySelectorAll('.svc-action-chip.active').length > 0;
+            }
+
             defaultActions.forEach(action => {
                 const chip = document.createElement('span');
                 chip.className = 'svc-action-chip';
@@ -254,6 +275,7 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
                     e.preventDefault();
                     e.stopPropagation();
                     chip.classList.toggle('active');
+                    noActionWarning.style.display = 'none';
                     treeEl.dispatchEvent(new Event('change', { bubbles: true }));
                 });
                 actionsContainer.appendChild(chip);
