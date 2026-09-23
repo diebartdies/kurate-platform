@@ -17,6 +17,9 @@
       "style": "DARK",
       "backgroundColor": "#0f0f1a",
       "overlaysWebView": false
+    },
+    "App": {
+      "launchAutoShow": false
     }
   }
 }

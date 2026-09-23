@@ -1007,7 +1007,18 @@
         const isNativeApp = /Capacitor|Ionic|android|iPhone|iPad|iPod/i.test(navigator.userAgent);
         const exitApp = () => {
             if (isNativeApp) {
-                window.location.href = 'kurate://exit';
+                // Try Capacitor App plugin first, then fallback
+                try {
+                    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+                        window.Capacitor.Plugins.App.exitApp();
+                    } else if (navigator.app && navigator.app.exitApp) {
+                        navigator.app.exitApp();
+                    } else {
+                        window.location.href = 'kurate://exit';
+                    }
+                } catch(e) {
+                    window.location.href = 'kurate://exit';
+                }
             } else {
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
