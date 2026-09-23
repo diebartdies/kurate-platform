@@ -2235,7 +2235,7 @@ exports.getHogarProfessionals = async (req, res, next) => {
     if (needsDistance) {
       // Fetch all, sort by distance in-memory
       const all = await User.find(query).select(
-        'name email professionalType professionalProfile.location.lat professionalProfile.location.lng professionalProfile.alias professionalProfile.photos professionalProfile.professions ' +
+        'name email professionalType professionalProfile.location.lat professionalProfile.location.lng professionalProfile.alias professionalProfile.photos professionalProfile.professions professionalProfile.usesWhatsApp professionalProfile.whatsappNumber professionalProfile.mobilePhone ' +
         'hogarProfile.firstName hogarProfile.lastName hogarProfile.companyName ' +
         'hogarProfile.action hogarProfile.area hogarProfile.specialty ' +
         'hogarProfile.services hogarProfile.professions hogarProfile.photos hogarProfile.availability hogarProfile.address ' +
@@ -2255,7 +2255,7 @@ exports.getHogarProfessionals = async (req, res, next) => {
       users = all.slice(skip, skip + limit);
     } else {
       users = await User.find(query).select(
-        'name email professionalType professionalProfile.location.lat professionalProfile.location.lng professionalProfile.alias professionalProfile.photos professionalProfile.professions ' +
+        'name email professionalType professionalProfile.location.lat professionalProfile.location.lng professionalProfile.alias professionalProfile.photos professionalProfile.professions professionalProfile.usesWhatsApp professionalProfile.whatsappNumber professionalProfile.mobilePhone ' +
         'hogarProfile.firstName hogarProfile.lastName hogarProfile.companyName ' +
         'hogarProfile.action hogarProfile.area hogarProfile.specialty ' +
         'hogarProfile.services hogarProfile.professions hogarProfile.photos hogarProfile.availability hogarProfile.address ' +
@@ -2268,24 +2268,27 @@ exports.getHogarProfessionals = async (req, res, next) => {
 
     const data = users.map(u => {
       const hp = u.hogarProfile || {};
+      const pp = u.professionalProfile || {};
       const services = hp.services || [];
       const primary = services[0] || {};
-      const photo = (hp.photos && hp.photos[0]) ? hp.photos[0] : ((u.professionalProfile && u.professionalProfile.photos && u.professionalProfile.photos[0]) || null);
+      const photo = (hp.photos && hp.photos[0]) ? hp.photos[0] : ((pp.photos && pp.photos[0]) || null);
       const loc = hp.address || {};
       const locationLine = (loc.province || '').toLowerCase() === 'caba'
         ? [loc.neighborhood, 'CABA'].filter(Boolean).join(', ')
         : [loc.neighborhood, loc.city].filter(Boolean).join(', ');
       const rawContact = hp.contact || {};
+      const waPhone = pp.whatsappNumber || pp.mobilePhone || rawContact.mobilePhone || '';
       const contact = {
-        whatsapp: Boolean(rawContact.whatsapp),
+        whatsapp: Boolean(rawContact.whatsapp || pp.usesWhatsApp !== false),
         telegram: Boolean(rawContact.telegram),
-        mobilePhone: b64(rawContact.mobilePhone),
+        mobilePhone: b64(rawContact.mobilePhone || pp.mobilePhone || ''),
         email: b64(rawContact.email),
-        telegramId: b64(rawContact.telegram)
+        telegramId: b64(rawContact.telegram),
+        whatsappNumber: b64(waPhone)
       };
       return {
         _id: u._id,
-        alias: (u.professionalProfile && u.professionalProfile.alias) || '',
+        alias: pp.alias || '',
         name: hp.firstName ? `${hp.firstName} ${hp.lastName || ''}`.trim() : (u.name || 'Técnico'),
         action: hp.action || '',
         actionDetails: hp.actionDetails || '',
@@ -2296,13 +2299,13 @@ exports.getHogarProfessionals = async (req, res, next) => {
         serviceName: primary.name || '',
         brands: primary.brands || [],
         actions: primary.actions || [],
-        professions: hp.professions && hp.professions.length ? hp.professions : ((u.professionalProfile && u.professionalProfile.professions) || []),
+        professions: hp.professions && hp.professions.length ? hp.professions : (pp.professions || []),
         photo,
         photoUrl: photo,
         location: locationLine,
         distance: u._distance != null && u._distance < 99999 ? u._distance : null,
-        whatsapp: Boolean(hp.contact && hp.contact.whatsapp),
-        telegram: Boolean(hp.contact && hp.contact.telegram),
+        whatsapp: Boolean(rawContact.whatsapp || pp.usesWhatsApp !== false),
+        telegram: Boolean(rawContact.telegram),
         contact,
         services
       };
@@ -2343,13 +2346,16 @@ exports.getHogarProfessionalById = async (req, res, next) => {
     }
 
     const hp = user.hogarProfile || {};
+    const pp = user.professionalProfile || {};
     const rawContact = hp.contact || {};
+    const waPhone = pp.whatsappNumber || pp.mobilePhone || rawContact.mobilePhone || '';
     const contact = {
-      whatsapp: Boolean(rawContact.whatsapp),
+      whatsapp: Boolean(rawContact.whatsapp || pp.usesWhatsApp !== false),
       telegram: Boolean(rawContact.telegram),
-      mobilePhone: b64(rawContact.mobilePhone),
+      mobilePhone: b64(rawContact.mobilePhone || pp.mobilePhone || ''),
       email: b64(rawContact.email),
-      telegramId: b64(rawContact.telegram)
+      telegramId: b64(rawContact.telegram),
+      whatsappNumber: b64(waPhone)
     };
     const photos = (hp.photos && hp.photos.length) ? hp.photos : (user.professionalProfile && user.professionalProfile.photos && user.professionalProfile.photos.length) ? user.professionalProfile.photos : [];
 
