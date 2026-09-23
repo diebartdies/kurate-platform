@@ -274,6 +274,13 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
                 chip.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    const willDeactivate = chip.classList.contains('active');
+                    const anyBrandChecked = brandContainer.querySelectorAll('input.dashboard-specialty-cb:not([value$=".__todas__"]):checked').length > 0;
+                    if (willDeactivate && anyBrandChecked && hasActiveAction() && actionsContainer.querySelectorAll('.svc-action-chip.active').length <= 1) {
+                        noActionWarning.textContent = '⚠ No podés quitar la última acción si hay marcas seleccionadas.';
+                        noActionWarning.style.display = 'block';
+                        return;
+                    }
                     chip.classList.toggle('active');
                     noActionWarning.style.display = 'none';
                     treeEl.dispatchEvent(new Event('change', { bubbles: true }));
