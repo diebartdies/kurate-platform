@@ -1460,6 +1460,25 @@ export async function loadProfDashboard() {
                     </div>
                 </div>
 
+                <!-- Estadísticas -->
+                <div class="card fileteado-section" style="margin-bottom: 20px; border: 1px solid var(--primary-gold); background: rgba(212,175,55,0.05);">
+                    <h3 class="gold-text" style="margin-bottom: 12px;">📊 Estadísticas</h3>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 120px; text-align: center; padding: 12px; background: rgba(212,175,55,0.08); border-radius: 8px;">
+                            <div style="font-size: 1.8rem; font-weight: bold; color: var(--primary-gold);">${stats.photoCount || 0}</div>
+                            <div style="font-size: 0.8rem; color: #aaa;">👁 Visualizaciones</div>
+                        </div>
+                        <div style="flex: 1; min-width: 120px; text-align: center; padding: 12px; background: rgba(37,211,102,0.08); border-radius: 8px;">
+                            <div style="font-size: 1.8rem; font-weight: bold; color: #25D366;">${stats.whatsappcCount || 0}</div>
+                            <div style="font-size: 0.8rem; color: #aaa;">💬 WhatsApp</div>
+                        </div>
+                        <div style="flex: 1; min-width: 120px; text-align: center; padding: 12px; background: rgba(59,130,246,0.08); border-radius: 8px;">
+                            <div style="font-size: 1.8rem; font-weight: bold; color: #3B82F6;">${stats.callCount || 0}</div>
+                            <div style="font-size: 0.8rem; color: #aaa;">📞 Llamadas</div>
+                        </div>
+                    </div>
+                </div>
+
                 ${statusBannerHtml}
                 ${firstApprovedBannerHtml}
                 ${setupBannerHtml}
