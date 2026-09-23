@@ -57,29 +57,47 @@ try{ preregId=new URLSearchParams(location.search).get('id') || JSON.parse(local
 const fileEl=document.getElementById('fileFront'), prev=document.getElementById('prevFront'), ok=document.getElementById('okFront'), btnCam=document.getElementById('btnCam'), btnSubmit=document.getElementById('btnSubmitDni');
 let frontDataUrl=null;
 btnCam.addEventListener('click',()=>fileEl.click());
-fileEl.addEventListener('change',()=>{
+function resizeImage(file, maxW, maxH, quality){
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{
+      let w=img.width, h=img.height;
+      if(w>maxW){h=h*maxW/w; w=maxW;}
+      if(h>maxH){w=w*maxH/h; h=maxH;}
+      const c=document.createElement('canvas'); c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      c.toBlob(b=>resolve(URL.createObjectURL(b)),'image/jpeg',quality);
+    };
+    img.src=URL.createObjectURL(file);
+  });
+}
+fileEl.addEventListener('change',async()=>{
   const f=fileEl.files[0]; if(!f) return;
-  const url=URL.createObjectURL(f); prev.src=url; prev.style.display='block'; frontDataUrl=null; ok.style.display='inline'; btnSubmit.disabled=false;
-  // leer como base64 para enviar a scan
-  const reader=new FileReader(); reader.onload=e=>{frontDataUrl=e.target.result; autoScan();}; reader.readAsDataURL(f);
+  btnCam.textContent='Procesando...'; btnCam.disabled=true;
+  try{
+    const resizedUrl=await resizeImage(f,1600,1200,0.85);
+    prev.src=resizedUrl; prev.style.display='block'; frontDataUrl=null; ok.style.display='inline'; btnSubmit.disabled=false;
+    const reader=new FileReader(); reader.onload=e=>{frontDataUrl=e.target.result; autoScan();};
+    const resp=await fetch(resizedUrl); const blob=await resp.blob();
+    reader.readAsDataURL(blob);
+  }catch(e){ showAlert('Error al procesar imagen',false); btnCam.disabled=false; btnCam.textContent='📷 Capturar frente'; }
 });
 async function autoScan(){
   if(!frontDataUrl) return;
   showAlert('Escaneando código...',true);
   try{
     const token=localStorage.getItem('token');
-    // intentar via pre-register scan si hay preregId, sino via verification-documents directo
     const id = new URLSearchParams(location.search).get('id');
     if(id){
       const r=await fetch(API+'/public/pre-register/scan-dni',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id, image: frontDataUrl})});
       const d=await r.json();
-      if(r.ok){ showExtracted(d); showAlert('DNI escaneado correctamente',true); return}
+      if(r.ok){ showExtracted(d); showAlert('DNI escaneado correctamente',true); btnCam.textContent='📷 Capturar frente'; btnCam.disabled=false; return}
       showAlert(d.error||'No se pudo leer el código, intentá de nuevo',false);
     } else {
-      // para profesionales ya logueados, solo extraemos y guardamos luego con verification-documents (1 foto)
       showAlert('Foto capturada. Tocá Confirmar.',true);
     }
   }catch(e){ showAlert('Error de conexión',false)}
+  btnCam.textContent='📷 Capturar frente'; btnCam.disabled=false;
 }
 function showExtracted(data){
   const ex=document.getElementById('extracted'), box=document.getElementById('extractedData');
