@@ -4181,6 +4181,11 @@ export async function renderEditForm(prof) {
                 <div style="flex:1;"><label>Post Code</label><input type="text" id="adminEditPostCode" value="${profile.location?.postalCode || ''}" style="width:100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
             </div>
             <div style="display:flex; gap:10px; flex-wrap: wrap; margin-bottom: 15px;">
+                <div style="flex:1;"><label>Province</label><select id="adminEditProvince" style="width:100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></select></div>
+                <div style="flex:1;"><label>City</label><select id="adminEditCity" style="width:100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></select></div>
+                <div style="flex:1;"><label>Neighborhood</label><input type="text" id="adminEditNeigh" style="width:100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;" placeholder="Neighborhood..." value="${profile.location?.neighborhood || ''}"></div>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap: wrap; margin-bottom: 15px;">
                 <div style="flex:1;"><label>Instagram</label><input type="text" id="adminEditInstagram" value="${profile.instagram || ''}" style="width:100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
                 <div style="flex:1;"><label>Facebook</label><input type="text" id="adminEditFacebook" value="${profile.facebook || ''}" style="width:100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
             </div>
@@ -4228,13 +4233,6 @@ export async function renderEditForm(prof) {
             <div style="display: flex; align-items: center; gap: 10px;">
                 <input type="checkbox" id="adminEditPaysMonthly" ${profile.paysMonthlyCharges !== false ? 'checked' : ''} style="width: auto;">
                 <span style="font-size: 0.9rem;">Subject to Monthly Charges (Disable for free accounts)</span>
-            </div>
-
-            <label>Location</label>
-            <div style="display:flex; gap:10px;">
-                <select id="adminEditProvince" style="flex:1; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></select>
-                <select id="adminEditCity" style="flex:1; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></select>
-                <input type="text" id="adminEditNeigh" style="flex:1; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;" placeholder="Neighborhood...">
             </div>
 
             <h4 style="margin-bottom: 5px; border-bottom: 1px solid #444; padding-bottom: 5px; color: var(--primary-gold);">Presupuesto y Tiempo de Respuesta</h4>
