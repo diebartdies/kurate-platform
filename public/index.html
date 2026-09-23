@@ -1004,7 +1004,18 @@
         registerCTA.addEventListener('click', function(){ window.location.href='/register.html'; });
 
         // Exit the APK (native bridge intercepts kurate://exit and closes the activity)
-        const exitApp = () => { window.location.href = 'kurate://exit'; };
+        const isNativeApp = /Capacitor|Ionic|android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        const exitApp = () => {
+            if (isNativeApp) {
+                window.location.href = 'kurate://exit';
+            } else {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                localStorage.removeItem('is18Plus');
+                sessionStorage.clear();
+                window.location.href = '/login.html';
+            }
+        };
         const exitAppBtn = document.getElementById('exitAppBtn');
         if (exitAppBtn) exitAppBtn.addEventListener('click', exitApp);
         const landingBack = document.getElementById('landingBack');
