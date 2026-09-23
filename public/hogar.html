@@ -15,9 +15,15 @@
   <link rel="canonical" href="https://kurate.drsrv.net.ar/hogar.html">
   <script>
     // Dynamic canonical: always point to base URL without query params
+    // Also noindex filtered versions to avoid thin content penalties
     (function() {
       var canonical = document.querySelector('link[rel="canonical"]');
       if (canonical) canonical.setAttribute('href', 'https://kurate.drsrv.net.ar/hogar.html');
+      if (location.search) {
+        var meta = document.querySelector('meta[name="robots"]');
+        if (meta) meta.setAttribute('content', 'noindex, follow');
+      }
+    })();
       // Also set og:url
       var ogUrl = document.querySelector('meta[property="og:url"]');
       if (ogUrl) ogUrl.setAttribute('content', 'https://kurate.drsrv.net.ar/hogar.html');
