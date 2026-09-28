@@ -357,8 +357,12 @@ app.get('/servicios/:slug', (req, res) => {
 async function getTopRatedForSeo(){
   try{
     const { mergePublicListingFilter } = require('./utils/professionalVisibility');
+    const Aviso = require('./models/Aviso');
     const Review = require('./models/Review');
     const filter = mergePublicListingFilter();
+    // Only professionals with an active/expiring aviso
+    const activeAvisoProfessionals = await Aviso.distinct('professional', { status: { $in: ['active', 'expiring'] } });
+    filter._id = { $in: activeAvisoProfessionals };
     const pros = await User.find(filter).select('professionalProfile.alias professionalProfile.photos professionalProfile.location').limit(20).lean();
     if(!pros.length) return [];
     const ids = pros.map(p=>p._id);
@@ -382,8 +386,12 @@ app.get('/reparaciones/:provinceSlug', async (req, res) => {
   // fetch pros in province for banner
   let topRated=[]; try{
     const { mergePublicListingFilter } = require('./utils/professionalVisibility');
+    const Aviso = require('./models/Aviso');
     const filter = mergePublicListingFilter();
     filter['professionalProfile.location.province'] = { $regex: province, $options:'i' };
+    // Only professionals with an active/expiring aviso
+    const activeAvisoProfessionals = await Aviso.distinct('professional', { status: { $in: ['active', 'expiring'] } });
+    filter._id = { $in: activeAvisoProfessionals };
     const pros = await User.find(filter).select('professionalProfile.alias professionalProfile.photos professionalProfile.location').limit(20).lean();
     const Review = require('./models/Review');
     const ids = pros.map(p=>p._id);

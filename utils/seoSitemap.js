@@ -56,11 +56,14 @@ async function buildSitemapForBase(baseUrl) {
   const serviceUrls = getAllServiceUrls();
   const dynamicServicePages = getAllServicePages();
 
-  // Add profile pages for approved professionals
+  // Add profile pages for approved professionals with an active/expiring aviso
   let profileUrls = [];
   try {
     const User = require('../models/User');
+    const Aviso = require('../models/Aviso');
+    const activeAvisoProfessionals = await Aviso.distinct('professional', { status: { $in: ['active', 'expiring'] } });
     const profiles = await User.find({
+      _id: { $in: activeAvisoProfessionals },
       role: 'professional',
       verificationStatus: 'approved',
       accountDeletedAt: null,

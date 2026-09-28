@@ -266,6 +266,12 @@ exports.searchProfessionals = async (req, res, next) => {
         { verificationStatus: null }
       ]
     };
+    // Only professionals with an active/expiring aviso
+    const activeAvisoProfessionals = await Aviso.distinct('professional', { status: { $in: ['active', 'expiring'] } });
+    if (activeAvisoProfessionals.length === 0) {
+      return res.status(200).json({ results: [], suggestions: [] });
+    }
+    baseFilter._id = { $in: activeAvisoProfessionals };
     baseFilter.$and = baseFilter.$and || [];
     baseFilter.$and.push({
       $or: [
@@ -843,6 +849,18 @@ exports.getProfessionalByAlias = async (req, res, next) => {
         error: 'Professional not found'
       });
     }
+
+    // Only expose the profile publicly once the professional has an active/expiring aviso
+    const hasActiveAviso = await Aviso.exists({
+      professional: professional._id,
+      status: { $in: ['active', 'expiring'] }
+    });
+    if (!hasActiveAviso) {
+      return res.status(404).json({
+        success: false,
+        error: 'Professional not found'
+      });
+    }
     const profObj = professional.toObject();
     const hasWhatsapp = hasContactNumber(profObj.professionalProfile);
     delete profObj.professionalProfile.whatsappNumber;
@@ -985,6 +1003,10 @@ exports.contactWhatsApp = async (req, res, next) => {
 exports.getSpecialties = async (req, res, next) => {
   try {
     const query = mergePublicListingFilter();
+
+    // Only professionals with an active/expiring aviso
+    const activeAvisoProfessionals = await Aviso.distinct('professional', { status: { $in: ['active', 'expiring'] } });
+    query._id = { $in: activeAvisoProfessionals };
 
     // If a quality filter is applied, only show specialties from that quality tier
     if (req.query.quality && req.query.quality.trim()) {

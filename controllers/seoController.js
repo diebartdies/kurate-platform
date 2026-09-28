@@ -135,7 +135,26 @@ exports.renderProfilePage = async (req, res, next) => {
 
     const template = loadTreasureTemplate();
 
-    if (!professional || !isProfileIndexable(professional)) {
+    if (!professional) {
+      res.status(404);
+      const html = applySeoToHtml(template, {
+        title: 'Perfil no encontrado | KuraTe',
+        description: 'El perfil solicitado no está disponible en KuraTe.',
+        url: absoluteUrl(`/perfil/${encodeURIComponent(aliasParam)}`),
+        robots: 'noindex, nofollow'
+      });
+      res.type('html');
+      return res.send(html);
+    }
+
+    // Only expose the profile page publicly once the professional has an active/expiring aviso
+    const Aviso = require('../models/Aviso');
+    const hasActiveAviso = await Aviso.exists({
+      professional: professional._id,
+      status: { $in: ['active', 'expiring'] }
+    });
+
+    if (!hasActiveAviso || !isProfileIndexable(professional)) {
       res.status(404);
       const html = applySeoToHtml(template, {
         title: 'Perfil no encontrado | KuraTe',

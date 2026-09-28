@@ -146,26 +146,35 @@
     if (!btnCrear || !overlay) return;
 
     // Dynamically populate environments from the professional's hogarProfile services
+    // that have both brands AND actions loaded (both slash and dot path formats)
     if (envSelect) {
       try {
         const r = await fetch('/api/v1/professionals/me', { headers: authHeaders() });
         const d = await r.json();
         const prof = d.data || {};
         const hp = prof.hogarProfile || {};
-        const svcPaths = (hp.services || []).map(s => s.path || '');
-        const envSet = new Set();
-        svcPaths.forEach(p => {
-          const env = p.split('/')[0];
-          if (env) envSet.add(env);
-        });
+        const svcPaths = (hp.services || [])
+          .filter(s => Array.isArray(s.brands) && s.brands.length > 0
+                    && Array.isArray(s.actions) && s.actions.length > 0)
+          .map(s => {
+            const raw = s.path || '';
+            return raw.includes('/') ? raw.split('/')[0] : raw.split('.')[0];
+          });
+        const envSet = new Set(svcPaths.filter(Boolean));
         if (envSet.size > 0) {
           const envLabels = { hogar: '🏠 Hogar', oficina: '🏢 Oficina', pime: '🏬 Pyme', industria: '🏭 Industria' };
           const envPrices = { hogar: 5000, oficina: 10000, pime: 10000, industria: 20000 };
           envSelect.innerHTML = '<option value="">Seleccionar entorno...</option>' +
             [...envSet].map(e => `<option value="${e}">${envLabels[e] || e} — $${(envPrices[e] || 0).toLocaleString('es-AR')}/mes</option>`).join('');
+        } else {
+          envSelect.innerHTML = '<option value="">No tenés entornos con marcas y acciones cargadas</option>';
+          const el = envSelect.lastElementChild;
+          if (el) el.disabled = true;
         }
       } catch (err) {
-        // Keep the hardcoded options as fallback
+        envSelect.innerHTML = '<option value="">Error al cargar entornos</option>';
+        const el = envSelect.lastElementChild;
+        if (el) el.disabled = true;
       }
     }
 

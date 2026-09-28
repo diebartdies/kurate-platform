@@ -68,13 +68,35 @@ exports.createAviso = async (req, res) => {
     }
 
     const hogar = user.hogarProfile || {};
-    const svcPaths = (hogar.services || []).map(s => s.path || '');
-    const declaredEnvs = new Set(svcPaths.map(p => p.split('/')[0]).filter(Boolean));
-    // Also check professionalProfile.services (dot-separated)
-    const pp = user.professionalProfile || {};
-    (pp.services || []).forEach(p => { const e = p.split('.')[0]; if (e) declaredEnvs.add(e); });
+    // Only environments where the professional has services with BOTH brands and actions loaded
+    const declaredEnvs = new Set(
+      (hogar.services || [])
+        .filter(s => Array.isArray(s.brands) && s.brands.length > 0
+                  && Array.isArray(s.actions) && s.actions.length > 0)
+        .map(s => {
+          const p = s.path || '';
+          return (p.includes('/') ? p.split('/')[0] : p.split('.')[0]);
+        })
+        .filter(Boolean)
+    );
     if (!declaredEnvs.has(environment)) {
       return res.status(400).json({ success: false, error: `Environment "${environment}" is not declared in your profile` });
+    }
+
+    // The service line must also have brands AND actions loaded by the professional
+    const declaredLines = new Set(
+      (hogar.services || [])
+        .filter(s => Array.isArray(s.brands) && s.brands.length > 0
+                  && Array.isArray(s.actions) && s.actions.length > 0)
+        .map(s => {
+          const p = s.path || '';
+          const parts = p.includes('/') ? p.split('/') : p.split('.');
+          return (parts.length >= 2 && parts[0] === environment) ? parts[1] : null;
+        })
+        .filter(Boolean)
+    );
+    if (!declaredLines.has(serviceLine)) {
+      return res.status(400).json({ success: false, error: `La línea de servicio "${serviceLine}" no está cargada con marcas y acciones en tu perfil` });
     }
 
     const now = new Date();
@@ -547,40 +569,29 @@ exports.getAvailableServiceLines = async (req, res) => {
       return res.status(404).json({ success: false, error: 'User not found' });
     }
 
-    // Extract unique service lines from the professional's hogarProfile.services for this environment
+    // Extract unique service lines from the professional's hogarProfile.services
+    // for this environment that have BOTH brands and actions loaded
+    // (supports slash "env/cat/device" and dot "env.cat.device" path formats)
     const declaredLines = new Set();
     const hp = user.hogarProfile || {};
     (hp.services || []).forEach(function(svc) {
+      const brands = Array.isArray(svc.brands) ? svc.brands : [];
+      const actions = Array.isArray(svc.actions) ? svc.actions : [];
+      if (brands.length === 0 || actions.length === 0) return;
       const path = svc.path || '';
-      const parts = path.split('/');
-      if (parts.length >= 2 && parts[0] === environment) {
-        declaredLines.add(parts[1]);
-      }
-    });
-    // Also check professionalProfile.services (dot-separated format)
-    const pp = user.professionalProfile || {};
-    (pp.services || []).forEach(function(path) {
-      const parts = path.split('.');
+      const parts = path.includes('/') ? path.split('/') : path.split('.');
       if (parts.length >= 2 && parts[0] === environment) {
         declaredLines.add(parts[1]);
       }
     });
 
-    // If no declared lines, fall back to all categories
-    let candidateLines;
-    if (declaredLines.size > 0) {
-      candidateLines = (areaNode.categories || [])
-        .filter(c => declaredLines.has(c.id))
-        .map(c => {
-          const devices = (c.devices || []).map(d => d.name);
-          return { id: c.id, name: c.name, examples: devices.slice(0, 4).join(', ') + (devices.length > 4 ? ' y más' : '') };
-        });
-    } else {
-      candidateLines = (areaNode.categories || []).map(c => {
+    // Only categories where the professional loaded brands AND actions for this environment
+    const candidateLines = (areaNode.categories || [])
+      .filter(c => declaredLines.has(c.id))
+      .map(c => {
         const devices = (c.devices || []).map(d => d.name);
         return { id: c.id, name: c.name, examples: devices.slice(0, 4).join(', ') + (devices.length > 4 ? ' y más' : '') };
       });
-    }
 
     const usedLines = await Aviso.distinct('serviceLine', {
       professional: req.user.id,

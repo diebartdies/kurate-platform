@@ -1515,6 +1515,13 @@ function renderActivityLogList() {
                 <span class="wa-thread-time">${escapeHtml(formatLogShortWhen(log.createdAt))}</span>
             </div>
             <div class="wa-thread-preview">${escapeHtml(action)}</div>
+            <div class="wa-thread-preview">
+                <span class="log-badge-actor">${log.ipAddress ? escapeHtml(log.ipAddress) : t('No IP')}</span>
+                ${log.ipIntel && log.ipIntel.status === 'success'
+                    ? `<span class="log-badge-actor">${escapeHtml([log.ipIntel.city, log.ipIntel.regionName, log.ipIntel.country].filter(Boolean).join(', '))}</span>
+                       <span class="log-badge-actor">${escapeHtml(log.ipIntel.isp || log.ipIntel.org || '')}</span>`
+                    : ''}
+            </div>
             ${highlightBadge}${actorBadge}
         </button>`;
     }).join('');
