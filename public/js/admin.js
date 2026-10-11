@@ -6163,7 +6163,7 @@ async function sendLeadInviteEmail(leadId) {
         // todos y el admin lo edita antes de confirmar.
         const first = single ? leadsById.get(leadId) : (ids.length ? leadsById.get(ids[0]) : null);
         const tpl = await loadInviteEmailTemplate(
-            single ? (first?.alias || '') : '',
+            single ? (first?.name || first?.alias || '') : '',
             first?.profession || ''
         );
         subjEl.value = tpl.subject || '';

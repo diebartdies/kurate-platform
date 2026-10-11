@@ -226,8 +226,9 @@ exports.getInviteEmail = async (req, res, next) => {
 // SMTP configurado no garantiza entrega de HTML y a una lista fria el texto
 // plano rinde mejor.
 function buildColdOutreachEmailBody(alias, profession) {
-  const name = (alias && String(alias).trim()) || '';
-  const greeting = name ? `Hola ${name},` : 'Hola,';
+  const rawName = (alias && String(alias).trim()) || '';
+  const cleanName = rawName.replace(/[:;,.\s]+$/, '').trim();
+  const greeting = cleanName ? `Hola ${cleanName},` : 'Hola,';
   const registerUrl = buildOutreachRegisterUrl();
   const link = registerUrl || '(se está configurando)';
 
