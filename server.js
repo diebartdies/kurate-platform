@@ -19,6 +19,8 @@ const { isKnownAdminIp, resolveAdminIpLabel } = require('./utils/adminKnownIps')
 const sendEmail = require('./sendEmail');
 const { resolveWhatsappNumber } = require('./utils/contactNumber');
 const smsNotifications = require('./services/smsNotifications');
+const appLogger = require('./utils/appLogger');
+const adminLogsController = require('./controllers/adminLogsController');
 
 // Connect to database
 connectDB();
@@ -123,6 +125,18 @@ const readLimiter = rateLimit({
   legacyHeaders: false
 });
 
+// Asesor IA (dev): el modelo redacta en CPU y tarda 30-50s, asi que tiene su
+// propio cupo chico por IP para que nadie lo use como servicio gratis.
+const aiLimiter = rateLimit({
+  windowMs: config.rateLimitWindow,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({ success: false, error: 'Demasiadas consultas a la IA, esperá un momento.' });
+  }
+});
+
 // True for the high-volume public discovery traffic that the vault grid fans
 // out (listing, profile detail, reviews, specialties, locations, public status)
 // plus the silent photo-click tracking. Everything else on /api stays strict.
@@ -154,6 +168,14 @@ function isAdminApi(req) {
   return req.path.startsWith('/api/v1/admin');
 }
 
+// Polls de estado del admin (2-10s). Devuelven estado en memoria, no son
+// "accesos" reales; loguearlos escribe un doc en Mongo por tick y satura la
+// base cuando el dashboard queda abierto.
+function isNoisyPoll(req) {
+  if (req.method !== 'GET') return false;
+  return /^\/api\/v1\/admin\/(outreach\/bulk-(whatsapp|sms|email)\/status|whatsapp\/(drip|register)\/status|logs\/server)\/?$/.test(req.path);
+}
+
 app.use((req, res, next) => {
   if (!req.path.startsWith('/api')) return next();
   if (isTwilioWebhook(req) || isHealthCheck(req)) return next();
@@ -166,7 +188,7 @@ app.use((req, res, next) => {
 // Access logging middleware
 app.use((req, res, next) => {
   if (!req.path.startsWith('/api')) return next();
-  if (req.path.includes('health') || req.path.includes('webhooks')) return next();
+  if (req.path.includes('health') || req.path.includes('webhooks') || isNoisyPoll(req)) return next();
   const start = Date.now();
   const logData = {
     ip: getClientIp(req),
@@ -188,7 +210,8 @@ app.use((req, res, next) => {
 
 // SEO routes (must be registered before static files)
 const seoController = require('./controllers/seoController');
-const { ACTIONS, ENVIRONMENTS, CATEGORIES, buildSeoLandingPage } = require('./utils/seoLandingPages');
+const aiController = require('./controllers/aiController');
+const { ACTIONS, ENVIRONMENTS, CATEGORIES, NIVELES, buildSeoLandingPage } = require('./utils/seoLandingPages');
 const { buildServiceLandingPage, getAllServiceUrls } = require('./utils/seoServicePages');
 app.get('/robots.txt', seoController.robotsTxt);
 app.get('/sitemap.xml', seoController.sitemapXml);
@@ -324,8 +347,59 @@ app.get('/categorias', async (req, res) => {
 <body><div class="lang-switch"><a href="/categorias" class="${lang==='es'?'active':''}">ES</a><a href="/categorias?lang=en" class="${lang==='en'?'active':''}">EN</a></div>
 <div class="container"><h1>${t.title}</h1><p>${t.desc}</p><div class="cards">${cards}</div><footer>${t.footer}</footer></div></body></html>`);
 });
+// Nota: /categorias/:slug se registra mas abajo, junto a /niveles, para que el
+// 301 de los niveles educativos funcione. Si se registrara aqui, Express lo usaria
+// primero y devolveria 404 en vez de redirigir.
+
+// Niveles educativos: raiz propia /niveles. Se separan de /categorias porque un
+// nivel (primario, secundario, universitario) no es una rama tecnica como la linea
+// blanca o el gas: mezclar ambas taxonomias en el mismo listado confunde.
+// Las URLs /categorias/<nivel> que se publicaron antes redirigen con 301.
+const EDUCACION_NIVEL_SLUGS = new Set(NIVELES.map(n => n.slug));
+app.get('/niveles', async (req, res) => {
+  const lang = req.query.lang === 'en' ? 'en' : 'es';
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  const t = lang === 'en'
+    ? { title: 'Education Levels', desc: 'Private lessons and tutoring for primary, secondary and university students.', footer: '© 2026 KuraTe — Your fast and direct answer.' }
+    : { title: 'Niveles educativos', desc: 'Clases particulares y acompañamiento para primaria, secundario y universidad.', footer: '© 2026 KuraTe — Tu respuesta rápida y directa.' };
+  const cards = NIVELES.map(n => {
+    const nTitle = typeof n.title === 'object' ? (n.title[lang] || n.title.es) : n.title;
+    const nDesc = typeof n.description === 'object' ? (n.description[lang] || n.description.es) : n.description;
+    const nMaterias = (n.grupos || []).reduce((acc, g) => acc + g.materias.length, 0);
+    return `<a href="/niveles/${n.slug}" style="text-decoration:none;background:#1a1a2e;border:1px solid #2a2a3e;border-radius:12px;padding:24px;display:block;transition:border-color 0.2s"><h2 style="color:#B8922E;font-size:1.3rem;margin:0 0 8px">${nTitle}</h2><p style="color:#999;font-size:0.95rem;margin:0 0 10px;line-height:1.5">${nDesc}</p><div style="color:#B8922E;font-size:0.85rem">${nMaterias} ${lang === 'en' ? 'subjects' : 'materias'}</div></a>`;
+  }).join('\n');
+  res.type('html').send(`<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${t.title} | KuraTe</title><meta name="description" content="${t.desc}"><meta name="robots" content="index, follow">
+<link rel="canonical" href="https://kurate.drsrv.net.ar/niveles">
+<link rel="alternate" hreflang="es" href="https://kurate.drsrv.net.ar/niveles"><link rel="alternate" hreflang="en" href="https://kurate.drsrv.net.ar/niveles?lang=en"><link rel="alternate" hreflang="x-default" href="https://kurate.drsrv.net.ar/niveles">
+<meta property="og:title" content="${t.title} | KuraTe"><meta property="og:description" content="${t.desc}"><meta property="og:url" content="https://kurate.drsrv.net.ar/niveles">
+<meta property="og:type" content="website"><meta property="og:site_name" content="KuraTe"><meta property="og:image" content="https://kurate.drsrv.net.ar/images/reparacion.png">
+<meta name="theme-color" content="#B8922E"><meta name="color-scheme" content="dark"><link rel="sitemap" type="application/xml" href="/sitemap.xml">
+<style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f0f1a;color:#e0e0e0;margin:0}.container{max-width:800px;margin:0 auto;padding:2rem 1.5rem}h1{color:#B8922E;font-size:2rem;margin-bottom:0.5rem}p{line-height:1.7;font-size:1.1rem;color:#ccc}.cards{display:grid;gap:16px;margin:2rem 0}footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid #333;color:#666;font-size:0.85rem;text-align:center}.lang-switch{position:fixed;top:12px;right:12px;z-index:100;display:flex;gap:4px}.lang-switch a{display:inline-block;padding:4px 8px;border-radius:4px;font-size:0.75rem;text-decoration:none;color:#ccc;background:rgba(255,255,255,0.1)}.lang-switch a.active{background:#B8922E;color:#fff}</style>
+</head>
+<body><div class="lang-switch"><a href="/niveles" class="${lang==='es'?'active':''}">ES</a><a href="/niveles?lang=en" class="${lang==='en'?'active':''}">EN</a></div>
+<div class="container"><h1>${t.title}</h1><p>${t.desc}</p><div class="cards">${cards}</div><footer>${t.footer}</footer></div></body></html>`);
+});
+app.get('/niveles/:slug', async (req, res) => {
+  const item = NIVELES.find(n => n.slug === req.params.slug);
+  if (!item) return res.status(404).send('Not found');
+  const lang = req.query.lang === 'en' ? 'en' : 'es';
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  const topRated = await getTopRatedForSeo();
+  res.type('html').send(buildSeoLandingPage('level', item, lang, topRated));
+});
+// 301 desde las URLs de nivel publicadas bajo /categorias antes de que existiera /niveles.
 app.get('/categorias/:slug', async (req, res) => {
-  const item = CATEGORIES.find(c => c.slug === req.params.slug);
+  const { slug } = req.params;
+  if (EDUCACION_NIVEL_SLUGS.has(slug)) {
+    const lang = req.query.lang === 'en' ? '?lang=en' : '';
+    return res.redirect(301, `/niveles/${slug}${lang}`);
+  }
+  const item = CATEGORIES.find(c => c.slug === slug);
   if (!item) return res.status(404).send('Not found');
   const lang = req.query.lang === 'en' ? 'en' : 'es';
   res.setHeader('Cache-Control', 'public, max-age=3600');
@@ -333,23 +407,87 @@ app.get('/categorias/:slug', async (req, res) => {
   res.type('html').send(buildSeoLandingPage('category', item, lang, topRated));
 });
 
-// Service landing pages: /servicios/reparar-heladera, /servicios/instalar-smart-tv, etc.
-app.get('/servicios/:slug', (req, res) => {
-  const { ACTION_ALIASES, DEVICES_ES } = require('./utils/seoServicePages');
-  const slug = req.params.slug;
-  let actionSlug = null, deviceSlug = null;
-  // Match known device slugs (which may contain hyphens) at the end
-  for (const devId of Object.keys(DEVICES_ES)) {
-    const suffix = '-' + devId;
-    if (slug.endsWith(suffix)) {
-      deviceSlug = devId;
-      actionSlug = slug.slice(0, slug.length - suffix.length);
-      break;
-    }
+// Service landing pages: /servicios/reparar-heladera, /servicios/reparo-heladera, etc.
+// Normaliza sinónimos de acción a su forma canónica antes de parsear.
+const ACTION_SYNONYM_MAP = {
+  // arreglar
+  'arreglo': 'arreglar',
+  'arregla': 'arreglar',
+  // reparar
+  'reparo': 'reparar',
+  'repara': 'reparar',
+  // instalar
+  'instalo': 'instalar',
+  'instala': 'instalar',
+  // service (ya existe como key)
+  'service': 'service',
+  // mantener
+  'mantenimiento': 'mantener',
+  'revisar': 'revisar', // ya es key
+  'verificar': 'revisar',
+  // instalar variants
+  'colocar': 'instalar',
+  'montar': 'instalar',
+  // sacar / desinstalar
+  'sacar': 'reparar',
+  'desinstalar': 'reparar'
+};
+
+function normalizeActionSlug(slug) {
+  // slug viene como "arreglo-heladera" o "reparo-lavarropas"
+  const parts = slug.split('-');
+  if (parts.length < 2) return slug;
+  const actionPart = parts[0];
+  const rest = parts.slice(1).join('-');
+  const canonical = ACTION_SYNONYM_MAP[actionPart];
+  if (canonical && canonical !== actionPart) {
+    return `${canonical}-${rest}`;
   }
+  return slug;
+}
+
+// Landing nacional: /servicios/reparar-heladera
+app.get('/servicios/:slug', (req, res) => {
+  const { parseServiceSlug, buildServiceLandingPage, LOCATIONS } = require('./utils/seoServicePages');
+  const normalizedSlug = normalizeActionSlug(req.params.slug);
+  const { actionSlug, deviceSlug, locationSlug } = parseServiceSlug(normalizedSlug);
   if (!actionSlug || !deviceSlug) return res.status(404).send('Not found');
+
+  // El canonical de las locales va con path ("/caba"), no con sufijo ("-caba").
+  if (locationSlug && LOCATIONS[locationSlug]) {
+    return res.redirect(301, `https://kurate.drsrv.net.ar/servicios/${actionSlug}-${deviceSlug}/${locationSlug}`);
+  }
+
   const page = buildServiceLandingPage(actionSlug, deviceSlug);
   if (!page) return res.status(404).send('Not found');
+
+  // Si el slug pedido no era el canónico, redirigir 301 al canónico para SEO
+  if (normalizedSlug !== req.params.slug) {
+    const canonicalUrl = `https://kurate.drsrv.net.ar/servicios/${normalizedSlug}`;
+    return res.redirect(301, canonicalUrl);
+  }
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.type('html').send(page.html);
+});
+
+// Landing local de SEO: /servicios/reparar-heladera/caba
+app.get('/servicios/:slug/:location', (req, res) => {
+  const { parseServiceSlug, buildServiceLocationLandingPage, LOCATIONS } = require('./utils/seoServicePages');
+  const locationSlug = String(req.params.location || '').toLowerCase();
+  if (!LOCATIONS[locationSlug]) return res.status(404).send('Not found');
+
+  const normalizedSlug = normalizeActionSlug(req.params.slug);
+  const { actionSlug, deviceSlug } = parseServiceSlug(normalizedSlug);
+  if (!actionSlug || !deviceSlug) return res.status(404).send('Not found');
+
+  const page = buildServiceLocationLandingPage(actionSlug, deviceSlug, locationSlug);
+  if (!page) return res.status(404).send('Not found');
+
+  // 301 si el slug no era canónico (sinónimos o localidad embebida con "-").
+  const canonicalSlug = `${actionSlug}-${deviceSlug}`;
+  if (req.params.slug !== canonicalSlug) {
+    return res.redirect(301, `https://kurate.drsrv.net.ar/servicios/${canonicalSlug}/${locationSlug}`);
+  }
   res.setHeader('Cache-Control', 'public, max-age=86400');
   res.type('html').send(page.html);
 });
@@ -429,12 +567,18 @@ app.use((req, res, next) => {
 });
 
 // Set static folder
+// La politica de cache la gobierna nginx (default.conf) con locations dedicados.
+// Aqui solo fijamos algo razonable por si el app se sirve directo (p.ej. :5001)
+// sin pasar por nginx. Evitar 'no-store' en CSS/JS: obligaba a re-descargar
+// ~1 MB en cada visita sin ganar nada.
 app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders: (res, filePath) => {
-    if (filePath.match(/\.(jpg|jpeg|png|gif|webp|svg|css)$/i)) {
-      res.setHeader('Cache-Control', 'public, max-age=2592000');
+    if (filePath.match(/\.(jpg|jpeg|png|gif|webp|svg|ico|css|js|mjs|woff2?)$/i)) {
+      res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+    } else if (filePath.match(/\.html$/i)) {
+      res.setHeader('Cache-Control', 'no-cache');
     } else {
-      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+      res.setHeader('Cache-Control', 'public, max-age=604800');
     }
   }
 }));
@@ -469,6 +613,33 @@ const storage = multer.diskStorage({
 const upload = multer({ 
   storage: storage,
   limits: { fieldSize: 100 * 1024 * 1024 } // 100MB limit to safely accept large Base64 arrays in req.body
+});
+
+// --- Matricula habilitante: almacenamiento PRIVADO ---
+// Va fuera de /public a proposito: el titulo habilitante no se puede linkear.
+// Solo se descarga via GET /professionals/matricula/:slug (dueno o admin).
+const matriculaDir = path.join(__dirname, 'private', 'matriculas');
+if (!fs.existsSync(matriculaDir)) {
+  fs.mkdirSync(matriculaDir, { recursive: true });
+}
+
+const matriculaStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, matriculaDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'matricula-' + uniqueSuffix + path.extname(file.originalname).toLowerCase());
+  }
+});
+
+const matriculaUpload = multer({
+  storage: matriculaStorage,
+  limits: { fileSize: 8 * 1024 * 1024, files: 1 },
+  fileFilter: function (req, file, cb) {
+    const ok = /^(image\/(jpeg|png|webp|heic|heif)|application\/pdf)$/i.test(file.mimetype);
+    cb(ok ? null : new Error('Solo se aceptan fotos (JPG/PNG/WEBP) o PDF de la matrícula.'), ok);
+  }
 });
 
 
@@ -512,6 +683,7 @@ app.use((req, res, next) => {
 // Mount routers
 const authController = require('./controllers/authController');
 const adminController = require('./controllers/adminController');
+const adminReportController = require('./controllers/adminReportController');
 const professionalController = require('./controllers/professionalController');
 const feedbackController = require('./controllers/feedbackController');
 const locationController = require('./controllers/locationController');
@@ -542,11 +714,17 @@ app.get('/api/v1/feedback/rating/:professionalId', feedbackController.getProfess
 // Location Routes (Public)
 app.get('/api/v1/locations/provinces', locationController.getProvinces);
 app.get('/api/v1/locations/provinces/name/:provinceName/cities', locationController.getCitiesByProvinceName);
+app.get('/api/v1/locations/provinces/name/:provinceName/departments', locationController.getDepartmentsByProvinceName);
 app.get('/api/v1/locations/provinces/:provinceId/sublocations', locationController.getSublocations);
 
 // Código Postal Argentino (CPA) lookup — proxies Correo Argentino's public web service
 const cpaController = require('./controllers/cpaController');
 app.post('/api/v1/cpa/lookup', cpaController.lookup);
+
+// Asesor IA — prototipo dev. Devuelve 404 si AI_ADVICE_ENABLED no esta, asi
+// que en produccion estas rutas no existen.
+app.get('/api/v1/ai/status', aiController.getStatus);
+app.post('/api/v1/ai/advice', aiLimiter, aiController.ask);
 
 // Services tree routes (Public)
 const Service = require('./models/Service');
@@ -652,6 +830,10 @@ app.put('/api/v1/professionals/updateprofile', protect, authorize('professional'
 app.get('/api/v1/service-tree', professionalController.getServiceTree);
 app.get('/api/v1/professions', professionalController.getProfessions);
 app.put('/api/v1/professionals/professions', protect, authorize('professional'), professionalController.updateMyProfessions);
+app.post('/api/v1/professionals/matricula', protect, authorize('professional'), matriculaUpload.single('matricula'), professionalController.uploadMatricula);
+app.get('/api/v1/professionals/matricula/:slug', protect, professionalController.getMatricula);
+app.get('/api/v1/professionals/matricula/:slug/padron', protect, authorize('admin'), professionalController.getMatriculaPadron);
+app.put('/api/v1/professionals/matricula/:slug/verificar', protect, authorize('admin'), professionalController.reviewMatricula);
 app.put('/api/v1/professionals/hogar/services', protect, authorize('professional'), professionalController.updateHogarServices);
 app.put('/api/v1/hogar/payment', protect, authorize('professional'), professionalController.updateHogarPayment);
 app.get('/api/v1/hogar/professionals', professionalController.getHogarProfessionals);
@@ -660,6 +842,7 @@ app.delete('/api/v1/professionals/me', protect, authorize('professional'), profe
 app.post('/api/v1/professionals/resubmit-verification', protect, authorize('professional'), upload.array('verificationDocuments', 3), professionalController.resubmitVerification);
 app.post('/api/v1/professionals/verification-documents', protect, authorize('professional'), upload.array('verificationDocuments', 3), professionalController.submitInitialVerification);
 app.post('/api/v1/auth/set-password', protect, require('./controllers/authController').setPassword);
+app.post('/api/v1/auth/change-password', protect, strictLimiter, require('./controllers/authController').changePassword);
 app.put('/api/v1/professionals/acknowledge-rate', protect, authorize('professional'), professionalController.acknowledgeRateChange);
 app.post('/api/v1/professionals/acknowledge-first-login', protect, authorize('professional'), professionalController.acknowledgeFirstLogin);
 app.post('/api/v1/professionals/upload-receipt', protect, authorize('professional'), upload.single('receipt'), paymentController.uploadReceipt);
@@ -708,6 +891,10 @@ app.get('/api/v1/admin/stats', protect, authorize('admin'), clickTrackingControl
 app.get('/api/v1/admin/stats/semestral', protect, authorize('admin'), clickTrackingController.getSemestralReport);
 app.get('/api/v1/admin/stats/anual', protect, authorize('admin'), clickTrackingController.getAnualReport);
 
+// Reporte tecnico de performance e indexado (solo admin)
+app.get('/api/v1/admin/reporte-performance', protect, authorize('admin'), adminReportController.reportePerformance);
+app.post('/api/v1/admin/reporte-performance/explain', protect, authorize('admin'), adminReportController.explainBusqueda);
+
 // Admin routes
 app.get('/api/v1/admin/verifications/pending', protect, authorize('admin'), adminController.getPendingVerifications);
 app.put('/api/v1/admin/verifications/:id', protect, authorize('admin'), adminController.verifyProfessional);
@@ -743,6 +930,7 @@ app.put('/api/v1/admin/professionals/:id', protect, authorize('admin'), adminCon
 app.delete('/api/v1/admin/professionals/:id', protect, authorize('admin'), adminController.deleteProfessional);
 app.get('/api/v1/admin/professionals', protect, authorize('admin'), adminController.getAllProfessionals);
 app.get('/api/v1/admin/professionals/:id', protect, authorize('admin'), adminController.getProfessionalById);
+app.put('/api/v1/admin/users/:id/password', protect, authorize('admin'), strictLimiter, adminController.setUserPassword);
 app.get('/api/v1/admin/outreach/invite-message', protect, authorize('admin'), potentialProfessionalController.getInviteMessage);
 app.post('/api/v1/admin/outreach/bulk-whatsapp', protect, authorize('admin'), outreachController.startBulkWhatsApp);
 app.post('/api/v1/admin/outreach/whatsapp/targeted', protect, authorize('admin'), outreachController.startTargetedWhatsApp);
@@ -751,12 +939,19 @@ app.post('/api/v1/admin/outreach/bulk-sms', protect, authorize('admin'), outreac
 app.post('/api/v1/admin/outreach/sms/targeted', protect, authorize('admin'), outreachController.startTargetedSms);
 app.get('/api/v1/admin/outreach/bulk-sms/status', protect, authorize('admin'), outreachController.getBulkSmsStatus);
 app.get('/api/v1/admin/potential-professionals', protect, authorize('admin'), potentialProfessionalController.getPotentialProfessionals);
+// Estas dos van ANTES que '/:id': Express matchea en orden y un GET con query
+// igual caeria en el handler de update.
+app.get('/api/v1/admin/potential-professionals/invite-email', protect, authorize('admin'), potentialProfessionalController.getInviteEmail);
+app.post('/api/v1/admin/potential-professionals/send-email', protect, authorize('admin'), potentialProfessionalController.sendEmailToSelected);
+app.get('/api/v1/admin/outreach/bulk-email/status', protect, authorize('admin'), potentialProfessionalController.getEmailOutreachStatus);
+app.post('/api/v1/admin/potential-professionals/unblock-batch', protect, authorize('admin'), potentialProfessionalController.unblockBatch);
 app.put('/api/v1/admin/potential-professionals/:id', protect, authorize('admin'), potentialProfessionalController.updatePotentialProfessional);
 app.post('/api/v1/admin/potential-professionals/block-phone', protect, authorize('admin'), potentialProfessionalController.blockPhone);
 app.post('/api/v1/admin/notifications/mail/broadcast', protect, authorize('admin'), adminController.sendBroadcastEmail);
 app.post('/api/v1/admin/notifications/mail/targeted', protect, authorize('admin'), adminController.sendTargetedEmail);
 
 const whatsappController = require('./controllers/whatsappController');
+const adminDeviceController = require('./controllers/adminDeviceController');
 const twilioWebhookController = require('./controllers/twilioWebhookController');
 const launchCurtainController = require('./controllers/launchCurtainController');
 const supportController = require('./controllers/supportController');
@@ -817,6 +1012,18 @@ app.get('/api/v1/admin/whatsapp/drip/status', protect, authorize('admin'), whats
 app.get('/api/v1/admin/whatsapp/inbound', protect, authorize('admin'), whatsappController.listWhatsAppInbound);
 app.post('/api/v1/admin/whatsapp/reply', protect, authorize('admin'), whatsappController.sendWhatsAppReply);
 
+// Admin device-gated login (soft-MAC) management
+app.get('/api/v1/admin/devices', protect, authorize('admin'), adminDeviceController.listDevices);
+app.post('/api/v1/admin/devices', protect, authorize('admin'), adminDeviceController.registerDevice);
+app.delete('/api/v1/admin/devices/:deviceId', protect, authorize('admin'), adminDeviceController.revokeDevice);
+app.post('/api/v1/admin/devices/gate', protect, authorize('admin'), adminDeviceController.setDeviceGate);
+// OJO: esta ruta NO puede volver a llamarse '/admin/logs'. Esa ya la monta
+// adminController.getActivityLogs (logs de acceso) mas arriba, y Express
+// resuelve la PRIMERA coincidencia: el visor del servidor recibiria el array
+// de activitylogs en lugar de {lines,stats,...} y la UI mostraba
+// "undefined linea(s) / buffer undefined/undefined".
+app.get('/api/v1/admin/logs/server', protect, authorize('admin'), adminLogsController.getLogs);
+
 // Twilio WhatsApp inbound — configure this URL on the Twilio WhatsApp sender.
 app.post('/api/v1/webhooks/twilio/whatsapp', twilioWebhookController.handleWhatsAppInbound);
 app.get('/api/v1/admin/launch-curtain', protect, authorize('admin'), launchCurtainController.getAdminLaunchCurtainConfig);
@@ -837,7 +1044,14 @@ app.get('/:environment/:category/:device/:action', seoController.handleServiceSe
 
 // Always return JSON for API errors (prevents admin UI "Network Error" on HTML 502 pages).
 app.use('/api', (err, req, res, next) => {
-  console.error('[API Error]', err.message || err);
+  const method = req.method || '?';
+  const route = req.originalUrl || req.url || '?';
+  const ip = getClientIp(req);
+  appLogger.logError([
+    `[API Error] ${method} ${route} -> ${err.status || 500} (ip ${ip})`,
+    `${err.message || err}`,
+    ...(err.stack ? String(err.stack).split('\n').slice(1, 6).map((l) => `  ${l.trim()}`) : [])
+  ]);
   if (res.headersSent) return next(err);
   res.status(err.status || 500).json({
     success: false,

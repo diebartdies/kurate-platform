@@ -1,0 +1,93 @@
+# Manifiesto de archivos del deploy por features.
+#
+# Un archivo por linea. Se sube SOLO lo que esta aca, nunca el arbol entero:
+# el working tree tiene cambios de otros features (android, nginx, css, avisos)
+# que no van en este deploy.
+#
+# Para agregar un archivo nuevo a un feature: agregar la linea y deployar.
+# Para sacar algo: comentar la linea. Ojo, queda el ultimo estado en produccion.
+#
+# Formato: <ruta relativa al repo>  [motivo]
+# Las lineas que empiezan con # se ignoran.
+
+# --- servidor y rutas ---
+server.js                                  # rutas de padron, explain, reporte y landings /servicios/<slug>[/<localidad>]
+
+# --- modelos ---
+models/User.js                             # servicePaths en ambos perfiles, campos de matricula, 7 indices
+models/Profession.js                       # taxonomia con campo regulated
+models/Department.js                       # coleccion departments: departamentos/partidos/comunas por provincia
+
+# --- controladores ---
+controllers/professionalController.js      # busqueda jerarquica, profesiones, padron, review con reglas
+controllers/adminController.js             # aprobacion/rechazo preservando credenciales
+controllers/adminReportController.js       # reporte de performance (solo admin)
+controllers/avisoController.js              # requiere brands no vacio + telefono/email verificados y direccion completa
+controllers/aiController.js                # requerido por server.js (flag apagado en prod)
+controllers/cpaController.js               # proxy de CPA, delegando el lookup a utils/cpaLookup.js
+controllers/seoController.js                # sitemap-services.xml emite /servicios/ en vez de las 728 plantillas
+controllers/locationController.js           # endpoint departments por provincia (coleccion departments)
+utils/aiAdvice.js                          # dependencia de aiController
+
+# --- utilidades ---
+utils/servicePathMatch.js                  # prefijos de path, lookup indexable, escapeRegex
+utils/matriculaRules.js                    # reglas por oficio/provincia/ente emisor
+utils/otraBrand.js                         # entrada "otra": prefijo, formato y saneo de marcas
+utils/publishRequirements.js               # requisitos para publicar: telefono, email y direccion
+utils/cpaLookup.js                         # lookup de CPA reutilizado por el endpoint y la regla de publicar
+utils/seoServicePages.js                    # landings /servicios/: 159 dispositivos x 9 acciones + SEO local CABA/Bs.As. (4293 URLs)
+utils/seoSitemap.js                         # sitemap unico, lastmod real, robots.txt sin el sitemap de plantillas
+utils/seoLandingPages.js                    # landings /acciones/, /entornos/, /categorias/ + accion "educar" y sus 3 niveles
+
+# --- datos ---
+data/serviceTree.js                        # arbol canonico de 182 dispositivos
+
+# --- front del admin y del directorio ---
+public/index.html                          # filtros profesionales
+public/hogar.html                          # filtros del directorio
+public/hogar-detail.html                   # ficha publica: muestra la marca "otra" sin prefijo
+public/avisos.html                         # detalle del aviso: idem
+public/js/autoFill.js                      # autocompletado de busqueda: sinonimos "educar/enseñar"
+public/js/helpers.js                       # selector multiple, entrada "otra" por dispositivo
+public/js/professional.js                  # edicion y upload de matricula
+public/js/admin.js                         # menu + modal del reporte de performance
+public/js/avisos.js                        # bloquea el alta de aviso si faltan requisitos de perfil
+public/profDashboard.html                  # modal y popup de requisitos para crear aviso
+public/js/sessionIdle.js                   # cierre por inactividad: 5 min para no-admins
+
+# --- visor de logs del servidor (admin) ---
+utils/appLogger.js                         # ring buffer + archivo tope 5MB, nunca lanza
+controllers/adminLogsController.js         # GET /api/v1/admin/logs (solo admin)
+config/appConfig.js                        # bloque aiAdvice: sin el, config.aiAdvice.enabled explota en prod
+models/AccessLog.js                        # TTL 7 dias (un doc por request /api): sin retencion la coleccion crece sin limite
+
+# --- padron de matriculados (gasistas) ---
+# Va a `potential_professionals`, NO a `users`: sin password, sin usuario creado
+# y sin exposicion en ningun endpoint publico.
+models/PotentialProfessional.js         # campos del padron + indice (fuente, matricula) + emailStatus
+controllers/potentialProfessionalController.js  # busqueda q, filtro por lote, orden estable, envio de mail a seleccionados
+scripts/import-padron-gasistas.js       # importa el padron (dry-run por defecto, --apply)
+
+# --- outreach por lote (email async con rate) ---
+services/emailOutreachService.js        # cola en segundo plano del envio de mails (202 + GET /bulk-email/status)
+public/js/i18n.js                       # claves ES de leads, bloquedos y emails/min en el admin
+
+# --- scripts que corren DENTRO del contenedor (docker cp, no se montan) ---
+scripts/sync-service-tree.js               # 97 -> 182 servicios, idempotente
+scripts/seed-professions.js                # 0 -> 32 profesiones, idempotente (subir el archivo NO siembra; correr el seed aparte)
+scripts/backfill-service-paths.js          # cache servicePaths en 107 perfiles
+scripts/purge-activitylog-ips.js           # borra activitylogs de IPs internas (--dry-run / --apply --yes)
+scripts/purge-activitylog-internal-ips.js  # purga loopback + red local + docker + IP publica del owner, con backup previo
+utils/professionalInviteMessage.js        # links de registro del outreach: host normalizado a minusculas
+scripts/backfill-lead-profession.js       # completa `profession` en los leads del padron (idempotente)
+
+# --- departamentos por provincia (prototipo mapa: dropdown) ---
+scripts/seed-departments.js                 # siembra coleccion departments desde CSV (idempotente, upsert + indice unico)
+scripts/departments-data.js                 # data CJS compartida (fuente del seed)
+scripts/generate-departments-data.js        # regenera departments-data.js + prototypes/data-departments.js desde el CSV
+scripts/provincias_y_departamentos_argentina.csv  # fuente oficial (BOM UTF-8), leida por el seed
+
+# --- tests (no se ejecutan en prod, pero viajan para poder correrlos ahi) ---
+scripts/test-otra-brand.js                 # 23 checks del formateo y del round-trip de "otra"
+scripts/test-publish-requirements.js       # 19 checks de los requisitos de publicacion y del CPA
+scripts/test-seo-service-pages.js           # 26 checks de las landings /servicios/, SEO local y sitemap

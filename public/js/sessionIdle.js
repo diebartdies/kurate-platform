@@ -1,8 +1,8 @@
 import { API_URL } from './globals.js';
 import { logoutToEntrance } from './navReturn.js';
 
-/** Inactivity limit for non-admin sessions (ms). Minimum 10 minutes. */
-export const SESSION_IDLE_MS = 10 * 60 * 1000;
+/** Inactivity limit for non-admin sessions (ms). */
+export const SESSION_IDLE_MS = 5 * 60 * 1000;
 
 const PUBLIC_AUTH_PAGES = new Set(['login.html', 'register.html', 'verify.html', 'recover.html']);
 

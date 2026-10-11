@@ -14,6 +14,10 @@ const accessLogSchema = new mongoose.Schema({
 });
 
 accessLogSchema.index({ timestamp: -1 });
+// TTL de 7 días: el middleware escribe un doc por request (incluyendo bots y
+// polls del admin). Sin retención acotada la colección crece sin límite y Mongo
+// paga cada count/find con un scan peor.
+accessLogSchema.index({ timestamp: 1 }, { expireAfterSeconds: 7 * 24 * 3600 });
 accessLogSchema.index({ user: 1, timestamp: -1 });
 accessLogSchema.index({ action: 1 });
 

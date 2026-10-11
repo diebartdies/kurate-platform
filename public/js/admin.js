@@ -1,9 +1,9 @@
-import { BASE_ORIGIN, API_URL, CATEGORY_META, getVerificationGesture, appPath } from './globals.js';
+import { BASE_ORIGIN, API_URL, CATEGORY_META, getVerificationGesture, appPath, getDeviceId } from './globals.js';
 import { showAlert, getPendingApprovalBannerHtml, getResubmissionBannerHtml, getGeneralRejectionBannerHtml } from './uiHelpers.js';
 import { t, applyStaticTranslations, formatOpeningDateTime, currentLang } from './i18n.js';
 import { activateAccessibleModal, deactivateAccessibleModal, announceMessage, confirmDialog, fixUnassociatedLabels } from './a11y.js';
 import { beginDashboardLoad, finishDashboardLoad, failDashboardLoad } from './dashboardShell.js';
-import { renderSpecialtyDropdown, setupLocationDropdowns, initCpaAutofill, collectTreeServices, renderProfessionsPicker } from './helpers.js';
+import { renderSpecialtyDropdown, setupLocationDropdowns, initCpaAutofill, collectTreeServices, renderProfessionsPicker, collectProfessions } from './helpers.js';
 import { addPhotoToGrid, openPendingConnectionsModal, bindProfessionalProfileForm, hideProfessionalPaymentOverlays, renderProfessionalMainDashboardShell, injectProfessionalDashboardGuides, renderAvailabilityDayControls } from './professional.js';
 
 import {
@@ -113,11 +113,14 @@ function buildAdminProfCard(p, eagerImages = false) {
     const alias = p.professionalProfile?.alias || 'No Alias';
     const photo = (p.professionalProfile?.photos && p.professionalProfile.photos.length > 0) ? p.professionalProfile.photos[0] : '/images/no-photo.svg';
     const vStatus = p.verificationStatus || 'pending';
-    const statusColor = vStatus === 'approved' ? 'green' : (vStatus === 'rejected' ? 'red' : 'orange');
-    const thumbWrap = document.createElement('div');
+    const statusColor = vStatus === 'approved' ? '#15803d' : (vStatus === 'rejected' ? '#dc2626' : '#a16207');
+    const thumbWrap = document.createElement('button');
+    thumbWrap.type = 'button';
     thumbWrap.className = 'admin-prof-thumb';
+    thumbWrap.title = `${t('View details')} — ${alias}`;
     const thumbImg = document.createElement('img');
     thumbImg.src = photo;
+    thumbImg.alt = alias;
     thumbImg.className = 'admin-prof-thumb-img';
     if (!eagerImages) thumbImg.loading = 'lazy';
     const statusBadge = document.createElement('div');
@@ -156,19 +159,12 @@ function buildAdminProfCard(p, eagerImages = false) {
     card.appendChild(emailEl);
     card.appendChild(actions);
 
-    // Whole card navigates to the professional's details; action buttons stop propagation.
+    // The photo thumbnail is the interactive "view details" control so the card
+    // itself stays a plain container (a focusable card would nest the action
+    // buttons and break keyboard/AT semantics).
     const goToDetails = () => openEditProfessionalModal(p);
-    card.style.cursor = 'pointer';
-    card.setAttribute('role', 'button');
-    card.setAttribute('tabindex', '0');
-    card.setAttribute('aria-label', `${t('View details')} — ${alias}`);
-    card.onclick = () => goToDetails();
-    card.onkeydown = (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            goToDetails();
-        }
-    };
+    thumbWrap.style.cssText = 'display:block;width:100%;border:none;padding:0;background:none;cursor:pointer;text-align:left;';
+    thumbWrap.onclick = goToDetails;
 
     editBtn.onclick = (e) => {
         if (e) e.stopPropagation();
@@ -249,13 +245,13 @@ export async function renderAdminGrid(container) {
         <div class="admin-grid-layout" style="display: flex; gap: 20px; align-items: flex-start; flex-direction: row; flex-wrap: wrap;">
             <div class="card admin-grid-sidebar" style="width: 100%; max-width: 250px; flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; position: sticky; top: 70px;">
                 <h4 class="gold-text" style="margin-bottom: 5px;">${t('Filters')}</h4>
-                <select id="adminFilterProv" class="form-select" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"><option value="">${t('All Provinces')}</option></select>
-                <select id="adminFilterCity" class="form-select" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"><option value="">${t('All Cities')}</option></select>
-                <select id="adminFilterNeigh" class="form-select" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"><option value="">${t('All Neighborhoods')}</option></select>
-                <select id="adminFilterSpecialty" class="form-select" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;">
+                <select id="adminFilterProv" aria-label="${t('All Provinces')}" class="form-select" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"><option value="">${t('All Provinces')}</option></select>
+                <select id="adminFilterCity" aria-label="${t('All Cities')}" class="form-select" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"><option value="">${t('All Cities')}</option></select>
+                <select id="adminFilterNeigh" aria-label="${t('All Neighborhoods')}" class="form-select" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"><option value="">${t('All Neighborhoods')}</option></select>
+                <select id="adminFilterSpecialty" aria-label="${t('All Specialties')}" class="form-select" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;">
                     <option value="">${t('All Specialties')}</option>
                 </select>
-                <select id="adminFilterQuality" class="form-select" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;">
+                <select id="adminFilterQuality" aria-label="${t('All Qualities')}" class="form-select" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;">
                     <option value="">${t('All Qualities')}</option>
                     <option value="verificados">${t(CATEGORY_META['verificados'].name)}</option>
                     <option value="Premium">${t(CATEGORY_META['Premium'].name)}</option>
@@ -542,10 +538,10 @@ export async function loadDashboard() {
                 
                 adminPanel.innerHTML = `
                     <div style="padding: 10px;">
-                        <h3 class="gold-text" style="margin-bottom: 25px; font-size: 1.5rem; text-align: center; border-bottom: 1px solid rgba(212, 175, 55, 0.3); padding-bottom: 15px;">Admin Control Panel</h3>
+                        <h1 class="gold-text" style="margin-bottom: 25px; font-size: 1.5rem; text-align: center; border-bottom: 1px solid rgba(212, 175, 55, 0.3); padding-bottom: 15px;">Admin Control Panel</h1>
                         
                         <div class="admin-menu-section" style="margin-bottom: 25px;">
-                            <h4 style="color: #888; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; padding-left: 10px;">Core Management</h4>
+                            <h2 style="color: #888; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; padding-left: 10px;">Core Management</h2>
                             <div style="display: flex; flex-direction: column; gap: 5px;">
                                 <button id="btnProfProfileAdmin" class="admin-nav-btn">👥 Professional Profiles</button>
                                 <button id="btnPendingApprovals" class="admin-nav-btn active-nav">✅ Pending Approvals</button>
@@ -554,12 +550,13 @@ export async function loadDashboard() {
                                 <button id="btnInterestNotes" class="admin-nav-btn">📰 ${t('Notes of Interest')}</button>
                                 <button id="btnAvisos" class="admin-nav-btn">📋 Avisos</button>
                                 <button id="btnStats" class="admin-nav-btn">📊 Estadísticas KPI</button>
+                                <button id="btnServerLogs" class="admin-nav-btn">Logs del servidor</button>
                                 <button id="btnDashboardConfig" class="admin-nav-btn">⚙️ ${t('Dashboard Config')}</button>
                             </div>
                         </div>
 
                         <div class="admin-menu-section" style="margin-bottom: 25px;">
-                            <h4 style="color: #888; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; padding-left: 10px;">Communications</h4>
+                            <h2 style="color: #888; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; padding-left: 10px;">Communications</h2>
                             <div style="display: flex; flex-direction: column; gap: 5px;">
                                 <button id="btnApplyInvitations" class="admin-nav-btn">📨 ${t('Apply Invitations')}</button>
                                 <button id="btnMailSpecial" class="admin-nav-btn">📧 Mail: Special Messages</button>
@@ -570,17 +567,18 @@ export async function loadDashboard() {
                         </div>
 
                         <div class="admin-menu-section" style="margin-bottom: 25px;">
-                            <h4 style="color: #888; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; padding-left: 10px;">Analytics & Traces</h4>
+                            <h2 style="color: #888; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; padding-left: 10px;">Analytics & Traces</h2>
                             <div style="display: flex; flex-direction: column; gap: 5px;">
                                 <button id="btnGuestTraffic" class="admin-nav-btn">🕵️‍♂️ Guest Traffic</button>
                                 <button id="btnTreasuresSteps" class="admin-nav-btn">💎 Treasures Steps</button>
                                 <button id="btnViewLogs" class="admin-nav-btn">📊 Full Activity Logs</button>
                                 <button id="btnAccessLogs" class="admin-nav-btn">🔒 Access Logs</button>
+                                <button id="btnReportePerformance" class="admin-nav-btn">⚡ ${t('Reporte de performance')}</button>
                             </div>
                         </div>
 
                         <div class="admin-menu-section">
-                            <h4 style="color: #888; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; padding-left: 10px;">System Settings</h4>
+                            <h2 style="color: #888; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; padding-left: 10px;">System Settings</h2>
                             <div style="display: flex; flex-direction: column; gap: 5px;">
                                 <button id="btnEditPricing" class="admin-nav-btn" style="color: var(--primary-gold); border-color: rgba(212, 175, 55, 0.3);">💰 ${t('Change prices')}</button>
                                 <div class="admin-launch-switch" style="margin: 8px 4px 0;">
@@ -609,6 +607,7 @@ export async function loadDashboard() {
                 document.getElementById('btnEditPricing').addEventListener('click', () => openEditPricingModal(data.globalPricing));
                 document.getElementById('btnViewLogs').addEventListener('click', () => openActivityLogsModal());
                 document.getElementById('btnAccessLogs').addEventListener('click', () => openAccessLogsModal());
+                document.getElementById('btnReportePerformance').addEventListener('click', () => openReportePerformanceModal());
                 document.getElementById('btnGuestTraffic').addEventListener('click', () => openActivityLogsModal('Guest Traffic', { isGuest: 'true' }));
                 document.getElementById('btnTreasuresSteps').addEventListener('click', () => openActivityLogsModal('Treasures Steps', { isGuest: 'false' }));
                 document.getElementById('btnApplyInvitations').addEventListener('click', openViewLeadsModal);
@@ -623,8 +622,9 @@ export async function loadDashboard() {
                     document.getElementById('adminGridContainer').scrollIntoView({ behavior: 'smooth' });
                 });
 
-                ['btnDashboardConfig'].forEach(id => {
-                    document.getElementById(id).addEventListener('click', openDashboardConfigModal);
+                ['btnDashboardConfig', 'btnServerLogs'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.addEventListener('click', id === 'btnServerLogs' ? openServerLogsModal : openDashboardConfigModal);
                 });
 
                 initLaunchCurtainQuickToggle();
@@ -1677,6 +1677,223 @@ function readLogFiltersFromUi() {
     if (highlight) currentLogFilters.highlight = highlight;
 }
 
+// Reporte de performance: latencia de la busqueda publica, cobertura de
+// indices, herramientas de load testing y que falta para llegar a produccion.
+// Los datos vienen de /api/v1/admin/reporte-performance (solo admin).
+export async function openReportePerformanceModal() {
+    let modal = document.getElementById('reportePerformanceModal');
+    if (modal) { modal.remove(); }
+
+    modal = document.createElement('div');
+    modal.id = 'reportePerformanceModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px;';
+    modal.innerHTML = `
+        <div style="background:#1a1a2e;border:1px solid var(--primary-gold);border-radius:8px;max-width:1150px;width:100%;max-height:88vh;display:flex;flex-direction:column;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #333;">
+                <h3 style="color:var(--primary-gold);margin:0;">⚡ Reporte de performance</h3>
+                <button id="closeReportePerformanceBtn" style="background:none;border:none;color:#aaa;font-size:1.5rem;cursor:pointer;">&times;</button>
+            </div>
+            <div style="padding:10px 20px;border-bottom:1px solid #333;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                <button id="rpReloadBtn" style="padding:5px 10px;background:var(--primary-gold);color:#111;border:none;border-radius:4px;cursor:pointer;font-size:0.78rem;font-weight:600;">Recargar</button>
+                <span id="rpGenerated" style="color:#777;font-size:0.75rem;"></span>
+                <div style="flex:1;"></div>
+                <input type="text" id="rpService" placeholder="service (ej. hogar/linea-blanca/heladera)" style="padding:5px 9px;background:#222;color:white;border:1px solid #444;border-radius:4px;font-size:0.78rem;width:280px;">
+                <input type="text" id="rpProfession" placeholder="profesion" style="padding:5px 9px;background:#222;color:white;border:1px solid #444;border-radius:4px;font-size:0.78rem;width:120px;">
+                <button id="rpExplainBtn" style="padding:5px 10px;background:#333;color:#ccc;border:none;border-radius:4px;cursor:pointer;font-size:0.78rem;">explain()</button>
+            </div>
+            <div id="reportePerformanceContent" style="overflow-y:auto;flex:1;padding:14px 20px;font-size:0.85rem;">
+                <div style="color:#888;text-align:center;padding:30px;">Cargando…</div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    const cerrar = () => modal.remove();
+    document.getElementById('closeReportePerformanceBtn').addEventListener('click', cerrar);
+    modal.addEventListener('click', (e) => { if (e.target === modal) cerrar(); });
+
+    const box = 'padding:8px 11px;background:#16162a;border:1px solid #333;border-radius:5px;margin-bottom:9px;';
+    const th = 'padding:6px 8px;text-align:left;color:var(--primary-gold);font-size:0.74rem;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #444;';
+    const td = 'padding:6px 8px;border-bottom:1px solid #2a2a3a;font-size:0.8rem;color:#ddd;';
+
+    function tabla(cabeceras, filas) {
+        return `<table style="width:100%;border-collapse:collapse;margin-bottom:6px;">
+            <thead><tr>${cabeceras.map(c => `<th style="${th}">${c}</th>`).join('')}</tr></thead>
+            <tbody>${filas.map(f => `<tr>${f.map(c => `<td style="${td}">${c}</td>`).join('')}</tr>`).join('')}</tbody>
+        </table>`;
+    }
+
+    function colorLatencia(ms) {
+        if (ms >= 1000) return 'color:#e05c5c;font-weight:700;';
+        if (ms >= 500) return 'color:#e0a44a;font-weight:600;';
+        return 'color:#6fbf73;';
+    }
+
+    function render(d) {
+        const resumen = (d.resumen || []).map(r =>
+            `<div style="${box}"><div style="color:var(--primary-gold);font-size:0.74rem;text-transform:uppercase;letter-spacing:0.5px;">${r.metrica}</div>
+             <div style="font-size:1.3rem;font-weight:700;margin:3px 0;">${r.valor}</div>
+             <div style="color:#999;font-size:0.78rem;">${r.detalle || ''}</div></div>`).join('');
+
+        const mediciones = (d.mediciones || []).map(m =>
+            [m.etapa === 'post-deploy' ? '<span style="color:#6fbf73;">post</span>' : '<span style="color:#777;">pre</span>',
+             m.consulta, `<code style="color:#8ab4f8;font-size:0.75rem;">${m.q}</code>`,
+             `n=${m.n}`,
+             `<span style="${colorLatencia(m.p50)}">${m.p50} ms</span>`,
+             `<span style="${colorLatencia(m.p95)}">${m.p95} ms</span>`,
+             `<span style="${colorLatencia(m.max)}">${m.max} ms</span>`,
+             m.http429 ? `<span style="color:#e0a44a;">${m.http429}/32 429</span>` : '<span style="color:#6fbf73;">ok</span>']
+        );
+
+        const deploy = d.deploy || {};
+        const pasosDeploy = (deploy.pasos || []).map(p =>
+            `<div style="${box}">
+                <div style="display:flex;justify-content:space-between;gap:10px;">
+                    <strong style="color:#eee;">${p.paso}</strong>
+                    <span style="font-size:0.72rem;color:#6fbf73;">● ${p.estado}</span>
+                </div>
+                <div style="color:#999;font-size:0.79rem;margin-top:4px;">${p.detalle}</div>
+            </div>`).join('');
+
+        const explain = (d.explain || []).map(e =>
+            [`<span style="color:#6fbf73;font-weight:600;">${e.tipo}</span>`, e.caso,
+             e.keys, e.docs, e.n,
+             `<code style="color:#8ab4f8;font-size:0.72rem;">${e.indice}</code>`]);
+
+        const metodos = (d.metodos || []).map(m => {
+            const badge = m.estado === 'implementado' ? 'color:#6fbf73;' : (m.estado === 'descartado' ? 'color:#777;' : 'color:#e0a44a;');
+            return `<div style="${box}">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+                    <strong style="color:#eee;">${m.nombre}</strong>
+                    <span style="font-size:0.72rem;${badge}">● ${m.estado}</span>
+                </div>
+                <div style="color:#999;font-size:0.78rem;margin-top:4px;">${m.licencia || ''}</div>
+                ${m.archivo ? `<div style="color:#8ab4f8;font-size:0.75rem;margin-top:4px;"><code>${m.archivo}</code></div>` : ''}
+                ${m.comando ? `<div style="color:#6fbf73;font-size:0.75rem;margin-top:3px;"><code>${m.comando}</code></div>` : ''}
+                ${m.cuando ? `<div style="color:#bbb;font-size:0.79rem;margin-top:6px;">${m.cuando}</div>` : ''}
+                ${m.cobertura ? `<div style="color:#888;font-size:0.77rem;margin-top:4px;">${m.cobertura}</div>` : ''}
+            </div>`;
+        }).join('');
+
+        const pendiente = (d.pendiente || []).map(p =>
+            `<div style="${box}">
+                <div style="display:flex;justify-content:space-between;gap:10px;">
+                    <strong style="color:#eee;">${p.area}</strong>
+                    <span style="font-size:0.72rem;color:#e0a44a;">● ${p.estado}</span>
+                </div>
+                <div style="color:#999;font-size:0.79rem;margin-top:4px;">${p.detalle}</div>
+            </div>`).join('');
+
+        const pruebas = (d.pruebas || []).map(p =>
+            [p.script, `<span style="color:#6fbf73;">${p.resultado}</span>`]);
+
+        const padrones = (d.padrones || {});
+        const padrRows = ((padrones.ejemplos || []).map(e =>
+            [e.oficio, e.provincia, e.ente || '—', e.ok ? '<span style="color:#6fbf73;">ok</span>' : '<span style="color:#e05c5c;">error</span>']));
+
+        const arbol = d.arbol || {};
+
+        return `
+            <div style="color:var(--primary-gold);font-size:0.78rem;text-transform:uppercase;letter-spacing:1px;margin:4px 0 8px;">Objetivo</div>
+            <div style="color:#ccc;margin-bottom:14px;">${d.objetivo || ''}</div>
+
+            <div style="color:var(--primary-gold);font-size:0.78rem;text-transform:uppercase;letter-spacing:1px;margin:4px 0 8px;">Resumen</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:9px;margin-bottom:16px;">${resumen}</div>
+
+            <div style="color:var(--primary-gold);font-size:0.78rem;text-transform:uppercase;letter-spacing:1px;margin:4px 0 8px;">Arbol de servicios (local vs produccion)</div>
+            <div style="${box}">
+                areas: <strong>${arbol.areas}</strong> (${(arbol.areaIds || []).join(', ')}) · categorias: <strong>${arbol.categorias}</strong> · dispositivos: <strong>${arbol.dispositivos}</strong> · paths: <strong>${arbol.pathsTotales}</strong> <span style="color:#777;">(profundidad 3: ${arbol.pathsProfundidad3})</span>
+                <div style="color:#999;font-size:0.78rem;margin-top:5px;">El arbol local y la coleccion de produccion quedaron alineados: 182 servicios, sin huerfanos.</div>
+            </div>
+
+            <div style="color:var(--primary-gold);font-size:0.78rem;text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px;">Latencia por consulta</div>
+            ${tabla(['', 'consulta', 'query', 'muestras', 'p50', 'p95', 'max', 'errores'], mediciones)}
+            <div style="color:#888;font-size:0.77rem;margin-bottom:16px;">${d.notaMediciones || ''}</div>
+
+            <div style="color:var(--primary-gold);font-size:0.78rem;text-transform:uppercase;letter-spacing:1px;margin:4px 0 8px;">explain() en produccion</div>
+            ${tabla(['plan', 'caso', 'keys', 'docs', 'n', 'indice'], explain)}
+            <div style="color:#888;font-size:0.77rem;margin-bottom:16px;">keysExamined igual a docsExamined significa que el indice resuelve sin descartar documentos.</div>
+
+            <div style="color:var(--primary-gold);font-size:0.78rem;text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px;">Deploy a produccion</div>
+            ${deploy.carpeta ? `<div style="${box}"><span style="color:#999;">carpeta de backup: </span><code style="color:#8ab4f8;">${deploy.carpeta}</code></div>` : ''}
+            ${pasosDeploy}
+
+            <div style="color:var(--primary-gold);font-size:0.78rem;text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px;">Herramientas de load testing</div>
+            ${metodos}
+
+            <div style="color:var(--primary-gold);font-size:0.78rem;text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px;">Pendiente</div>
+            ${pendiente}
+
+            <div style="color:var(--primary-gold);font-size:0.78rem;text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px;">Pruebas</div>
+            ${tabla(['script', 'resultado'], pruebas)}
+
+            <div style="color:var(--primary-gold);font-size:0.78rem;text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px;">Padrones de matricula</div>
+            <div style="color:#999;font-size:0.79rem;margin-bottom:8px;">${padrones.nota || ''}</div>
+            ${tabla(['oficio', 'provincia', 'ente emisor', 'estado'], padrRows)}
+            <div style="height:16px;"></div>
+        `;
+    }
+
+    async function cargar() {
+        const content = document.getElementById('reportePerformanceContent');
+        try {
+            const res = await fetch('/api/v1/admin/reporte-performance', { headers: authHeaders(), credentials: 'include' });
+            if (res.status === 401 || res.status === 403) {
+                content.innerHTML = '<div style="color:#e05c5c;text-align:center;padding:30px;">Solo los administradores pueden ver este reporte.</div>';
+                return;
+            }
+            const json = await res.json();
+            if (!json.success) throw new Error(json.error || 'error');
+            document.getElementById('rpGenerated').textContent = 'generado ' + new Date(json.data.generadoEn).toLocaleString('es-AR');
+            content.innerHTML = render(json.data);
+        } catch (e) {
+            content.innerHTML = `<div style="color:#e05c5c;text-align:center;padding:30px;">No se pudo cargar el reporte: ${e.message}</div>`;
+        }
+    }
+
+    async function explicar() {
+        const content = document.getElementById('reportePerformanceContent');
+        const service = document.getElementById('rpService').value.trim();
+        const profession = document.getElementById('rpProfession').value.trim();
+        content.innerHTML = '<div style="color:#888;text-align:center;padding:30px;">Consultando explain()…</div>';
+        try {
+            const res = await fetch('/api/v1/admin/reporte-performance/explain', {
+                method: 'POST',
+                headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ service, profession, matriculado: true })
+            });
+            const json = await res.json();
+            if (!json.success) throw new Error(json.error || 'error');
+            const d = json.data;
+            const badge = d.usaIndice
+                ? '<span style="color:#6fbf73;font-weight:700;">IXSCAN — hay indice en uso</span>'
+                : '<span style="color:#e05c5c;font-weight:700;">COLLSCAN — escanea toda la coleccion</span>';
+            content.innerHTML = `
+                <div style="${box}">
+                    <div style="color:var(--primary-gold);font-size:0.74rem;text-transform:uppercase;">Resultado</div>
+                    <div style="margin:6px 0;">${badge}</div>
+                    <div style="color:#bbb;font-size:0.83rem;">${d.interpretacion}</div>
+                </div>
+                <div style="${box}"><div style="color:var(--primary-gold);font-size:0.74rem;text-transform:uppercase;">Query</div>
+                    <pre style="color:#8ab4f8;font-size:0.75rem;overflow-x:auto;margin:6px 0 0;">${JSON.stringify(d.query, null, 2)}</pre></div>
+                <div style="${box}"><div style="color:var(--primary-gold);font-size:0.74rem;text-transform:uppercase;">Winning plan</div>
+                    <pre style="color:#9ccc65;font-size:0.72rem;overflow-x:auto;max-height:260px;margin:6px 0 0;">${JSON.stringify(d.winningPlan, null, 2)}</pre></div>
+                ${d.executionStats ? `<div style="${box}"><div style="color:var(--primary-gold);font-size:0.74rem;text-transform:uppercase;">Execution stats</div>
+                    <pre style="color:#ce93d8;font-size:0.72rem;overflow-x:auto;max-height:260px;margin:6px 0 0;">${JSON.stringify(d.executionStats, null, 2)}</pre></div>` : ''}
+                <button id="rpBackBtn" style="padding:6px 12px;background:#333;color:#ccc;border:none;border-radius:4px;cursor:pointer;">← Volver al reporte</button>
+            `;
+            document.getElementById('rpBackBtn').addEventListener('click', cargar);
+        } catch (e) {
+            content.innerHTML = `<div style="color:#e05c5c;text-align:center;padding:30px;">explain() fallo: ${e.message}</div>`;
+        }
+    }
+
+    document.getElementById('rpReloadBtn').addEventListener('click', cargar);
+    document.getElementById('rpExplainBtn').addEventListener('click', explicar);
+    await cargar();
+}
+
 export async function openAccessLogsModal() {
     let modal = document.getElementById('accessLogsModal');
     if (!modal) {
@@ -1946,10 +2163,18 @@ export async function loadActivityLogs() {
             if (currentLogFilters[key]) url.searchParams.append(key, currentLogFilters[key]);
         });
 
-        const res = await fetch(url, {
-            headers: authHeaders(),
-            credentials: 'include'
-        });
+const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 20000);
+        let res;
+        try {
+            res = await fetch(url, {
+                headers: authHeaders(),
+                credentials: 'include',
+                signal: controller.signal
+            });
+        } finally {
+            clearTimeout(timeout);
+        }
         const data = await parseAdminApiResponse(res);
 
         if (data.success) {
@@ -2041,8 +2266,11 @@ export async function openViewLeadsModal() {
                     <option value="contacted">${t('contacted')}</option>
                     <option value="joined">${t('joined')}</option>
                     <option value="rejected">${t('rejected')}</option>
+                    <option value="blocked">${t('Blocked')}</option>
                 </select>
                 <button id="leadsFilterBtn" type="button" style="background: #333; color: white; border: 1px solid #555; padding: 8px 12px; border-radius: 4px; cursor: pointer;">${t('Filter')}</button>
+                <input id="leadsSearch" type="search" placeholder="${t('Search name, matricula, email, locality...')}" style="flex: 1 1 240px; min-width: 200px; padding: 8px; background: #333; color: white; border: 1px solid #555; border-radius: 4px;">
+                <button id="leadsClearSearchBtn" type="button" style="background: transparent; color: #aaa; border: 1px solid #555; padding: 8px 12px; border-radius: 4px; cursor: pointer;">${t('Clear')}</button>
                 <span id="leadsTotalInfo" style="color: #888; font-size: 0.85rem; margin-left: auto;"></span>
             </div>
             <div class="admin-leads-toolbar" style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
@@ -2050,8 +2278,14 @@ export async function openViewLeadsModal() {
                 <button id="previewInviteBtn" type="button" style="background: transparent; border: 1px solid var(--primary-gold); color: var(--primary-gold);">${t('Preview invite message')}</button>
                 <button id="selectPendingLeadsBtn" type="button" style="background: #333; color: white; border: 1px solid #555; padding: 8px 12px; border-radius: 4px; cursor: pointer;">${t('Select pending')}</button>
                 <button id="clearLeadSelectionBtn" type="button" style="background: #333; color: white; border: 1px solid #555; padding: 8px 12px; border-radius: 4px; cursor: pointer;">${t('Clear selection')}</button>
+                <button id="applySelectedEmailBtn" type="button" style="background: #2563eb; color: #fff; font-weight: bold; border: none; padding: 10px 16px; border-radius: 4px; cursor: pointer;">${t('Send email to selected')}</button>
+                <span id="leadSelectionCount" style="color:#888;font-size:0.8rem;"></span>
                 <button id="applySelectedInviteBtn" type="button" style="background: #25D366; color: #fff; font-weight: bold; border: none; padding: 10px 16px; border-radius: 4px; cursor: pointer;">${t('Apply invitation to selected')}</button>
                 <button id="bulkWhatsappBtn" type="button" style="background: transparent; border: 1px solid #25D366; color: #25D366; font-weight: bold; padding: 10px 16px; border-radius: 4px; cursor: pointer;">${t('Apply to all pending')}</button>
+            </div>
+            <div id="leadBlockedNotice" class="hidden" style="margin-bottom:16px;padding:12px 14px;border:1px solid rgba(220,38,38,.35);border-radius:8px;background:rgba(220,38,38,.08);">
+                <div id="leadBlockedNoticeText" style="color:#f1a4a4;font-size:.9rem;line-height:1.5;margin-bottom:10px;"></div>
+                <button id="unblockVisibleLeadsBtn" type="button" style="background:#b91c1c;color:#fff;font-weight:bold;border:1px solid #7f1d1d;border-radius:4px;padding:8px 12px;cursor:pointer;"></button>
             </div>
             <div id="bulkWhatsappPanel" class="hidden" style="margin-bottom: 20px; padding: 16px; border: 1px solid rgba(37,211,102,0.4); border-radius: 8px; background: rgba(37,211,102,0.08);">
                 <h4 class="gold-text" style="margin: 0 0 10px 0;">${t('Bulk outreach progress')}</h4>
@@ -2071,7 +2305,10 @@ export async function openViewLeadsModal() {
                         <tr style="border-bottom: 1px solid var(--primary-gold);">
                             <th style="padding: 10px;">${t('Select')}</th>
                             <th class="col-date-added" style="padding: 10px;">${t('Date Added')}</th>
-                            <th style="padding: 10px;">${t('Alias')}</th>
+                            <th style="padding: 10px;">${t('Name')}</th>
+                            <th style="padding: 10px;">${t('Matricula')}</th>
+                            <th style="padding: 10px;">${t('Locality')}</th>
+                            <th style="padding: 10px;">${t('Email')}</th>
                             <th style="padding: 10px;">${t('Phone Number')}</th>
                             <th class="col-source" style="padding: 10px;">${t('Source')}</th>
                             <th class="col-status" style="padding: 10px; min-width: 88px;">${t('Status')}</th>
@@ -2079,7 +2316,7 @@ export async function openViewLeadsModal() {
                         </tr>
                     </thead>
                     <tbody id="leadsTableBody">
-                        <tr><td colspan="7" style="padding: 10px; text-align: center;">Loading...</td></tr>
+                        <tr><td colspan="10" style="padding: 10px; text-align: center;">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -2098,6 +2335,28 @@ export async function openViewLeadsModal() {
         document.getElementById('refreshLeadsBtn').onclick = () => loadLeads(leadsCurrentPage);
         document.getElementById('leadsFilterBtn').onclick = () => loadLeads(1);
         document.getElementById('leadsFilterStatus').addEventListener('change', () => loadLeads(1));
+
+        // Con ~1700 leads del padron, escribir a mano no es una opcion: se
+        // busca mientras se tipea, con debounce para no pegarle al endpoint
+        // en cada tecla.
+        let leadsSearchTimer = null;
+        const leadsSearch = document.getElementById('leadsSearch');
+        if (leadsSearch) {
+            leadsSearch.addEventListener('input', () => {
+                clearTimeout(leadsSearchTimer);
+                leadsSearchTimer = setTimeout(() => loadLeads(1), 350);
+            });
+            leadsSearch.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { clearTimeout(leadsSearchTimer); loadLeads(1); }
+            });
+        }
+        const leadsClearSearch = document.getElementById('leadsClearSearchBtn');
+        if (leadsClearSearch) {
+            leadsClearSearch.onclick = () => {
+                if (leadsSearch) leadsSearch.value = '';
+                loadLeads(1);
+            };
+        }
         document.getElementById('leadsBtnPrev').onclick = () => {
             if (leadsCurrentPage > 1) loadLeads(leadsCurrentPage - 1);
         };
@@ -2105,14 +2364,31 @@ export async function openViewLeadsModal() {
             if (leadsCurrentPage < leadsTotalPages) loadLeads(leadsCurrentPage + 1);
         };
         document.getElementById('previewInviteBtn').onclick = previewInviteMessage;
+// Con el padron de gasistas los leads vienen bloqueados (doNotContact),
+        // asi que los checkboxes estan deshabilitados y estos botones trabajan
+        // sobre cero elementos. Antes no pasaba nada y parecian rotos: ahora
+        // avisan por que.
+        const selectableCbs = () => [...document.querySelectorAll('.lead-invite-cb:not(:disabled)')];
         document.getElementById('selectPendingLeadsBtn').onclick = () => {
-            document.querySelectorAll('.lead-invite-cb:not(:disabled)').forEach((cb) => { cb.checked = true; });
+            const cbs = selectableCbs();
+            if (!cbs.length) { notifyNoSelectableLeads(); return; }
+            cbs.forEach((cb) => { cb.checked = true; });
+            updateLeadSelectionCount();
         };
         document.getElementById('clearLeadSelectionBtn').onclick = () => {
-            document.querySelectorAll('.lead-invite-cb').forEach((cb) => { cb.checked = false; });
+            const cbs = document.querySelectorAll('.lead-invite-cb');
+            const hadOnes = [...cbs].some((cb) => cb.checked);
+            cbs.forEach((cb) => { cb.checked = false; });
+            updateLeadSelectionCount();
+            if (!hadOnes) {
+                const msg = t('There was no selection to clear.');
+                showAlert(selectionFeedbackEl(), msg, false);
+            }
         };
+        document.getElementById('unblockVisibleLeadsBtn').onclick = unblockVisibleLeads;
         document.getElementById('applySelectedInviteBtn').onclick = applyInvitationToSelectedLeads;
         document.getElementById('bulkWhatsappBtn').onclick = startBulkWhatsappOutreach;
+        document.getElementById('applySelectedEmailBtn').onclick = () => sendLeadInviteEmail(null);
         modal.querySelectorAll('input[name="inviteChannel"]').forEach((radio) => {
             radio.addEventListener('change', onInviteChannelChange);
         });
@@ -2125,6 +2401,8 @@ export async function openViewLeadsModal() {
 
 let leadsCurrentPage = 1;
 let leadsTotalPages = 1;
+// Leads de la pagina renderizada, indexados por _id (ver loadLeads).
+const leadsById = new Map();
 const LEADS_PAGE_SIZE = 50;
 
 function updateLeadsPagination(pagination) {
@@ -2162,13 +2440,19 @@ function updateLeadsPagination(pagination) {
 export async function loadLeads(page = leadsCurrentPage) {
     leadsCurrentPage = Math.max(1, page);
     const tbody = document.getElementById('leadsTableBody');
-    tbody.innerHTML = `<tr><td colspan="7" style="padding: 10px; text-align: center;">${t('Loading...')}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10" style="padding: 10px; text-align: center;">${t('Loading...')}</td></tr>`;
     
     try {
         const statusEl = document.getElementById('leadsFilterStatus');
         const status = statusEl ? statusEl.value : '';
+        const searchEl = document.getElementById('leadsSearch');
+        const term = searchEl ? searchEl.value.trim() : '';
         let url = `${API_URL}/admin/potential-professionals?page=${leadsCurrentPage}&limit=${LEADS_PAGE_SIZE}`;
-        if (status) url += `&status=${encodeURIComponent(status)}`;
+        if (status) {
+            if (status === 'blocked') url += '&blocked=true';
+            else url += `&status=${encodeURIComponent(status)}`;
+        }
+        if (term) url += `&q=${encodeURIComponent(term)}`;
 
         const res = await fetch(url, { 
             headers: authHeaders(),
@@ -2176,12 +2460,17 @@ export async function loadLeads(page = leadsCurrentPage) {
         });
         const data = await parseAdminApiResponse(res);
 
-        if (data.success) {
-            tbody.innerHTML = '';
-            updateLeadsPagination(data.pagination);
+if (data.success) {
+              tbody.innerHTML = '';
+              updateLeadsPagination(data.pagination);
+              // Cache de la pagina actual: el modal de mail lo usa para saber el
+              // alias y el oficio del lead antes de pedir la plantilla.
+              leadsById.clear();
+              data.data.forEach((lead) => leadsById.set(String(lead._id), lead));
 
             if (data.data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" style="padding: 10px; text-align: center;">${t('No leads found.')}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="10" style="padding: 10px; text-align: center;">${t('No leads found.')}</td></tr>`;
+                updateLeadBlockedNotice(data.data);
                 return;
             }
             
@@ -2190,9 +2479,9 @@ export async function loadLeads(page = leadsCurrentPage) {
                 let sourceHost = lead.sourceUrl;
                 try { sourceHost = new URL(lead.sourceUrl).hostname; } catch(e) {}
 
-                const statusColor = lead.status === 'contacted' ? 'green' : (lead.status === 'rejected' ? 'red' : 'orange');
+                const statusColor = lead.status === 'contacted' ? '#15803d' : (lead.status === 'rejected' ? '#dc2626' : '#a16207');
                 const smsState = lead.smsStatus || 'pending';
-                const smsColor = smsState === 'sent' ? 'green' : (smsState === 'failed' ? 'red' : 'orange');
+                const smsColor = smsState === 'sent' ? '#15803d' : (smsState === 'failed' ? '#dc2626' : '#a16207');
                 const waLink = lead.whatsappLink || '#';
                 const blocked = Boolean(lead.doNotContact);
                 const waDisabled = !lead.whatsappLink || blocked;
@@ -2204,6 +2493,13 @@ export async function loadLeads(page = leadsCurrentPage) {
                     ? `<span class="admin-status-badge admin-status-badge--blocked" style="background:#6b1d1d;" title="${(lead.doNotContactReason || '').replace(/"/g, '&quot;')}">${t('Do not contact')}</span>`
                     : '';
 
+                const mailState = lead.emailStatus || 'pending';
+                const mailColor = mailState === 'sent' ? '#15803d' : (mailState === 'failed' ? '#dc2626' : '#a16207');
+                const mailDisabled = blocked || !lead.email;
+                const mailTip = blocked
+                    ? (lead.doNotContactReason || 'Blocked')
+                    : (lead.email ? '' : 'No email');
+
                 const tr = document.createElement('tr');
                 tr.style.borderBottom = '1px solid #333';
                 tr.innerHTML = `
@@ -2211,19 +2507,24 @@ export async function loadLeads(page = leadsCurrentPage) {
                         <input type="checkbox" class="lead-invite-cb" value="${lead._id}" ${isPending ? '' : 'disabled'} style="width:auto;">
                     </td>
                     <td class="col-date-added" style="padding: 10px;">${dateAdded}</td>
-                    <td style="padding: 10px;">${lead.alias || '—'}</td>
-                    <td style="padding: 10px;">${lead.phone}</td>
-                    <td class="col-source" style="padding: 10px;"><a href="${lead.sourceUrl}" target="_blank" style="color: var(--primary-gold);">${sourceHost || '—'}</a></td>
+                    <td style="padding: 10px;">${escapeHtml(lead.name || lead.alias || '—')}</td>
+                    <td style="padding: 10px;">${escapeHtml(lead.matricula || '—')}</td>
+                    <td style="padding: 10px;">${escapeHtml(lead.locality || '—')}</td>
+                    <td style="padding: 10px;">${lead.email ? `<a href="mailto:${escapeHtml(lead.email)}" style="color: var(--primary-gold);">${escapeHtml(lead.email)}</a>` : '—'}</td>
+                    <td style="padding: 10px;">${escapeHtml(lead.phone || '—')}</td>
+                    <td class="col-source" style="padding: 10px;">${lead.sourceUrl ? `<a href="${escapeHtml(lead.sourceUrl)}" target="_blank" rel="noopener noreferrer" style="color: var(--primary-gold);">${escapeHtml(sourceHost || '—')}</a>` : escapeHtml(lead.fuente || '—')}</td>
                     <td style="padding: 10px;" class="lead-status-cell">
                         <div class="lead-status-stack">
                             <span class="admin-status-badge admin-status-badge--${lead.status || 'pending'}" style="background: ${statusColor};">${statusLabel}</span>
                             <span class="admin-status-badge admin-status-badge--sms" style="background: ${smsColor};">${smsLabel}</span>
+                            <span class="admin-status-badge admin-status-badge--email" style="background: ${mailColor};" title="${escapeHtml(mailTip)}">${t('Email')}: ${t(mailState)}</span>
                             ${blockBadge}
                         </div>
                     </td>
                     <td style="padding: 10px;">
                         <a href="${waLink}" target="_blank" rel="noopener noreferrer" data-lead-id="${lead._id}" data-lead-phone="${lead.phone || ''}" class="lead-whatsapp-btn"${waDisabled ? ' aria-disabled="true" style="opacity:0.4;pointer-events:none;"' : ''}>${t('Send invite')}</a>
-                        ${blocked ? '' : `<button type="button" class="lead-block-btn" data-lead-phone="${lead.phone || ''}" style="margin-left:6px;font-size:0.85em;">${t('Block')}</button>`}
+                        <button type="button" class="lead-email-btn" data-lead-id="${lead._id}"${mailDisabled ? ' disabled title="' + escapeHtml(mailTip) + '" style="margin-left:6px;font-size:0.85em;opacity:0.4;cursor:not-allowed;"' : ' style="margin-left:6px;font-size:0.85em;"'}>${t('Send email')}</button>
+                        ${blocked ? `<button type="button" class="lead-unblock-btn" data-lead-id="${lead._id}" style="margin-left:6px;font-size:0.85em;">${t('Unblock')}</button>` : `<button type="button" class="lead-block-btn" data-lead-phone="${lead.phone || ''}" style="margin-left:6px;font-size:0.85em;">${t('Block')}</button>`}
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -2235,9 +2536,25 @@ export async function loadLeads(page = leadsCurrentPage) {
             document.querySelectorAll('.lead-block-btn').forEach((btn) => {
                 btn.addEventListener('click', () => blockLeadPhone(btn.getAttribute('data-lead-phone')));
             });
+            document.querySelectorAll('.lead-unblock-btn').forEach((btn) => {
+                btn.addEventListener('click', () => unblockLead(btn.getAttribute('data-lead-id')));
+            });
+            document.querySelectorAll('.lead-email-btn').forEach((btn) => {
+                btn.addEventListener('click', () => sendLeadInviteEmail(btn.getAttribute('data-lead-id')));
+            });
+
+            // El contador tiene que reflejar cambios hechos a mano en los
+            // checkbox, no solo los botones de seleccionar todo / limpiar.
+            tbody.querySelectorAll('.lead-invite-cb').forEach((cb) => {
+                cb.addEventListener('change', updateLeadSelectionCount);
+            });
+
+            updateLeadSelectionCount();
+            updateLeadBlockedNotice(data.data);
         }
     } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="7" style="padding: 10px; text-align: center; color: var(--accent-red);">${t('Failed to load leads.')}</td></tr>`;
+        const timedOut = err && (err.name === 'AbortError' || /abort/i.test(String(err.message || '')));
+        tbody.innerHTML = `<tr><td colspan="10" style="padding: 10px; text-align: center; color: var(--accent-red);">${t(timedOut ? 'Timed out loading leads.' : 'Failed to load leads.')}</td></tr>`;
     }
 }
 
@@ -2298,6 +2615,86 @@ async function markLeadContacted(id) {
         });
     } catch (err) {
         console.error('Failed to mark lead as contacted', err);
+    }
+}
+
+// Quita el bloqueo doNotContact de UN lead. El padron se importa con todos
+// bloqueados (sin consentimiento), asi que sin esto no hay forma de volver a
+// habilitar un lead desde la UI: habia endpoint PUT pero ningun boton.
+async function unblockLead(leadId) {
+    if (!leadId) return;
+    try {
+        const res = await fetch(`${API_URL}/admin/potential-professionals/${encodeURIComponent(leadId)}`, {
+            method: 'PUT',
+            headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+            credentials: 'include',
+            // Volver a 'pending': al desbloquear queda 'rejected' y el lead
+            // seguiria fuera de los filtros de outreach.
+            body: JSON.stringify({ doNotContact: false, status: 'pending' })
+        });
+        const data = await parseAdminApiResponse(res);
+        if (!data.success) {
+            announceMessage(data.error || t('Could not unblock lead'));
+            return;
+        }
+        announceMessage(t('Lead unblocked.'));
+        loadLeads(leadsCurrentPage);
+    } catch (err) {
+        console.error('Failed to unblock lead', err);
+        announceMessage(t('Could not unblock lead'));
+    }
+}
+
+// Cuenta y muestra el aviso cuando la pagina actual tiene leads bloqueados
+// (el padron se importa entero con doNotContact). Sin esto la tabla aparece
+// pero nada es seleccionable y parece rota.
+function updateLeadBlockedNotice(leads) {
+    const notice = document.getElementById('leadBlockedNotice');
+    if (!notice) return;
+    const list = Array.isArray(leads) ? leads : [];
+    const blocked = list.filter((l) => Boolean(l.doNotContact));
+    if (!blocked.length) {
+        notice.classList.add('hidden');
+        return;
+    }
+    const btn = document.getElementById('unblockVisibleLeadsBtn');
+    if (btn) btn.textContent = t('Unblock {count} visible').replace('{count}', String(blocked.length));
+    const textEl = document.getElementById('leadBlockedNoticeText');
+    if (textEl) {
+        textEl.textContent = t('{count} of {total} leads on this page are blocked. They were imported without contact consent, so nothing is selectable. Unblock them to invite them, or unblock row by row.')
+            .replace('{count}', String(blocked.length))
+            .replace('{total}', String(list.length));
+    }
+    notice.classList.remove('hidden');
+}
+
+// Desbloqueo en lote de los leads bloqueados visibles en la pagina actual.
+// Quita doNotContact y los devuelve a 'pending' (misma logica que unblockLead
+// por fila) sin enviar nada: la salvaguarda de consentimiento queda intacta.
+async function unblockVisibleLeads() {
+    const blocked = [...leadsById.values()].filter((l) => Boolean(l.doNotContact));
+    if (!blocked.length) return;
+    if (!(await confirmDialog(t('Unblock {count} visible lead(s)? They become pending again and can be selected.').replace('{count}', String(blocked.length))))) return;
+    const btn = document.getElementById('unblockVisibleLeadsBtn');
+    if (btn) btn.disabled = true;
+    try {
+        const res = await fetch(`${API_URL}/admin/potential-professionals/unblock-batch`, {
+            method: 'POST',
+            headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ ids: blocked.map((l) => l._id) })
+        });
+        const data = await parseAdminApiResponse(res);
+        if (!data.success) {
+            announceMessage(data.error || t('Could not unblock leads'));
+            return;
+        }
+        announceMessage(t('Unblocked {count} lead(s).').replace('{count}', String(data.data?.modified ?? blocked.length)));
+        loadLeads(leadsCurrentPage);
+    } catch {
+        announceMessage(t('Could not unblock leads'));
+    } finally {
+        if (btn) btn.disabled = false;
     }
 }
 
@@ -2661,7 +3058,7 @@ export async function loadPaymentVerifications() {
                         ${item.receiptUrl ? `<a href="${item.receiptUrl}" target="_blank" style="color: var(--primary-gold); text-decoration: none; font-size: 1.2rem;" title="Ver comprobante">${receiptIsPdf ? '📄' : '🖼️'}</a>` : '<span style="color: #666;">-</span>'}
                     </td>
                     <td style="padding: 10px; text-align: center;">
-                        <button class="ack-payment-btn" data-id="${item._id}" data-type="${item.type}" style="padding: 5px 12px; background: #22c55e; color: white; border: none; border-radius: 4px; font-size: 0.8rem; cursor: pointer; font-weight: 600;">✓ Aprobar</button>
+                        <button class="ack-payment-btn" data-id="${item._id}" data-type="${item.type}" style="padding: 5px 12px; background: #15803d; color: white; border: none; border-radius: 4px; font-size: 0.8rem; cursor: pointer; font-weight: 600;">✓ Aprobar</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -3314,6 +3711,7 @@ export async function loadPendingVerifications() {
                         <div class="admin-pending-actions">
                             <button type="button" class="approve-btn admin-verification-btn" data-id="${prof._id}" title="${t('Approve')}" aria-label="${t('Approve')}">✓</button>
                             <button type="button" class="reject-btn admin-verification-btn" data-id="${prof._id}" title="${t('Reject')}" aria-label="${t('Reject')}">✕</button>
+                            <button type="button" class="set-password-btn admin-verification-btn" data-id="${prof._id}" data-email="${prof.email}" title="${t('Set temporary password')}" aria-label="${t('Set temporary password')}">🔑</button>
                         </div>
                     </td>
                 `;
@@ -3325,6 +3723,9 @@ export async function loadPendingVerifications() {
             });
             document.querySelectorAll('.reject-btn').forEach(btn => {
                 btn.onclick = () => openRejectVerificationModal(btn.getAttribute('data-id'));
+            });
+            document.querySelectorAll('.set-password-btn').forEach(btn => {
+                btn.onclick = () => openSetPasswordModal(btn.getAttribute('data-id'), btn.getAttribute('data-email'));
             });
             document.querySelectorAll('.view-doc-btn').forEach(btn => {
                 btn.onclick = () => {
@@ -3427,6 +3828,123 @@ export function openRejectVerificationModal(professionalId) {
     };
 
     openAdminOverlay(modal);
+}
+
+export function openSetPasswordModal(userId, userEmail) {
+    let modal = document.getElementById('setPasswordModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'setPasswordModal';
+        Object.assign(modal.style, {
+            position: 'fixed', top: '0', left: '0', width: '100%', height: '100%',
+            backgroundColor: 'rgba(0,0,0,0.9)', zIndex: '3500', display: 'none',
+            alignItems: 'center', justifyContent: 'center', padding: '20px',
+            overflowY: 'auto', boxSizing: 'border-box'
+        });
+
+        modal.innerHTML = `
+            <div class="card admin-modal-panel" style="max-width: 520px; width: 100%; padding: 24px; color: white;">
+                <h3 class="gold-text" style="margin-top: 0;">${t('Set temporary password')}</h3>
+                <p style="font-size: 0.9rem; color: #ccc; margin-bottom: 20px;">
+                    ${t('This closes every open session for the account and forces the user to define their own password on next login. The temporary password is emailed to them.')}
+                </p>
+                <div style="margin-bottom: 16px;">
+                    <label for="setPwdTargetEmail" style="display: block; margin-bottom: 6px; color: var(--primary-gold);">${t('Account')}</label>
+                    <input id="setPwdTargetEmail" type="text" readonly style="width: 100%; box-sizing: border-box; padding: 10px; background: #111; color: #aaa; border: 1px solid #444; border-radius: 4px;">
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label for="setPwdInput" style="display: block; margin-bottom: 6px; color: var(--primary-gold);">${t('Temporary password (min 6 chars)')}</label>
+                    <input id="setPwdInput" type="text" placeholder="${t('Type a password to send')}" autocomplete="off" style="width: 100%; box-sizing: border-box; padding: 10px; background: #111; color: white; border: 1px solid rgba(212,175,55,0.45); border-radius: 4px;">
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label for="setPwdConfirmInput" style="display: block; margin-bottom: 6px; color: var(--primary-gold);">${t('Repeat password')}</label>
+                    <input id="setPwdConfirmInput" type="text" placeholder="${t('Repeat the password')}" autocomplete="off" style="width: 100%; box-sizing: border-box; padding: 10px; background: #111; color: white; border: 1px solid rgba(212,175,55,0.45); border-radius: 4px;">
+                </div>
+                <div style="display:flex; gap:10px; flex-wrap: wrap; margin-bottom: 14px;">
+                    <button type="button" id="setPwdGenerateBtn" style="padding: 8px 14px; background: #333; color: white; border: none; border-radius: 4px; cursor: pointer;">${t('Generate random')}</button>
+                </div>
+                <div id="setPwdAlert" class="alert hidden" style="margin-bottom: 12px;"></div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+                    <button type="button" id="setPwdCancelBtn" style="padding: 10px 20px; background: #555; color: white; border: none; border-radius: 4px; cursor: pointer;">${t('Cancel')}</button>
+                    <button type="button" id="setPwdConfirmBtn" style="padding: 10px 20px; background: var(--primary-gold); color: #000; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">${t('Set password')}</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        document.getElementById('setPwdCancelBtn').addEventListener('click', () => {
+            closeAdminOverlay(modal);
+        });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeAdminOverlay(modal);
+        });
+        document.getElementById('setPwdGenerateBtn').addEventListener('click', () => {
+            const generated = generateTempPassword();
+            document.getElementById('setPwdInput').value = generated;
+            document.getElementById('setPwdConfirmInput').value = generated;
+        });
+        applyStaticTranslations(modal);
+    }
+
+    modal.dataset.userId = userId;
+    document.getElementById('setPwdTargetEmail').value = userEmail || '';
+    document.getElementById('setPwdInput').value = '';
+    document.getElementById('setPwdConfirmInput').value = '';
+    const alertEl = document.getElementById('setPwdAlert');
+    alertEl.classList.add('hidden');
+    alertEl.textContent = '';
+
+    const confirmBtn = document.getElementById('setPwdConfirmBtn');
+    confirmBtn.onclick = async () => {
+        const password = document.getElementById('setPwdInput').value;
+        const confirmPassword = document.getElementById('setPwdConfirmInput').value;
+
+        if (!password || password.length < 6) {
+            showAlert(alertEl, t('Password must be at least 6 characters.'), true, 'setPwdInput');
+            return;
+        }
+        if (password !== confirmPassword) {
+            showAlert(alertEl, t('Passwords do not match.'), true, 'setPwdConfirmInput');
+            return;
+        }
+
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = t('Setting...');
+
+        try {
+            const res = await fetch(`${API_URL}/admin/users/${userId}/password`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', ...authHeaders() },
+                body: JSON.stringify({ password, confirmPassword })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data.success) {
+                showAlert(alertEl, data.error || t('Network Error'), true, 'setPwdInput');
+                return;
+            }
+            closeAdminOverlay(modal);
+            alert(data.data?.emailDelivered
+                ? t('Password set. The user was emailed the temporary password and must change it on next login.')
+                : t('Password set, but the email could NOT be sent. Share the temporary password with the user manually.'));
+            if (data.data?.self) {
+                alert(t('That was your own account: log in again with the new password.'));
+            }
+        } catch (err) {
+            showAlert(alertEl, err.message || t('Network Error'));
+        } finally {
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = t('Set password');
+        }
+    };
+
+    openAdminOverlay(modal);
+}
+
+function generateTempPassword() {
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+    const bytes = new Uint32Array(12);
+    (window.crypto || window.msCrypto).getRandomValues(bytes);
+    return Array.from(bytes, (n) => alphabet[n % alphabet.length]).join('');
 }
 
 export async function updateVerificationStatus(id, status, extra = {}) {
@@ -4454,19 +4972,27 @@ export async function renderEditForm(prof) {
             document.getElementById('adminEditWhatsapp')?.value || ''
         );
 
-        // Map checked profession slugs to { slug, name } (mirrors updateMyProfessions).
-        // Undefined = taxonomy unreachable, leave stored professions untouched.
+        // Profesiones con su estado de matriculacion. collectProfessions lee los
+        // checkbox "Soy matriculado en X" del mismo picker que usa el panel del
+        // profesional; antes el admin mandaba solo {slug,name} y el backend heredaba
+        // el valor guardado, asi que la matriculacion no se podia editar aca.
+        // Undefined = taxonomia inalcanzable, no tocar las profesiones guardadas.
         let adminProfessions;
         try {
-            const checkedSlugs = [...new Set(Array.from(document.querySelectorAll('#adminEditProfessions input[data-profession-slug]:checked')).map(i => String(i.dataset.professionSlug || '').trim().toLowerCase()).filter(Boolean))];
-            if (checkedSlugs.length === 0) {
-                adminProfessions = [];
+            const picked = collectProfessions('adminEditProfessions');
+            if (!document.getElementById('adminEditProfessions')) {
+                adminProfessions = undefined;
             } else {
                 const taxRes = await fetch(`${API_URL}/professions`, { headers: authHeaders(), credentials: 'include' });
                 const taxData = await taxRes.json().catch(() => ({}));
                 const nameBySlug = new Map();
                 if (taxData && Array.isArray(taxData.data)) taxData.data.forEach(p => { if (p && p.slug) nameBySlug.set(String(p.slug).toLowerCase(), p.name || p.slug); });
-                adminProfessions = checkedSlugs.map(s => ({ slug: s, name: nameBySlug.get(s) || s }));
+                adminProfessions = picked.map(p => ({
+                    slug: p.slug,
+                    name: nameBySlug.get(String(p.slug).toLowerCase()) || p.slug,
+                    matriculado: !!p.matriculado,
+                    matriculaNumero: p.matriculaNumero || ''
+                }));
             }
         } catch (err) { adminProfessions = undefined; }
 
@@ -5371,6 +5897,513 @@ async function loadWhatsAppConfigPanel() {
     }
 }
 
+function setSecDevicesAlert(message, isError) {
+    const alertEl = document.getElementById('secDevicesAlert');
+    if (!alertEl) return;
+    alertEl.textContent = message || '';
+    alertEl.style.display = message ? 'block' : 'none';
+    alertEl.style.background = isError ? 'rgba(239,68,68,0.12)' : 'rgba(34,197,94,0.12)';
+    alertEl.style.borderColor = isError ? '#ef4444' : '#22c55e';
+    alertEl.style.color = isError ? '#ffb3b3' : '#a5f3c8';
+}
+
+function renderAdminDevicesPanel(data) {
+    const list = document.getElementById('secDevicesList');
+    if (!list) return;
+    const gate = data.enabled === true;
+    const devices = Array.isArray(data.devices) ? data.devices : [];
+
+    const gateToggle = document.getElementById('secDevicesGateToggle');
+    if (gateToggle) gateToggle.checked = gate;
+    const gateLabel = document.getElementById('secDevicesGateLabel');
+    if (gateLabel) gateLabel.textContent = gate ? 'Requiere dispositivo autorizado (activo)' : 'Requiere dispositivo autorizado (inactivo)';
+    const currentId = document.getElementById('secDevicesCurrentId');
+    if (currentId) currentId.textContent = getDeviceId();
+
+    if (devices.length === 0) {
+        list.innerHTML = '<p style="color:#888;text-align:center;padding:20px;">Sin dispositivos registrados todavía.</p>';
+        return;
+    }
+
+    list.innerHTML = devices.map((d, i) => `
+        <div style="border:1px solid #333;border-radius:6px;padding:10px 12px;margin-bottom:8px;background:rgba(255,255,255,0.03);display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;">
+            <div style="flex:1;min-width:180px;">
+                <div style="color:#eee;font-weight:600;font-size:0.92rem;">${d.label || 'Dispositivo sin nombre'}${String(getDeviceId()).toLowerCase() === String(d.deviceId).toLowerCase() ? ' <span style="color:var(--primary-gold);font-size:0.75rem;">(este dispositivo)</span>' : ''}</div>
+                <div style="color:#777;font-size:0.75rem;word-break:break-all;margin-top:2px;">id: ${d.deviceId}</div>
+                <div style="color:#666;font-size:0.75rem;margin-top:2px;">${d.lastSeenAt ? 'Último acceso: ' + new Date(d.lastSeenAt).toLocaleString() : 'Sin accesos registrados'}${d.ipAddress ? ' · IP: ' + d.ipAddress : ''}</div>
+            </div>
+            <button type="button" data-revoke-device="${d.deviceId}" style="padding:5px 10px;background:transparent;color:#cc6666;border:1px solid #cc6666;border-radius:4px;cursor:pointer;font-size:0.8rem;">Revocar</button>
+        </div>
+    `).join('');
+
+    list.querySelectorAll('[data-revoke-device]').forEach((btn) => {
+        btn.onclick = () => revokeAdminDevice(btn.getAttribute('data-revoke-device'), btn);
+    });
+}
+
+async function loadAdminDevicesPanel() {
+    const list = document.getElementById('secDevicesList');
+    if (!list) return;
+    list.innerHTML = '<p style="color:#888;text-align:center;padding:20px;">Cargando...</p>';
+    try {
+        const r = await fetch(`${API_URL}/admin/devices`, { headers: authHeaders() });
+        const d = await r.json();
+        if (!d.success) {
+            setSecDevicesAlert(d.error || 'No se pudieron cargar los dispositivos.', true);
+            list.innerHTML = '';
+            return;
+        }
+        renderAdminDevicesPanel(d.data);
+    } catch (err) {
+        list.innerHTML = '';
+        setSecDevicesAlert(adminConnectionErrorMessage(err), true);
+    }
+}
+
+async function toggleAdminDeviceGate(checked) {
+    const gateToggle = document.getElementById('secDevicesGateToggle');
+    if (gateToggle) gateToggle.disabled = true;
+    try {
+        const r = await fetch(`${API_URL}/admin/devices/gate`, {
+            method: 'POST',
+            headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ enabled: checked })
+        });
+        const d = await r.json();
+        if (!d.success) {
+            setSecDevicesAlert(d.error || 'No se pudo actualizar la protección.', true);
+            if (gateToggle) gateToggle.checked = !checked;
+        } else {
+            renderAdminDevicesPanel(d.data);
+            setSecDevicesAlert('Protección por dispositivo actualizada.', false);
+        }
+    } catch (err) {
+        setSecDevicesAlert(adminConnectionErrorMessage(err), true);
+        if (gateToggle) gateToggle.checked = !checked;
+    } finally {
+        if (gateToggle) gateToggle.disabled = false;
+    }
+}
+
+async function registerCurrentAdminDevice() {
+    const label = (document.getElementById('secDevicesLabelInput')?.value || '').trim();
+    const btn = document.getElementById('secDevicesRegisterBtn');
+    if (btn) btn.disabled = true;
+    try {
+        const r = await fetch(`${API_URL}/admin/devices`, {
+            method: 'POST',
+            headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deviceId: getDeviceId(), label })
+        });
+        const d = await r.json();
+        if (!d.success) {
+            setSecDevicesAlert(d.error || 'No se pudo registrar el dispositivo.', true);
+            return;
+        }
+        if (document.getElementById('secDevicesLabelInput')) document.getElementById('secDevicesLabelInput').value = '';
+        renderAdminDevicesPanel(d.data);
+        setSecDevicesAlert('Dispositivo registrado.', false);
+    } catch (err) {
+        setSecDevicesAlert(adminConnectionErrorMessage(err), true);
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
+async function revokeAdminDevice(deviceId, btn) {
+    if (btn) btn.disabled = true;
+    try {
+        const r = await fetch(`${API_URL}/admin/devices/${encodeURIComponent(deviceId)}`, {
+            method: 'DELETE',
+            headers: authHeaders()
+        });
+        const d = await r.json();
+        if (!d.success) {
+            setSecDevicesAlert(d.error || 'No se pudo revocar el dispositivo.', true);
+            return;
+        }
+        renderAdminDevicesPanel(d.data);
+        setSecDevicesAlert('Dispositivo revocado.', false);
+    } catch (err) {
+        setSecDevicesAlert(adminConnectionErrorMessage(err), true);
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
+function wireAdminDevicesPanel() {
+    const gateToggle = document.getElementById('secDevicesGateToggle');
+    if (gateToggle) gateToggle.onchange = () => toggleAdminDeviceGate(gateToggle.checked);
+    const registerBtn = document.getElementById('secDevicesRegisterBtn');
+    if (registerBtn) registerBtn.onclick = registerCurrentAdminDevice;
+    const refreshBtn = document.getElementById('secDevicesRefreshBtn');
+    if (refreshBtn) refreshBtn.onclick = loadAdminDevicesPanel;
+}
+
+let serverLogsTimer = null;
+
+async function fetchServerLogs(lines, level) {
+    const res = await fetch(`${API_URL}/admin/logs/server?lines=${lines}${level ? `&level=${level}` : ''}`, {
+        headers: authHeaders()
+    });
+    const d = await res.json().catch(() => null);
+    if (!res.ok || !d || d.success !== true) {
+        throw new Error(d?.error || `HTTP ${res.status}`);
+    }
+    return d.data;
+}
+
+// --- Envio de mail a profesionales potenciales seleccionados ----------------
+// A diferencia de WhatsApp, el mail lo manda el backend (nodemailer): el
+// navegador no puede SMTP. El modal deja editar asunto y cuerpo antes de
+// confirmar, y muestra el resultado lead por lead.
+
+async function loadInviteEmailTemplate(alias, profession) {
+    const q = new URLSearchParams({ alias: alias || '', profession: profession || '' });
+    const res = await fetch(`${API_URL}/admin/potential-professionals/invite-email?${q}`, {
+        headers: authHeaders(),
+        credentials: 'include'
+    });
+    const d = await res.json().catch(() => null);
+    if (!res.ok || !d || d.success !== true) throw new Error(d?.error || `HTTP ${res.status}`);
+    return d.data;
+}
+
+function selectedLeadIds() {
+    return [...document.querySelectorAll('.lead-invite-cb:not(:disabled):checked')].map((cb) => cb.value);
+}
+
+function updateLeadSelectionCount() {
+    const sel = document.getElementById('leadSelectionCount');
+    if (sel) sel.textContent = `${selectedLeadIds().length} ${t('selected')}`;
+}
+
+// Elemento donde se avisa que no hay leads seleccionables en la vista actual.
+// Sin esto los botones "Seleccionar pendiente" / "Limpiar seleccion"
+// parecian rotos cuando todos los checkboxes estan deshabilitados.
+function selectionFeedbackEl() {
+    let el = document.getElementById('leadSelectionFeedback');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'leadSelectionFeedback';
+        el.style.cssText = 'width:100%;margin:-8px 0 12px 0;';
+        const count = document.getElementById('leadSelectionCount');
+        const toolbar = count ? count.closest('.admin-leads-toolbar') : null;
+        if (toolbar && toolbar.parentNode) toolbar.parentNode.insertBefore(el, toolbar.nextSibling);
+    }
+    return el;
+}
+
+function notifyNoSelectableLeads() {
+    // Sin checkboxes habilitados no se puede seleccionar nada. Lo mas probable
+    // es que todos los leads visibles esten bloqueados (padron importado sin
+    // consentimiento), asi que lo decimos en vez de fallar en silencio.
+    showAlert(selectionFeedbackEl(), t('No selectable leads on this page. Leads imported from the padron are blocked until you unblock them.'), true);
+}
+
+async function sendLeadInviteEmail(leadId) {
+    // El modal se reutiliza entre aperturas (crearlo cada vez duplicaba nodos y
+    // dejaba listeners viejos pegados). Si quedo a medio cerrar de un envio
+    // anterior, se limpia antes de reabrirlo.
+    let modal = document.getElementById('leadEmailModal');
+    if (!modal) modal = createLeadEmailModal();
+    if (!modal.isConnected) document.body.appendChild(modal);
+    // Por si el envio anterior cerro sin deactivateAccessibleModal.
+    deactivateAccessibleModal(modal);
+
+    const alertEl = document.getElementById('leAlert');
+    const subjEl = document.getElementById('leSubject');
+    const bodyEl = document.getElementById('leBody');
+    const sendBtn = document.getElementById('leSend');
+    const counter = document.getElementById('leCounter');
+    // Si quedo polling de un envio anterior (cerrado a mano a mitad de corrida),
+    // cortarlo antes de reabrir el modal.
+    stopEmailProgress();
+    const single = !!leadId;
+    const ids = single ? [leadId] : selectedLeadIds();
+
+    if (!single && !ids.length) {
+        showAlert(alertEl, t('Select at least one professional.'), true);
+        return;
+    }
+
+    showAlert(alertEl, t('Loading template...'), false);
+    try {
+        // Para un lote se usa el oficio del primer lead: el cuerpo es comun a
+        // todos y el admin lo edita antes de confirmar.
+        const first = single ? leadsById.get(leadId) : (ids.length ? leadsById.get(ids[0]) : null);
+        const tpl = await loadInviteEmailTemplate(
+            single ? (first?.alias || '') : '',
+            first?.profession || ''
+        );
+        subjEl.value = tpl.subject || '';
+        bodyEl.value = tpl.body || '';
+    } catch (err) {
+        showAlert(alertEl, adminConnectionErrorMessage(err), true);
+        return;
+    }
+
+    counter.textContent = single
+        ? t('1 recipient')
+        : `${ids.length} ${t('recipients')} ${t('selected')}`;
+    openAdminOverlay(modal);
+
+    sendBtn.onclick = async () => {
+        const subject = subjEl.value.trim();
+        const message = bodyEl.value.trim();
+        if (!subject || !message) {
+            showAlert(alertEl, t('Subject and message are required.'), true);
+            return;
+        }
+        const rateRaw = parseInt(document.getElementById('leRate')?.value, 10);
+        const rate = Math.min(120, Math.max(1, rateRaw || 10));
+        sendBtn.disabled = true;
+        showAlert(alertEl, t('Sending...'), false);
+        try {
+            const res = await fetch(`${API_URL}/admin/potential-professionals/send-email`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...authHeaders() },
+                credentials: 'include',
+                body: JSON.stringify({ ids, subject, message, rate })
+            });
+            const d = await res.json().catch(() => null);
+            if (!res.ok || !d || d.success !== true) {
+                throw new Error(d?.error || `HTTP ${res.status}`);
+            }
+            // El envio arranca en segundo plano (respuesta 202) y la UI pollea
+            // el status para mostrar el progreso y el resumen al terminar.
+            startEmailProgress(alertEl, sendBtn);
+        } catch (err) {
+            showAlert(alertEl, adminConnectionErrorMessage(err), true);
+            sendBtn.disabled = false;
+        }
+    };
+}
+
+let emailProgressTimer = null;
+
+function stopEmailProgress() {
+    if (emailProgressTimer) {
+        clearInterval(emailProgressTimer);
+        emailProgressTimer = null;
+    }
+}
+
+// Pollea /bulk-email/status mientras corre el envio en segundo plano. Se reusa
+// la misma caja de alerta del modal para el progreso y el resumen final.
+function startEmailProgress(alertEl, sendBtn) {
+    stopEmailProgress();
+    const poll = async () => {
+        try {
+            const res = await fetch(`${API_URL}/admin/outreach/bulk-email/status`, {
+                headers: authHeaders(),
+                credentials: 'include'
+            });
+            const d = await res.json().catch(() => null);
+            if (!res.ok || !d || d.success !== true) return;
+            const s = d.data || {};
+
+            if (s.phase === 'sending') {
+                const sent = Number(s.sent) || 0;
+                const total = Number(s.total) || 0;
+                showAlert(alertEl, t('Sending... ({sent}/{total})').replace('{sent}', String(sent)).replace('{total}', String(total)), false);
+                return;
+            }
+
+            stopEmailProgress();
+            let msg = t('Email outreach complete.');
+            msg = `${msg} ${t('Sent')}: ${s.sent}`;
+            if (s.skipped) msg += ` · ${t('Skipped')}: ${s.skipped}`;
+            if (s.failed) msg += ` · ${t('Failed')}: ${s.failed}`;
+            if (s.notFound) msg += ` · ${t('Not found')}: ${s.notFound}`;
+            if (s.skipped && !s.sent) {
+                msg += ` — ${t('Blocked leads are never emailed. Unblock them first in the Invitation column.')}`;
+            }
+            if (s.phase === 'error' && s.lastError) msg += ` (${s.lastError})`;
+            showAlert(alertEl, msg, s.phase === 'error' || (!s.sent && (s.failed || s.notFound)));
+            sendBtn.disabled = false;
+            loadLeads(leadsCurrentPage);
+        } catch (err) {
+            showAlert(alertEl, adminConnectionErrorMessage(err), true);
+            stopEmailProgress();
+        }
+    };
+    emailProgressTimer = setInterval(poll, 2000);
+    poll();
+}
+
+function createLeadEmailModal() {
+    const modal = document.createElement('div');
+    modal.id = 'leadEmailModal';
+    modal.className = 'admin-modal-overlay';
+    modal.style.display = 'none';
+    // Estado inicial coherente con el de un modal cerrado: sin esto el primer
+    // activateAccessibleModal encuentra un modal "vivo" sin estar abierto.
+    modal.setAttribute('aria-hidden', 'true');
+    modal.innerHTML = `
+        <div class="admin-modal" style="max-width: 680px;">
+            <div class="admin-modal-header" style="display:flex;justify-content:space-between;align-items:center;padding:16px;border-bottom:1px solid #333;">
+                <h3 class="gold-text" style="margin:0;">${t('Send invitation email')}</h3>
+                <button type="button" class="admin-modal-close" style="background:transparent;color:#aaa;border:1px solid #555;border-radius:4px;padding:6px 12px;cursor:pointer;">✕</button>
+            </div>
+            <div style="padding:16px;">
+                <div id="leAlert" style="margin-bottom:12px;font-size:0.9rem;"></div>
+                <p id="leCounter" style="color:#aaa;font-size:0.85rem;margin:0 0 12px;"></p>
+                <label style="display:block;color:var(--primary-gold);font-weight:bold;font-size:0.85rem;margin-bottom:4px;">${t('Subject')}</label>
+                <input id="leSubject" type="text" style="width:100%;padding:9px;background:#222;color:#fff;border:1px solid #444;border-radius:4px;margin-bottom:12px;">
+                <label style="display:block;color:var(--primary-gold);font-weight:bold;font-size:0.85rem;margin-bottom:4px;">${t('Message')}</label>
+                <textarea id="leBody" rows="14" style="width:100%;padding:9px;background:#222;color:#fff;border:1px solid #444;border-radius:4px;font-family:inherit;font-size:0.9rem;"></textarea>
+                <div style="display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap;">
+                    <label for="leRate" style="display:block;color:var(--primary-gold);font-weight:bold;font-size:0.85rem;">${t('Emails per minute')}</label>
+                    <input id="leRate" type="number" min="1" max="120" step="1" value="10" style="width:90px;padding:9px;background:#222;color:#fff;border:1px solid #444;border-radius:4px;">
+                    <span id="leRateHint" style="color:#888;font-size:0.82rem;"></span>
+                </div>
+                <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+                    <button type="button" class="admin-modal-close" style="background:#333;color:#fff;border:1px solid #555;padding:9px 18px;border-radius:4px;cursor:pointer;">${t('Cancel')}</button>
+                    <button id="leSend" type="button" style="background:var(--primary-gold);color:#0f0f1a;border:none;padding:9px 18px;border-radius:4px;cursor:pointer;font-weight:bold;">${t('Send')}</button>
+                </div>
+            </div>
+        </div>
+    `;
+    modal.querySelectorAll('.admin-modal-close').forEach((b) => {
+        // Mismo motivo que en el envio: cerrar a mano dejaba el modal "vivo".
+        b.onclick = () => {
+            stopEmailProgress();
+            closeAdminOverlay(modal);
+        };
+    });
+
+    const rateInput = modal.querySelector('#leRate');
+    if (rateInput) {
+        const updateHint = () => {
+            const hint = modal.querySelector('#leRateHint');
+            if (!hint) return;
+            const rate = Math.min(120, Math.max(1, parseInt(rateInput.value, 10) || 10));
+            const secs = Math.max(1, Math.round(60 / rate));
+            hint.textContent = t('{count} emails per minute = one email every {secs} seconds.')
+                .replace('{count}', String(rate))
+                .replace('{secs}', String(secs));
+            const alertBox = modal.querySelector('#leAlert');
+            if (alertBox) alertBox.textContent = '';
+        };
+        rateInput.addEventListener('input', updateHint);
+        updateHint();
+    }
+    return modal;
+}
+
+export async function openServerLogsModal() {
+    if (serverLogsTimer) {
+        clearInterval(serverLogsTimer);
+        serverLogsTimer = null;
+    }
+
+    let lines = 300;
+    let level = '';
+    let auto = false;
+
+    let modal = document.getElementById('serverLogsModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'serverLogsModal';
+        Object.assign(modal.style, {
+            position: 'fixed', top: '0', left: '0', width: '100%', height: '100%',
+            backgroundColor: 'rgba(0,0,0,0.9)', zIndex: '3000', display: 'flex',
+            flexDirection: 'column', padding: '20px', overflowY: 'auto'
+        });
+
+        const close = () => {
+            if (serverLogsTimer) {
+                clearInterval(serverLogsTimer);
+                serverLogsTimer = null;
+            }
+            closeAdminOverlay(modal);
+        };
+
+        const closeBar = createAdminModalCloseBar({ maxWidth: '1100px', onClick: close });
+
+        const container = document.createElement('div');
+        Object.assign(container.style, {
+            backgroundColor: 'var(--dark-bg, #1a1a1a)', padding: '20px',
+            borderRadius: '8px', color: 'white', maxWidth: '1100px', margin: '0 auto', width: '100%'
+        });
+
+        container.innerHTML = `
+            <h2 class="gold-text" style="margin:0 0 6px 0;">Logs del servidor</h2>
+            <p style="color:#888;font-size:0.85rem;margin:0 0 16px 0;">
+                Todo lo que la app escribe en consola, incluidos los stack traces. Se guardan en archivo, asi que sobreviven a un reinicio del contenedor.
+            </p>
+            <div id="slAlert" class="alert hidden" style="padding:10px;border-radius:4px;border:1px solid transparent;margin-bottom:12px;"></div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+                <label style="color:#aaa;font-size:0.85rem;">Lineas:
+                    <select id="slLines" style="margin-left:6px;padding:6px;background:#222;color:#fff;border:1px solid #444;border-radius:4px;">
+                        <option value="100">100</option>
+                        <option value="300" selected>300</option>
+                        <option value="1000">1000</option>
+                        <option value="2000">2000</option>
+                    </select>
+                </label>
+                <label style="color:#aaa;font-size:0.85rem;">Nivel:
+                    <select id="slLevel" style="margin-left:6px;padding:6px;background:#222;color:#fff;border:1px solid #444;border-radius:4px;">
+                        <option value="">Todos</option>
+                        <option value="ERROR">Solo errores</option>
+                        <option value="WARN">Solo avisos</option>
+                    </select>
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;color:#aaa;font-size:0.85rem;cursor:pointer;">
+                    <input type="checkbox" id="slAuto"> Auto (5s)
+                </label>
+                <button type="button" id="slRefresh" style="padding:7px 14px;background:var(--primary-gold);color:var(--dark-bg,#0f0f1a);border:none;border-radius:4px;cursor:pointer;font-weight:bold;">Refrescar</button>
+                <button type="button" id="slCopy" style="padding:7px 14px;background:#333;color:#fff;border:1px solid #555;border-radius:4px;cursor:pointer;">Copiar</button>
+            </div>
+            <div id="slMeta" style="color:#777;font-size:0.8rem;margin-bottom:10px;">—</div>
+            <pre id="slOut" style="margin:0;background:#0d0d12;border:1px solid #333;border-radius:6px;padding:14px;max-height:60vh;overflow:auto;font-size:0.8rem;line-height:1.5;white-space:pre-wrap;word-break:break-all;color:#c9d1d9;">Cargando…</pre>
+        `;
+
+        modal.appendChild(closeBar);
+        modal.appendChild(container);
+        document.body.appendChild(modal);
+        applyStaticTranslations(modal);
+    }
+
+    const out = document.getElementById('slOut');
+    const meta = document.getElementById('slMeta');
+    const alertEl = document.getElementById('slAlert');
+
+    const load = async () => {
+        try {
+            const data = await fetchServerLogs(lines, level);
+            const s = data.stats || {};
+            const c = s.counts || {};
+            meta.textContent = `${data.total} linea(s) · ERROR ${c.ERROR || 0} · WARN ${c.WARN || 0} · buffer ${s.buffered}/${s.ringSize} · log ${Math.round((s.fileBytes || 0) / 1024)} KB · up ${data.uptimeSeconds}s · RAM ${data.memoryMb} MB`;
+            out.textContent = (data.lines || []).join('\n') || '(sin lineas)';
+            if (auto) out.scrollTop = out.scrollHeight;
+            showAlert(alertEl, '');
+        } catch (err) {
+            showAlert(alertEl, adminConnectionErrorMessage(err), true);
+        }
+    };
+
+    document.getElementById('slLines').onchange = (e) => { lines = parseInt(e.target.value, 10) || 300; load(); };
+    document.getElementById('slLevel').onchange = (e) => { level = e.target.value; load(); };
+    document.getElementById('slRefresh').onclick = load;
+    document.getElementById('slAuto').onchange = (e) => {
+        auto = e.target.checked;
+        if (serverLogsTimer) { clearInterval(serverLogsTimer); serverLogsTimer = null; }
+        if (auto) serverLogsTimer = setInterval(load, 5000);
+    };
+    document.getElementById('slCopy').onclick = async () => {
+        try {
+            await navigator.clipboard.writeText(out.textContent || '');
+            showAlert(alertEl, 'Logs copiados al portapapeles.', false);
+        } catch (e) {
+            showAlert(alertEl, 'No se pudo copiar.', true);
+        }
+    };
+
+    await load();
+}
+
 export async function openDashboardConfigModal() {
     let modal = document.getElementById('dashboardConfigModal');
     if (!modal) {
@@ -5491,6 +6524,25 @@ export async function openDashboardConfigModal() {
                     <button type="button" id="waInboundRefreshBtn" style="margin-top:12px;padding:8px 14px;background:#333;color:#fff;border:1px solid #555;border-radius:4px;cursor:pointer;">${t('Refresh replies')}</button>
                 </div>
             </section>
+
+            <section style="border:1px solid rgba(212,175,55,0.25);border-radius:8px;padding:20px;margin-bottom:20px;">
+                <h3 class="gold-text" style="margin:0 0 6px 0;">${t('Security — Authorized devices')}</h3>
+                <p style="color:#888;font-size:0.85rem;margin:0 0 16px 0;">${t('Lock the admin login to this device and any other devices you register here. Each device gets a private id (soft‑MAC) stored locally; from 4G the public IP changes but this id stays stable.')}</p>
+                <div id="secDevicesAlert" class="alert hidden" style="padding:10px;border-radius:4px;border:1px solid transparent;margin-bottom:12px;"></div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">
+                    <label class="admin-toggle-switch" title="${t('Require an authorized device to sign in')}">
+                        <input type="checkbox" id="secDevicesGateToggle" aria-label="${t('Require an authorized device to sign in')}">
+                    </label>
+                    <span id="secDevicesGateLabel" style="color:#ccc;font-size:0.92rem;">${t('Require authorized device to sign in')}</span>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;">
+                    <input type="text" id="secDevicesLabelInput" placeholder="${t('Device name (e.g. My phone)')}" style="flex:1;min-width:200px;padding:9px 10px;background:#222;color:white;border:1px solid #444;border-radius:4px;">
+                    <button type="button" id="secDevicesRegisterBtn" style="padding:9px 16px;background:var(--primary-gold);color:var(--dark-bg);border:none;border-radius:4px;cursor:pointer;font-weight:bold;">${t('Register this device')}</button>
+                    <button type="button" id="secDevicesRefreshBtn" style="padding:9px 14px;background:#333;color:#fff;border:1px solid #555;border-radius:4px;cursor:pointer;">🔄</button>
+                </div>
+                <p style="color:#888;font-size:0.85rem;margin:0 0 8px 0;">${t('This device id')}: <code id="secDevicesCurrentId" style="color:#9cf;word-break:break-all;">—</code></p>
+                <div id="secDevicesList" style="max-height:280px;overflow-y:auto;padding-right:4px;">—</div>
+            </section>
         `;
 
         modal.appendChild(closeBar);
@@ -5577,10 +6629,11 @@ export async function openDashboardConfigModal() {
         wireLaunchCurtainToggle(document.getElementById('launchCurtainConfigToggle'));
         const launchCurtainSaveOpeningBtn = document.getElementById('launchCurtainSaveOpeningBtn');
         if (launchCurtainSaveOpeningBtn) launchCurtainSaveOpeningBtn.onclick = handleLaunchCurtainOpeningSave;
+        wireAdminDevicesPanel();
     }
 
     openAdminOverlay(modal);
-    await Promise.all([loadWhatsAppConfigPanel(), loadLaunchCurtainConfigPanel()]);
+    await Promise.all([loadWhatsAppConfigPanel(), loadLaunchCurtainConfigPanel(), loadAdminDevicesPanel()]);
 }
 
 async function openAvisosModal() {
@@ -5625,7 +6678,7 @@ async function openAvisosModal() {
 
     const ENV_LABELS = { hogar: '🏠 Hogar', oficina: '🏢 Oficina', pime: '🏬 Pyme', industria: '🏭 Industria' };
     const STATUS_LABELS = { pending_payment: '⏳ Pendiente', active: '✅ Activo', expiring: '⚠️ Expirando', expired: '❌ Expirado', rejected: '🚫 Rechazado', cancelled: '🚫 Cancelado' };
-    const STATUS_COLORS = { pending_payment: '#eab308', active: '#22c55e', expiring: '#f97316', expired: '#ef4444', rejected: '#ef4444', cancelled: '#888' };
+    const STATUS_COLORS = { pending_payment: '#a16207', active: '#15803d', expiring: '#c2410c', expired: '#dc2626', rejected: '#dc2626', cancelled: '#6b7280' };
 
     async function loadAvisos() {
         const status = document.getElementById('avisoFilterStatus')?.value || '';
@@ -5648,7 +6701,7 @@ async function openAvisosModal() {
             }
 
             list.innerHTML = avisos.map(a => {
-                const color = STATUS_COLORS[a.status] || '#888';
+                const color = STATUS_COLORS[a.status] || '#6b7280';
                 const profName = a._professionalName || '';
                 const profAlias = a._professionalAlias || '';
                 const profEmail = a._professionalEmail || '';
@@ -5657,11 +6710,11 @@ async function openAvisosModal() {
                 let actions = '';
                 if (a.status === 'pending_payment') {
                     actions = `
-                        <button class="aviso-admin-approve" data-id="${a._id}" style="padding: 5px 10px; background: #22c55e; color: white; border: none; border-radius: 4px; font-size: 0.8rem; cursor: pointer; font-weight: 600;">✅ Aprobar</button>
+                        <button class="aviso-admin-approve" data-id="${a._id}" style="padding: 5px 10px; background: #15803d; color: white; border: none; border-radius: 4px; font-size: 0.8rem; cursor: pointer; font-weight: 600;">✅ Aprobar</button>
                         <button class="aviso-admin-reject" data-id="${a._id}" style="padding: 5px 10px; background: #ef4444; color: white; border: none; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">🚫 Rechazar</button>`;
                 } else if (a.status === 'expired' || a.status === 'expiring') {
                     actions = `
-                        <button class="aviso-admin-renew" data-id="${a._id}" style="padding: 5px 10px; background: #22c55e; color: white; border: none; border-radius: 4px; font-size: 0.8rem; cursor: pointer; font-weight: 600;">🔄 Renovar</button>
+                        <button class="aviso-admin-renew" data-id="${a._id}" style="padding: 5px 10px; background: #15803d; color: white; border: none; border-radius: 4px; font-size: 0.8rem; cursor: pointer; font-weight: 600;">🔄 Renovar</button>
                         <button class="aviso-admin-reject" data-id="${a._id}" style="padding: 5px 10px; background: #ef4444; color: white; border: none; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">🚫 Rechazar</button>`;
                 }
 

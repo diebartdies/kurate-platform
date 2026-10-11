@@ -4,14 +4,27 @@
 KuraTe — Professional services marketplace (kurate.drsrv.net.ar). Fork of SexAppeal-platform rebranded to general services.
 
 ## Infrastructure
-- **VPS**: 192.168.1.67 (Oracle Linux 10.2, root SSH via id_kurate_rsa)
+- **VPS**: 192.168.1.95 (Ubuntu 24.04, root SSH, key id_kurate_rsa). El AGENTS.md viejo decía 192.168.1.67/Oracle: está equivocado.
 - **Domain**: kurate.drsrv.net.ar → 181.91.83.196 (public IP via router NAT)
-- **Docker stack**: mongo 4.4 (port 27018), app (node), nginx (80/443)
+- **Docker stack**: mongo 4.4 (port 27017 interno, KuraTe_mongo), app node (KuraTe_app, port 5000), nginx (80/443). Backend bind-montADO desde /root/KuraTe-platform (NO es un git clone; el deploy copia archivos). Frontend Vite en /root/KuraTe-platform/kurate-app (KuraTe_web).
+
+## Sync obligatorio: local(dev) ↔ Git ↔ VPS (SIEMPRE)
+Cada cambio que se toque acá termina en los 3 lugares. El working tree tiene
+cambios de MUCHOS features sin deployar: nunca se commitea todo ni se sube el
+arbol entero. Formato de cada feature:
+
+1. **Local = git**: commit con las rutas puntuales del feature + push a origin/master.
+2. **Manifiesto**: agregar cada ruta a `scripts/deploy-manifest.txt` (con motivo).
+3. **VPS**: correr `scripts/deploy-features.ps1` (default IP .95) que hace
+   preflight de sintaxis → backup → upload → restart+health → data → verify → smoke.
+   En VPS el código ya está bajo /root/KuraTe-platform montado por bind: reinicio
+   suficiente para JS/modelos; autoIndex crea los índices nuevos al arrancar.
 
 ## NAT / Firewall Rules (CRITICAL for SSL cert renewal)
-- **Router NAT 80**: forward TCP port 80 external → 192.168.1.67:80 internal (ACME challenge)
-- **Router NAT 443**: forward TCP port 443 external → 192.168.1.67:443 internal
+- **Router NAT 80**: forward TCP port 80 external → 192.168.1.95:80 internal (ACME challenge)
+- **Router NAT 443**: forward TCP port 443 external → 192.168.1.95:443 internal
 - **VPS firewall**: if on internal network, open port 80 on VPS firewall (ufw/iptables) so nginx can serve ACME challenge files
+- El viejo `.67` no responde más; el único VPS es `.95`.
 
 Without port 80 from internet, Let's Encrypt cannot verify domain ownership and certbot will fail.
 
