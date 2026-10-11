@@ -93,7 +93,8 @@ PotentialProfessionalSchema.index({ createdAt: -1, matricula: 1, _id: 1 });
 PotentialProfessionalSchema.index({ status: 1, createdAt: -1, matricula: 1, _id: 1 });
 PotentialProfessionalSchema.index({ doNotContact: 1, status: 1, createdAt: -1, matricula: 1, _id: 1 });
 
-// blockPhone busca por numero normalizado.
-PotentialProfessionalSchema.index({ phone: 1 });
+// blockPhone busca por numero normalizado. OJO: `phone` ya es unique:true en el
+// schema, asi que mongoose ya crea phone_1 unico: no duplicarlo aca (mongoose
+// avisa "Duplicate schema index" al arrancar).
 
 module.exports = mongoose.model('PotentialProfessional', PotentialProfessionalSchema, 'potential_professionals');
