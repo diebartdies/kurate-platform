@@ -2257,6 +2257,9 @@ export async function openViewLeadsModal() {
                 <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: #ddd;">
                     <input type="radio" name="inviteChannel" value="sms" style="width:auto;"> ${t('SMS')}
                 </label>
+                <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: #ddd;">
+                    <input type="radio" name="inviteChannel" value="email" style="width:auto;"> ${t('Email')}
+                </label>
             </div>
             <div class="admin-leads-filters" style="display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; align-items: center;">
                 <label for="leadsFilterStatus" style="color: var(--primary-gold); font-weight: bold;">${t('Status')}:</label>
@@ -2278,7 +2281,6 @@ export async function openViewLeadsModal() {
                 <button id="previewInviteBtn" type="button" style="background: transparent; border: 1px solid var(--primary-gold); color: var(--primary-gold);">${t('Preview invite message')}</button>
                 <button id="selectPendingLeadsBtn" type="button" style="background: #333; color: white; border: 1px solid #555; padding: 8px 12px; border-radius: 4px; cursor: pointer;">${t('Select pending')}</button>
                 <button id="clearLeadSelectionBtn" type="button" style="background: #333; color: white; border: 1px solid #555; padding: 8px 12px; border-radius: 4px; cursor: pointer;">${t('Clear selection')}</button>
-                <button id="applySelectedEmailBtn" type="button" style="background: #2563eb; color: #fff; font-weight: bold; border: none; padding: 10px 16px; border-radius: 4px; cursor: pointer;">${t('Send email to selected')}</button>
                 <span id="leadSelectionCount" style="color:#888;font-size:0.8rem;" aria-live="polite"></span>
                 <button id="applySelectedInviteBtn" type="button" style="background: #25D366; color: #fff; font-weight: bold; border: none; padding: 10px 16px; border-radius: 4px; cursor: pointer;">${t('Apply invitation to selected')}</button>
                 <button id="bulkWhatsappBtn" type="button" style="background: transparent; border: 1px solid #25D366; color: #25D366; font-weight: bold; padding: 10px 16px; border-radius: 4px; cursor: pointer;">${t('Apply to all pending')}</button>
@@ -2389,9 +2391,8 @@ export async function openViewLeadsModal() {
             }
         };
         document.getElementById('unblockVisibleLeadsBtn').onclick = unblockVisibleLeads;
-        document.getElementById('applySelectedInviteBtn').onclick = applyInvitationToSelectedLeads;
+        document.getElementById('applySelectedInviteBtn').onclick = applyInvitationToSelected;
         document.getElementById('bulkWhatsappBtn').onclick = startBulkWhatsappOutreach;
-        document.getElementById('applySelectedEmailBtn').onclick = () => sendLeadInviteEmail(null);
         modal.querySelectorAll('input[name="inviteChannel"]').forEach((radio) => {
             radio.addEventListener('change', onInviteChannelChange);
         });
@@ -2845,7 +2846,8 @@ function outreachEndpoints() {
 }
 
 function onInviteChannelChange(e) {
-    inviteChannel = e.target.value === 'sms' ? 'sms' : 'whatsapp';
+    const picked = e.target.value;
+    inviteChannel = (picked === 'sms' || picked === 'email') ? picked : 'whatsapp';
     if (bulkWhatsappPollTimer) {
         clearInterval(bulkWhatsappPollTimer);
         bulkWhatsappPollTimer = null;
@@ -2856,9 +2858,30 @@ function onInviteChannelChange(e) {
     if (panel) panel.classList.add('hidden');
     const bulkBtn = document.getElementById('bulkWhatsappBtn');
     const selectedBtn = document.getElementById('applySelectedInviteBtn');
-    if (bulkBtn) bulkBtn.disabled = false;
     if (selectedBtn) selectedBtn.disabled = false;
-    pollBulkWhatsappStatus();
+    // Email no tiene envio masivo: el backend solo admite ids tildados (max 100
+    // por tanda) para no disparar un envio sin consentimiento a todo el padron.
+    // El boton "a todas las pendientes" queda deshabilitado cuando el canal es
+    // Correo; el verde "Aplicar a seleccionadas" abre el modal de correo.
+    if (bulkBtn) {
+        const isEmail = inviteChannel === 'email';
+        bulkBtn.disabled = isEmail;
+        bulkBtn.title = isEmail ? t('Bulk email is not available. Select recipients and use Apply invitation to selected.') : '';
+        bulkBtn.style.opacity = isEmail ? '0.5' : '';
+        bulkBtn.style.cursor = isEmail ? 'not-allowed' : 'pointer';
+    }
+    if (inviteChannel !== 'email') pollBulkWhatsappStatus();
+}
+
+// Un solo boton verde "Aplicar invitacion a seleccionadas" que respeta el canal
+// elegido: WhatsApp/SMS disparan el outreach del servidor; Email abre el modal
+// de correo con su plantilla propia para los prospectos tildados.
+async function applyInvitationToSelected() {
+    if (inviteChannel === 'email') {
+        await sendLeadInviteEmail(null);
+        return;
+    }
+    return applyInvitationToSelectedLeads();
 }
 
 function renderBulkWhatsappStatus(status) {
@@ -2937,6 +2960,10 @@ async function pollBulkWhatsappStatus() {
 }
 
 async function startBulkWhatsappOutreach() {
+    if (inviteChannel === 'email') {
+        announceMessage(t('Bulk email is not available. Select recipients and use Apply invitation to selected.'));
+        return;
+    }
     if (!(await confirmDialog(t('Apply the platform invitation to ALL pending potential professionals? This cannot be undone easily.')))) return;
 
     const btn = document.getElementById('bulkWhatsappBtn');

@@ -302,6 +302,7 @@ const translations = {
         'There was no selection to clear.': 'No había ninguna selección para limpiar.',
         'Selected {count} pending lead(s).': 'Se seleccionaron {count} prospecto(s) pendiente(s).',
         'Cleared selection ({count}).': 'Se limpió la selección ({count}).',
+        'Bulk email is not available. Select recipients and use Apply invitation to selected.': 'El correo masivo no está disponible. Seleccioná destinatarios y usá "Aplicar invitación a seleccionadas".',
         'Emails per minute': 'Emails por minuto',
         '{count} emails per minute = one email every {secs} seconds.': '{count} emails por minuto = un email cada {secs} segundos.',
         'Sending... ({sent}/{total})': 'Enviando… ({sent}/{total})',
