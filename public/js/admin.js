@@ -2279,7 +2279,7 @@ export async function openViewLeadsModal() {
                 <button id="selectPendingLeadsBtn" type="button" style="background: #333; color: white; border: 1px solid #555; padding: 8px 12px; border-radius: 4px; cursor: pointer;">${t('Select pending')}</button>
                 <button id="clearLeadSelectionBtn" type="button" style="background: #333; color: white; border: 1px solid #555; padding: 8px 12px; border-radius: 4px; cursor: pointer;">${t('Clear selection')}</button>
                 <button id="applySelectedEmailBtn" type="button" style="background: #2563eb; color: #fff; font-weight: bold; border: none; padding: 10px 16px; border-radius: 4px; cursor: pointer;">${t('Send email to selected')}</button>
-                <span id="leadSelectionCount" style="color:#888;font-size:0.8rem;"></span>
+                <span id="leadSelectionCount" style="color:#888;font-size:0.8rem;" aria-live="polite"></span>
                 <button id="applySelectedInviteBtn" type="button" style="background: #25D366; color: #fff; font-weight: bold; border: none; padding: 10px 16px; border-radius: 4px; cursor: pointer;">${t('Apply invitation to selected')}</button>
                 <button id="bulkWhatsappBtn" type="button" style="background: transparent; border: 1px solid #25D366; color: #25D366; font-weight: bold; padding: 10px 16px; border-radius: 4px; cursor: pointer;">${t('Apply to all pending')}</button>
             </div>
@@ -2374,15 +2374,18 @@ export async function openViewLeadsModal() {
             if (!cbs.length) { notifyNoSelectableLeads(); return; }
             cbs.forEach((cb) => { cb.checked = true; });
             updateLeadSelectionCount();
+            showAlert(selectionFeedbackEl(), t('Selected {count} pending lead(s).').replace('{count}', String(cbs.length)), false);
         };
         document.getElementById('clearLeadSelectionBtn').onclick = () => {
             const cbs = document.querySelectorAll('.lead-invite-cb');
-            const hadOnes = [...cbs].some((cb) => cb.checked);
+            const cleared = [...cbs].filter((cb) => cb.checked).length;
             cbs.forEach((cb) => { cb.checked = false; });
             updateLeadSelectionCount();
-            if (!hadOnes) {
+            if (!cleared) {
                 const msg = t('There was no selection to clear.');
-                showAlert(selectionFeedbackEl(), msg, false);
+                showAlert(selectionFeedbackEl(), msg, true);
+            } else {
+                showAlert(selectionFeedbackEl(), t('Cleared selection ({count}).').replace('{count}', String(cleared)), false);
             }
         };
         document.getElementById('unblockVisibleLeadsBtn').onclick = unblockVisibleLeads;
