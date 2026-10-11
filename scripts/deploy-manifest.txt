@@ -91,3 +91,11 @@ scripts/provincias_y_departamentos_argentina.csv  # fuente oficial (BOM UTF-8), 
 scripts/test-otra-brand.js                 # 23 checks del formateo y del round-trip de "otra"
 scripts/test-publish-requirements.js       # 19 checks de los requisitos de publicacion y del CPA
 scripts/test-seo-service-pages.js           # 26 checks de las landings /servicios/, SEO local y sitemap
+
+# --- fotos de profesionales de test (base64 EN LA DB, no archivos) ---
+# build corre LOCAL (necesita las imagenes de public/images) y apply se corre en
+# el contenedor con el JSON generado: nunca se guardan jpg como archivo servido.
+scripts/set-test-professional-photos.js    # mapea email->imagen de public/images y la reduce con sharp
+scripts/build-test-pro-photos.js           # genera JSON {email: dataUri} desde public/images (local)
+scripts/apply-test-pro-photos.js           # aplica el JSON a la DB (idempotente)
+scripts/migrate-professional-photos.js     # migra fotos estaticas viejas a avatar base64 (idempotente)

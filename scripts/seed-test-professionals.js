@@ -3,13 +3,16 @@ const dotenv = require('dotenv');
 const path = require('path');
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
+const { PHOTO_BY_EMAIL, buildPhoto } = require('./set-test-professional-photos');
 
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27018/KuraTe';
 
 // Las fotos se guardan como data-URI base64 EN LA DB (nunca como archivos en
-// /images o /uploads). Genera un avatar SVG con las iniciales del profesional.
+// /images o /uploads). Se toma una foto real distinta por oficio desde
+// public/images (ver set-test-professional-photos.js). Si no hay archivo, se
+// cae a un avatar SVG con las iniciales.
 const PHOTO_COLORS = ['#1f6feb', '#2ea043', '#bf3989', '#d29922', '#8957e5', '#0a7ea4', '#cf222e', '#6e40c9', '#0969da', '#9a6700', '#8250df', '#116329', '#a40e26'];
 function makeAvatar(alias, hex) {
   const initials = String(alias || '?')
@@ -397,16 +400,19 @@ async function seed() {
 
   for (const [i, tp] of TEST_PROFESSIONALS.entries()) {
     const pp = tp.professionalProfile || {};
-    // Reemplaza cualquier foto que apunte a un archivo inexistente por un
-    // avatar base64 persistido en la DB.
-    if (!Array.isArray(pp.photos) || pp.photos.some(isBrokenPhoto)) {
+    // Foto real distinta por oficio, desde public/images → base64 en la DB.
+    // Si no hay archivo, cae a un avatar SVG con las iniciales.
+    const realPhoto = PHOTO_BY_EMAIL[tp.email] ? await buildPhoto(PHOTO_BY_EMAIL[tp.email]) : null;
+    if (realPhoto) {
+      pp.photos = [realPhoto];
+    } else if (!Array.isArray(pp.photos) || pp.photos.some(isBrokenPhoto)) {
       pp.photos = [makeAvatar(pp.alias, PHOTO_COLORS[i % PHOTO_COLORS.length])];
     }
 
     const existing = await User.findOne({ email: tp.email });
     if (existing) {
       const ep = existing.professionalProfile || {};
-      if (Array.isArray(ep.photos) && ep.photos.some(isBrokenPhoto)) {
+      if (!Array.isArray(ep.photos) || !ep.photos.length || ep.photos.some(isBrokenPhoto)) {
         ep.photos = pp.photos;
         existing.professionalProfile = ep;
         existing.markModified('professionalProfile');

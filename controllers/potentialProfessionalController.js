@@ -364,7 +364,7 @@ exports.unblockBatch = async (req, res, next) => {
 
     const validIds = ids
       .filter((id) => id && mongoose.Types.ObjectId.isValid(String(id)))
-      .map((id) => mongoose.Types.ObjectId(String(id)));
+      .map((id) => new mongoose.Types.ObjectId(String(id)));
 
     if (!validIds.length) {
       return res.status(400).json({ success: false, error: 'Select at least one valid lead' });
