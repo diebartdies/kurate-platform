@@ -143,12 +143,10 @@ Estamos en el lanzamiento de KuraTe, un directorio nuevo para publicar tu perfil
  
 ✅ Primer mes gratis · sin comisiones por contacto
 ✅ En las búsquedas, el orden es el resultado del algoritmo (proximidad a la dirección, opiniones, especialidades y matriculación), no hay rotación aleatoria ni quien paga para aparecer primero
-✅ Perfiles verificados · contacto protegido · vacaciones descontables
+✅ Perfiles verificados · contacto protegido
 ✅ No pedimos registrar ningún medio de pago
- 
-¿Querés saber más? Respondé a este mensaje.
- 
-Y para hacerlo aún más a tu medida, ¿qué te parece que no debería faltar en una plataforma de oferta de servicios?
+✅ Trabajamos con Google para garantizar seguridad, alta performance y indexación correcta
+✅ Compatibles con W3C (HTML5) y WCAG 2.1 Nivel A
  
 Si querés probarlo: ${registerUrl}`;
 }
