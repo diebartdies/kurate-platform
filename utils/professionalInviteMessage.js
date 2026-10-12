@@ -142,7 +142,7 @@ function buildColdOutreachStep1Message(alias) {
 Estamos en el lanzamiento de KuraTe, un directorio nuevo para publicar tu perfil y servicios — distinto a los que ya conocés. Ofrecemos:
  
 ✅ Primer mes gratis · sin comisiones por contacto
-✅ En las búsquedas, el orden se basa en proximidad a la dirección cargada, opiniones de trabajos realizados, especialidades y matriculación (no en quién paga para quedar primero)
+✅ En las búsquedas, el orden es el resultado del algoritmo (proximidad a la dirección, opiniones, especialidades y matriculación), no hay rotación aleatoria ni quien paga para aparecer primero
 ✅ Perfiles verificados · contacto protegido · vacaciones descontables
 ✅ No pedimos registrar ningún medio de pago
  
