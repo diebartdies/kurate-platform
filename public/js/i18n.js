@@ -67,7 +67,7 @@ const translations = {
         'Professional registration': 'Registro profesional',
         'Join KuraTe as a Professional. Complete every required field and upload your verification photos. Admin review typically takes up to 48 hours.': 'Únase a KuraTe como Profesional. Complete todos los campos obligatorios y cargue sus fotos de verificación. La revisión del administrador suele demorar hasta 48 horas.',
         'Quick signup — only what you need to get started. We will help you complete your profile and photos.': 'Registro rápido — solo lo necesario para empezar. Te ayudamos a completar tu perfil y tus fotos.',
-        'We never ask you to register a payment method - no card, no automatic debit.': 'No pedimos registrar ning\u00fan medio de pago \u2014 ni tarjeta, ni d\u00e9bito autom\u00e1tico.'
+        'We never ask you to register a payment method - no card, no automatic debit.': 'No pedimos registrar ningún medio de pago — ni tarjeta, ni débito automático.',
         'Leave your email, phone and birth date. Our team completes your profile and uploads your photos — you do not need to do it alone.': 'Dejá tu email, teléfono y fecha de nacimiento. Nuestro equipo completa tu perfil y sube tus fotos — no tenés que hacerlo sola.',
         'Leave your email, phone and age. Our team completes your profile and uploads your photos — you do not need to do it alone.': 'Dejá tu email, teléfono y fecha de nacimiento. Nuestro equipo completa tu perfil y sube tus fotos — no tenés que hacerlo sola.',
         'We calculate your age automatically — you must be 18 or older.': 'Calculamos tu edad automáticamente — debés ser mayor de 18.',
