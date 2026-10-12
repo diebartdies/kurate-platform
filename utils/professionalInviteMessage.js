@@ -19,7 +19,10 @@ const BRAND_IMAGE_PATH = process.env.WHATSAPP_DRIP_IMAGE
 function getOutreachAliasDomain() {
   const raw = (config.whatsappDrip?.aliasDomain || '').trim();
   if (!raw) return '';
-  return raw.replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
+  const host = raw.replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
+  // DNS no distingue mayusculas, pero un link con mayusculas se ve roto en el
+  // mail y algunos clientes/antispam lo marcan. Normalizamos a minusculas.
+  return host.toLowerCase();
 }
 
 function buildOutreachRegisterUrl() {
@@ -135,18 +138,18 @@ function buildColdOutreachStep1Message(alias) {
   const registerUrl = buildOutreachRegisterUrl() || 'https://KuraTe.drsrv.net.ar/register.html?type=professional';
 
   return `Hola ${name} ✨
-
+ 
 Estamos en el lanzamiento de KuraTe, un directorio nuevo para publicar tu perfil y servicios — distinto a los que ya conocés. Ofrecemos:
-
+ 
 ✅ Primer mes gratis · sin comisiones por contacto
-✅ Rotación justa: nadie paga extra para quedar primera
+✅ En las búsquedas, el orden se basa en proximidad a la dirección cargada, opiniones de trabajos realizados, especialidades y matriculación (no en quién paga para quedar primero)
 ✅ Perfiles verificados · contacto protegido · vacaciones descontables
 ✅ No pedimos registrar ningún medio de pago
-
+ 
 ¿Querés saber más? Respondé a este mensaje.
-
+ 
 Y para hacerlo aún más a tu medida, ¿qué te parece que no debería faltar en una plataforma de oferta de servicios?
-
+ 
 Si querés probarlo: ${registerUrl}`;
 }
 

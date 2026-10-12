@@ -244,30 +244,37 @@ function buildColdOutreachEmailBody(alias, profession) {
     : 'Estamos armando la red de profesionales de KuraTe: los matriculados de los padrones oficiales aparecen en las búsquedas de su zona cuando alguien necesita ese servicio.';
 
   return `${greeting}
-
+ 
+Estamos en el lanzamiento de KuraTe, un directorio nuevo para publicar tu perfil y servicios — distinto a los que ya conocés. Ofrecemos:
+ 
+✅ Primer mes gratis · sin comisiones por contacto
+✅ En las búsquedas, el orden se basa en proximidad a la dirección cargada, opiniones de trabajos realizados, especialidades y matriculación (no en quién paga para quedar primero)
+✅ Perfiles verificados · contacto protegido · vacaciones descontables
+✅ No pedimos registrar ningún medio de pago
+ 
 ${enPadron}
-
+ 
 ${red}
-
+ 
 Qué recibís si te registrás:
 - Tu perfil visible con tu zona de cobertura.
 - Tu matrícula verificada en las búsquedas.
 - Sin costo de alta ni suscripción mensual.
-
+ 
 Cómo funciona el cobro:
 El registro es gratuito, pero publicar avisos es un servicio pago. Cada aviso
 tiene un costo único según el tipo de trabajo (hogar, oficina, pyme o industria)
 y dura 30 días. No hay permanencia ni renovación automática: cada aviso se
 paga y se publica por separado, y vos decidís si volvés a publicar.
-
+ 
 Antes de pagar nada vas a ver el precio exacto y confirmás. KuraTe no te cobra
 sin que vos lo autorices.
-
+ 
 Para crear tu cuenta:
 ${link}
-
+ 
 Aclaración: que figurés en el padrón de matriculados no implica que ya tengas cuenta en KuraTe.
-
+ 
 Si no te sirve o preferís que no te escribamos más, respondé este mail con "nomolestar" y no te volvemos a contactar.`;
 }
 
