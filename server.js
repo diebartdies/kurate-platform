@@ -1048,7 +1048,7 @@ app.get('/', (req, res) => {
 // Express no matchea distinto por cantidad de segmentos, así que la ruta
 // opcional captura 1+/2+/3+/4+ y redirige las formas cortas a una landing
 // válida en vez de devolver el 404 crudo "Cannot GET".
-app.get('/:environment/:category?/:device?/:action?', (req, res, next) => {
+app.get('/:environment{/:category}{/:device}{/:action}', (req, res, next) => {
   const p = req.params;
   const segs = [p.environment, p.category, p.device, p.action].filter((s) => s != null);
   if (segs.length < 4) {
