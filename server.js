@@ -225,9 +225,14 @@ app.get('/sitemap-services.xml', seoController.getServiceSitemap);
 // Redirect bogus paths Google is crawling (410 Gone or 301)
 app.get('/hogar/professionals', (req, res) => res.redirect(301, '/hogar.html'));
 app.get('/professionals/search', (req, res) => res.redirect(301, '/hogar.html'));
-app.get('/categorias/electrohogar', (req, res) => res.redirect(301, '/categorias'));
 app.get('/precios-aire-acondicionado', (req, res) => res.redirect(301, '/precios-aire-acondicionado.html'));
 app.get('/avisos', (req, res) => res.redirect(301, '/avisos.html'));
+app.get('/industria', (req, res) => res.redirect(301, '/entornos/industria'));
+app.get('/casa-campo', (req, res) => res.redirect(301, '/entornos/campo'));
+app.get('/professions', (req, res) => res.redirect(301, '/acciones'));
+app.get('/hogar', (req, res) => res.redirect(301, '/hogar.html'));
+app.get('/oficina', (req, res) => res.redirect(301, '/hogar.html'));
+// /reparaciones index y /reparaciones/<provincia> tienen sus handlers más abajo.
 
 // Redirect old heladera-con-freezer paths to heladera
 app.get('/hogar/linea-blanca/heladera-con-freezer/:action', (req, res) => res.redirect(301, '/hogar/linea-blanca/heladera/' + req.params.action));
@@ -1039,8 +1044,23 @@ app.get('/', (req, res) => {
 });
 
 // SEO service pages: /hogar/linea-blanca/heladera/reparar etc.
-// Must be AFTER all API routes to avoid catching /api/v1/... paths
-app.get('/:environment/:category/:device/:action', seoController.handleServiceSeoPage);
+// Must be AFTER all API routes to avoid catching /api/v1/... paths.
+// Express no matchea distinto por cantidad de segmentos, así que la ruta
+// opcional captura 1+/2+/3+/4+ y redirige las formas cortas a una landing
+// válida en vez de devolver el 404 crudo "Cannot GET".
+app.get('/:environment/:category?/:device?/:action?', (req, res, next) => {
+  const p = req.params;
+  const segs = [p.environment, p.category, p.device, p.action].filter((s) => s != null);
+  if (segs.length < 4) {
+    // /<area>/<categoria>/<dispositivo> (3 seg) → primera acción de reparación
+    if (p.category && p.device && !p.action) {
+      return res.redirect(301, `/${p.environment}/${p.category}/${p.device}/reparar`);
+    }
+    // /<area>/<...> u otros 2 segmentos → buscador
+    return res.redirect(301, '/hogar.html');
+  }
+  return seoController.handleServiceSeoPage(req, res, next);
+});
 
 // Always return JSON for API errors (prevents admin UI "Network Error" on HTML 502 pages).
 app.use('/api', (err, req, res, next) => {

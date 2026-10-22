@@ -115,7 +115,14 @@ exports.renderLocationPage = async (req, res, next) => {
 
 exports.renderProfilePage = async (req, res, next) => {
   try {
-    const aliasParam = String(req.params.alias || '').trim();
+    let aliasParam = String(req.params.alias || '').trim();
+    // Express entrega el segmento de la URL todavía con percent-encoding
+    // (ej. "Manicuria%20Avanzada"). Sin decodificar, los perfiles con espacios
+    // o acentos nunca matchean el alias guardado y devuelven 404.
+    try {
+      const decoded = decodeURIComponent(aliasParam).trim();
+      if (decoded) aliasParam = decoded;
+    } catch { /* segmento con % inválido: usar tal cual */ }
     const aliasLower = aliasParam.toLowerCase();
 
     if (RESERVED_PROFILE_ALIASES.has(aliasLower)) {
@@ -262,19 +269,28 @@ exports.handleServiceSeoPage = async (req, res) => {
 };
 
 exports.getServiceSitemap = async (req, res) => {
-  try {
-    const pages = getAllServiceSeoPages();
-    const baseUrl = 'https://kurate.drsrv.net.ar';
-    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
-    xml += '  <url><loc>' + baseUrl + '/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>\n';
-    for (const page of pages) {
-      xml += '  <url><loc>' + baseUrl + page.path + '</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>\n';
+    try {
+      // Ahora emite las páginas de /servicios/, que son las que compiten por
+      // "arreglar/reparar/reparo/service <dispositivo>". Antes salían las 728
+      // landings por área, que son plantillas casi idénticas y que Google
+      // termina ignorando; esas siguen sirviéndose por link directo, solo dejan
+      // de anunciarse en el sitemap.
+      const { getAllServiceUrls } = require('../utils/seoServicePages');
+      const pages = getAllServiceUrls();
+      const baseUrl = 'https://kurate.drsrv.net.ar';
+      const today = new Date().toISOString().slice(0, 10);
+      let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
+      xml += '  <url><loc>' + baseUrl + '/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>\n';
+      for (const page of pages) {
+        xml += '  <url><loc>' + baseUrl + page.loc + '</loc><lastmod>' + (page.lastmod || today) + '</lastmod>';
+        xml += '<changefreq>' + (page.changefreq || 'monthly') + '</changefreq>';
+        xml += '<priority>' + (page.priority || 0.6) + '</priority></url>\n';
+      }
+      xml += '</urlset>';
+      res.set('Content-Type', 'application/xml; charset=utf-8');
+      res.send(xml);
+    } catch (err) {
+      console.error('Service sitemap error:', err);
+      res.status(500).send('Internal Server Error');
     }
-    xml += '</urlset>';
-    res.set('Content-Type', 'application/xml; charset=utf-8');
-    res.send(xml);
-  } catch (err) {
-    console.error('Service sitemap error:', err);
-    res.status(500).send('Internal Server Error');
-  }
-};
+  };
