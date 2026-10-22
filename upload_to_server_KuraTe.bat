@@ -17,7 +17,10 @@ powershell -NoProfile -Command "$paths=@('%~dp0scripts\deploy-extract.sh','%~dp0
 if errorlevel 1 goto line_endings_failed
 
 echo [2/6] Compressing project files locally (ignoring heavy/native files)...
-tar -czf upload_package.tar.gz --exclude=node_modules --exclude=.git --exclude=.cache --exclude=.wwebjs_auth --exclude=android --exclude=ios --exclude=upload_package.tar.gz --exclude=docker-compose.override.yml --exclude=.env --exclude=*.archive --exclude=*.tar.gz --exclude=certbot .
+:: OJO con las exclusiones: KurateCerts NO se sube porque el cert local puede estar
+:: EXPIRADO y pisaria el valido de prod (nginx lee de ahi) -> TLS caido. Los dumps
+:: de la DB tampoco: son datos de usuarios y no van por scp.
+tar -czf upload_package.tar.gz --exclude=node_modules --exclude=.git --exclude=.cache --exclude=.wwebjs_auth --exclude=android --exclude=ios --exclude=upload_package.tar.gz --exclude=docker-compose.override.yml --exclude=.env --exclude=*.archive --exclude=*.tar.gz --exclude=certbot --exclude=KurateCerts --exclude=backups --exclude=DB-BACK --exclude=*.gz --exclude=*.dump .
 if errorlevel 1 goto archive_failed
 
 echo.

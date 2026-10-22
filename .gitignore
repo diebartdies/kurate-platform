@@ -24,6 +24,10 @@ tmp_restore.gz
 *padron*.txt
 *padrones*.txt
 
+# Certificados TLS: la clave privada no va a GitHub, y ademas el cert local
+# puede estar EXPIRADO y pisar el valido de prod (nginx lee KurateCerts/).
+KurateCerts/
+
 # Capacitor / Android / iOS build outputs
 android/.gradle/
 android/build/
