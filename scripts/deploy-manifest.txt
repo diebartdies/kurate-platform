@@ -73,8 +73,7 @@ services/emailOutreachService.js        # cola en segundo plano del envio de mai
 public/js/i18n.js                       # claves ES de leads, bloquedos y emails/min en el admin
 
 # --- scripts que corren DENTRO del contenedor (docker cp, no se montan) ---
-scripts/sync-service-tree.js               # 97 -> 182 servicios, idempotente
-scripts/seed-professions.js                # 0 -> 32 profesiones, idempotente (subir el archivo NO siembra; correr el seed aparte)
+scripts/sync-service-tree.js               # 97 -> 182 servicios, idempotentescripts/seed-professions.js                # 0 -> 32 profesiones, idempotente (subir el archivo NO siembra; correr el seed aparte)
 scripts/backfill-service-paths.js          # cache servicePaths en 107 perfiles
 scripts/purge-activitylog-ips.js           # borra activitylogs de IPs internas (--dry-run / --apply --yes)
 scripts/purge-activitylog-internal-ips.js  # purga loopback + red local + docker + IP publica del owner, con backup previo
@@ -99,3 +98,14 @@ scripts/set-test-professional-photos.js    # mapea email->imagen de public/image
 scripts/build-test-pro-photos.js           # genera JSON {email: dataUri} desde public/images (local)
 scripts/apply-test-pro-photos.js           # aplica el JSON a la DB (idempotente)
 scripts/migrate-professional-photos.js     # migra fotos estaticas viejas a avatar base64 (idempotente)
+
+# --- tareas programadas (backup Mongo, git push, housekeeping) ---
+# El paquete cron DEBE estar instalado y activo en el VPS: /etc/cron.d/* no corre solo.
+# install-all-crons.sh ahora lo verifica/instala (paso [0/4]).
+daily_backup.sh                            # backup diario Mongo: valida rc + tamano + restaurabilidad
+scripts/install-all-crons.sh               # instala los 3 crons + asegura el servicio cron
+scripts/install-daily-backup-cron.sh       # cron 03:00 UTC (Mongo backup)
+scripts/install-git-backup-cron.sh         # cron 06:00/18:00 UTC (git push)
+scripts/install-housekeeping-cron.sh       # cron domingos 03:15 UTC (housekeeping)
+scripts/disk-housekeeping.sh               # housekeeping LIGHT: no borra volumenes ni mongo
+scripts/git-backup-push.sh                 # git commit+push de respaldo (rechaza .env/pem)
