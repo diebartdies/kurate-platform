@@ -19,6 +19,11 @@ DB-BACK/
 *.archive
 tmp_restore.gz
 
+# Padrones de matriculados: datos de terceros, nunca a GitHub.
+*matriculados*.txt
+*padron*.txt
+*padrones*.txt
+
 # Capacitor / Android / iOS build outputs
 android/.gradle/
 android/build/
