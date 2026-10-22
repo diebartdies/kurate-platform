@@ -112,6 +112,16 @@ echo No git changes to commit - skipping commit/push.
 goto end
 
 :git_commit
+:: Guard: nunca subir dumps de base de datos ni archivos sensibles a GitHub.
+:: El .gitignore ya los excluye, pero por si acaso se chequea antes de commitear.
+git diff --cached --name-only > "%TEMP%\kurate_staged.txt"
+findstr /I /C:".gz" /C:".dump" /C:".archive" /C:"DB-BACK" /C:"backups" /C:".env" "%TEMP%\kurate_staged.txt" >nul
+if not errorlevel 1 (
+  echo.
+  echo WARNING: hay dumps/archivos sensibles en el stage. Se quitan del commit.
+  git reset HEAD -- "*.gz" "*.dump" "*.archive" "DB-BACK" "backups" ".env" >nul 2>&1
+)
+del "%TEMP%\kurate_staged.txt" >nul 2>&1
 git commit -m "Automated deployment update"
 if errorlevel 1 goto git_commit_failed
 echo n| git -c gc.auto=0 push origin HEAD 2>&1
