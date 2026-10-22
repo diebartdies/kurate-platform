@@ -47,60 +47,54 @@ const LOCATIONS = {
  * Sinónimos por acción. Son las palabras que la gente realmente escribe en el
  * buscador. "reparo" y "técnico" se agregaron porque faltaban y son de las
  * búsquedas más comunes en Argentina.
+ *
+ * Cada clave es una forma CANÓNICA: una sola URL por intención y dispositivo.
+ * Antes "reparar", "arreglar", "reparo", "service" y "reparacion" eran claves
+ * separadas y cada una generaba su propia página con el mismo contenido (solo
+ * cambiaba el título). Eso publicaba 4 duplicados por dispositivo en el
+ * sitemap y Google los reportaba como error de indexación. Ahora las cinco
+ * formas son sinónimos de la misma acción canónica y las URLs viejas
+ * responden 301 hacia la canónica.
  */
 const ACTION_ALIASES = {
   reparar: {
     label: 'Reparar',
+    noun: 'Reparación',
     synonyms: ['reparar', 'repara', 'arreglar', 'arreglo', 'arregla', 'componer', 'reparo', 'reparación', 'service', 'servicio técnico', 'técnico', 'reparador', 'sacar', 'desinstalar']
-  },
-  arreglar: {
-    label: 'Arreglar',
-    synonyms: ['arreglar', 'arreglo', 'arregla', 'reparar', 'componer', 'reparo', 'service', 'técnico', 'sacar', 'desinstalar']
-  },
-  reparo: {
-    label: 'Reparo',
-    synonyms: ['reparo', 'reparar', 'arreglar', 'componer', 'service', 'técnico']
-  },
-  service: {
-    label: 'Service',
-    synonyms: ['service', 'servicio técnico', 'reparar', 'arreglar', 'reparo', 'técnico', 'service técnico', 'sacar', 'desinstalar']
-  },
-  reparacion: {
-    label: 'Reparación',
-    synonyms: ['reparación', 'reparar', 'arreglar', 'componer', 'reparo', 'service', 'técnico']
   },
   instalar: {
     label: 'Instalar',
+    noun: 'Instalación',
     synonyms: ['instalar', 'instalo', 'instala', 'colocar', 'montar', 'instalación', 'instalador']
   },
   mantener: {
     label: 'Mantener',
-    synonyms: ['mantener', 'mantenimiento', 'revisar', 'chequear', 'verificar', 'service']
+    noun: 'Mantenimiento',
+    synonyms: ['mantener', 'mantenimiento']
   },
   revisar: {
     label: 'Revisar',
-    synonyms: ['revisar', 'chequear', 'verificar', 'inspeccionar', 'revisión', 'service']
+    noun: 'Revisión',
+    synonyms: ['revisar', 'revisión', 'chequear', 'verificar', 'inspeccionar']
   },
   certificar: {
     label: 'Certificar',
-    synonyms: ['certificar', 'habilitar', 'certificado']
-  },
-  vender: {
-    label: 'Vender',
-    synonyms: ['vender', 'venta', 'comprar']
+    noun: 'Certificación',
+    synonyms: ['certificar', 'certificado', 'habilitar']
   },
   comprar: {
     label: 'Comprar',
+    noun: 'Compra',
     synonyms: ['comprar', 'compra', 'vender', 'venta']
   }
 };
 
 /** Acciones que tienen sentido técnico sobre un dispositivo concreto. */
-const REPAIR_ACTIONS = new Set(['reparar', 'arreglar', 'reparo', 'service', 'reparacion']);
+const REPAIR_ACTIONS = new Set(['reparar']);
 /** Acciones de servicio sobre instalaciones (no son "reparar una heladera"). */
 const SERVICE_ACTIONS = new Set(['instalar', 'mantener', 'revisar', 'certificar']);
 /** Acciones comerciales: no aplica a todo dispositivo, se reservan. */
-const COMMERCIAL_ACTIONS = new Set(['vender', 'comprar']);
+const COMMERCIAL_ACTIONS = new Set(['comprar']);
 
 /**
  * Dispositivos del árbol, aplanados y deduplicados por id.

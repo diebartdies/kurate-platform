@@ -415,27 +415,41 @@ app.get('/categorias/:slug', async (req, res) => {
 // Service landing pages: /servicios/reparar-heladera, /servicios/reparo-heladera, etc.
 // Normaliza sinónimos de acción a su forma canónica antes de parsear.
 const ACTION_SYNONYM_MAP = {
-  // arreglar
-  'arreglo': 'arreglar',
-  'arregla': 'arreglar',
-  // reparar
+  // Todas las formas "reparar" → canónica reparar
+  'arreglar': 'reparar',
+  'arreglo': 'reparar',
+  'arregla': 'reparar',
   'reparo': 'reparar',
   'repara': 'reparar',
+  'reparacion': 'reparar',
+  'reparación': 'reparar',
+  'componer': 'reparar',
+  // service
+  'service': 'reparar',
+  'servicio': 'reparar',
+  'tecnico': 'reparar',
+  'técnico': 'reparar',
   // instalar
   'instalo': 'instalar',
   'instala': 'instalar',
-  // service (ya existe como key)
-  'service': 'service',
+  'instalacion': 'instalar',
+  'instalación': 'instalar',
   // mantener
   'mantenimiento': 'mantener',
-  'revisar': 'revisar', // ya es key
+  // revisar
+  'revisión': 'revisar',
+  'revision': 'revisar',
+  'chequear': 'revisar',
   'verificar': 'revisar',
+  'inspeccionar': 'revisar',
   // instalar variants
   'colocar': 'instalar',
   'montar': 'instalar',
   // sacar / desinstalar
   'sacar': 'reparar',
-  'desinstalar': 'reparar'
+  'desinstalar': 'reparar',
+  // comercial
+  'venta': 'comprar'
 };
 
 function normalizeActionSlug(slug) {

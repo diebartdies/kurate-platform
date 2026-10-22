@@ -109,3 +109,6 @@ scripts/install-git-backup-cron.sh         # cron 06:00/18:00 UTC (git push)
 scripts/install-housekeeping-cron.sh       # cron domingos 03:15 UTC (housekeeping)
 scripts/disk-housekeeping.sh               # housekeeping LIGHT: no borra volumenes ni mongo
 scripts/git-backup-push.sh                 # git commit+push de respaldo (rechaza .env/pem)
+# SEO canonical actions fix - 2026-10-22 04:29
+utils/seoServicePages.js
+server.js
