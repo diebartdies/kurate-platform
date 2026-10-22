@@ -427,7 +427,7 @@ export async function loadTreasureDetails() {
                 <div class="card" style="position: relative;">
                     ${editBtnHtml}
                     <button type="button" id="treasureBackBtn" onmouseover="this.style.background='rgba(212, 175, 55, 0.1)'" onmouseout="this.style.background='transparent'" style="position: absolute; top: 20px; right: 20px; padding: 6px 12px; font-size: 0.85rem; background: transparent; color: var(--primary-gold); border: 1px solid var(--primary-gold); border-radius: 4px; cursor: pointer; transition: background 0.3s ease; z-index: 10;">&#8592; ${t('Back')}</button>
-                    <h2 class="gold-text" style="text-align: center; margin-bottom: 20px; padding: 0 80px;">${prof.alias || 'Unknown'}</h2>
+                    <h1 class="gold-text" style="font-size: 1.5em; text-align: center; margin-bottom: 20px; padding: 0 80px;">${prof.alias || 'Unknown'}</h1>
                     ${pendingApprovalBannerHtml}
 
                     <div style="text-align: center; margin-bottom: 15px;">
@@ -464,7 +464,7 @@ export async function loadTreasureDetails() {
                     </div>
 
                     <div id="treasureBioSection" style="margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                        <h3 class="gold-text" style="margin: 0 0 12px; font-size: 1.1rem;">${t('Service Description')}</h3>
+                        <h2 class="gold-text" style="margin: 0 0 12px; font-size: 1.1rem;">${t('Service Description')}</h2>
                         <p style="white-space: pre-wrap; color: #ccc; line-height: 1.65; margin: 0;">${safeBio || t('No service description available.')}</p>
                     </div>
 
@@ -511,16 +511,16 @@ export async function loadTreasureDetails() {
                     </div>
 
                     <div style="margin-top: 30px; text-align: center; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
-                        ${hasWhatsapp ? `<button onclick="contactOnWhatsApp('${prof.alias}')" style="background: #25D366; color: white; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; font-weight: bold;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.405-.881-.728-1.476-1.626-1.65-1.923-.173-.298-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.012c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>${t('Contact on WhatsApp')}</button>` : ''}
+                        ${hasWhatsapp ? `<button onclick="contactOnWhatsApp('${prof.alias}')" style="background: #25D366; color: #08281d; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; font-weight: bold;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.405-.881-.728-1.476-1.626-1.65-1.923-.173-.298-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.012c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>${t('Contact on WhatsApp')}</button>` : ''}
                         ${hasWhatsapp ? `<button onclick="contactOnPhone('${prof.alias}')" style="background: transparent; border: 1px solid var(--primary-gold); color: var(--primary-gold); display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>${t('Phone Call')}</button>` : ''}
                     </div>
 
                     <!-- Reviews Section -->
                     <div id="reviewsSection" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
-                        <h3 class="gold-text" style="margin: 0 0 15px; font-size: 1.1rem;">${t('Reviews')}</h3>
+                        <h2 class="gold-text" style="margin: 0 0 15px; font-size: 1.1rem;">${t('Reviews')}</h2>
                         <div id="reviewsList"><p style="color: #999; font-size: 0.9rem;">${t('Loading reviews...')}</p></div>
                         <div id="reviewFormContainer" style="display:none; margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
-                            <h4 style="margin: 0 0 12px; color: var(--primary-gold); font-size: 1rem;">${t('Leave a Review')}</h4>
+                            <h3 style="margin: 0 0 12px; color: var(--primary-gold); font-size: 1rem;">${t('Leave a Review')}</h3>
                             <div style="margin-bottom: 12px;">
                                 <label style="display: block; margin-bottom: 6px; color: #ccc; font-size: 0.9rem;">${t('Rating')}:</label>
                                 <div id="reviewStarPicker" style="display: flex; gap: 4px; cursor: pointer;">
@@ -817,9 +817,9 @@ export async function initializeFilters() {
         if (document.body.classList.contains('blueprint-theme')) {
             filterDrawer.style.maxWidth = '92vw';
             filterDrawer.style.paddingTop = 'calc(var(--global-topbar-height, 55px) + var(--blueprint-notes-height, 40px) + env(safe-area-inset-top, 0px) + 12px)';
-            filterDrawer.style.paddingLeft = 'max(12px, env(safe-area-inset-left))';
-            filterDrawer.style.paddingRight = 'max(12px, env(safe-area-inset-right))';
-            filterDrawer.style.paddingBottom = 'max(20px, env(safe-area-inset-bottom))';
+            filterDrawer.style.paddingLeft = 'max(12px, env(safe-area-inset-left, 0px))';
+            filterDrawer.style.paddingRight = 'max(12px, env(safe-area-inset-right, 0px))';
+            filterDrawer.style.paddingBottom = 'max(20px, env(safe-area-inset-bottom, 0px))';
         }
 
         const drawerHeader = document.createElement('div');

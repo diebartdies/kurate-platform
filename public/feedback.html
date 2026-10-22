@@ -23,7 +23,7 @@ button.submit:disabled { opacity: 0.5; cursor: default; }
 </style>
 </head>
 <body>
-<div class="card">
+<main class="card" id="main-content">
   <img class="logo" src="/KuraTe_logo_black.png" alt="KuraTe">
   <h1>¿Cómo fue tu experiencia?</h1>
   <p>Tu opinión nos ayuda a mejorar. Calificá del 1 al 5.</p>
@@ -34,10 +34,10 @@ button.submit:disabled { opacity: 0.5; cursor: default; }
     <button data-star="4">★</button>
     <button data-star="5">★</button>
   </div>
-  <textarea id="comment" placeholder="Comentario (opcional)"></textarea>
+                <textarea id="comment" placeholder="Comentario (opcional)" aria-label="Comentario (opcional)"></textarea>
   <button class="submit" id="submitBtn" disabled>Enviar opinión</button>
   <div class="msg" id="msg"></div>
-</div>
+</main>
 <script>
 const params = new URLSearchParams(location.search);
 const feedbackId = params.get('id');

@@ -5,6 +5,22 @@ export const BASE_ORIGIN = (window.location.protocol === 'file:' || window.locat
   : window.location.origin;
 export const API_URL = `${BASE_ORIGIN}/api/v1`;
 
+const DEVICE_ID_KEY = 'kurate_device_id';
+
+/** Persistent per-install device id (soft-MAC). Survives app reinstalls on native stays, resets on cache wipe. */
+export function getDeviceId() {
+    try {
+        let id = localStorage.getItem(DEVICE_ID_KEY);
+        if (!id || id === 'null' || id === 'undefined') {
+            id = (crypto.randomUUID ? crypto.randomUUID() : `dev-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`);
+            localStorage.setItem(DEVICE_ID_KEY, id);
+        }
+        return id;
+    } catch (err) {
+        return `dev-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+    }
+}
+
 /**
  * Age-verification + Terms & Conditions version (for future legal gate).
  * MUST stay in sync with config/appConfig.js -> terms.version on the backend.

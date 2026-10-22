@@ -1,6 +1,75 @@
 import { API_URL } from './globals.js';
 import { t, applyStaticTranslations } from './i18n.js';
 
+// Marca/marca-modelo escrita a mano por el profesional ("otra"). Se guarda en
+// el mismo array `brands` que las marcas del árbol, con este prefijo para poder
+// distinguirla al editar y para no romper los filtros que comparan contra el
+// serviceTree. El nombre visible es el que va después del prefijo.
+export const OTRA_PREFIX = '__otra__:';
+
+// Siglas técnicas que van en mayúsculas enteras aunque sean "palabras". Solo
+// abreviaturas reales: sin esto, "smart tv" se formatearía "Smart Tv".
+// Debe coincidir con utils/otraBrand.js (misma regla, versión ESM).
+const OTRA_ACRONIMOS = new Set([
+    'tv', 'led', 'lcd', 'oled', 'dvd', 'cd', 'usb', 'ac', 'dc', 'ups',
+    'pvc', 'wifi', 'app', 'gps', 'dvr', 'dsl', 'hd', 'sd', 'amp', 'plc',
+    'dab', 'ev', 'rlv', 'xl', 'xs', 'xxl'
+]);
+
+/**
+ * Formatea un nombre de marca escrito a mano.
+ * Reglas: trim + colapsar espacios; la inicial de cada palabra en mayúscula y
+ * el resto en minúscula; palabras de un solo caracter en mayúscula; siglas
+ * conocidas enteras en mayúsculas; se respetan guiones y barras ("Aire-Split",
+ * "In-Out") tratando cada parte como una palabra.
+ * "LAVAVAJILLAS"      -> "Lavavajillas"
+ * "estufa de patio"   -> "Estufa De Patio"
+ * "smart-tv"          -> "Smart-TV"
+ * "aire  acondicionado"-> "Aire Acondicionado" (el doble espacio se colapsa)
+ */
+export function formatBrandName(raw) {
+    if (raw === null || raw === undefined) return '';
+    const cleaned = String(raw).replace(/\s+/g, ' ').trim();
+    if (!cleaned) return '';
+    return cleaned
+        .split(' ')
+        .map(word => {
+            // El espacio siempre separa palabras; otra puntuación pegada dentro
+            // de una palabra pasa a guion. "aire-split" -> "Aire-Split".
+            const parts = word
+                .replace(/[^A-Za-z0-9À-ÿ]+/g, '-')
+                .replace(/^-+|-+$/g, '')
+                .split('-')
+                .filter(Boolean);
+            return parts.map(part => {
+                if (OTRA_ACRONIMOS.has(part.toLowerCase())) return part.toUpperCase();
+                if (part.length === 1) return part.toUpperCase();
+                return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+            }).join('-');
+        })
+        .filter(Boolean)
+        .join(' ');
+}
+
+/** Nombre visible de una marca: si tiene el prefijo "otra", lo saca. */
+export function brandDisplayName(brand) {
+    if (typeof brand !== 'string') return '';
+    return brand.startsWith(OTRA_PREFIX) ? brand.slice(OTRA_PREFIX.length) : brand;
+}
+
+/** true si la marca es una entrada "otra" escrita a mano. */
+export function isOtherBrand(brand) {
+    return typeof brand === 'string' && brand.startsWith(OTRA_PREFIX);
+}
+
+/** Devuelve el nombre limpio de la entrada "otra" guardada en un array, o ''. */
+export function extractOtherBrand(brands) {
+    if (!Array.isArray(brands)) return '';
+    const found = brands.find(isOtherBrand);
+    if (!found) return '';
+    return found.slice(OTRA_PREFIX.length).trim();
+}
+
 export async function renderSpecialtyDropdown(containerId, preselectedServices = [], options = {}) {
     const { quality = '', context = 'form' } = options;
     let container = document.getElementById(containerId);
@@ -105,6 +174,16 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
             .svc-brands-leaf { display:none; flex-wrap:wrap; gap:2px 0; align-items:center; padding: 2px 0 2px 24px; }
             .svc-device.open > .svc-brands-leaf { display:flex; }
             .svc-brand-wrapper { display: contents; }
+            /* "Otra" + su input: ambos con la MISMA caja (24px) para que el texto
+               y el campo queden alineados al centro. El label no puede heredar
+               el line-height del body y el input no puede traer su padding por
+               default: por eso los dos llevan height y line-height fijos. */
+            .svc-brand-other { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; margin: 2px 0; border: 1px dashed rgba(212,175,55,0.35); border-radius: 12px; box-sizing: border-box; }
+            .svc-brand-other.filled { border-style: solid; border-color: var(--primary-gold); background: rgba(212,175,55,0.1); }
+            .svc-brand-other .svc-cb-label { display: flex; align-items: center; height: 24px; line-height: 24px; font-size: 0.78rem; color: var(--primary-gold); font-weight: 600; white-space: nowrap; }
+            .svc-otra-input { box-sizing: border-box; height: 24px; line-height: 22px; background: rgba(0,0,0,0.3); border: 1px solid rgba(212,175,55,0.25); color: #fff; border-radius: 10px; padding: 0 10px; font-size: 0.78rem; font-family: inherit; min-width: 150px; }
+            .svc-otra-input:focus { outline: none; border-color: var(--primary-gold); }
+            .svc-otra-input::placeholder { color: #666; }
             .svc-actions { display: none; flex-wrap: wrap; gap: 4px; padding: 2px 0 6px 24px; align-items: center; }
             .svc-device.open > .svc-actions { display: flex; }
             .svc-actions-info { width: 100%; font-size: 0.7rem; color: #888; font-style: italic; margin-bottom: 2px; }
@@ -175,26 +254,28 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
         name.className = 'svc-name';
         name.textContent = t(device.name);
 
+        const hasBrandList = !!(device.brands && device.brands.length > 0);
         const brandCount = document.createElement('span');
         brandCount.className = 'svc-count';
-        brandCount.textContent = `${device.brands.length} marcas`;
+        // Para educación no hay marcas, mostrar nivel en vez de "sin marcas"
+        const isEducacion = device.area === 'educacion' || (device.path && device.path.startsWith('educacion/'));
+        brandCount.textContent = hasBrandList ? `${device.brands.length} marcas` : (isEducacion ? '' : 'sin marcas');
 
         header.appendChild(chevron);
         header.appendChild(name);
         header.appendChild(brandCount);
 
-        if (device.brands && device.brands.length > 0) {
-            header.addEventListener('click', (e) => {
-                e.stopPropagation();
-                wrap.classList.toggle('open');
-            });
-        }
+        header.addEventListener('click', (e) => {
+            e.stopPropagation();
+            wrap.classList.toggle('open');
+        });
 
         wrap.appendChild(header);
 
-        if (device.brands && device.brands.length > 0) {
+        {
             const brandContainer = document.createElement('div');
             brandContainer.className = 'svc-brands-leaf';
+            if (hasBrandList) {
             // Opción "Todas" — selecciona todas las marcas de este dispositivo
             const allItem = document.createElement('label');
             allItem.className = 'svc-leaf-item svc-brand-item';
@@ -239,6 +320,50 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
                 });
                 brandContainer.appendChild(el);
             });
+            } // fin if (hasBrandList)
+
+            // Entrada "Otra": campo de texto libre para una marca que no está en
+            // la lista. No es un checkbox para no romper la lógica de "Todas" ni
+            // los :not([value$=".__todas__"]) que recorren el árbol.
+            const savedOther = extractOtherBrand(
+                (preselectedArr.find(s => s && s.path && s.path.toLowerCase() === path.toLowerCase()) || {}).brands
+            );
+            const otherWrap = document.createElement('div');
+            otherWrap.className = 'svc-brand-other';
+            const otherLabel = document.createElement('span');
+            otherLabel.className = 'svc-cb-label';
+            otherLabel.textContent = 'Otra';
+            const otherInput = document.createElement('input');
+            otherInput.type = 'text';
+            otherInput.className = 'svc-otra-input';
+            otherInput.dataset.otraFor = path;
+            otherInput.placeholder = 'Escribí la marca';
+            otherInput.maxLength = 60;
+            otherInput.value = savedOther;
+            otherInput.addEventListener('input', () => {
+                const caret = otherInput.selectionStart;
+                const formatted = formatBrandName(otherInput.value);
+                if (formatted !== otherInput.value) otherInput.value = formatted;
+                if (caret !== null) otherInput.setSelectionRange(caret, caret);
+                // Misma regla que los checkboxes de marca: sin acción no se
+                // guarda la marca. Se avisa y se limpia el texto.
+                if (formatted && !hasActiveAction()) {
+                    noActionWarning.textContent = '⚠ Elegí al menos una acción antes de escribir una marca.';
+                    noActionWarning.style.display = 'block';
+                    otherInput.value = '';
+                    otherWrap.classList.remove('filled');
+                    return;
+                }
+                noActionWarning.style.display = 'none';
+                otherWrap.classList.toggle('filled', !!formatted);
+                updateDeviceActionsVisibility();
+                brandContainer.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+            otherWrap.classList.toggle('filled', !!savedOther);
+            otherWrap.appendChild(otherLabel);
+            otherWrap.appendChild(otherInput);
+            brandContainer.appendChild(otherWrap);
+
             wrap.appendChild(brandContainer);
 
             // Action chips at device level (shared across all brands)
@@ -276,7 +401,8 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
                     e.stopPropagation();
                     const willDeactivate = chip.classList.contains('active');
                     const anyBrandChecked = brandContainer.querySelectorAll('input.dashboard-specialty-cb:not([value$=".__todas__"]):checked').length > 0;
-                    if (willDeactivate && anyBrandChecked && hasActiveAction() && actionsContainer.querySelectorAll('.svc-action-chip.active').length <= 1) {
+                    const hasOtherBrand = !!(otherInput && formatBrandName(otherInput.value));
+                    if (willDeactivate && (anyBrandChecked || hasOtherBrand) && hasActiveAction() && actionsContainer.querySelectorAll('.svc-action-chip.active').length <= 1) {
                         noActionWarning.textContent = '⚠ No podés quitar la última acción si hay marcas seleccionadas.';
                         noActionWarning.style.display = 'block';
                         return;
@@ -292,7 +418,9 @@ export async function renderSpecialtyDropdown(containerId, preselectedServices =
             // Show/hide actions based on whether any brand is checked
             const updateDeviceActionsVisibility = () => {
                 const anyChecked = brandContainer.querySelectorAll('input.dashboard-specialty-cb:not([value$=".__todas__"]):checked').length > 0;
-                if (anyChecked) {
+                // "Otra" no es checkbox: cuenta como marca elegida si tiene texto.
+                const hasOther = !!(otherInput && formatBrandName(otherInput.value));
+                if (anyChecked || hasOther) {
                     wrap.classList.add('device-checked');
                 } else {
                     wrap.classList.remove('device-checked');
@@ -716,14 +844,24 @@ export function collectTreeServices(containerId) {
     const result = [];
     devices.forEach(deviceEl => {
         const brandCbs = deviceEl.querySelectorAll('.svc-brands-leaf input.dashboard-specialty-cb:not([value$=".__todas__"]):checked');
-        if (!brandCbs.length) return;
+        const otherInput = deviceEl.querySelector('.svc-otra-input');
+        const otherName = otherInput ? formatBrandName(otherInput.value) : '';
+        if (!brandCbs.length && !otherName) return;
         const brands = [];
         brandCbs.forEach(cb => {
             const parts = cb.value.split('.');
             brands.push(parts[parts.length - 1]);
         });
-        const firstVal = brandCbs[0].value;
-        const devicePath = firstVal.substring(0, firstVal.lastIndexOf('.'));
+        // La marca escrita en "Otra" viaja en brands con el prefijo para que el
+        // servidor y los filtros puedan distinguirla de una marca del árbol.
+        if (otherName) brands.push(OTRA_PREFIX + otherName);
+        const pathSource = otherName
+            ? (otherInput.dataset.otraFor || '')
+            : (brandCbs[0] ? brandCbs[0].value : '');
+        if (!pathSource) return;
+        const devicePath = otherName
+            ? pathSource
+            : pathSource.substring(0, pathSource.lastIndexOf('.'));
         const tree = window._serviceTree || [];
         let deviceName = devicePath.split('.').pop();
         for (const area of tree) {
@@ -749,11 +887,20 @@ export async function renderProfessionsPicker(containerId, preselected = []) {
     let container = document.getElementById(containerId);
     if (!container) return;
 
-    const preselectedMap = new Map();
+    // Estado por profesion: slug -> { name, matriculado, matriculaNumero, matriculaVerificada }
+    const state = new Map();
     (preselected || []).forEach(p => {
+        if (!p) return;
         const slug = typeof p === 'string' ? p : (p && p.slug);
-        const name = typeof p === 'string' ? p : (p && p.name);
-        if (slug) preselectedMap.set(slug.toLowerCase(), name || slug);
+        if (!slug) return;
+        state.set(slug.toLowerCase(), {
+            name: (typeof p === 'string' ? p : p.name) || slug,
+            matriculado: typeof p === 'string' ? false : !!p.matriculado,
+            matriculaNumero: (typeof p === 'string' ? '' : p.matriculaNumero) || '',
+            matriculaVerificada: typeof p === 'string' ? false : !!p.matriculaVerificada,
+            matriculaRechazada: typeof p === 'string' ? false : !!p.matriculaRechazada,
+            matriculaFoto: typeof p === 'string' ? '' : (p.matriculaFoto || '')
+        });
     });
 
     let professions = [];
@@ -771,36 +918,123 @@ export async function renderProfessionsPicker(containerId, preselected = []) {
         return;
     }
 
+    const esc = (s) => String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
     function render() {
         container.innerHTML = professions.map(p => {
-            const checked = preselectedMap.has(p.slug.toLowerCase());
+            const key = p.slug.toLowerCase();
+            const st = state.get(key);
+            const checked = !!st;
+            const regulated = !!p.regulated;
             return `
-                <label class="svc-leaf-item" style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border:1px solid rgba(212,175,55,0.2); border-radius:8px; cursor:pointer; background:rgba(255,255,255,0.03);">
-                    <input type="checkbox" data-profession-slug="${p.slug}" ${checked ? 'checked' : ''} style="position:absolute; opacity:0; width:0; height:0; pointer-events:none;">
-                    <span class="svc-cb-box" style="display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; min-width:18px; border:2px solid #555; border-radius:4px; background:transparent; flex-shrink:0;"></span>
-                    <span class="svc-cb-label" style="font-size:0.83rem; color:#aaa;">${p.name}</span>
-                </label>
-            `;
+                <div class="prof-pick" data-prof-wrap="${p.slug}" style="margin-bottom:${regulated ? '2px' : '0'};">
+                    <label class="svc-leaf-item" style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border:1px solid rgba(212,175,55,0.2); border-radius:8px; cursor:pointer; background:rgba(255,255,255,0.03);">
+                        <input type="checkbox" data-profession-slug="${p.slug}" ${checked ? 'checked' : ''} style="position:absolute; opacity:0; width:0; height:0; pointer-events:none;">
+                        <span class="svc-cb-box" style="display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; min-width:18px; border:2px solid #555; border-radius:4px; background:transparent; flex-shrink:0;"></span>
+                        <span class="svc-cb-label" style="font-size:0.83rem; color:#aaa;">${esc(p.name)}</span>
+                    </label>
+                    ${regulated ? `
+                    <div class="prof-matricula" data-prof-matricula="${p.slug}" ${checked ? '' : 'hidden'} style="margin:6px 0 10px 6px; padding:10px 12px; border-left:2px solid rgba(184,146,46,0.4); background:rgba(184,146,46,0.05); border-radius:0 8px 8px 0;">
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.83rem;">
+                            <input type="checkbox" data-prof-matriculado="${p.slug}" ${st && st.matriculado ? 'checked' : ''}>
+                            <span>Soy matriculado en ${esc(p.name)}</span>
+                        </label>
+                        <div class="prof-mat-fields" data-prof-mat-fields="${p.slug}" ${st && st.matriculado ? '' : 'hidden'} style="margin-top:8px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                            <input type="text" data-prof-matricula-numero="${p.slug}" value="${st ? esc(st.matriculaNumero) : ''}" placeholder="N° de matrícula" maxlength="40" style="flex:1; min-width:150px; padding:7px 10px; background:#1a1a2e; border:1px solid #333; border-radius:6px; color:#eee; font-size:0.82rem;">
+                            <label style="font-size:0.78rem; color:#999; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                                <span>Foto/PDF del título</span>
+                                <input type="file" data-prof-matricula-file="${p.slug}" accept="image/jpeg,image/png,image/webp,application/pdf" style="font-size:0.75rem;">
+                            </label>
+                        </div>
+                        <p style="font-size:0.72rem; color:#888; margin:6px 0 0;">Cargá el número o el título. Un administrador verifica la matriculación${st && st.matriculaVerificada ? ' — <span style="color:#5cb85c;">ya verificada</span>' : ''}${st && st.matriculaRechazada ? ' — <span style="color:#d9534f;">rechazada, actualizala</span>' : ''}.</p>
+                    </div>` : ''}
+                </div>`;
         }).join('');
     }
+
+    function syncMatriculaVisibility(slug) {
+        const box = container.querySelector(`[data-prof-matricula="${slug}"]`);
+        if (!box) return;
+        const check = container.querySelector(`[data-profession-slug="${slug}"]`);
+        box.hidden = !check || !check.checked;
+    }
+
+function syncFieldsVisibility(slug) {
+        // Scoped por slug: con dos oficios regulados (gasista/electricista) un
+        // selector global movia los campos del oficio equivocado.
+        const fields = container.querySelector(`[data-prof-mat-fields="${slug}"]`);
+        if (!fields) return;
+        const chk = container.querySelector(`input[data-prof-matriculado="${slug}"]`);
+        fields.hidden = !chk || !chk.checked;
+    }
+
     render();
 
     container.querySelectorAll('input[data-profession-slug]').forEach(input => {
         input.addEventListener('change', () => {
+            const slug = input.dataset.professionSlug;
+            const p = professions.find(x => x.slug === slug);
             if (input.checked) {
-                const p = professions.find(x => x.slug === input.dataset.professionSlug);
-                if (p) preselectedMap.set(p.slug.toLowerCase(), p.name);
+                const prev = state.get(slug.toLowerCase());
+                state.set(slug.toLowerCase(), prev || { name: (p && p.name) || slug, matriculado: false, matriculaNumero: '', matriculaVerificada: false, matriculaRechazada: false, matriculaFoto: '' });
             } else {
-                preselectedMap.delete(input.dataset.professionSlug.toLowerCase());
+                state.delete(slug.toLowerCase());
             }
+            syncMatriculaVisibility(slug);
+        });
+    });
+
+    container.querySelectorAll('input[data-prof-matriculado]').forEach(input => {
+        input.addEventListener('change', () => {
+            const slug = input.dataset.profMatriculado;
+            const st = state.get(slug.toLowerCase());
+            if (st) st.matriculado = input.checked;
+            syncFieldsVisibility(slug);
+        });
+    });
+
+    container.querySelectorAll('input[data-prof-matricula-numero]').forEach(input => {
+        input.addEventListener('input', () => {
+            const slug = input.dataset.profMatriculaNumero;
+            const st = state.get(slug.toLowerCase());
+            if (st) st.matriculaNumero = input.value;
         });
     });
 }
 
-export function collectProfessions() {
-    const slugs = new Set();
-    document.querySelectorAll('#upProfessions input[data-profession-slug]:checked').forEach(input => {
-        slugs.add(input.dataset.professionSlug);
+// Devuelve [{slug, matriculado, matriculaNumero}] para el PUT de profesiones.
+// Los archivos adjuntos se suben aparte: este endpoint es JSON.
+// containerId permite reutilizarla en el editor del admin (#adminEditProfessions),
+// que usa el mismo picker pero otro contenedor.
+export function collectProfessions(containerId = 'upProfessions') {
+    const root = document.getElementById(containerId);
+    if (!root) return [];
+    const out = [];
+    root.querySelectorAll('input[data-profession-slug]:checked').forEach(input => {
+        const slug = input.dataset.professionSlug;
+        const matInput = root.querySelector(`input[data-prof-matriculado="${slug}"]`);
+        const numInput = root.querySelector(`input[data-prof-matricula-numero="${slug}"]`);
+        out.push({
+            slug,
+            matriculado: !!(matInput && matInput.checked),
+            matriculaNumero: numInput ? numInput.value.trim() : ''
+        });
     });
-    return [...slugs];
+    return out;
+}
+
+// Archivos de matricula pendientes de subir: [{slug, file}]. Se sube DESPUES
+// del PUT de profesiones, porque el endpoint exige matriculado=true.
+export function collectMatriculaFiles(containerId = 'upProfessions') {
+    const root = document.getElementById(containerId);
+    if (!root) return [];
+    const out = [];
+    root.querySelectorAll('input[data-prof-matricula-file]').forEach(input => {
+        if (input.files && input.files[0]) {
+            out.push({ slug: input.dataset.profMatriculaFile, file: input.files[0] });
+        }
+    });
+    return out;
 }

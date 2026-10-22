@@ -3,17 +3,59 @@ const User = require('../models/User');
 const { getClientIp } = require('../utils/clientIp');
 const sendEmail = require('../sendEmail');
 const serviceTree = require('../data/serviceTree');
+const {
+  evaluatePublishRequirements,
+  buildPublishBlockedText
+} = require('../utils/publishRequirements');
+const { lookupCpa } = require('../utils/cpaLookup');
 
 const AVISO_PRICES = {
   hogar: 5000,
   oficina: 10000,
   pime: 10000,
-  industria: 20000
+  industria: 20000,
+  educacion: 5000
 };
 
 const AVISO_DURATION_DAYS = 30;
 const MAX_ACTIVE_AVISOS = 5;
 const EXPIRY_WARNING_DAYS = 5;
+
+/**
+ * Evalua los requisitos de publicacion y, si la direccion esta completa pero
+ * sin codigo postal, lo busca y lo guarda antes de volver a evaluar.
+ *
+ * Se ejecuta en el backend y no solo en el front porque POST /api/v1/avisos es
+ * el que realmente crea el aviso: si la regla viviera unicamente en el cliente,
+ * cualquiera podria esquivarla.
+ *
+ * @returns {Promise<{canPublish:boolean, mensaje:string, faltantes:Array, direccion:object, necesitaCP:boolean, direccionCompleta:boolean}>}
+ */
+async function ensurePublishRequirements(user) {
+  let resultado = evaluatePublishRequirements(user);
+
+  // Solo tiene sentido intentar el CP si la direccion esta completa y lo unico
+  // que falta es el codigo postal. Si falta calle o ciudad, el lookup fallaria
+  // y solo generaria ruido contra el servicio de Correo Argentino.
+  if (resultado.necesitaCP) {
+    const cpa = await lookupCpa(resultado.direccion);
+    if (cpa) {
+      // Se guarda en hogarProfile.address, que es de donde lo lee la regla.
+      if (!user.hogarProfile) user.hogarProfile = {};
+      if (!user.hogarProfile.address) user.hogarProfile.address = {};
+      user.hogarProfile.address.postalCode = cpa;
+      await user.save();
+      resultado = evaluatePublishRequirements(user);
+      if (resultado.canPublish) {
+        console.log(`[aviso] CP ${cpa} completado automaticamente para ${user.email || user._id}`);
+      }
+      return { ...resultado, mensaje: '', cpaCompletado: cpa };
+    }
+    console.warn(`[aviso] no se pudo resolver el CP de ${user.email || user._id}`);
+  }
+
+  return { ...resultado, mensaje: buildPublishBlockedText(resultado) };
+}
 
 async function adminLogDetails(req) {
   try {
@@ -26,101 +68,193 @@ async function adminLogDetails(req) {
 }
 
 exports.createAviso = async (req, res) => {
-  try {
-    const { environment, serviceLine, text } = req.body;
-    if (!environment || !AVISO_PRICES[environment]) {
-      return res.status(400).json({ success: false, error: 'Invalid environment' });
-    }
-    if (!serviceLine) {
-      return res.status(400).json({ success: false, error: 'Service line is required' });
-    }
+    try {
+      const { environment, serviceLine, serviceLines, text } = req.body;
+      if (!environment || !AVISO_PRICES[environment]) {
+        return res.status(400).json({ success: false, error: 'Invalid environment' });
+      }
 
-    const areaNode = serviceTree.find(a => a.id === environment);
-    if (!areaNode) {
-      return res.status(400).json({ success: false, error: 'Invalid area' });
+      // Educación: puede aceptar múltiples niveles (serviceLines array)
+      const isEducacion = environment === 'educacion';
+      const incomingLines = isEducacion ? (serviceLines || []) : (serviceLine ? [serviceLine] : []);
+
+      if (!incomingLines.length) {
+        return res.status(400).json({ success: false, error: isEducacion ? 'Se requiere al menos un nivel educativo' : 'Service line is required' });
+      }
+
+      const areaNode = serviceTree.find(a => a.id === environment);
+      if (!areaNode) {
+        return res.status(400).json({ success: false, error: 'Invalid area' });
+      }
+
+      const user = await User.findById(req.user.id);
+      if (!user) {
+        return res.status(404).json({ success: false, error: 'User not found' });
+      }
+
+      // Requisitos de publicacion: telefono y email verificados + direccion
+      // completa. Si la direccion esta completa pero sin codigo postal, se busca
+      // y se completa solo antes de decidir. La validacion va ACA y no solo en el
+      // front: el endpoint es publico para cualquier cliente.
+      const requisitos = await ensurePublishRequirements(user);
+      if (!requisitos.canPublish) {
+        return res.status(403).json({
+          success: false,
+          error: requisitos.mensaje,
+          code: 'PUBLISH_REQUIREMENTS',
+          requisitos: {
+            phoneVerified: !!user.phoneVerified,
+            isEmailVerified: !!user.isEmailVerified,
+            direccion: requisitos.direccion,
+            direccionCompleta: requisitos.direccionCompleta,
+            necesitaCP: requisitos.necesitaCP,
+            faltantes: requisitos.faltantes
+          }
+        });
+      }
+
+      const activeCount = await Aviso.countDocuments({
+        professional: req.user.id,
+        status: { $in: ['pending_payment', 'active', 'expiring'] }
+      });
+      if (activeCount >= MAX_ACTIVE_AVISOS) {
+        return res.status(400).json({ success: false, error: `Maximum ${MAX_ACTIVE_AVISOS} active avisos allowed` });
+      }
+
+      // Educación: validar que los niveles existan y el profesional los tenga
+      if (isEducacion) {
+        const profUser = await User.findById(req.user.id).select('professionalProfile.professions');
+        if (!profUser) {
+          return res.status(404).json({ success: false, error: 'User not found' });
+        }
+        const profNiveles = new Set();
+        const profMap = {
+          'docente-primaria': 'primario',
+          'profesor-matematicas': 'primario',
+          'profesor-lengua-literatura': 'primario',
+          'profesor-ingles': 'primario',
+          'profesor-formacion-etica': 'primario',
+          'docente-secundaria': 'secundario',
+          'profesor-fisica-quimica': 'secundario',
+          'profesor-biologia-ciencias': 'secundario',
+          'profesor-historia-geografia': 'secundario',
+          'docente-universitario': 'universitario'
+        };
+        (profUser.professionalProfile?.professions || []).forEach(p => {
+          if (profMap[p.slug]) profNiveles.add(profMap[p.slug]);
+        });
+        for (const lvl of serviceLines) {
+          if (!profNiveles.has(lvl)) {
+            return res.status(400).json({ success: false, error: `No tenés la profesión para enseñar en ${lvl}` });
+          }
+        }
+      } else {
+        // Resto de entornos: validación original
+        if (!areaNode) {
+          return res.status(400).json({ success: false, error: 'Invalid area' });
+        }
+        const catNode = areaNode.categories.find(c => c.id === serviceLine);
+        if (!catNode) {
+          return res.status(400).json({ success: false, error: 'Invalid service line for this area' });
+        }
+      }
+
+      // Educación: validar que no existan avisos activos para esos niveles
+      if (isEducacion) {
+        for (const lvl of serviceLines) {
+          const existing = await Aviso.findOne({
+            professional: req.user.id,
+            environment: 'educacion',
+            serviceLine: lvl,
+            status: { $in: ['pending_payment', 'active', 'expiring'] }
+          });
+          if (existing) {
+            return res.status(400).json({ success: false, error: `Ya tenés un aviso activo para ${lvl} en Educación. Solo se permite un aviso por nivel.` });
+          }
+        }
+      } else {
+        // Validación original para resto de entornos
+        const existing = await Aviso.findOne({
+          professional: req.user.id,
+          environment,
+          serviceLine,
+          status: { $in: ['pending_payment', 'active', 'expiring'] }
+        });
+        if (existing) {
+          return res.status(400).json({ success: false, error: `Ya tenés un aviso activo para ${serviceLine} en ${environment}. Solo se permite un aviso por línea de servicio.` });
+        }
+      }
+
+      // Validar entorno declarado para no-educacion
+      if (!isEducacion) {
+        if (!areaNode) {
+          return res.status(400).json({ success: false, error: 'Invalid area' });
+        }
+        const catNode = areaNode.categories.find(c => c.id === serviceLine);
+        if (!catNode) {
+          return res.status(400).json({ success: false, error: 'Invalid service line for this area' });
+        }
+
+        const hogar = user.hogarProfile || {};
+        // Only environments where the professional has services with BOTH brands and actions loaded
+        const declaredEnvs = new Set(
+          (hogar.services || [])
+            .filter(s => Array.isArray(s.brands) && s.brands.length > 0
+                      && Array.isArray(s.actions) && s.actions.length > 0)
+            .map(s => {
+              const p = s.path || '';
+              return (p.includes('/') ? p.split('/')[0] : p.split('.')[0]);
+            })
+            .filter(Boolean)
+        );
+        if (!declaredEnvs.has(environment)) {
+          return res.status(400).json({ success: false, error: `Environment "${environment}" is not declared in your profile` });
+        }
+
+        // The service line must also have brands AND actions loaded by the professional
+        const declaredLines = new Set(
+          (hogar.services || [])
+            .filter(s => Array.isArray(s.brands) && s.brands.length > 0
+                      && Array.isArray(s.actions) && s.actions.length > 0)
+            .map(s => {
+              const p = s.path || '';
+              const parts = p.includes('/') ? p.split('/') : p.split('.');
+              return (parts.length >= 2 && parts[0] === environment) ? parts[1] : null;
+            })
+            .filter(Boolean)
+        );
+        if (!declaredLines.has(serviceLine)) {
+          return res.status(400).json({ success: false, error: `La línea de servicio "${serviceLine}" no está cargada con marcas y acciones en tu perfil` });
+        }
+      }
+
+      const now = new Date();
+      const endDate = new Date(now);
+      endDate.setDate(endDate.getDate() + AVISO_DURATION_DAYS);
+
+      const created = [];
+      for (const lvl of isEducacion ? serviceLines : [serviceLine]) {
+        const catNode = isEducacion ? { id: lvl, name: lvl.charAt(0).toUpperCase() + lvl.slice(1) } : areaNode.categories.find(c => c.id === serviceLine);
+        const aviso = await Aviso.create({
+          professional: req.user.id,
+          environment,
+          serviceLine: lvl,
+          serviceLineName: catNode.name,
+          text: text || '',
+          startDate: now,
+          endDate,
+          price: AVISO_PRICES[environment],
+          status: 'pending_payment'
+        });
+        created.push(aviso);
+      }
+
+      res.status(201).json({ success: true, data: created.length === 1 ? created[0] : created });
+    } catch (err) {
+      console.error('createAviso error:', err);
+      res.status(500).json({ success: false, error: err.message });
     }
-    const catNode = areaNode.categories.find(c => c.id === serviceLine);
-    if (!catNode) {
-      return res.status(400).json({ success: false, error: 'Invalid service line for this area' });
-    }
-
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ success: false, error: 'User not found' });
-    }
-
-    const activeCount = await Aviso.countDocuments({
-      professional: req.user.id,
-      status: { $in: ['pending_payment', 'active', 'expiring'] }
-    });
-    if (activeCount >= MAX_ACTIVE_AVISOS) {
-      return res.status(400).json({ success: false, error: `Maximum ${MAX_ACTIVE_AVISOS} active avisos allowed` });
-    }
-
-    const existing = await Aviso.findOne({
-      professional: req.user.id,
-      environment,
-      serviceLine,
-      status: { $in: ['pending_payment', 'active', 'expiring'] }
-    });
-    if (existing) {
-      return res.status(400).json({ success: false, error: `Ya tenés un aviso activo para ${catNode.name} en ${environment}. Solo se permite un aviso por línea de servicio.` });
-    }
-
-    const hogar = user.hogarProfile || {};
-    // Only environments where the professional has services with BOTH brands and actions loaded
-    const declaredEnvs = new Set(
-      (hogar.services || [])
-        .filter(s => Array.isArray(s.brands) && s.brands.length > 0
-                  && Array.isArray(s.actions) && s.actions.length > 0)
-        .map(s => {
-          const p = s.path || '';
-          return (p.includes('/') ? p.split('/')[0] : p.split('.')[0]);
-        })
-        .filter(Boolean)
-    );
-    if (!declaredEnvs.has(environment)) {
-      return res.status(400).json({ success: false, error: `Environment "${environment}" is not declared in your profile` });
-    }
-
-    // The service line must also have brands AND actions loaded by the professional
-    const declaredLines = new Set(
-      (hogar.services || [])
-        .filter(s => Array.isArray(s.brands) && s.brands.length > 0
-                  && Array.isArray(s.actions) && s.actions.length > 0)
-        .map(s => {
-          const p = s.path || '';
-          const parts = p.includes('/') ? p.split('/') : p.split('.');
-          return (parts.length >= 2 && parts[0] === environment) ? parts[1] : null;
-        })
-        .filter(Boolean)
-    );
-    if (!declaredLines.has(serviceLine)) {
-      return res.status(400).json({ success: false, error: `La línea de servicio "${serviceLine}" no está cargada con marcas y acciones en tu perfil` });
-    }
-
-    const now = new Date();
-    const endDate = new Date(now);
-    endDate.setDate(endDate.getDate() + AVISO_DURATION_DAYS);
-
-    const aviso = await Aviso.create({
-      professional: req.user.id,
-      environment,
-      serviceLine,
-      serviceLineName: catNode.name,
-      text: text || '',
-      startDate: now,
-      endDate,
-      price: AVISO_PRICES[environment],
-      status: 'pending_payment'
-    });
-
-    res.status(201).json({ success: true, data: aviso });
-  } catch (err) {
-    console.error('createAviso error:', err);
-    res.status(500).json({ success: false, error: err.message });
-  }
-};
+  };
 
 exports.getMyAvisos = async (req, res) => {
   try {
@@ -553,61 +687,110 @@ exports.getExpiringAvisos = async (req, res) => {
 };
 
 exports.getAvailableServiceLines = async (req, res) => {
-  try {
-    const { environment } = req.query;
-    if (!environment) {
-      return res.status(400).json({ success: false, error: 'environment query param required' });
-    }
-
-    const areaNode = serviceTree.find(a => a.id === environment);
-    if (!areaNode) {
-      return res.status(400).json({ success: false, error: 'Invalid area' });
-    }
-
-    const user = await User.findById(req.user.id).select('hogarProfile.services professionalProfile.services');
-    if (!user) {
-      return res.status(404).json({ success: false, error: 'User not found' });
-    }
-
-    // Extract unique service lines from the professional's hogarProfile.services
-    // for this environment that have BOTH brands and actions loaded
-    // (supports slash "env/cat/device" and dot "env.cat.device" path formats)
-    const declaredLines = new Set();
-    const hp = user.hogarProfile || {};
-    (hp.services || []).forEach(function(svc) {
-      const brands = Array.isArray(svc.brands) ? svc.brands : [];
-      const actions = Array.isArray(svc.actions) ? svc.actions : [];
-      if (brands.length === 0 || actions.length === 0) return;
-      const path = svc.path || '';
-      const parts = path.includes('/') ? path.split('/') : path.split('.');
-      if (parts.length >= 2 && parts[0] === environment) {
-        declaredLines.add(parts[1]);
+    try {
+      const { environment } = req.query;
+      if (!environment) {
+        return res.status(400).json({ success: false, error: 'environment query param required' });
       }
-    });
 
-    // Only categories where the professional loaded brands AND actions for this environment
-    const candidateLines = (areaNode.categories || [])
-      .filter(c => declaredLines.has(c.id))
-      .map(c => {
-        const devices = (c.devices || []).map(d => d.name);
-        return { id: c.id, name: c.name, examples: devices.slice(0, 4).join(', ') + (devices.length > 4 ? ' y más' : '') };
+      // Educación: devuelve niveles (primario, secundario, universitario) en vez de categorías
+      if (environment === 'educacion') {
+        const user = await User.findById(req.user.id).select('professionalProfile.professions');
+        if (!user) {
+          return res.status(404).json({ success: false, error: 'User not found' });
+        }
+
+        // Mapear profesiones de enseñanza a niveles
+        const profNiveles = new Set();
+        const profMap = {
+          'docente-primaria': 'primario',
+          'profesor-matematicas': 'primario',
+          'profesor-lengua-literatura': 'primario',
+          'profesor-ingles': 'primario',
+          'profesor-formacion-etica': 'primario',
+          'docente-secundaria': 'secundario',
+          'profesor-fisica-quimica': 'secundario',
+          'profesor-biologia-ciencias': 'secundario',
+          'profesor-historia-geografia': 'secundario',
+          'docente-universitario': 'universitario'
+        };
+
+        (user.professionalProfile?.professions || []).forEach(p => {
+          if (profMap[p.slug]) profNiveles.add(profMap[p.slug]);
+        });
+
+        // Niveles disponibles (los que tiene el profesional y no están en avisos activos)
+        const allLevels = ['primario', 'secundario', 'universitario'];
+        const candidateLevels = allLevels.filter(l => profNiveles.has(l));
+
+        const usedLevels = await Aviso.distinct('serviceLine', {
+          professional: req.user.id,
+          environment: 'educacion',
+          status: { $in: ['pending_payment', 'active', 'expiring'] }
+        });
+        const usedSet = new Set(usedLevels);
+
+        const available = candidateLevels
+          .filter(l => !usedSet.has(l))
+          .map(l => ({
+            id: l,
+            name: l.charAt(0).toUpperCase() + l.slice(1)
+          }));
+
+        return res.json({ success: true, data: available, used: [...usedSet] });
+      }
+
+      // Resto de entornos (hogar, oficina, pime, industria)
+      const areaNode = serviceTree.find(a => a.id === environment);
+      if (!areaNode) {
+        return res.status(400).json({ success: false, error: 'Invalid area' });
+      }
+
+      const user = await User.findById(req.user.id).select('hogarProfile.services professionalProfile.services');
+      if (!user) {
+        return res.status(404).json({ success: false, error: 'User not found' });
+      }
+
+      // Extract unique service lines from the professional's hogarProfile.services
+      // for this environment that have BOTH brands and actions loaded
+      // (supports slash "env/cat/device" and dot "env.cat.device" path formats)
+      const declaredLines = new Set();
+      const hp = user.hogarProfile || {};
+      (hp.services || []).forEach(function(svc) {
+        const brands = Array.isArray(svc.brands) ? svc.brands : [];
+        const actions = Array.isArray(svc.actions) ? svc.actions : [];
+        if (brands.length === 0 || actions.length === 0) return;
+        const path = svc.path || '';
+        const parts = path.includes('/') ? path.split('/') : path.split('.');
+        if (parts.length >= 2 && parts[0] === environment) {
+          declaredLines.add(parts[1]);
+        }
       });
 
-    const usedLines = await Aviso.distinct('serviceLine', {
-      professional: req.user.id,
-      environment,
-      status: { $in: ['pending_payment', 'active', 'expiring'] }
-    });
-    const usedSet = new Set(usedLines);
+      // Only categories where the professional loaded brands AND actions for this environment
+      const candidateLines = (areaNode.categories || [])
+        .filter(c => declaredLines.has(c.id))
+        .map(c => {
+          const devices = (c.devices || []).map(d => d.name);
+          return { id: c.id, name: c.name, examples: devices.slice(0, 4).join(', ') + (devices.length > 4 ? ' y más' : '') };
+        });
 
-    const available = candidateLines.filter(l => !usedSet.has(l.id));
+      const usedLines = await Aviso.distinct('serviceLine', {
+        professional: req.user.id,
+        environment,
+        status: { $in: ['pending_payment', 'active', 'expiring'] }
+      });
+      const usedSet = new Set(usedLines);
 
-    res.json({ success: true, data: available, used: [...usedSet] });
-  } catch (err) {
-    console.error('getAvailableServiceLines error:', err);
-    res.status(500).json({ success: false, error: err.message });
-  }
-};
+      const available = candidateLines.filter(l => !usedSet.has(l.id));
+
+      res.json({ success: true, data: available, used: [...usedSet] });
+
+    } catch (err) {
+      console.error('getAvailableServiceLines error:', err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  };
 
 function extractProfessionalData(user) {
   if (!user) return null;

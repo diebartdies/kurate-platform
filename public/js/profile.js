@@ -60,7 +60,7 @@
             if (loader) loader.style.display = 'none';
             // PC->móvil handoff: si es pre-registrado sin DNI y está en celular, llevar a captura
             const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 768;
-            const needsDni = user.verificationStatus !== 'approved' && (!user.verificationDocuments || user.verificationDocuments.length < 3);
+            const needsDni = user.verificationStatus !== 'approved' && !user.verificationDocumentsCount;
             if (needsDni && isMobile && !location.pathname.includes('captura-dni')) {
                 // evitar loop si ya está en captura
                 if (!sessionStorage.getItem('dni_redirect_done')) {
@@ -90,7 +90,7 @@
             ? [loc.neighborhood || loc.city, loc.province].filter(Boolean).join(', ')
             : '';
         const vStatus = user.verificationStatus || 'pending';
-        const statusColor = vStatus === 'approved' ? '#22c55e' : (vStatus === 'rejected' ? '#e08' : '#f59e0b');
+        const statusColor = vStatus === 'approved' ? '#15803d' : (vStatus === 'rejected' ? '#dc2626' : '#b45309');
         const statusLabel = vStatus === 'approved' ? 'Aprobado' : (vStatus === 'rejected' ? 'Rechazado' : 'Pendiente');
 
         // Build specialties
@@ -105,14 +105,14 @@
                     <a href="/captura-dni.html" style="display:inline-block;padding:10px 18px;background:#f59e0b;color:#111;border-radius:8px;font-weight:700;text-decoration:none">📸 Capturar DNI ahora</a>
                     <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
                         <button type="button" id="sendLinkToPhoneBtn" style="padding:6px 12px;background:#333;color:#fff;border:1px solid #555;border-radius:6px;font-size:0.8rem;cursor:pointer">📋 Copiar link</button>
-                        <button type="button" id="sendLinkWhatsAppBtn" style="padding:6px 12px;background:#25D366;color:#fff;border:none;border-radius:6px;font-size:0.8rem;cursor:pointer;font-weight:700">💬 WhatsApp</button>
+                        <button type="button" id="sendLinkWhatsAppBtn" style="padding:6px 12px;background:#25D366;color:#08281d;border:none;border-radius:6px;font-size:0.8rem;cursor:pointer;font-weight:700">💬 WhatsApp</button>
                         <button type="button" id="sendLinkSmsBtn" style="padding:6px 12px;background:#007AFF;color:#fff;border:none;border-radius:6px;font-size:0.8rem;cursor:pointer">✉️ SMS</button>
                     </div>
                 </div>` : '';
 
         content.innerHTML = `
             <div style="max-width: 600px; margin: 0 auto;">
-                <h2 class="gold-text" style="margin-bottom: 20px; text-align: center;">Mi Perfil</h2>
+                <h1 class="gold-text" style="margin-bottom: 20px; text-align: center;">Mi Perfil</h1>
                 ${needsDniBanner}
 
                 <div class="card" style="border: 1px solid rgba(212, 175, 55, 0.3); padding: 0; overflow: hidden;">

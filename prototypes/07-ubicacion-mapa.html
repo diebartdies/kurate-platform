@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KuraTe — Selección de Ubicación por Mapa (Prototipo)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"></noscript>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #0B0F19; --bg-card: #161B2A; --bg-glass: rgba(22,27,42,0.7);
+            --border: rgba(148,163,184,0.15); --border-focus: #A855F7;
+            --text: #F0F2F5; --text-secondary: #94A3B8; --text-muted: #64748B;
+            --violet: #A855F7; --cyan: #06B6D4; --green: #10B981;
+            --radius: 16px; --radius-sm: 12px; --radius-xs: 8px;
+            --font-heading: 'Clash Display', sans-serif; --font-body: 'Plus Jakarta Sans', sans-serif;
+        }
+        body { font-family: var(--font-body); background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+        :focus-visible { outline: 3px solid var(--border-focus); outline-offset: 3px; border-radius: 4px; }
+        .skip-link { position: absolute; top: -100%; left: 1rem; z-index: 9999; padding: .75rem 1.5rem; background: var(--violet); color: #fff; font-weight: 600; border-radius: 0 0 8px 8px; text-decoration: none; }
+        .skip-link:focus { top: 0; }
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+        .wrap { max-width: 1200px; margin: 0 auto; padding: 3rem 1.5rem 4rem; }
+        .back-link { display: inline-flex; align-items: center; gap: .5rem; color: var(--text-secondary); text-decoration: none; font-size: .875rem; font-weight: 600; margin-bottom: 1.5rem; transition: color .2s; }
+        .back-link:hover { color: var(--text); }
+        h1 { font-family: var(--font-heading); font-size: clamp(1.75rem, 4vw, 2.5rem); font-weight: 700; margin-bottom: .5rem; background: linear-gradient(135deg, #FFF, #E0E7FF, #A5F3FC); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .subtitle { color: var(--text-secondary); font-size: 1.0625rem; max-width: 720px; margin-bottom: 1rem; }
+
+        .note { display: inline-flex; align-items: center; gap: .5rem; padding: .5rem 1rem; background: rgba(6,182,212,.1); border: 1px solid rgba(6,182,212,.3); border-radius: 8px; color: var(--cyan); font-size: .8125rem; font-weight: 600; margin-bottom: 2.5rem; }
+
+        /* ===== Wizard step tracker (entra desde el prototipo 06) ===== */
+        .wz-track { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem; padding: .875rem 1.25rem; background: var(--bg-glass); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+        .wz-track[hidden] { display: none; }
+        .wz-steps { display: inline-flex; align-items: center; gap: .25rem; }
+        .wz-dot { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: .75rem; font-weight: 700; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); }
+        .wz-dot.active { background: var(--violet); border-color: var(--violet); color: #fff; box-shadow: 0 0 16px rgba(168,85,247,.5); }
+        .wz-dot.done { background: rgba(16,185,129,.15); border-color: var(--green); color: var(--green); }
+        .wz-line { width: 22px; height: 2px; background: var(--border); }
+        .wz-action-pill { padding: .375rem .875rem; border-radius: 9999px; background: rgba(16,185,129,.12); border: 1px solid rgba(16,185,129,.4); color: var(--green); font-size: .8125rem; font-weight: 700; }
+        .wz-categoria-pill { padding: .375rem .875rem; border-radius: 9999px; background: rgba(168,85,247,.12); border: 1px solid rgba(168,85,247,.4); color: var(--violet); font-size: .8125rem; font-weight: 700; }
+        .wz-step-label { color: var(--text-secondary); font-size: .8125rem; font-weight: 600; margin-left: auto; }
+
+        /* ===== Breadcrumb ===== */
+        .breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-bottom: 2rem; padding: .875rem 1.25rem; background: var(--bg-glass); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+        .crumb { display: inline-flex; align-items: center; gap: .375rem; padding: .4375rem .875rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 9999px; font-size: .8125rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all .2s; }
+        .crumb:hover { border-color: rgba(168,85,247,.4); color: var(--text); }
+        .crumb.selected { border-color: var(--violet); background: rgba(168,85,247,.12); color: var(--violet); }
+        .crumb-sep { color: var(--text-muted); font-size: .875rem; }
+        .crumb-placeholder { color: var(--text-muted); font-size: .8125rem; font-style: italic; }
+
+        /* ===== Three big scope buttons ===== */
+        .scope-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+        @media (max-width: 820px) { .scope-grid { grid-template-columns: 1fr; } }
+
+        .scope-btn {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            background: var(--bg-glass);
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            backdrop-filter: blur(20px);
+            cursor: pointer;
+            color: var(--text);
+            font-family: var(--font-body);
+            text-align: left;
+            transition: transform .3s, border-color .3s, box-shadow .3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .scope-btn::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--violet), var(--cyan)); opacity: 0; transition: opacity .3s; }
+        .scope-btn:hover { transform: translateY(-5px); border-color: rgba(168,85,247,.5); box-shadow: 0 24px 48px rgba(0,0,0,.5), 0 0 32px rgba(168,85,247,.12); }
+        .scope-btn:hover::before { opacity: 1; }
+        .scope-btn[aria-pressed="true"] { border-color: var(--violet); box-shadow: 0 0 32px rgba(168,85,247,.25); }
+        .scope-btn[aria-pressed="true"]::before { opacity: 1; }
+
+        .scope-map { position: relative; aspect-ratio: 5 / 6; border-radius: 10px; overflow: hidden; background: var(--bg-card); border: 1px solid var(--border); }
+        .scope-map img { display: block; width: 100%; height: 100%; object-fit: cover; }
+        .scope-title { font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; }
+        .scope-desc { color: var(--text-secondary); font-size: .875rem; line-height: 1.6; }
+
+        /* ===== Result panel (grid de provincias) ===== */
+        .result-panel { display: none; margin-top: 2rem; }
+        .result-panel.active { display: block; animation: fadeIn .3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .result-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+        .result-title { font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; }
+        .result-hint { color: var(--text-muted); font-size: .875rem; }
+
+        .prov-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 1rem; }
+        @media (max-width: 640px) { .prov-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); } }
+
+        .prov-card {
+            display: flex; flex-direction: column; gap: .5rem;
+            background: var(--bg-glass);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: .625rem;
+            backdrop-filter: blur(20px);
+            transition: border-color .25s, box-shadow .25s;
+        }
+        .prov-card:hover { border-color: rgba(168,85,247,.45); }
+        .prov-card.selected { border-color: var(--green); box-shadow: 0 0 24px rgba(16,185,129,.2); }
+
+        .prov-map { position: relative; aspect-ratio: 4 / 3; border-radius: 8px; overflow: hidden; background: var(--bg-card); border: 1px solid var(--border); }
+        .prov-map img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+        .prov-name { position: absolute; left: 0; right: 0; bottom: 0; padding: 1rem .6rem .45rem; font-family: var(--font-heading); font-size: .8125rem; font-weight: 700; line-height: 1.25; color: #fff; background: linear-gradient(to top, rgba(11,15,25,.94), rgba(11,15,25,0)); pointer-events: none; }
+        .prov-count { position: absolute; top: .375rem; right: .375rem; padding: .15rem .45rem; border-radius: 6px; background: rgba(11,15,25,.78); border: 1px solid rgba(148,163,184,.25); color: var(--text-secondary); font-size: .6875rem; backdrop-filter: blur(8px); }
+        .prov-count strong { color: var(--green); font-weight: 700; }
+
+        .field { display: flex; flex-direction: column; gap: .25rem; }
+        select {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 100%;
+            padding: .55rem 2rem .55rem .7rem;
+            background: #0E1424 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='%2394A3B8' d='M4 6l4 4 4-4z'/%3E%3C/svg%3E") no-repeat right .8rem center;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-xs);
+            color: var(--text);
+            font-family: var(--font-body);
+            font-size: .8125rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        select:hover { border-color: rgba(168,85,247,.45); }
+        select:disabled { opacity: .55; cursor: not-allowed; }
+
+        /* ===== Confirm bar ===== */
+        .confirm-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 2rem; padding: 1.25rem; background: rgba(16,185,129,.08); border: 1px solid rgba(16,185,129,.3); border-radius: var(--radius-sm); }
+        .confirm-loc { font-size: .9375rem; }
+        .confirm-loc .loc-label { color: var(--text-muted); font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; margin-bottom: .125rem; }
+        .confirm-loc .loc-value { font-weight: 700; color: var(--green); }
+        .confirm-loc .loc-empty { font-style: italic; color: var(--text-muted); font-weight: 400; }
+
+        .btn { display: inline-flex; align-items: center; gap: .5rem; padding: .875rem 1.75rem; border-radius: var(--radius-xs); font-family: var(--font-body); font-size: 1rem; font-weight: 700; cursor: pointer; transition: all .2s; border: none; text-decoration: none; }
+        .btn-primary { background: linear-gradient(135deg, var(--violet), var(--cyan)); color: #0B0F19; box-shadow: 0 4px 24px rgba(168,85,247,.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(168,85,247,.4); }
+        .btn-primary:disabled { opacity: .4; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-secondary { background: transparent; color: var(--text-secondary); border: 2px solid var(--border); }
+        .btn-secondary:hover { border-color: var(--text-secondary); color: var(--text); }
+
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+        @media (prefers-contrast: high) { .scope-btn, .prov-card { border-width: 3px; } }
+        @media (max-width: 640px) { .confirm-bar { flex-direction: column; align-items: stretch; } .btn { justify-content: center; } }
+    </style>
+</head>
+<body>
+    <a href="#main" class="skip-link">Saltar al contenido</a>
+
+    <main id="main" class="wrap">
+        <a href="index.html" class="back-link" aria-label="Volver al menú de prototipos">← Volver a prototipos</a>
+        <h1>¿Dónde necesitás el servicio?</h1>
+        <p class="subtitle">Elegí el alcance y después el departamento/partido/comuna exacto. Cada provincia tiene su tarjeta con su propio dropdown: data cargada de la colección <span style="font-family:monospace;">departments</span>.</p>
+        <span class="note">🗺️ Mapas reales por provincia — la elección va por dropdown (departamentos chicos serían imposibles de clickear)</span>
+
+        <!-- Wizard step indicator + acción elegida en el paso 1 -->
+        <div class="wz-track" id="wzTrack" hidden>
+            <span class="wz-steps" aria-hidden="true">
+                <span class="wz-dot done">1</span><span class="wz-line"></span>
+                <span class="wz-dot done">2</span><span class="wz-line"></span>
+                <span class="wz-dot active">3</span><span class="wz-line"></span>
+                <span class="wz-dot">4</span><span class="wz-line"></span>
+                <span class="wz-dot">5</span><span class="wz-line"></span>
+                <span class="wz-dot">6</span>
+            </span>
+            <span class="wz-action-pill" id="wzActionPill">🔧 Reparar</span>
+            <span class="wz-categoria-pill" id="wzCategoriaPill" hidden></span>
+            <span class="wz-step-label">Paso 3 de 6 · Ubicación</span>
+        </div>
+
+        <!-- Breadcrumb -->
+        <nav aria-label="Ruta de selección" class="breadcrumb" id="breadcrumb"></nav>
+
+        <!-- Step 1: scope selector -->
+        <section aria-labelledby="scope-title">
+            <h2 class="sr-only" id="scope-title">Elegí el mapa de ubicación</h2>
+            <div class="scope-grid" role="group" aria-label="Elegí el mapa">
+                <!-- Argentina -->
+                <button type="button" class="scope-btn" data-scope="argentina" aria-pressed="false" id="scope-argentina">
+                    <div class="scope-map">
+                        <img src="/public/images/mapa de argentina.jpeg" alt="Mapa de Argentina" loading="lazy" width="461" height="666">
+                    </div>
+                    <span class="scope-title">🗺️ Argentina</span>
+                    <span class="scope-desc">Grid con las 22 provincias (Bs.As. y CABA tienen su propio mapa al lado): cada tarjeta trae su mapa y su dropdown de departamentos.</span>
+                </button>
+
+                <!-- Buenos Aires provincia -->
+                <button type="button" class="scope-btn" data-scope="bsas" aria-pressed="false" id="scope-bsas">
+                    <div class="scope-map">
+                        <img src="/public/images/provincia de buenos aires.jpg" alt="Mapa de la provincia de Buenos Aires" loading="lazy" width="735" height="802">
+                    </div>
+                    <span class="scope-title">🏙️ Buenos Aires (Provincia)</span>
+                    <span class="scope-desc">Directo a los 135 partidos por dropdown. Ideal si ya sabés que es en provincia (no CABA).</span>
+                </button>
+
+                <!-- CABA / AMBA -->
+                <button type="button" class="scope-btn" data-scope="caba" aria-pressed="false" id="scope-caba">
+                    <div class="scope-map">
+                        <img src="/public/images/amba.jpeg" alt="Mapa del AMBA (CABA y conurbano)" loading="lazy" width="631" height="485">
+                    </div>
+                    <span class="scope-title">📍 CABA + AMBA</span>
+                    <span class="scope-desc">Un solo dropdown: comunas de CABA con sus barrios + los 24 partidos del AMBA.</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Step 2: grid de provincias con dropdown -->
+        <div class="result-panel" id="resultPanel">
+            <div class="result-header">
+                <h2 class="result-title" id="resultTitle">—</h2>
+                <span class="result-hint" id="resultHint"></span>
+            </div>
+            <div class="prov-grid" id="provGrid" role="region" aria-label="Provincias"></div>
+        </div>
+
+        <!-- Confirm -->
+        <div class="confirm-bar" id="confirmBar">
+            <div class="confirm-loc">
+                <div class="loc-label">Tu ubicación seleccionada</div>
+                <span class="loc-value" id="confirmText">—</span>
+            </div>
+            <div style="display:flex; gap:.75rem; flex-wrap:wrap; align-items:center;">
+                <button type="button" class="btn btn-secondary" id="btnClear" disabled>Limpiar</button>
+                <button type="button" class="btn btn-primary" id="btnConfirm" disabled>Usar esta ubicación</button>
+            </div>
+        </div>
+    </main>
+
+    <div id="announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- Fallback embebido (generado desde el CSV; en prod se usa la API) -->
+    <script src="data-departments.js"></script>
+
+    <script>
+    (function() {
+        'use strict';
+        const $ = id => document.getElementById(id);
+        const announce = msg => $('announcer').textContent = msg;
+
+        /* ===== Paso 1 (acción) viene del prototipo 06 ===== */
+        const ACCION_ICONO = { reparar:'🔧', instalar:'⚡', educar:'📚', disenar:'🎨', mantener:'🧹', verificar:'🔍', desinstalar:'🗑️', mejorar:'⭐', comprar:'🛒', buscar:'🔎', vender:'💰', donar:'🎁', descartar:'🚮' };
+        const ACCION_LABEL = { reparar:'Reparar', instalar:'Instalar', educar:'Educar', disenar:'Diseñar', mantener:'Mantener', verificar:'Verificar', desinstalar:'Desinstalar', mejorar:'Mejorar', comprar:'Comprar', buscar:'Buscar', vender:'Vender', donar:'Donar', descartar:'Descartar' };
+
+        /* ===== Alias de provincias (CSV -> nombre en BD) ===== */
+        const PROV_ALIAS = {
+            'Ciudad Autónoma de Buenos Aires': 'CABA',
+            'Tierra del Fuego, Antártida e Islas del Atlántico Sur': 'Tierra del Fuego',
+            'Tierra del Fuego': 'Tierra del Fuego',
+            'CABA': 'CABA'
+        };
+        const normProv = name => PROV_ALIAS[name] || name;
+
+        // Invierte el alias para buscar en el fallback (que usa nombres del CSV)
+        function normal2csv(name) {
+            const inv = { 'CABA': 'Ciudad Autónoma de Buenos Aires', 'Tierra del Fuego': 'Tierra del Fuego, Antártida e Islas del Atlántico Sur' };
+            return inv[name] || name;
+        }
+
+        /* ===== Estado ===== */
+        const state = {
+            scope: null,              // 'argentina' | 'bsas' | 'caba'
+            seleccion: null,          // { prov, dept }
+            accion: new URLSearchParams(location.search).get('accion') || '',  // del prototipo 06
+            categoria: new URLSearchParams(location.search).get('categoria') || ''  // del prototipo 06
+        };
+
+        const scopeInfo = {
+            argentina: { label:'🗺️ Todas las provincias de Argentina', hint:'Elegí el departamento/partido en el dropdown de cada tarjeta.' },
+            bsas: { label:'🏙️ Partidos de Buenos Aires (Provincia)', hint:'Elegí el partido en el dropdown.' },
+            caba: { label:'📍 Comunas de CABA y partidos del AMBA', hint:'Comunas con sus barrios + partidos del conurbano, en un solo dropdown.' }
+        };
+
+        // Muestra el tracker cuando el prototipo 06 pasa la acción elegida
+        const _accion = state.accion;
+        if (_accion && ACCION_LABEL[_accion]) {
+            const track = $('wzTrack');
+            track.hidden = false;
+            track.querySelector('.wz-action-pill').textContent = (ACCION_ICONO[_accion] || '') + ' ' + ACCION_LABEL[_accion];
+            announce('Paso 3 de 6: elegí la ubicación. Ya elegiste: ' + ACCION_LABEL[_accion] + '.');
+        }
+        const _categoria = state.categoria;
+        if (_categoria) {
+            const track = $('wzTrack');
+            track.hidden = false;
+            const p = $('wzCategoriaPill');
+            p.hidden = false;
+            p.textContent = '🏷️ ' + _categoria;
+            announce('Categoría seleccionada: ' + _categoria + '.');
+        }
+
+        // Mapa por provincia (imagen real). Claves = nombre normalizado.
+        const PROV_MAP = {
+            'Buenos Aires': 'provincia de buenos aires.jpg',
+            'CABA': 'amba.jpeg',
+            'Catamarca': 'catamarca.png',
+            'Chaco': 'chaco.png',
+            'Chubut': 'chubut.png',
+            'Córdoba': 'cordoba.png',
+            'Corrientes': 'corientes.png',
+            'Entre Ríos': 'parana.png',
+            'Formosa': 'formosa.png',
+            'Jujuy': 'jujuy.jpeg',
+            'La Pampa': 'la pampa.png',
+            'La Rioja': 'la rioja.png',
+            'Mendoza': 'mendoza.jpeg',
+            'Misiones': 'misiones.jpeg',
+            'Neuquén': 'neuquen.png',
+            'Río Negro': 'rio negro.png',
+            'Salta': 'salta.png',
+            'San Juan': 'san juan.jpeg',
+            'San Luis': 'san luis.png',
+            'Santa Cruz': 'santa cruz.jpg',
+            'Santa Fe': 'santa fe.jpeg',
+            'Santiago del Estero': 'santiago del estero.jpeg',
+            'Tierra del Fuego': 'ushuaia.png',
+            'Tucumán': 'tucuman.jpeg'
+        };
+
+        // Barrios de cada comuna de CABA (para mostrar la descripcion en el dropdown)
+        const COMUNA_BARRIOS = {
+            'Comuna 1': ['Retiro', 'San Nicolás', 'Puerto Madero', 'San Telmo', 'Montserrat', 'Constitución'],
+            'Comuna 2': ['Recoleta'],
+            'Comuna 3': ['Balvanera', 'San Cristóbal'],
+            'Comuna 4': ['La Boca', 'Barracas', 'Parque Patricios', 'Nueva Pompeya'],
+            'Comuna 5': ['Almagro', 'Boedo'],
+            'Comuna 6': ['Caballito'],
+            'Comuna 7': ['Flores', 'Parque Chacabuco'],
+            'Comuna 8': ['Villa Soldati', 'Villa Riachuelo', 'Villa Lugano'],
+            'Comuna 9': ['Parque Avellaneda', 'Liniers', 'Mataderos'],
+            'Comuna 10': ['Villa Real', 'Monte Castro', 'Versalles', 'Floresta', 'Vélez Sarsfield', 'Villa Luro'],
+            'Comuna 11': ['Villa General Mitre', 'Villa Devoto', 'Villa del Parque', 'Villa Santa Rita'],
+            'Comuna 12': ['Coghlan', 'Saavedra', 'Villa Urquiza', 'Villa Pueyrredón'],
+            'Comuna 13': ['Núñez', 'Belgrano', 'Colegiales'],
+            'Comuna 14': ['Palermo'],
+            'Comuna 15': ['Chacarita', 'Villa Crespo', 'La Paternal', 'Villa Ortúzar', 'Agronomía', 'Parque Chas']
+        };
+
+        // Partidos del conurbano (24 municipios del AMBA segun INDEC)
+        const AMBA_PARTIDOS = ['Almirante Brown', 'Avellaneda', 'Berazategui', 'Esteban Echeverría', 'Ezeiza', 'Florencio Varela', 'General Rodríguez', 'General San Martín', 'Hurlingham', 'Ituzaingó', 'José C. Paz', 'La Matanza', 'Lanús', 'Lomas de Zamora', 'Malvinas Argentinas', 'Merlo', 'Moreno', 'Morón', 'Quilmes', 'San Fernando', 'San Isidro', 'San Miguel', 'Tigre', 'Vicente López'];
+
+        /* ===== Carga de departamentos: API primero, fallback embebido ===== */
+        async function loadDepartments(provName) {
+            const api = '/api/v1/locations/provinces/name/' + encodeURIComponent(provName) + '/departments';
+            try {
+                const res = await fetch(api, { headers: { 'Accept': 'application/json' } });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+                if (Array.isArray(data) && data.length) return data.map(d => d.name);
+            } catch (e) { /* sin API (prototipo estático): usar fallback */ }
+
+            const fb = (window.DEPARTMENTS_GEO || {});
+            const lookup = fb[provName] || fb[normal2csv(provName)] || [];
+            return lookup.slice();
+        }
+
+        /* ===== Breadcrumb ===== */
+        function renderBreadcrumb() {
+            const bc = $('breadcrumb');
+            bc.innerHTML = '';
+            if (!state.scope) {
+                bc.innerHTML = '<span class="crumb-placeholder">Todavía no elegiste ubicación</span>';
+                return;
+            }
+            const scopeCrumb = document.createElement('button');
+            scopeCrumb.type = 'button';
+            scopeCrumb.className = 'crumb' + (!state.seleccion ? ' selected' : '');
+            scopeCrumb.textContent = scopeLabel(state.scope);
+            scopeCrumb.setAttribute('aria-label', 'Volver al alcance: ' + scopeLabel(state.scope));
+            scopeCrumb.addEventListener('click', () => showScope(state.scope, true));
+            bc.appendChild(scopeCrumb);
+
+            if (state.seleccion) {
+                const sep = document.createElement('span');
+                sep.className = 'crumb-sep';
+                sep.textContent = '›';
+                sep.setAttribute('aria-hidden', 'true');
+                bc.appendChild(sep);
+                const crumb = document.createElement('button');
+                crumb.type = 'button';
+                crumb.className = 'crumb selected';
+                crumb.textContent = state.seleccion.prov + ' › ' + state.seleccion.dept;
+                crumb.addEventListener('click', () => { state.seleccion = null; renderScope(); });
+                bc.appendChild(crumb);
+            }
+        }
+
+        function scopeLabel(scope) {
+            if (scope === 'argentina') return 'Argentina';
+            if (scope === 'bsas') return 'Buenos Aires (Provincia)';
+            return 'CABA + AMBA';
+        }
+
+        /* ===== Confirm bar ===== */
+        function renderConfirm() {
+            const parts = [];
+            if (state.seleccion) parts.push(state.seleccion.prov, state.seleccion.dept);
+            $('confirmText').textContent = parts.length ? parts.join(' › ') : '—';
+            $('btnConfirm').disabled = !state.seleccion;
+            $('btnClear').disabled = !state.scope && !state.seleccion;
+        }
+
+        $('btnClear').addEventListener('click', () => {
+            state.seleccion = null;
+            if (state.scope) { showScope(state.scope, true); }
+            else { $('resultPanel').classList.remove('active'); document.querySelectorAll('.scope-btn').forEach(b => b.setAttribute('aria-pressed', 'false')); }
+            renderBreadcrumb(); renderConfirm();
+            announce('Selección de ubicación limpiada.');
+        });
+
+        $('btnConfirm').addEventListener('click', () => {
+            const params = new URLSearchParams();
+            params.set('paso', '2');
+            if (state.accion && ACCION_LABEL[state.accion]) params.set('accion', state.accion);
+            if (state.categoria) params.set('categoria', state.categoria);
+            if (state.seleccion) params.set('ubicacion', state.seleccion.prov + ' › ' + state.seleccion.dept);
+            location.href = '02-frictionless-wizard.html?' + params.toString();
+        });
+
+        /* ===== Scope buttons ===== */
+        document.querySelectorAll('.scope-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                showScope(btn.dataset.scope);
+                renderBreadcrumb(); renderConfirm();
+            });
+        });
+
+        function showScope(scope, keepSel) {
+            state.scope = scope;
+            if (!keepSel) state.seleccion = null;
+            document.querySelectorAll('.scope-btn').forEach(b => b.setAttribute('aria-pressed', b.dataset.scope === scope ? 'true' : 'false'));
+            renderScope();
+            renderBreadcrumb(); renderConfirm();
+        }
+
+        /* ===== Grid de provincias ===== */
+        function provincesForScope(scope) {
+            if (scope === 'argentina') {
+                return Object.keys(window.DEPARTMENTS_GEO || {})
+                    .map(normProv)
+                    .filter((v, i, a) => a.indexOf(v) === i)
+                    .filter(p => p !== 'Buenos Aires' && p !== 'CABA')
+                    .sort((a, b) => a.localeCompare(b, 'es'));
+            }
+            if (scope === 'bsas') return ['Buenos Aires'];
+            return ['CABA'];
+        }
+
+        function renderScope() {
+            const info = scopeInfo[state.scope];
+            $('resultTitle').textContent = info.label;
+            $('resultHint').textContent = info.hint;
+            const grid = $('provGrid');
+            grid.innerHTML = '';
+            grid.setAttribute('aria-label', info.label);
+
+            const provinces = provincesForScope(state.scope);
+            provinces.forEach((prov, i) => grid.appendChild(buildCard(prov, i)));
+
+            $('resultPanel').classList.add('active');
+            $('resultPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            announce('Selección de alcance: ' + info.label);
+        }
+
+        function buildCard(prov, i) {
+            const card = document.createElement('article');
+            card.className = 'prov-card';
+            card.id = 'card-' + i;
+
+            const imgFile = PROV_MAP[prov];
+            const imgWrap = document.createElement('div');
+            imgWrap.className = 'prov-map';
+            const img = document.createElement('img');
+            img.src = imgFile ? '/public/images/' + imgFile : '/public/images/mapa de argentina.jpeg';
+            img.alt = 'Mapa de la provincia de ' + prov;
+            img.loading = 'lazy';
+            img.width = 400;
+            img.height = 300;
+            imgWrap.appendChild(img);
+
+            const name = document.createElement('h3');
+            name.className = 'prov-name';
+            name.textContent = prov;
+            imgWrap.appendChild(name);
+
+            const count = document.createElement('span');
+            count.className = 'prov-count';
+            count.textContent = 'Cargando…';
+            imgWrap.appendChild(count);
+
+            const field = document.createElement('div');
+            field.className = 'field';
+            const sel = document.createElement('select');
+            sel.id = 'dept-' + i;
+            sel.setAttribute('aria-label', 'Departamentos de ' + prov);
+            sel.disabled = true;
+            field.appendChild(sel);
+
+            card.appendChild(imgWrap);
+            card.appendChild(field);
+
+            if (prov === 'CABA') {
+                fillCabaSelect(sel, count, card, prov);
+            } else {
+                loadDepartments(prov).then(depts => fillSimpleSelect(sel, count, card, prov, depts));
+            }
+
+            sel.addEventListener('change', () => {
+                if (!sel.value) {
+                    if (state.seleccion && state.seleccion.prov === prov) {
+                        state.seleccion = null;
+                        card.classList.remove('selected');
+                    }
+                    renderConfirm();
+                    return;
+                }
+                state.seleccion = { prov: prov, dept: sel.value };
+                document.querySelectorAll('#provGrid .prov-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                document.querySelectorAll('#provGrid .prov-card select').forEach(s => { if (s !== sel) s.value = ''; });
+                renderBreadcrumb(); renderConfirm();
+                announce('Departamento seleccionado: ' + prov + ', ' + sel.value + '. Ya podés usar esta ubicación.');
+            });
+
+            return card;
+        }
+
+        function emptyOption(text) {
+            const opt = document.createElement('option');
+            opt.value = '';
+            opt.textContent = text;
+            return opt;
+        }
+
+        function fillSimpleSelect(sel, count, card, prov, depts) {
+            sel.innerHTML = '';
+            sel.appendChild(emptyOption('Elegir departamento…'));
+            if (!depts.length) {
+                sel.disabled = true;
+                count.textContent = 'Sin datos';
+                return;
+            }
+            depts.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d;
+                opt.textContent = d;
+                sel.appendChild(opt);
+            });
+            sel.disabled = false;
+            count.innerHTML = '<strong>' + depts.length + '</strong> deptos';
+        }
+
+        async function fillCabaSelect(sel, count, card, prov) {
+            sel.innerHTML = '';
+            sel.appendChild(emptyOption('Elegir comuna o partido…'));
+            const [comunas, bsasAll] = await Promise.all([
+                loadDepartments('CABA'),
+                loadDepartments('Buenos Aires')
+            ]);
+            const partidos = AMBA_PARTIDOS.filter(p => bsasAll.indexOf(p) !== -1);
+            if (!comunas.length && !partidos.length) {
+                sel.disabled = true;
+                count.textContent = 'Sin datos';
+                return;
+            }
+
+            const g1 = document.createElement('optgroup');
+            g1.label = 'Comunas de CABA';
+            comunas.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                const barrios = COMUNA_BARRIOS[c];
+                opt.textContent = barrios ? c + ' — ' + barrios.join(', ') : c;
+                g1.appendChild(opt);
+            });
+            sel.appendChild(g1);
+
+            const g2 = document.createElement('optgroup');
+            g2.label = 'Partidos del AMBA (conurbano)';
+            partidos.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p;
+                opt.textContent = p;
+                g2.appendChild(opt);
+            });
+            sel.appendChild(g2);
+
+            sel.disabled = false;
+            count.innerHTML = '<strong>' + (comunas.length + partidos.length) + '</strong> opciones';
+
+            if (state.seleccion && state.seleccion.prov === prov) {
+                sel.value = state.seleccion.dept;
+                card.classList.add('selected');
+            }
+        }
+
+        /* ===== Init ===== */
+        renderBreadcrumb();
+        renderConfirm();
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KuraTe — Clientes vs Profesionales (Prototipo)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"></noscript>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #0B0F19; --bg-card: #161B2A; --bg-glass: rgba(22,27,42,0.7);
+            --border: rgba(148,163,184,0.15); --text: #F0F2F5; --text-secondary: #94A3B8;
+            --text-muted: #64748B; --violet: #A855F7; --cyan: #06B6D4; --green: #10B981;
+            --radius: 16px; --radius-sm: 12px; --radius-xs: 8px;
+            --font-heading: 'Clash Display', sans-serif; --font-body: 'Plus Jakarta Sans', sans-serif;
+        }
+        body { font-family: var(--font-body); background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+        :focus-visible { outline: 3px solid var(--violet); outline-offset: 3px; border-radius: 4px; }
+        .skip-link { position: absolute; top: -100%; left: 1rem; z-index: 9999; padding: .75rem 1.5rem; background: var(--violet); color: #fff; font-weight: 600; border-radius: 0 0 8px 8px; text-decoration: none; }
+        .skip-link:focus { top: 0; }
+
+        .bifurcation { max-width: 1100px; margin: 0 auto; padding: 4rem 1.5rem; }
+        .section-title { font-family: var(--font-heading); font-size: clamp(1.75rem, 4vw, 2.75rem); font-weight: 700; text-align: center; margin-bottom: 0.5rem; background: linear-gradient(135deg, #FFF, #E0E7FF, #A5F3FC); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .section-sub { text-align: center; color: var(--text-secondary); font-size: 1.0625rem; max-width: 600px; margin: 0 auto 3rem; }
+
+        .split-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .split-grid { grid-template-columns: 1fr; } }
+
+        .split-card {
+            position: relative;
+            background: var(--bg-glass);
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 2.5rem 2rem;
+            backdrop-filter: blur(20px);
+            overflow: hidden;
+            transition: transform .3s ease, border-color .3s ease, box-shadow .3s ease;
+        }
+        .split-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+        }
+        .split-card.clientes::before { background: linear-gradient(90deg, var(--cyan), var(--green)); }
+        .split-card.profesionales::before { background: linear-gradient(90deg, var(--violet), var(--cyan)); }
+
+        .split-card.clientes:hover { transform: translateY(-6px); border-color: rgba(6,182,212,0.4); box-shadow: 0 24px 48px rgba(6,182,212,0.15); }
+        .split-card.profesionales:hover { transform: translateY(-6px); border-color: rgba(168,85,247,0.4); box-shadow: 0 24px 48px rgba(168,85,247,0.15); }
+
+        .split-icon { font-size: 3rem; margin-bottom: 1rem; display: block; }
+        .split-card h3 { font-family: var(--font-heading); font-size: 1.75rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .split-card .split-desc { color: var(--text-secondary); font-size: 1rem; margin-bottom: 1.75rem; line-height: 1.7; }
+
+        .split-features { list-style: none; margin-bottom: 2rem; }
+        .split-features li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.625rem 0;
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+        }
+        .split-features li .check {
+            flex-shrink: 0;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-top: 1px;
+        }
+        .clientes .split-features li .check { background: rgba(6,182,212,0.15); color: var(--cyan); border: 1px solid rgba(6,182,212,0.35); }
+        .profesionales .split-features li .check { background: rgba(168,85,247,0.15); color: var(--violet); border: 1px solid rgba(168,85,247,0.35); }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.625rem;
+            width: 100%;
+            padding: 1rem 2rem;
+            border-radius: var(--radius-xs);
+            font-family: var(--font-body);
+            font-size: 1.0625rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .2s ease;
+            border: none;
+            text-decoration: none;
+        }
+        .btn-primary-clientes { background: linear-gradient(135deg, var(--cyan), var(--green)); color: #0B0F19; box-shadow: 0 4px 24px rgba(6,182,212,0.3); }
+        .btn-primary-clientes:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(6,182,212,0.4); }
+        .btn-primary-pro { background: linear-gradient(135deg, var(--violet), var(--cyan)); color: #0B0F19; box-shadow: 0 4px 24px rgba(168,85,247,0.3); }
+        .btn-primary-pro:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(168,85,247,0.4); }
+
+        .split-note { text-align: center; color: var(--text-muted); font-size: 0.75rem; margin-top: 0.75rem; }
+
+        /* Stats inside cards */
+        .split-stats { display: flex; gap: 1.5rem; margin-bottom: 1.75rem; }
+        .split-stat .num { font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; }
+        .split-stat .lbl { font-size: 0.75rem; color: var(--text-muted); }
+        .clientes .split-stat .num { color: var(--cyan); }
+        .profesionales .split-stat .num { color: var(--violet); }
+
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+        @media (prefers-contrast: high) { .split-card { border-width: 3px; } }
+    </style>
+</head>
+<body>
+    <a href="#main" class="skip-link">Saltar al contenido</a>
+    <main id="main" class="bifurcation">
+        <h2 class="section-title">¿Cómo querés usar KuraTe?</h2>
+        <p class="section-sub">Elegí tu camino. Ambos son gratuitos para empezar.</p>
+
+        <div class="split-grid">
+            <!-- CLIENTES -->
+            <section class="split-card clientes" aria-labelledby="clientes-title">
+                <span class="split-icon" aria-hidden="true">🏠</span>
+                <h3 id="clientes-title">Soy Cliente</h3>
+                <p class="split-desc">Necesitás resolver algo y buscás un profesional confiable cerca tuyo.</p>
+
+                <div class="split-stats">
+                    <div class="split-stat">
+                        <div class="num">3 min</div>
+                        <div class="lbl">para publicar</div>
+                    </div>
+                    <div class="split-stat">
+                        <div class="num">Gratis</div>
+                        <div class="lbl">sin costo</div>
+                    </div>
+                </div>
+
+                <ul class="split-features">
+                    <li><span class="check" aria-hidden="true">✓</span> Publicá tu pedido en menos de 3 minutos</li>
+                    <li><span class="check" aria-hidden="true">✓</span> Recibí presupuestos de varios profesionales</li>
+                    <li><span class="check" aria-hidden="true">✓</span> Compará precios, ratings y disponibilidad</li>
+                    <li><span class="check" aria-hidden="true">✓</span> Pagá seguro con garantía de servicio</li>
+                    <li><span class="check" aria-hidden="true">✓</span> Dejá reseña y ayudá a la comunidad</li>
+                </ul>
+
+                <a href="#" class="btn btn-primary-clientes" aria-label="Buscar un profesional ahora">
+                    🔍 Buscar profesional
+                </a>
+                <p class="split-note">Sin registro hasta que elijas un profesional</p>
+            </section>
+
+            <!-- PROFESIONALES -->
+            <section class="split-card profesionales" aria-labelledby="pro-title">
+                <span class="split-icon" aria-hidden="true">💼</span>
+                <h3 id="pro-title">Soy Profesional</h3>
+                <p class="split-desc">Ofrecés un servicio y querés llegar a más clientes sin gastar en publicidad.</p>
+
+                <div class="split-stats">
+                    <div class="split-stat">
+                        <div class="num">0%</div>
+                        <div class="lbl">comisión inicial</div>
+                    </div>
+                    <div class="split-stat">
+                        <div class="num">12K+</div>
+                        <div class="lbl">clientes activos</div>
+                    </div>
+                </div>
+
+                <ul class="split-features">
+                    <li><span class="check" aria-hidden="true">✓</span> Creá tu perfil profesional gratis</li>
+                    <li><span class="check" aria-hidden="true">✓</span> Recibí pedidos calificados en tu zona</li>
+                    <li><span class="check" aria-hidden="true">✓</span> Mostrá tu portfolio, ratings y matrículas</li>
+                    <li><span class="check" aria-hidden="true">✓</span> Publicá avisos destacados desde $5.000</li>
+                    <li><span class="check" aria-hidden="true">✓</span> Dashboard con métricas y seguimiento</li>
+                </ul>
+
+                <a href="#" class="btn btn-primary-pro" aria-label="Crear perfil profesional gratis">
+                    🚀 Crear perfil gratis
+                </a>
+                <p class="split-note">Activación inmediata · Sin costo mensual</p>
+            </section>
+        </div>
+    </main>
+</body>
+</html>

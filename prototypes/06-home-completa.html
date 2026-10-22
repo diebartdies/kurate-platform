@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KuraTe — Home Completa (Prototipo)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"></noscript>
+    <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}:root{--bg:#0B0F19;--bg-elevated:#121721;--bg-card:#161B2A;--bg-glass:rgba(22,27,42,0.7);--border:rgba(148,163,184,0.15);--border-focus:#A855F7;--text:#F0F2F5;--text-secondary:#94A3B8;--text-muted:#7B8AA1;--violet:#A855F7;--cyan:#06B6D4;--green:#10B981;--red:#EF4444;--yellow:#F59E0B;--radius:16px;--radius-sm:12px;--radius-xs:8px;--font-heading:'Clash Display',sans-serif;--font-body:'Plus Jakarta Sans',sans-serif;}html{scroll-behavior:smooth;}body{font-family:var(--font-body);background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased;}:focus-visible{outline:3px solid var(--border-focus);outline-offset:3px;border-radius:4px;}.skip-link{position:absolute;top:-100%;left:1rem;z-index:9999;padding:.75rem 1.5rem;background:var(--violet);color:#fff;font-weight:600;border-radius:0 0 8px 8px;text-decoration:none;}.skip-link:focus{top:0;}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}img{max-width:100%;height:auto;}.site-header{position:sticky;top:0;z-index:100;background:rgba(11,15,25,0.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);}.nav-inner{max-width:1200px;margin:0 auto;padding:0.875rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;}.logo{font-family:var(--font-heading);font-size:1.5rem;font-weight:700;text-decoration:none;background:linear-gradient(135deg,var(--violet),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}.nav-links{display:flex;gap:1.5rem;list-style:none;}.nav-links a{color:var(--text-secondary);text-decoration:none;font-size:0.9375rem;font-weight:500;transition:color .2s;}.nav-links a:hover{color:var(--text);}.nav-cta{padding:0.625rem 1.25rem;background:linear-gradient(135deg,var(--violet),var(--cyan));color:#0B0F19 !important;-webkit-text-fill-color:#0B0F19;font-weight:700 !important;border-radius:var(--radius-xs);text-decoration:none;font-size:0.9375rem;transition:transform .2s;}.nav-cta:hover{transform:translateY(-1px);}@media (max-width:768px){.nav-links{display:none;}}.hero{position:relative;overflow:hidden;padding:5rem 1.5rem 6rem;text-align:center;}.hero::before{content:'';position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:800px;height:800px;background:radial-gradient(circle,rgba(168,85,247,0.15) 0%,transparent 70%);pointer-events:none;}.hero::after{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(148,163,184,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,0.04) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;mask-image:radial-gradient(ellipse at center,black 30%,transparent 70%);-webkit-mask-image:radial-gradient(ellipse at center,black 30%,transparent 70%);}.hero-badge{display:inline-flex;align-items:center;gap:0.5rem;padding:0.5rem 1.25rem;background:rgba(168,85,247,0.12);border:1px solid rgba(168,85,247,0.3);border-radius:9999px;font-size:0.8125rem;font-weight:600;color:#DDD6FE;margin-bottom:1.5rem;position:relative;z-index:1;}.hero-badge .pulse{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s ease-in-out infinite;}@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.6;transform:scale(1.2);}}.hero h1{position:relative;z-index:1;font-family:var(--font-heading);font-size:clamp(2.5rem,6vw,5rem);font-weight:700;line-height:1.05;letter-spacing:-0.03em;margin-bottom:1.5rem;background:linear-gradient(135deg,#FFF 0%,#E0E7FF 40%,#A5F3FC 70%,#D1FAE5 100%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:gradientShift 8s ease-in-out infinite;}@keyframes gradientShift{0%,100%{background-position:0% center;}50%{background-position:100% center;}}.dynamic-text{display:inline-block;min-width:300px;text-align:left;}.hero-sub{position:relative;z-index:1;font-size:clamp(1.125rem,2.5vw,1.375rem);color:var(--text-secondary);max-width:640px;margin:0 auto 2.5rem;}.hero-eslogan{position:relative;z-index:1;font-family:var(--font-heading);font-size:clamp(1.25rem,3vw,1.75rem);font-weight:700;color:var(--cyan);margin-bottom:2.5rem;}.search-wrap{position:relative;z-index:1;max-width:640px;margin:0 auto 2rem;}.search-bar{display:flex;align-items:center;background:var(--bg-glass);border:2px solid var(--border);border-radius:14px;padding:0.5rem 0.5rem 0.5rem 1.25rem;backdrop-filter:blur(20px);transition:border-color .2s;}.search-bar:focus-within{border-color:var(--violet);box-shadow:0 0 32px rgba(168,85,247,0.2);}.search-bar input{flex:1;background:none;border:none;color:var(--text);font-family:var(--font-body);font-size:1.0625rem;padding:0.75rem 0;outline:none;min-width:0;}.search-bar input::placeholder{color:var(--text-muted);}.search-bar button{padding:0.875rem 1.75rem;background:linear-gradient(135deg,var(--violet),var(--cyan));color:#0B0F19;border:none;border-radius:10px;font-family:var(--font-body);font-size:1rem;font-weight:700;cursor:pointer;transition:transform .2s;white-space:nowrap;}.search-bar button:hover{transform:scale(1.03);}.quick-chips{display:flex;flex-wrap:wrap;gap:0.625rem;justify-content:center;position:relative;z-index:1;}.chip{padding:0.5rem 1rem;background:rgba(15,23,42,0.7);border:1px solid var(--border);border-radius:9999px;color:var(--text-secondary);font-size:0.8125rem;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none;}.chip:hover{background:rgba(168,85,247,0.12);border-color:rgba(168,85,247,0.35);color:var(--text);transform:translateY(-2px);}.wizard-preview{max-width:900px;margin:-3rem auto 0;position:relative;z-index:2;}.wizard-card{background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;backdrop-filter:blur(24px);box-shadow:0 24px 64px rgba(0,0,0,0.5);}.wizard-card::before{content:'';display:block;height:3px;background:linear-gradient(90deg,var(--violet),var(--cyan),var(--green));border-radius:2px;margin:-2rem -2rem 1.5rem;}.wizard-card h2{font-family:var(--font-heading);font-size:1.375rem;font-weight:600;margin-bottom:0.375rem;text-align:center;}.wizard-card .wz-hint{color:var(--text-muted);font-size:0.875rem;text-align:center;margin-bottom:1.5rem;}.action-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:0.75rem;}.action-card{display:flex;flex-direction:column;align-items:center;gap:0.5rem;padding:1.125rem 0.75rem;background:var(--bg-card);border:2px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--font-body);font-size:0.875rem;font-weight:600;cursor:pointer;transition:all .2s;text-align:center;}.action-card:hover{border-color:rgba(168,85,247,0.4);background:rgba(168,85,247,0.08);transform:translateY(-3px);}.action-card[aria-pressed="true"]{border-color:var(--violet);background:rgba(168,85,247,0.12);box-shadow:0 0 24px rgba(168,85,247,0.25);}.action-card .action-icon{width:96px;height:auto;object-fit:contain;}.wz-submit{display:block;width:100%;margin-top:1.25rem;padding:1rem;background:linear-gradient(135deg,var(--violet),var(--cyan));color:#0B0F19;border:none;border-radius:var(--radius-xs);font-family:var(--font-body);font-size:1.0625rem;font-weight:700;cursor:pointer;transition:transform .2s,box-shadow .2s;}.wz-submit:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(168,85,247,0.4);}.section{max-width:1200px;margin:0 auto;padding:5rem 1.5rem;}.section-title{font-family:var(--font-heading);font-size:clamp(1.75rem,4vw,2.75rem);font-weight:700;text-align:center;margin-bottom:0.5rem;background:linear-gradient(135deg,#FFF,#E0E7FF,#A5F3FC);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}.section-sub{text-align:center;color:var(--text-secondary);font-size:1.0625rem;max-width:600px;margin:0 auto 3rem;}.section-label{display:block;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--violet);margin-bottom:1rem;text-align:center;}.env-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;}@media (max-width:640px){.env-grid{grid-template-columns:1fr;}}.env-card{position:relative;display:block;border:2px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;background:var(--bg-card);transition:transform .3s,border-color .3s,box-shadow .3s;text-decoration:none;color:inherit;}.env-card:hover{transform:translateY(-6px);border-color:rgba(168,85,247,0.5);box-shadow:0 24px 48px rgba(0,0,0,0.5),0 0 32px rgba(168,85,247,0.15);}.env-image{position:relative;height:220px;overflow:hidden;}.env-image img{width:100%;height:100%;object-fit:cover;transition:transform .5s;}.env-card:hover .env-image img{transform:scale(1.06);}.env-image::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(11,15,25,0.9),rgba(11,15,25,0.2) 60%,transparent);}.env-overlay{position:absolute;bottom:0;left:0;right:0;padding:1.25rem;z-index:1;}.env-name{font-family:var(--font-heading);font-size:1.375rem;font-weight:700;display:flex;align-items:center;gap:0.5rem;}.env-count{padding:0.25rem 0.75rem;background:rgba(168,85,247,0.2);border:1px solid rgba(168,85,247,0.4);border-radius:9999px;font-size:0.75rem;font-weight:700;color:#DDD6FE;backdrop-filter:blur(8px);}.env-desc{color:var(--text-secondary);font-size:0.8125rem;margin-top:0.25rem;}.env-footer{display:flex;align-items:center;justify-content:space-between;padding:0.875rem 1.25rem;background:rgba(11,15,25,0.92);border-top:1px solid var(--border);}.env-tags{display:flex;gap:0.375rem;flex-wrap:wrap;}.env-tag{padding:0.1875rem 0.5rem;background:rgba(148,163,184,0.1);border:1px solid rgba(148,163,184,0.2);border-radius:6px;font-size:0.6875rem;color:var(--text-secondary);font-weight:600;}.env-arrow{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--violet),var(--cyan));display:flex;align-items:center;justify-content:center;color:#0B0F19;font-weight:700;flex-shrink:0;transition:transform .2s;}.env-card:hover .env-arrow{transform:translateX(4px);}.env-badge{position:absolute;top:1rem;right:1rem;z-index:2;padding:0.375rem 0.875rem;background:linear-gradient(135deg,var(--green),var(--cyan));color:#0B0F19;font-size:0.6875rem;font-weight:700;border-radius:9999px;text-transform:uppercase;letter-spacing:0.05em;}.env-card.wide{grid-column:1 / -1;justify-self:center;width:calc(50% - 0.75rem);}@media (max-width:640px){.env-card.wide{grid-column:auto;width:100%;}}.cat-panel{margin-top:2.5rem;animation:catFade .3s ease;}@keyframes catFade{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}.cat-title{font-family:var(--font-heading);font-size:1.375rem;font-weight:700;margin-bottom:0.25rem;}.cat-sub{color:var(--text-secondary);font-size:0.875rem;margin-bottom:1.25rem;}.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1.25rem;}@media (max-width:640px){.cat-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));}}.cat-card{position:relative;display:block;width:100%;padding:0;border:2px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;background:var(--bg-card);color:inherit;font-family:var(--font-body);text-align:left;transition:transform .3s,border-color .3s,box-shadow .3s;}.cat-card:hover{transform:translateY(-4px);border-color:rgba(168,85,247,0.5);box-shadow:0 20px 40px rgba(0,0,0,0.45),0 0 28px rgba(168,85,247,0.15);}.cat-image{position:relative;height:150px;overflow:hidden;}.cat-image img{width:100%;height:100%;object-fit:cover;}.cat-image::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(11,15,25,0.85),rgba(11,15,25,0.15) 60%,transparent);}.cat-name{position:absolute;bottom:0;left:0;right:0;padding:1.5rem 0.9rem 0.7rem;font-family:var(--font-heading);font-size:1.0625rem;font-weight:700;z-index:1;}.cat-arrow{position:absolute;top:0.75rem;right:0.75rem;width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--violet),var(--cyan));display:flex;align-items:center;justify-content:center;color:#0B0F19;font-weight:700;z-index:1;transition:transform .2s;}.cat-card:hover .cat-arrow{transform:translateX(3px);}.cat-preview{position:fixed;z-index:300;width:560px;pointer-events:none;opacity:0;visibility:hidden;transform:translateY(10px) scale(.96);transition:opacity .18s ease,transform .18s ease;border-radius:14px;overflow:hidden;border:2px solid rgba(168,85,247,.5);box-shadow:0 28px 70px rgba(0,0,0,.65);}.cat-preview.show{opacity:1;visibility:visible;transform:none;}.cat-preview img{display:block;width:100%;height:305px;object-fit:cover;}@media (hover:none),(max-width:760px){.cat-preview{display:none;}}.metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;margin-bottom:3.5rem;}.metric-card{background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius);padding:2rem 1.5rem;text-align:center;backdrop-filter:blur(20px);transition:transform .3s,border-color .3s;}.metric-card:hover{transform:translateY(-4px);border-color:rgba(168,85,247,0.35);}.metric-icon{font-size:2rem;margin-bottom:0.75rem;display:block;}.metric-number{font-family:var(--font-heading);font-size:clamp(2rem,5vw,2.75rem);font-weight:700;background:linear-gradient(135deg,var(--violet),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;}.metric-label{color:var(--text-secondary);font-size:0.9375rem;margin-top:0.375rem;}.testimonial-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem;}.testimonial-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:1.75rem;}.testimonial-stars{color:var(--yellow);font-size:1.125rem;letter-spacing:2px;margin-bottom:1rem;}.testimonial-text{color:var(--text-secondary);font-size:0.9375rem;line-height:1.7;font-style:italic;margin-bottom:1.25rem;}.testimonial-author{display:flex;align-items:center;gap:0.75rem;}.testimonial-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--violet),var(--cyan));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.875rem;color:#fff;flex-shrink:0;}.testimonial-info .name{font-weight:600;font-size:0.9375rem;}.testimonial-info .role{font-size:0.75rem;color:var(--text-muted);}.split-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;}@media (max-width:768px){.split-grid{grid-template-columns:1fr;}}.split-card{position:relative;background:var(--bg-glass);border:2px solid var(--border);border-radius:var(--radius);padding:2.5rem 2rem;backdrop-filter:blur(20px);overflow:hidden;transition:transform .3s,border-color .3s,box-shadow .3s;}.split-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;}.split-card.clientes::before{background:linear-gradient(90deg,var(--cyan),var(--green));}.split-card.pro::before{background:linear-gradient(90deg,var(--violet),var(--cyan));}.split-card.clientes:hover{transform:translateY(-6px);border-color:rgba(6,182,212,0.4);box-shadow:0 24px 48px rgba(6,182,212,0.12);}.split-card.pro:hover{transform:translateY(-6px);border-color:rgba(168,85,247,0.4);box-shadow:0 24px 48px rgba(168,85,247,0.12);}.split-icon{font-size:3rem;margin-bottom:1rem;display:block;}.split-card h3{font-family:var(--font-heading);font-size:1.75rem;font-weight:700;margin-bottom:0.5rem;}.split-desc{color:var(--text-secondary);font-size:1rem;margin-bottom:1.75rem;line-height:1.7;}.split-features{list-style:none;margin-bottom:2rem;}.split-features li{display:flex;align-items:flex-start;gap:0.75rem;padding:0.625rem 0;font-size:0.9375rem;color:var(--text-secondary);}.split-features li .check{flex-shrink:0;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;margin-top:1px;}.clientes .check{background:rgba(6,182,212,0.15);color:var(--cyan);border:1px solid rgba(6,182,212,0.35);}.pro .check{background:rgba(168,85,247,0.15);color:var(--violet);border:1px solid rgba(168,85,247,0.35);}.btn-full{display:flex;align-items:center;justify-content:center;gap:0.625rem;width:100%;padding:1rem 2rem;border-radius:var(--radius-xs);font-family:var(--font-body);font-size:1.0625rem;font-weight:700;cursor:pointer;transition:all .2s;border:none;text-decoration:none;}.btn-cyan{background:linear-gradient(135deg,var(--cyan),var(--green));color:#0B0F19;box-shadow:0 4px 24px rgba(6,182,212,0.3);}.btn-cyan:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(6,182,212,0.4);}.btn-violet{background:linear-gradient(135deg,var(--violet),var(--cyan));color:#0B0F19;box-shadow:0 4px 24px rgba(168,85,247,0.3);}.btn-violet:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(168,85,247,0.4);}.split-note{text-align:center;color:var(--text-muted);font-size:0.75rem;margin-top:0.75rem;}.site-footer{background:var(--bg-elevated);border-top:1px solid var(--border);padding:3rem 1.5rem 2rem;}.footer-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:2rem;}.footer-brand .logo{font-size:1.25rem;}.footer-brand p{color:var(--text-muted);font-size:0.8125rem;margin-top:0.75rem;line-height:1.7;}.footer-col h4{font-size:0.75rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:1rem;font-weight:700;}.footer-col ul{list-style:none;}.footer-col li{margin-bottom:0.5rem;}.footer-col a{color:var(--text-secondary);text-decoration:none;font-size:0.875rem;transition:color .2s;}.footer-col a:hover{color:var(--text);}.footer-bottom{max-width:1200px;margin:2rem auto 0;padding-top:1.5rem;border-top:1px solid var(--border);text-align:center;color:var(--text-muted);font-size:0.75rem;}@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;}html{scroll-behavior:auto;}}@media (prefers-contrast:high){.env-card,.split-card,.metric-card,.testimonial-card,.wizard-card{border-width:3px;}}</style>
+</head>
+<body>
+    <a href="#main" class="skip-link">Saltar al contenido principal</a>
+
+    <!-- HEADER -->
+    <header class="site-header" role="banner">
+        <div class="nav-inner">
+            <a href="#" class="logo" aria-label="KuraTe - Inicio">KuraTe</a>
+            <nav aria-label="Navegación principal">
+                <ul class="nav-links">
+                    <li><a href="#entornos">Entornos</a></li>
+                    <li><a href="#confianza">Confianza</a></li>
+                    <li><a href="#profesionales">Ser profesional</a></li>
+                    <li><a href="#" class="nav-cta">Ingresar</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main">
+        <!-- HERO -->
+        <section class="hero" aria-labelledby="hero-title">
+            <div class="hero-badge">
+                <span class="pulse" aria-hidden="true"></span>
+                Diseño Web3 · Mobile-First
+            </div>
+            <h1 id="hero-title">
+                <span class="dynamic-text" id="dynamicText" aria-live="polite">¿Qué necesitás solucionar hoy?</span>
+            </h1>
+            <p class="hero-sub">Conectá con 12.000+ profesionales verificados en toda Argentina. Desde una reparación urgente hasta clases particulares, encontrá quién lo resuelve.</p>
+            <p class="hero-eslogan" aria-label="Eslógán: ¡Hacelo ya!">¡¡¡Hacelo ya!!! ⚡</p>
+
+            <!-- Search predictive -->
+            <div class="search-wrap">
+                <form class="search-bar" role="search" aria-label="Búsqueda de servicios" action="#" method="get">
+                    <label for="heroSearch" class="sr-only">Buscar servicio, profesión o problema</label>
+                    <input type="search" id="heroSearch" name="q" placeholder="¿Qué necesitás? Ej: plomero, clase de inglés, pintar departamento..." autocomplete="off">
+                    <button type="submit">Buscar</button>
+                </form>
+            </div>
+
+            <div class="quick-chips" role="list" aria-label="Búsquedas rápidas">
+                <a href="#" class="chip" role="listitem">🔧 Plomero</a>
+                <a href="#" class="chip" role="listitem">⚡ Electricista</a>
+                <a href="#" class="chip" role="listitem">📚 Clases de inglés</a>
+                <a href="#" class="chip" role="listitem">🎨 Pintor</a>
+                <a href="#" class="chip" role="listitem">❄️ Aire acondicionado</a>
+                <a href="#" class="chip" role="listitem">🧹 Limpieza</a>
+            </div>
+        </section>
+
+        <!-- WIZARD PREVIEW -->
+        <section class="wizard-preview" aria-labelledby="wz-title">
+            <div class="wizard-card">
+                <h2 id="wz-title">O usá el asistente rápido</h2>
+                <p class="wz-hint">6 pasos · 2 minutos · resultados en vivo</p>
+
+                <div class="action-grid" role="group" aria-label="Elegí la acción">
+                    <button type="button" class="action-card" data-action="educar" aria-label="Educar" aria-pressed="false"><img class="action-icon" src="/public/images/actions/educar.png?v=3" alt="" aria-hidden="true"></button>
+                    <button type="button" class="action-card" data-action="reparar" aria-label="Reparar" aria-pressed="false"><img class="action-icon" src="/public/images/actions/reparar.png?v=3" alt="" aria-hidden="true"></button>
+                    <button type="button" class="action-card" data-action="verificar" aria-label="Verificar" aria-pressed="false"><img class="action-icon" src="/public/images/actions/verificar.png?v=3" alt="" aria-hidden="true"></button>
+                    <button type="button" class="action-card" data-action="desinstalar" aria-label="Desinstalar" aria-pressed="false"><img class="action-icon" src="/public/images/actions/desinstalar.png?v=3" alt="" aria-hidden="true"></button>
+                    <button type="button" class="action-card" data-action="mejorar" aria-label="Mejorar" aria-pressed="false"><img class="action-icon" src="/public/images/actions/mejorar.png?v=3" alt="" aria-hidden="true"></button>
+                    <button type="button" class="action-card" data-action="disenar" aria-label="Diseñar" aria-pressed="false"><img class="action-icon" src="/public/images/actions/disenar.png?v=3" alt="" aria-hidden="true"></button>
+                    <button type="button" class="action-card" data-action="comprar" aria-label="Comprar" aria-pressed="false"><img class="action-icon" src="/public/images/actions/comprar.png?v=3" alt="" aria-hidden="true"></button>
+                    <button type="button" class="action-card" data-action="instalar" aria-label="Instalar" aria-pressed="false"><img class="action-icon" src="/public/images/actions/instalar.png?v=3" alt="" aria-hidden="true"></button>
+                    <button type="button" class="action-card" data-action="mantener" aria-label="Mantener" aria-pressed="false"><img class="action-icon" src="/public/images/actions/mantener.png?v=3" alt="" aria-hidden="true"></button>
+                    <button type="button" class="action-card" data-action="buscar" aria-label="Buscar" aria-pressed="false"><img class="action-icon" src="/public/images/actions/buscar.png?v=3" alt="" aria-hidden="true"></button>
+                    <button type="button" class="action-card" data-action="vender" aria-label="Vender" aria-pressed="false"><img class="action-icon" src="/public/images/actions/vender.png?v=3" alt="" aria-hidden="true"></button>
+                    <button type="button" class="action-card" data-action="donar" aria-label="Donar" aria-pressed="false"><img class="action-icon" src="/public/images/actions/donar.png?v=3" alt="" aria-hidden="true"></button>
+                    <button type="button" class="action-card" data-action="descartar" aria-label="Descartar" aria-pressed="false"><img class="action-icon" src="/public/images/actions/descartar.png?v=3" alt="" aria-hidden="true"></button>
+                </div>
+
+                <button type="button" class="wz-submit" id="wzSubmit" disabled aria-label="Continuar con la ubicación">Continuar →</button>
+            </div>
+        </section>
+
+        <p id="announcer" class="sr-only" aria-live="polite" aria-atomic="true"></p>
+
+        <!-- ENVIRONMENTS -->
+        <section class="section" id="entornos" aria-labelledby="env-title">
+            <h2 class="section-title" id="env-title">¿En qué entorno necesitás ayuda?</h2>
+            <p class="section-sub">Elegí el entorno. Vamos a mostrarte los profesionales disponibles al instante.</p>
+
+            <div class="env-grid" role="group" aria-label="Entornos disponibles">
+                <a href="#" class="env-card" data-env="hogar" aria-label="Hogar: 4.312 profesionales disponibles">
+                    <span class="env-badge">Más popular</span>
+                    <div class="env-image"><img src="/public/images/Hogar comedorjpeg.jpeg" alt="Interior de hogar moderno" loading="lazy" width="540" height="220">
+<div class="env-overlay">
+                        <div class="env-name">🏠 Hogar <span class="env-count">4.312 pros</span></div>
+                
+                    <p class="env-desc">Plomería, baños y sanitarios, carpintería</p>
+                </div>
+                </div>
+                    <div class="env-footer">
+                        <div class="env-tags" aria-hidden="true"><span class="env-tag">Línea blanca</span><span class="env-tag">Climatización</span><span class="env-tag">Baño y sanitarios</span><span class="env-tag">+9</span></div>
+                        <span class="env-arrow" aria-hidden="true">→</span>
+                    </div>
+                </a>
+
+                <a href="#" class="env-card" data-env="educacion" aria-label="Educación: 1.847 profesionales disponibles">
+                    <div class="env-image"><img src="/public/images/Educar-673.webp" srcset="/public/images/Educar-400.webp 400w, /public/images/Educar-564.webp 564w, /public/images/Educar-673.webp 673w, /public/images/Educar-1128.webp 1128w" sizes="(max-width: 640px) calc(100vw - 48px), 564px" alt="Aula de educación" loading="lazy" width="673" height="379">
+<div class="env-overlay">
+                        <div class="env-name">📚 Educación <span class="env-count">1.847 pros</span></div>
+                
+                    <p class="env-desc">Clases particulares, tutorías y capacitación</p>
+                </div>
+                </div>
+                    <div class="env-footer">
+                        <div class="env-tags" aria-hidden="true"><span class="env-tag">Matemáticas</span><span class="env-tag">Inglés</span><span class="env-tag">+6</span></div>
+                        <span class="env-arrow" aria-hidden="true">→</span>
+                    </div>
+                </a>
+
+                <a href="#" class="env-card" data-env="oficina" aria-label="Oficina: 2.156 profesionales disponibles">
+                    <div class="env-image"><img src="/public/images/Oficina.jpeg" alt="Espacio de oficina" loading="lazy" width="540" height="220">
+<div class="env-overlay">
+                        <div class="env-name">💼 Oficina <span class="env-count">2.156 pros</span></div>
+                
+                    <p class="env-desc">Redes, IT y mantenimiento de espacios</p>
+                </div>
+                </div>
+                    <div class="env-footer">
+                        <div class="env-tags" aria-hidden="true"><span class="env-tag">Redes</span><span class="env-tag">IT</span><span class="env-tag">+8</span></div>
+                        <span class="env-arrow" aria-hidden="true">→</span>
+                    </div>
+                </a>
+
+                <a href="#" class="env-card" data-env="industria" aria-label="Industria: 1.098 profesionales disponibles">
+                    <div class="env-image"><img src="/public/images/Industria1-673.webp" srcset="/public/images/Industria1-400.webp 400w, /public/images/Industria1-564.webp 564w, /public/images/Industria1-673.webp 673w, /public/images/Industria1-1128.webp 1128w" sizes="(max-width: 640px) calc(100vw - 48px), 564px" alt="Planta industrial" loading="lazy" width="673" height="379">
+<div class="env-overlay">
+                        <div class="env-name">🏭 Industria <span class="env-count">1.098 pros</span></div>
+                
+                    <p class="env-desc">Equipamiento pesado, 24/7, normas de seguridad</p>
+                </div>
+                </div>
+                    <div class="env-footer">
+                        <div class="env-tags" aria-hidden="true"><span class="env-tag">Soldadura</span><span class="env-tag">Mecánica</span><span class="env-tag">+10</span></div>
+                        <span class="env-arrow" aria-hidden="true">→</span>
+                    </div>
+                </a>
+
+                <a href="#" class="env-card wide" data-env="campo" aria-label="Casa de Campo: 642 profesionales disponibles">
+                    <div class="env-image"><img src="/public/images/casa de campo-673.webp" srcset="/public/images/casa de campo-400.webp 400w, /public/images/casa de campo-564.webp 564w, /public/images/casa de campo-673.webp 673w, /public/images/casa de campo-1128.webp 1128w" sizes="(max-width: 640px) calc(100vw - 48px), 564px" alt="Casa de campo con jardín" loading="lazy" width="673" height="252">
+<div class="env-overlay">
+                        <div class="env-name">🌿 Casa de Campo <span class="env-count">642 pros</span></div>
+                
+                    <p class="env-desc">Energía solar, maquinaria agrícola y mantenimiento rural</p>
+                </div>
+                </div>
+                    <div class="env-footer">
+                        <div class="env-tags" aria-hidden="true"><span class="env-tag">Solar</span><span class="env-tag">Riego</span><span class="env-tag">+7</span></div>
+                        <span class="env-arrow" aria-hidden="true">→</span>
+                    </div>
+</a>
+            </div>
+
+            <div class="cat-panel" id="catPanel" hidden aria-live="polite">
+                <h3 class="cat-title" id="catTitle">Categorías de Hogar</h3>
+                <p class="cat-sub" id="catSub">Elegí la categoría para afinar la búsqueda.</p>
+                <div class="cat-grid" id="catGrid" role="list" aria-label="Categorías del entorno"></div>
+            </div>
+            <div class="cat-preview" id="catPreview" aria-hidden="true"><img alt="" width="560" height="305"></div>
+        </section>
+
+        <!-- SOCIAL PROOF -->
+        <section class="section" id="confianza" aria-labelledby="trust-title">
+            <span class="section-label">Confianza comprobada</span>
+            <h2 class="section-title" id="trust-title">Miles confían en KuraTe</h2>
+            <p class="section-sub">Números reales de una comunidad que crece cada día.</p>
+
+            <div class="metrics-grid">
+                <article class="metric-card"><span class="metric-icon" aria-hidden="true">👥</span><div class="metric-number">12.847</div><div class="metric-label">Profesionales verificados</div></article>
+                <article class="metric-card"><span class="metric-icon" aria-hidden="true">✅</span><div class="metric-number">89.432</div><div class="metric-label">Trabajos completados</div></article>
+                <article class="metric-card"><span class="metric-icon" aria-hidden="true">⭐</span><div class="metric-number">4.9/5</div><div class="metric-label">Calificación promedio</div></article>
+                <article class="metric-card"><span class="metric-icon" aria-hidden="true">⚡</span><div class="metric-number">2.3 min</div><div class="metric-label">Tiempo de respuesta</div></article>
+            </div>
+
+            <div class="testimonial-grid">
+                <article class="testimonial-card">
+                    <div class="testimonial-stars" aria-label="5 de 5 estrellas">★★★★★</div>
+                    <blockquote class="testimonial-text">"Encontré electricista en 5 minutos. Llegó el mismo día y resolvió el problema a un precio justo."</blockquote>
+                    <div class="testimonial-author"><div class="testimonial-avatar" aria-hidden="true">MG</div><div class="testimonial-info"><div class="name">María González</div><div class="role">Cliente · Palermo</div></div></div>
+                </article>
+                <article class="testimonial-card">
+                    <div class="testimonial-stars" aria-label="5 de 5 estrellas">★★★★★</div>
+                    <blockquote class="testimonial-text">"Como profesional, recibo pedidos calificados sin gastar en publicidad. Cambió mi negocio."</blockquote>
+                    <div class="testimonial-author"><div class="testimonial-avatar" aria-hidden="true">CR</div><div class="testimonial-info"><div class="name">Carlos Rodríguez</div><div class="role">Plomero · Caballito</div></div></div>
+                </article>
+                <article class="testimonial-card">
+                    <div class="testimonial-stars" aria-label="5 de 5 estrellas">★★★★★</div>
+                    <blockquote class="testimonial-text">"Los profesores de matemáticas son excelentes. Mi hija mejoró sus notas en un mes."</blockquote>
+                    <div class="testimonial-author"><div class="testimonial-avatar" aria-hidden="true">LP</div><div class="testimonial-info"><div class="name">Lucía Pérez</div><div class="role">Cliente · Recoleta</div></div></div>
+                </article>
+            </div>
+        </section>
+
+        <!-- BIFURCATION -->
+        <section class="section" id="profesionales" aria-labelledby="split-title">
+            <h2 class="section-title" id="split-title">¿Cómo querés usar KuraTe?</h2>
+            <p class="section-sub">Elegí tu camino. Ambos son gratuitos para empezar.</p>
+
+            <div class="split-grid">
+                <section class="split-card clientes" aria-labelledby="cli-title">
+                    <span class="split-icon" aria-hidden="true">🏠</span>
+                    <h3 id="cli-title">Soy Cliente</h3>
+                    <p class="split-desc">Necesitás resolver algo y buscás un profesional confiable cerca tuyo.</p>
+                    <ul class="split-features">
+                        <li><span class="check" aria-hidden="true">✓</span> Publicá tu pedido en menos de 3 minutos</li>
+                        <li><span class="check" aria-hidden="true">✓</span> Recibí presupuestos de varios profesionales</li>
+                        <li><span class="check" aria-hidden="true">✓</span> Compará precios, ratings y disponibilidad</li>
+                        <li><span class="check" aria-hidden="true">✓</span> Pagá seguro con garantía de servicio</li>
+                    </ul>
+                    <a href="#" class="btn-full btn-cyan" aria-label="Buscar un profesional">🔍 Buscar profesional</a>
+                    <p class="split-note">Sin registro hasta que elijas un profesional</p>
+                </section>
+
+                <section class="split-card pro" aria-labelledby="pro-title">
+                    <span class="split-icon" aria-hidden="true">💼</span>
+                    <h3 id="pro-title">Soy Profesional</h3>
+                    <p class="split-desc">Ofrecés un servicio y querés llegar a más clientes sin gastar en publicidad.</p>
+                    <ul class="split-features">
+                        <li><span class="check" aria-hidden="true">✓</span> Creá tu perfil profesional gratis</li>
+                        <li><span class="check" aria-hidden="true">✓</span> Recibí pedidos calificados en tu zona</li>
+                        <li><span class="check" aria-hidden="true">✓</span> Mostrá portfolio, ratings y matrículas</li>
+                        <li><span class="check" aria-hidden="true">✓</span> Dashboard con métricas y seguimiento</li>
+                    </ul>
+                    <a href="#" class="btn-full btn-violet" aria-label="Crear perfil profesional gratis">🚀 Crear perfil gratis</a>
+                    <p class="split-note">Activación inmediata · Sin costo mensual</p>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="site-footer" role="contentinfo">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <a href="#" class="logo" aria-label="KuraTe - Inicio">KuraTe</a>
+                <p>La plataforma profesional que conecta clientes con profesionales verificados en toda Argentina.</p>
+            </div>
+            <nav class="footer-col" aria-label="Plataforma">
+                <h4>Plataforma</h4>
+                <ul>
+                    <li><a href="#entornos">Entornos</a></li>
+                    <li><a href="#confianza">Confianza</a></li>
+                    <li><a href="#profesionales">Ser profesional</a></li>
+                    <li><a href="#">Precios</a></li>
+                </ul>
+            </nav>
+            <nav class="footer-col" aria-label="Soporte">
+                <h4>Soporte</h4>
+                <ul>
+                    <li><a href="#">Centro de ayuda</a></li>
+                    <li><a href="#">Contacto</a></li>
+                    <li><a href="#">Términos</a></li>
+                    <li><a href="#">Privacidad</a></li>
+                </ul>
+            </nav>
+            <nav class="footer-col" aria-label="Comunidad">
+                <h4>Comunidad</h4>
+                <ul>
+                    <li><a href="#">Blog</a></li>
+                    <li><a href="#">Guías</a></li>
+                    <li><a href="#">Casos de éxito</a></li>
+                </ul>
+            </nav>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 KuraTe. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script>
+    (function() {
+        'use strict';
+
+        var announcer = document.getElementById('announcer');
+        function announce(msg) { if (announcer) announcer.textContent = msg; }
+
+        // Hero dynamic text rotation
+        var phrases = [
+            '¿Qué necesitás solucionar hoy?',
+            '¿Necesitás un plomero ahora?',
+            '¿Buscás clases particulares?',
+            '¿Querés instalar algo nuevo?',
+            '¿Necesitás ayuda con tu hogar?'
+        ];
+        var idx = 0;
+        var el = document.getElementById('dynamicText');
+        var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        if (!reduceMotion) {
+            setInterval(function() {
+                idx = (idx + 1) % phrases.length;
+                el.style.opacity = '0';
+                el.style.transition = 'opacity 0.3s';
+                setTimeout(function() {
+                    el.textContent = phrases[idx];
+                    el.style.opacity = '1';
+                }, 300);
+            }, 3500);
+        }
+
+        // Wizard action cards
+        document.querySelectorAll('.action-card').forEach(function(card) {
+            card.addEventListener('click', function() {
+                document.querySelectorAll('.action-card').forEach(function(c) { c.setAttribute('aria-pressed', 'false'); });
+                card.setAttribute('aria-pressed', 'true');
+                document.getElementById('wzSubmit').disabled = false;
+                announce('Acción seleccionada: ' + card.getAttribute('aria-label') + '. Podés continuar.');
+            });
+        });
+
+        // Continuar → navega al paso 2 (mapa de ubicación, prototipo 07)
+        var wzSubmit = document.getElementById('wzSubmit');
+        var selectedAction = null;
+        wzSubmit.addEventListener('click', function() {
+            var pressed = document.querySelector('.action-card[aria-pressed="true"]');
+            if (!pressed) { announce('Primero elegí una acción.'); return; }
+            selectedAction = pressed.dataset.action;
+            announcer.textContent = 'Paso 3 de 6: elegí la ubicación con el mapa. Cargando…';
+            // Paso 2 real: mapa de ubicación. Pasamos la acción elegida.
+            window.location.href = '07-ubicacion-mapa.html?accion=' + encodeURIComponent(selectedAction);
+        });
+
+        // Categorías por entorno (imágenes provistas en public/images)
+        var CATEGORIAS = {
+            hogar: [
+                { label: 'Línea blanca', emoji: '🔌', img: '/public/images/linea blanca 1-800.webp', alt: 'Reparación y compra de línea blanca' },
+                { label: 'Plomería y desagotes', emoji: '🚿', img: '/public/images/plomeria y desagotes-800.webp', alt: 'Plomería y desagotes' },
+                { label: 'Vidriería y espejos', emoji: '🪟', img: '/public/images/vidrieria y espejos-800.webp', alt: 'Vidriería y espejos' },
+                { label: 'Línea marrón', emoji: '🚽', img: '/public/images/linea Marron-800.webp', alt: 'Línea marrón: cerámica sanitaria' },
+                { label: 'Línea gris', emoji: '🧱', img: '/public/images/Linea Gris-800.webp', alt: 'Línea gris' },
+                { label: 'Baños y sanitarios', emoji: '🛁', img: '/public/images/Baños sanitarios cuidado personal-800.webp', alt: 'Baños y sanitarios' },
+                { label: 'Carpintería', emoji: '🪚', img: '/public/images/Carpinteria-800.webp', alt: 'Carpintería' }
+            ]
+        };
+
+        var catPreview = document.getElementById('catPreview');
+        var catPreviewImg = catPreview.querySelector('img');
+
+        function hidePreview() { catPreview.classList.remove('show'); }
+
+        function positionPreview(x, y) {
+            var w = catPreview.offsetWidth || 560, h = catPreview.offsetHeight || 305;
+            var left = x + 28, top = y - h / 2;
+            if (left + w > window.innerWidth - 12) { left = x - w - 28; }
+            catPreview.style.left = Math.max(12, Math.min(left, window.innerWidth - w - 12)) + 'px';
+            catPreview.style.top = Math.max(12, Math.min(top, window.innerHeight - h - 12)) + 'px';
+        }
+
+        function showPreview(cat, x, y) {
+            if (window.matchMedia('(hover: none)').matches) { return; }
+            if (catPreviewImg.getAttribute('src') !== cat.img) { catPreviewImg.src = cat.img; }
+            positionPreview(x, y);
+            catPreview.classList.add('show');
+        }
+
+        window.addEventListener('scroll', hidePreview, { passive: true });
+
+        function renderCategories(envKey) {
+            var cats = CATEGORIAS[envKey];
+            var grid = document.getElementById('catGrid');
+            hidePreview();
+            grid.innerHTML = '';
+            cats.forEach(function(cat) {
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'cat-card';
+                btn.setAttribute('aria-label', cat.label);
+                btn.innerHTML = '<div class="cat-image"><img src="' + cat.img + '" alt="' + cat.alt + '" loading="lazy" width="400" height="150"></div>'
+                    + '<span class="cat-name">' + cat.emoji + ' ' + cat.label + '</span>'
+                    + '<span class="cat-arrow" aria-hidden="true">→</span>';
+                btn.addEventListener('click', function() {
+                    var action = document.querySelector('.action-card[aria-pressed="true"]');
+                    announce('Categoría ' + cat.label + ' seleccionada. Paso siguiente: elegí la ubicación con el mapa.');
+                    var url = '07-ubicacion-mapa.html?categoria=' + encodeURIComponent(cat.label);
+                    if (action) { url += '&accion=' + encodeURIComponent(action.dataset.action); }
+                    window.location.href = url;
+                });
+                btn.addEventListener('mouseenter', function(e) { showPreview(cat, e.clientX, e.clientY); });
+                btn.addEventListener('mousemove', function(e) { positionPreview(e.clientX, e.clientY); });
+                btn.addEventListener('mouseleave', hidePreview);
+                btn.addEventListener('focus', function() {
+                    var r = btn.getBoundingClientRect();
+                    showPreview(cat, r.right + 8, r.top + r.height / 2);
+                });
+                btn.addEventListener('blur', hidePreview);
+                grid.appendChild(btn);
+            });
+            document.getElementById('catTitle').textContent = 'Categorías de ' + envKey.charAt(0).toUpperCase() + envKey.slice(1);
+            document.getElementById('catPanel').hidden = false;
+            document.getElementById('catPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // Env cards: al seleccionar un entorno genera las categorías (Hogar) o avanza (resto)
+        document.querySelectorAll('.env-card').forEach(function(card) {
+            card.addEventListener('click', function(e) {
+                e.preventDefault();
+                var env = card.getAttribute('data-env');
+                if (env && CATEGORIAS[env]) {
+                    renderCategories(env);
+                    announce('Entorno seleccionado. Elegí una categoría.');
+                } else {
+                    var name = card.querySelector('.env-name').textContent.trim();
+                    announce('Entorno seleccionado: ' + name + '. Paso siguiente: elegí la ubicación con el mapa.');
+                }
+            });
+        });
+    })();
+    </script>
+</body>
+</html>

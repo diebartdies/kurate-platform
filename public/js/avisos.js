@@ -1,4 +1,4 @@
-(() => {
+﻿(() => {
   const API = '/api/v1/avisos';
   const ENV_LABELS = { hogar: '🏠 Hogar', oficina: '🏢 Oficina', pime: '🏬 Pyme', industria: '🏭 Industria' };
   const STATUS_LABELS = { pending_payment: '⏳ Pendiente pago', active: '✅ Activo', expiring: '⚠️ Por expirar', expired: '❌ Expirado', rejected: '🚫 Rechazado', cancelled: '🚫 Cancelado' };
@@ -162,8 +162,8 @@
           });
         const envSet = new Set(svcPaths.filter(Boolean));
         if (envSet.size > 0) {
-          const envLabels = { hogar: '🏠 Hogar', oficina: '🏢 Oficina', pime: '🏬 Pyme', industria: '🏭 Industria' };
-          const envPrices = { hogar: 5000, oficina: 10000, pime: 10000, industria: 20000 };
+          const envLabels = { hogar: '🏠 Hogar', oficina: '🏢 Oficina', pime: '🏭 Pyme', industria: '🏭 Industria', educacion: '📚 Educación' };
+          const envPrices = { hogar: 5000, oficina: 10000, pime: 10000, industria: 20000, educacion: 5000 };
           envSelect.innerHTML = '<option value="">Seleccionar entorno...</option>' +
             [...envSet].map(e => `<option value="${e}">${envLabels[e] || e} — $${(envPrices[e] || 0).toLocaleString('es-AR')}/mes</option>`).join('');
         } else {
@@ -218,36 +218,55 @@
       });
     }
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const env = $('#avisoEnvironment').value;
-      const serviceLine = $('#avisoServiceLine').value;
-      const text = $('#avisoText').value.trim();
+form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const env = $('#avisoEnvironment').value;
+        const serviceLine = $('#avisoServiceLine').value;
+        const serviceLines = env === 'educacion' 
+          ? Array.from(document.querySelectorAll('input[name="serviceLines"]:checked')).map(cb => cb.value)
+          : [];
+        const text = $('#avisoText').value.trim();
 
-      if (!env) {
-        alert.textContent = 'Seleccioná un entorno.';
-        alert.className = 'alert';
-        alert.style.background = 'rgba(239,68,68,0.15)';
-        alert.style.color = '#ef4444';
-        alert.style.borderColor = '#ef4444';
-        return;
-      }
+        if (!env) {
+          alert.textContent = 'Seleccioná un entorno.';
+          alert.className = 'alert';
+          alert.style.background = 'rgba(239,68,68,0.15)';
+          alert.style.color = '#ef4444';
+          alert.style.borderColor = '#ef4444';
+          return;
+        }
 
-      if (!serviceLine) {
-        alert.textContent = 'Seleccioná una línea de servicio.';
-        alert.className = 'alert';
-        alert.style.background = 'rgba(239,68,68,0.15)';
-        alert.style.color = '#ef4444';
-        alert.style.borderColor = '#ef4444';
-        return;
-      }
+        if (env === 'educacion') {
+          if (serviceLines.length === 0) {
+            alert.textContent = 'Seleccioná al menos un nivel educativo.';
+            alert.className = 'alert';
+            alert.style.background = 'rgba(239,68,68,0.15)';
+            alert.style.color = '#ef4444';
+            alert.style.borderColor = '#ef4444';
+            return;
+          }
+        } else {
+          if (!serviceLine) {
+            alert.textContent = 'Seleccioná una línea de servicio.';
+            alert.className = 'alert';
+            alert.style.background = 'rgba(239,68,68,0.15)';
+            alert.style.color = '#ef4444';
+            alert.style.borderColor = '#ef4444';
+            return;
+          }
+        }
 
-      try {
-        const r = await fetch(API, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...authHeaders() },
-          body: JSON.stringify({ environment: env, serviceLine, text })
-        });
+        try {
+          const r = await fetch(API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...authHeaders() },
+            body: JSON.stringify({ 
+              environment: env, 
+              serviceLine: env === 'educacion' ? undefined : serviceLine,
+              serviceLines: env === 'educacion' ? serviceLines : undefined,
+              text 
+            })
+          });
         const d = await r.json();
 
         if (d.success) {
@@ -471,3 +490,6 @@
     checkExpiringAvisos();
   });
 })();
+
+
+

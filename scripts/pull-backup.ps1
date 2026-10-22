@@ -3,7 +3,7 @@
 
 $ErrorActionPreference = "Stop"
 
-$VpsIp = "192.168.1.67"
+$VpsIp = "192.168.1.95"
 $User = "root"
 $KeyPath = "$HOME\.ssh\id_kurate_rsa"
 $BackupDir = "D:\FullMinent\backups"

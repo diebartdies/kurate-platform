@@ -1,4 +1,117 @@
 const KURATE_BASE = 'https://kurate.drsrv.net.ar';
+const { getDevices } = require('./seoServicePages');
+
+// --- Accion "Educar" y sus tres niveles --------------------------------------
+// Las materias viven en una sola fuente de verdad y las 3 categorias de nivel
+// (primario / secundario / universitario) se derivan de ella. Si se agrega una
+// materia nueva alcanza con editarla aca y se refleja en los 3 niveles.
+const EDUCACION_GRUPOS = [
+  {
+    id: 'ciencias-exactas',
+    title: { es: 'Ciencias Exactas y Naturales', en: 'Exact and Natural Sciences' },
+    emoji: '\u{1F9EE}',
+    materias: [
+      { id: 'matematicas', title: { es: 'Matemáticas', en: 'Mathematics' },
+        submaterias: [
+          { id: 'algebra', title: { es: 'Álgebra', en: 'Algebra' } },
+          { id: 'geometria', title: { es: 'Geometría', en: 'Geometry' } },
+          { id: 'trigonometria', title: { es: 'Trigonometría', en: 'Trigonometry' } }
+        ] },
+      { id: 'fisica', title: { es: 'Física', en: 'Physics' } },
+      { id: 'quimica', title: { es: 'Química', en: 'Chemistry' } },
+      { id: 'biologia', title: { es: 'Biología', en: 'Biology' } }
+    ]
+  },
+  {
+    id: 'lengua-humanidades',
+    title: { es: 'Lengua y Humanidades', en: 'Language and Humanities' },
+    emoji: '✍️',
+    materias: [
+      { id: 'lengua-literatura', title: { es: 'Lengua y Literatura', en: 'Language and Literature' } },
+      { id: 'ingles', title: { es: 'Inglés', en: 'English' } },
+      { id: 'historia', title: { es: 'Historia', en: 'History' } },
+      { id: 'geografia', title: { es: 'Geografía', en: 'Geography' } },
+      { id: 'formacion-etica', title: { es: 'Formación Ética y Ciudadana', en: 'Ethics and Citizenship Education' } }
+    ]
+  }
+];
+
+// Cada nivel declara qué grupos cubre. Se mantiene explícito (en vez de asumir
+// que todos los grupos aplican a todos los niveles) porque no toda materia tiene
+// sentido en todos los niveles: no se ofrecen clases de álgebra para primaria.
+const EDUCACION_NIVELES = [
+  {
+    slug: 'primario',
+    title: { es: 'Primario', en: 'Primary' },
+    description: { es: 'Clases particulares y acompañamiento para primaria: matemática, lengua, ciencias y más.', en: 'Private lessons and tutoring for primary school: math, language, science and more.' },
+    keywords: { es: 'clases particulares primaria, apoyos escolar primaria, matemática primaria, lengua primaria, Argentina', en: 'primary tutoring, primary school math, primary language lessons, Argentina' },
+    grupos: ['ciencias-exactas', 'lengua-humanidades'],
+    nota: { es: 'En primaria el refuerzo suele ser de lectura, escritura y comprensión antes que de cálculo avanzado.', en: 'At primary level, support usually focuses on reading, writing and comprehension before advanced calculation.' }
+  },
+  {
+    slug: 'secundario',
+    title: { es: 'Secundario', en: 'Secondary' },
+    description: { es: 'Clases particulares y preparación para el secundario: ciencias exactas, lengua, historia y más.', en: 'Private lessons and secondary school exam prep: exact sciences, language, history and more.' },
+    keywords: { es: 'clases particulares secundario, preparación acceso universidad, matemática secundaria, química, física, Argentina', en: 'secondary tutoring, university entrance prep, secondary math, chemistry, physics, Argentina' },
+    grupos: ['ciencias-exactas', 'lengua-humanidades'],
+    nota: { es: 'El foco suele ser consolidar lo visto en la escuela y la preparación para exámenes.', en: 'The focus is usually consolidating school content and exam preparation.' }
+  },
+  {
+    slug: 'universitario',
+    title: { es: 'Universitario', en: 'University' },
+    description: { es: 'Clases particulares y acompañamiento universitario por materia, con énfasis en exámenes.', en: 'Private lessons and university-level tutoring by subject, focused on exams.' },
+    keywords: { es: 'clases particulares universidad, aprobar matemática university, álgebra, análisis, Argentina', en: 'university tutoring, pass university math, algebra, analysis, Argentina' },
+    grupos: ['ciencias-exactas', 'lengua-humanidades'],
+    nota: { es: 'En el nivel universitario se trabaja por materia y con los temas concretos de la carrera.', en: 'At university level, work is subject-based and tied to specific course topics.' }
+  }
+];
+
+const educacionGruposDe = (nivel) => (nivel.grupos || []).map(id => EDUCACION_GRUPOS.find(g => g.id === id)).filter(Boolean);
+const educacionMaterias = (nivel) => educacionGruposDe(nivel).flatMap(g => g.materias);
+
+const tr = (campo, lang) => (typeof campo === 'object' ? (campo[lang] || campo.es) : campo);
+
+// Agrupa un conjunto de materias por grupo, preservando el emoji y el orden.
+function renderGruposEducacion(grupos, lang, { conNivel = false } = {}) {
+  if (!grupos || !grupos.length) return '';
+  return grupos.map(grupo => {
+    const grupoTitle = tr(grupo.title, lang);
+    const items = grupo.materias.map(materia => {
+      const nombre = tr(materia.title, lang);
+      const subs = (materia.submaterias || []).map(s => tr(s.title, lang));
+      const sublinea = subs.length
+        ? `<div style="color:#8a8a9a;font-size:0.88rem;margin-top:3px">${subs.join(' · ')}</div>`
+        : '';
+      return `<li style="padding:8px 0;border-bottom:1px solid #222;color:#ccc;font-size:1rem">${nombre}${sublinea}</li>`;
+    }).join('');
+    const encabezado = conNivel
+      ? `${grupo.emoji || ''} <a href="/niveles/${grupo.nivelSlug}" style="color:#B8922E;text-decoration:none">${grupo.nivelTitle} — ${grupoTitle}</a>`
+      : `${grupo.emoji || ''} ${grupoTitle}`;
+    return `<h3 style="color:#e0e0e0;font-size:1.05rem;margin:1.5rem 0 0.5rem">${encabezado}</h3>
+      <ul style="list-style:none;padding:0">${items}</ul>`;
+  }).join('');
+}
+
+// Bloque de la acción "Educar": los tres niveles, cada uno con sus grupos,
+// materias y submaterias.
+function renderEducacionNiveles(lang) {
+  const nivelCards = EDUCACION_NIVELES.map(nivel => {
+    const grupos = educacionGruposDe(nivel).map(g => ({
+      ...g,
+      nivelSlug: nivel.slug,
+      nivelTitle: tr(nivel.title, lang)
+    }));
+    const nota = tr(nivel.nota, lang);
+    const nMaterias = educacionMaterias(nivel).length;
+    return `<div style="margin:0 0 18px;padding:16px;background:#151522;border:1px solid #2a2a3e;border-radius:12px">
+      <h3 style="margin:0 0 4px;color:#B8922E;font-size:1.1rem"><a href="/niveles/${nivel.slug}" style="color:#B8922E;text-decoration:none">${tr(nivel.title, lang)}</a></h3>
+      <div style="color:#8a8a9a;font-size:0.9rem;margin-bottom:10px">${nota} · ${nMaterias} ${lang === 'en' ? 'subjects' : 'materias'}</div>
+      ${renderGruposEducacion(grupos, lang, { conNivel: false })}
+    </div>`;
+  }).join('');
+  return `<h2 style="margin-top:2rem;color:#B8922E;font-size:1.2rem">${lang === 'en' ? 'Levels and subjects' : 'Niveles y materias'}</h2>
+  ${nivelCards}`;
+}
 
 const ACTIONS = [
   { slug: 'arreglar', title: { es: 'Arreglar', en: 'Fix' },
@@ -71,6 +184,17 @@ const ACTIONS = [
     services: { es: ['Diseño de instalaciones eléctricas', 'Proyecto de gas', 'Diseño de sistemas de climatización', 'Planos eléctricos', 'Cálculo de cargas'], en: ['Electrical installation design', 'Gas system planning', 'Climate control system design', 'Electrical blueprints', 'Load calculation'] },
     faq: [
       { q: { es: '¿Necesito un proyecto para instalar un aire?', en: 'Do I need a project plan to install an air conditioner?' }, a: { es: 'Para instalaciones comerciales o industriales sí. Para hogares, nuestros técnicos evalúan el lugar.', en: 'For commercial or industrial installations, yes. For homes, our technicians assess the site.' } }
+    ] },
+  { slug: 'educar', title: { es: 'Educar', en: 'Tutor' },
+    description: { es: 'Clases particulares y acompañamiento escolar para primaria, secundario y universidad.', en: 'Private lessons and academic tutoring for primary, secondary and university students.' },
+    keywords: { es: 'clases particulares, apoyo escolar, tutor, profesor, primaria, secundario, universidad, Argentina', en: 'private lessons, tutoring, tutor, teacher, primary, secondary, university, Argentina' },
+    content: { es: 'En KuraTe encontrás docentes y profesores para fortalecer el rendimiento escolar en los tres niveles. Elegí el nivel que necesitás —primario, secundario o universitario— y pedí clases de la materia que te cuesta. Cada profesional tiene su perfil, su experiencia y las reseñas de quienes ya estudiaron con él.', en: 'On KuraTe you find teachers and tutors to strengthen academic performance at all three levels. Choose the level you need —primary, secondary or university— and request lessons in the subject you struggle with. Every professional has a profile, their experience and reviews from students who already studied with them.' },
+    serviciosEducacion: true,
+    noDevices: true,
+    faq: [
+      { q: { es: '¿Puedo pedir clases de una sola materia?', en: 'Can I request lessons for a single subject?' }, a: { es: 'Sí. Elegís el nivel y después la materia: matemática, física, química, biología, lengua, inglés, historia, geografía o ética.', en: 'Yes. Pick the level and then the subject: math, physics, chemistry, biology, language, English, history, geography or ethics.' } },
+      { q: { es: '¿Las clases son presenciales o virtuales?', en: 'Are lessons in person or online?' }, a: { es: 'Depende del profesional: muchos ofrecen ambas modalidades. Podés indicarle tu preferencia al contactarlo.', en: 'It depends on the professional: many offer both. Tell them your preference when you contact them.' } },
+      { q: { es: '¿Los profesores están habilitados para enseñar?', en: 'Are the teachers qualified to teach?' }, a: { es: 'Cada profesional declara su título y su experiencia en la materia. Pedí el detalle por chat antes de contratar.', en: 'Each professional lists their degree and subject experience. Ask for details via chat before hiring.' } }
     ] }
 ];
 
@@ -111,28 +235,55 @@ const CATEGORIES = [
     services: { es: ['Soldadura MIG/MAG', 'Soldadura TIG', 'Corte plasma', 'Estructuras metálicas', 'Portones y rejas'], en: ['MIG/MAG welding', 'TIG welding', 'Plasma cutting', 'Metal structures', 'Gates and fences'] } }
 ];
 
+// Los tres niveles educativos viven en su propia raiz /niveles, no mezclados con
+// las categorias tecnicas de /categorias (linea blanca, gas, plomeria): son dos
+// taxonomias distintas y listarlas juntas confunde a quien busca un tecnico.
+// Se derivan de EDUCACION_NIVELES para que /acciones/educar y /niveles/<nivel>
+// no puedan quedar desincronizados entre si.
+const NIVELES = EDUCACION_NIVELES.map(nivel => {
+  const grupos = educacionGruposDe(nivel);
+  return {
+    slug: nivel.slug,
+    title: nivel.title,
+    description: nivel.description,
+    keywords: nivel.keywords,
+    content: { es: `${nivel.nota.es} En KuraTe encontrás profesores y tutores para ${nivel.title.es.toLowerCase()}, disponibles por materia y con modalidad presencial o virtual.`, en: `${nivel.nota.en} On KuraTe you find teachers and tutors for ${nivel.title.en.toLowerCase()}, available by subject and in in person or online.` },
+    serviciosEducacion: true,
+    noDevices: true,
+    grupos,
+    // Un listado plano de materias mantiene el bloque "Servicios" que el resto de
+    // las landings ya usan, y las submaterias se muestran agrupadas debajo.
+    services: {
+      es: grupos.flatMap(g => g.materias.map(m => m.title.es)),
+      en: grupos.flatMap(g => g.materias.map(m => m.title.en))
+    }
+  };
+});
+
 const UI = {
   es: {
     breadcrumb: 'KuraTe',
     searchCta: 'Buscar profesionales',
     servicesTitle: 'Servicios disponibles',
     faqTitle: 'Preguntas frecuentes',
-    othersTitle: (type) => `Otros${type === 'action' ? ' servicios' : type === 'environment' ? ' entornos' : ' categorías'}`,
+    othersTitle: (type) => `Otros${type === 'action' ? ' servicios' : type === 'environment' ? ' entornos' : type === 'level' ? ' niveles' : ' categorías'}`,
     footer: '© 2026 KuraTe — Tu respuesta rápida y directa.',
     actions: 'Acciones',
     environments: 'Entornos',
     categories: 'Categorías',
+    levels: 'Niveles educativos',
   },
   en: {
     breadcrumb: 'KuraTe',
     searchCta: 'Find professionals',
     servicesTitle: 'Available services',
     faqTitle: 'Frequently asked questions',
-    othersTitle: (type) => `Other${type === 'action' ? ' services' : type === 'environment' ? ' environments' : ' categories'}`,
+    othersTitle: (type) => `Other${type === 'action' ? ' services' : type === 'environment' ? ' environments' : type === 'level' ? ' education levels' : ' categories'}`,
     footer: '© 2026 KuraTe — Your fast and direct answer.',
     actions: 'Actions',
     environments: 'Environments',
     categories: 'Categories',
+    levels: 'Education levels',
   }
 };
 
@@ -151,7 +302,7 @@ function buildSeoLandingPage(type, item, lang = 'es', topRated = []) {
   if (type === 'category') searchParams.set('service', item.slug);
   const searchUrl = `/hogar.html?${searchParams.toString()}`;
 
-  const basePath = type === 'action' ? 'acciones' : type === 'environment' ? 'entornos' : 'categorias';
+  const basePath = type === 'action' ? 'acciones' : type === 'environment' ? 'entornos' : type === 'level' ? 'niveles' : 'categorias';
   const canonicalLang = lang === 'en' ? '?lang=en' : '';
   const altLang = lang === 'es' ? 'en' : 'es';
   const altTitle = typeof item.title === 'object' ? (item.title[altLang] || item.title.es) : item.title;
@@ -159,6 +310,7 @@ function buildSeoLandingPage(type, item, lang = 'es', topRated = []) {
   const otherActions = ACTIONS.filter(a => a.slug !== item.slug);
   const otherEnvs = ENVIRONMENTS.filter(e => e.slug !== item.slug);
   const otherCats = CATEGORIES.filter(c => c.slug !== item.slug);
+  const otherLevels = NIVELES.filter(n => n.slug !== item.slug);
 
   let linksHtml = '';
   if (type === 'action') {
@@ -171,6 +323,11 @@ function buildSeoLandingPage(type, item, lang = 'es', topRated = []) {
       const eTitle = typeof e.title === 'object' ? (e.title[lang] || e.title.es) : e.title;
       return `<li><a href="/entornos/${e.slug}${canonicalLang}">${eTitle}</a></li>`;
     }).join('');
+  } else if (type === 'level') {
+    linksHtml = otherLevels.map(n => {
+      const nTitle = typeof n.title === 'object' ? (n.title[lang] || n.title.es) : n.title;
+      return `<li><a href="/niveles/${n.slug}${canonicalLang}">${nTitle}</a></li>`;
+    }).join('');
   } else {
     linksHtml = otherCats.map(c => {
       const cTitle = typeof c.title === 'object' ? (c.title[lang] || c.title.es) : c.title;
@@ -182,6 +339,13 @@ function buildSeoLandingPage(type, item, lang = 'es', topRated = []) {
     ? `<h2>${t.servicesTitle}</h2><ul style="list-style:none;padding:0;">${services.map(s => `<li style="padding:6px 0;border-bottom:1px solid #222;color:#ccc;font-size:1rem;">✓ ${s}</li>`).join('')}</ul>`
     : '';
 
+  // En las categorias de nivel educativo el listado plano de arriba se reemplaza
+  // por la version agrupada, que ademas muestra las submaterias de cada materia.
+  const gruposHtml = item.serviciosEducacion && item.grupos
+    ? `<h2>${lang === 'en' ? 'Subjects by area' : 'Materias por área'}</h2>${renderGruposEducacion(item.grupos, lang)}`
+    : '';
+  const servicesHtmlFinal = gruposHtml || servicesHtml;
+
   const faqHtml = (faq.length)
     ? `<h2>${t.faqTitle}</h2>${faq.map(f => {
         const q = typeof f.q === 'object' ? (f.q[lang] || f.q.es) : f.q;
@@ -192,7 +356,7 @@ function buildSeoLandingPage(type, item, lang = 'es', topRated = []) {
 
   const contentHtml = content ? `<p style="margin-top:1.5rem;font-size:1.05rem;color:#bbb;line-height:1.8;">${content}</p>` : '';
 
-  const breadcrumbLabel = type === 'action' ? t.actions : type === 'environment' ? t.environments : t.categories;
+  const breadcrumbLabel = type === 'action' ? t.actions : type === 'environment' ? t.environments : type === 'level' ? t.levels : t.categories;
 
   return `<!DOCTYPE html>
 <html lang="${lang}">
@@ -279,8 +443,22 @@ function buildSeoLandingPage(type, item, lang = 'es', topRated = []) {
         `).join('')}
       </div>
     </div>` : ''}
+    ${type === 'action' && !item.noDevices ? (() => {
+      const devices = getDevices();
+      const actionSlug = item.slug;
+      const topDevices = [...devices.values()]
+        .filter(d => d.categories.length > 0)
+        .sort((a, b) => (b.brands?.length || 0) - (a.brands?.length || 0))
+        .slice(0, 18);
+      const chips = topDevices.map(d =>
+        `<a href="/servicios/${actionSlug}-${d.id}" style="display:inline-block;margin:4px 6px 4px 0;padding:8px 14px;background:#1a1a2e;border:1px solid #2a2a3e;border-radius:20px;color:#B8922E;text-decoration:none;font-size:0.9rem;white-space:nowrap;transition:all .2s" onmouseover="this.style.background='#B8922E';this.style.color='#0f0f1a'" onmouseout="this.style.background='#1a1a2e';this.style.color='#B8922E'">${d.name}</a>`
+      ).join('');
+      return `<h2 style="margin-top:2rem;color:#B8922E;font-size:1.2rem">${item.title.es || item.title} por dispositivo</h2>
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin:1rem 0">${chips}</div>`;
+    })() : ''}
+    ${type === 'action' && item.serviciosEducacion ? renderEducacionNiveles(lang) : ''}
     <a href="${searchUrl}" class="cta" rel="nofollow">${t.searchCta}</a>
-    ${servicesHtml}
+    ${servicesHtmlFinal}
     ${faqHtml}
     <h2>${t.othersTitle(type)}</h2>
     <ul>${linksHtml}</ul>
@@ -295,9 +473,10 @@ function getAllSeoUrls() {
   ACTIONS.forEach(a => urls.push({ loc: `/acciones/${a.slug}`, priority: 0.6, changefreq: 'monthly' }));
   ENVIRONMENTS.forEach(e => urls.push({ loc: `/entornos/${e.slug}`, priority: 0.6, changefreq: 'monthly' }));
   CATEGORIES.forEach(c => urls.push({ loc: `/categorias/${c.slug}`, priority: 0.6, changefreq: 'monthly' }));
+  NIVELES.forEach(n => urls.push({ loc: `/niveles/${n.slug}`, priority: 0.6, changefreq: 'monthly' }));
   urls.push({ loc: '/reparaciones/caba', priority: 0.9, changefreq: 'weekly' });
   urls.push({ loc: '/reparaciones', priority: 0.5, changefreq: 'monthly' });
   return urls;
 }
 
-module.exports = { ACTIONS, ENVIRONMENTS, CATEGORIES, buildSeoLandingPage, getAllSeoUrls, KURATE_BASE };
+module.exports = { ACTIONS, ENVIRONMENTS, CATEGORIES, NIVELES, buildSeoLandingPage, getAllSeoUrls, KURATE_BASE, EDUCACION_NIVELES, EDUCACION_GRUPOS, educacionMaterias };

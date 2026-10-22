@@ -7,7 +7,6 @@ const path = require('path');
 const { sendSms } = require('../services/smsService');
 const { OAuth2Client } = require('google-auth-library');
 const { decodeDniBarcode, parseDniDate, calculateAge } = require('../utils/dniBarcode');
-const bcrypt = require('bcryptjs');
 function normalizeAlias(s){ if(!s) return s; return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim(); }
 const { assignGpsToLocation } = require('../utils/cityCoordinates');
 const jwt = require('jsonwebtoken');
@@ -25,15 +24,24 @@ function getExpireAt() {
 }
 
 const sendTokenResponse = (user, statusCode, res) => {
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE || '30d'
-  });
+  // Signed through the model so the token carries tokenVersion like every other
+  // auth path — an admin password reset must be able to revoke these tokens too.
+  const token = user.getSignedJwtToken();
   const cookieOptions = {
-    expires: new Date(Date.now() + (process.env.JWT_COOKIE_EXPIRE || 30) * 24 * 60 * 60 * 1000),
+    expires: new Date(Date.now() + (process.env.JWT_COOKIE_EXPIRE || 30) * 24 * 60 * 60 * 60 * 1000),
     httpOnly: true
   };
   if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
-  res.status(statusCode).cookie('token', token, cookieOptions).json({ success: true, token, user });
+
+  // The user was just built in memory, so it still carries the raw base64 ID image
+  // that `select: false` would normally hide. Never ship it to the browser.
+  const safeUser = user.toObject ? user.toObject() : { ...user };
+  if (Array.isArray(safeUser.verificationDocuments)) {
+    safeUser.verificationDocumentsCount = safeUser.verificationDocuments.length;
+    delete safeUser.verificationDocuments;
+  }
+
+  res.status(statusCode).cookie('token', token, cookieOptions).json({ success: true, token, user: safeUser });
 };
 
 // Step 1: Submit email + phone -> send SMS code
@@ -256,16 +264,17 @@ exports.complete = async (req, res) => {
     if (!prereg.emailVerified || !prereg.phoneVerified) {
       return res.status(400).json({ error: 'Completa la verificacion de email y telefono.' });
     }
-    const hashedPassword = await bcrypt.hash(password, 10);
     const userRole = role || 'professional';
     const parsedBirthDate = parseDniDate(prereg.dniFechaNacimiento);
     const user = await User.create({
       email: prereg.email,
-      password: hashedPassword,
+      password,
       role: userRole,
       isEmailVerified: true,
       isVerified: userRole !== 'professional',
       verificationStatus: userRole === 'professional' ? 'pending' : 'approved',
+      verificationDocuments: prereg.dniFrontImage ? [prereg.dniFrontImage] : [],
+      verificationDocumentsCount: prereg.dniFrontImage ? 1 : 0,
       phoneVerified: true,
       registrationMode: 'pre-registration',
       professionalProfile: userRole === 'professional' ? {

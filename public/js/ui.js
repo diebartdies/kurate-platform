@@ -82,6 +82,11 @@ export function initGlobalTopBar() {
 
     const topBar = document.createElement('div');
     topBar.id = 'globalTopBar';
+    // The bar is the site header/navigation cluster injected at runtime. A
+    // bare div would leave its links outside every landmark; marking it as
+    // labelled navigation keeps other page banners (static <header>) unique.
+    topBar.setAttribute('role', 'navigation');
+    topBar.setAttribute('aria-label', 'Barra superior');
     Object.assign(topBar.style, {
         position: 'fixed', top: '0', left: '0', width: '100%', height: '55px',
 

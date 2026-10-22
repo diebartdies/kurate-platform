@@ -15,14 +15,14 @@ html {
     padding-top: env(safe-area-inset-top, 0px) !important;
     height: calc(var(--global-topbar-height) + env(safe-area-inset-top, 0px)) !important;
     min-height: var(--global-topbar-height);
-    padding-left: max(12px, env(safe-area-inset-left)) !important;
-    padding-right: max(12px, env(safe-area-inset-right)) !important;
+    padding-left: max(12px, env(safe-area-inset-left, 0px)) !important;
+    padding-right: max(12px, env(safe-area-inset-right, 0px)) !important;
     box-sizing: border-box !important;
 }
 
 body {
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
 }
 
 /* Logo sizing — overrides large inline heights on page headers */
@@ -68,8 +68,8 @@ header nav a {
 }
 
 .container {
-    padding-left: max(16px, env(safe-area-inset-left));
-    padding-right: max(16px, env(safe-area-inset-right));
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
 
 button,
@@ -192,7 +192,7 @@ html.page-pending #pageLoader {
 .admin-overlay-modal,
 .admin-leads-modal {
     box-sizing: border-box;
-    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    padding: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
 }
 
 .admin-leads-panel .admin-leads-toolbar {
@@ -350,33 +350,33 @@ table {
 }
 
 .reg-page {
-    padding-left: max(12px, env(safe-area-inset-left));
-    padding-right: max(12px, env(safe-area-inset-right));
+    padding-left: max(12px, env(safe-area-inset-left, 0px));
+    padding-right: max(12px, env(safe-area-inset-right, 0px));
 }
 
 #privacyShield {
-    left: max(12px, env(safe-area-inset-left));
-    bottom: max(12px, env(safe-area-inset-bottom));
-    max-width: calc(100vw - 24px - env(safe-area-inset-left) - env(safe-area-inset-right));
+    left: max(12px, env(safe-area-inset-left, 0px));
+    bottom: max(12px, env(safe-area-inset-bottom, 0px));
+    max-width: calc(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
 }
 
 /* Reserve space so fixed privacy badge does not cover primary actions */
 body.register-page .reg-page,
 body.register-page main .container {
-    padding-bottom: max(148px, calc(112px + env(safe-area-inset-bottom))) !important;
+    padding-bottom: max(148px, calc(112px + env(safe-area-inset-bottom, 0px))) !important;
 }
 
 body.password-recovery-page main,
 body.password-recovery-page .container {
-    padding-bottom: max(120px, calc(88px + env(safe-area-inset-bottom)));
+    padding-bottom: max(120px, calc(88px + env(safe-area-inset-bottom, 0px)));
 }
 
 body.landing-page .landing-frame-auth {
-    padding-bottom: max(24px, env(safe-area-inset-bottom));
+    padding-bottom: max(24px, env(safe-area-inset-bottom, 0px));
 }
 
 body.landing-page .landing-pro-links {
-    margin-bottom: max(72px, calc(56px + env(safe-area-inset-bottom)));
+    margin-bottom: max(72px, calc(56px + env(safe-area-inset-bottom, 0px)));
 }
 
 /* Landing index — global top bar + privacy shield must not clip content */
@@ -385,7 +385,7 @@ body.landing-page.has-global-topbar {
 }
 
 body.landing-page .landing-container {
-    padding-bottom: max(88px, calc(72px + env(safe-area-inset-bottom)));
+    padding-bottom: max(88px, calc(72px + env(safe-area-inset-bottom, 0px)));
     box-sizing: border-box;
 }
 
@@ -409,7 +409,7 @@ body.landing-page .landing-container {
     }
 
     body.landing-page .landing-pro-links {
-        margin-bottom: max(96px, calc(76px + env(safe-area-inset-bottom)));
+        margin-bottom: max(96px, calc(76px + env(safe-area-inset-bottom, 0px)));
     }
 }
 
@@ -521,7 +521,7 @@ body.register-page #registerMain {
 
 #treasureDetail .container {
     padding-top: 80px;
-    padding-bottom: max(80px, env(safe-area-inset-bottom));
+    padding-bottom: max(80px, env(safe-area-inset-bottom, 0px));
 }
 
 @media (max-width: 900px) {
@@ -620,8 +620,8 @@ body.register-page #registerMain {
     }
 
     .container {
-        padding-left: max(12px, env(safe-area-inset-left));
-        padding-right: max(12px, env(safe-area-inset-right));
+        padding-left: max(12px, env(safe-area-inset-left, 0px));
+        padding-right: max(12px, env(safe-area-inset-right, 0px));
     }
 
     header {
@@ -642,12 +642,12 @@ body.register-page #registerMain {
 
     #privacyShield.privacy-shield--form-page {
         left: auto !important;
-        right: max(10px, env(safe-area-inset-right)) !important;
+        right: max(10px, env(safe-area-inset-right, 0px)) !important;
         max-width: min(188px, calc(46vw - 8px)) !important;
     }
 
     #privacyShield.privacy-shield--expanded {
-        max-width: min(280px, calc(100vw - 20px - env(safe-area-inset-left) - env(safe-area-inset-right))) !important;
+        max-width: min(280px, calc(100vw - 20px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))) !important;
         max-height: min(36vh, 220px);
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
@@ -655,11 +655,11 @@ body.register-page #registerMain {
 
     body.register-page .reg-page,
     body.register-page main .container {
-        padding-bottom: max(168px, calc(128px + env(safe-area-inset-bottom))) !important;
+        padding-bottom: max(168px, calc(128px + env(safe-area-inset-bottom, 0px))) !important;
     }
 
     body.landing-page .landing-pro-links {
-        margin-bottom: max(88px, calc(64px + env(safe-area-inset-bottom)));
+        margin-bottom: max(88px, calc(64px + env(safe-area-inset-bottom, 0px)));
     }
 
     .five-column-grid:not(.admin-prof-grid) {
@@ -700,8 +700,8 @@ body.register-page #registerMain {
 
 @media (max-width: 768px) {
     body.categories-page .categories-container {
-        padding-left: max(8px, env(safe-area-inset-left));
-        padding-right: max(8px, env(safe-area-inset-right));
+        padding-left: max(8px, env(safe-area-inset-left, 0px));
+        padding-right: max(8px, env(safe-area-inset-right, 0px));
     }
 
     .categories-shell {

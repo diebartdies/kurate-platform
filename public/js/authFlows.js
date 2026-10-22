@@ -1,4 +1,4 @@
-import { API_URL, BASE_ORIGIN, appPath } from './globals.js';
+import { API_URL, BASE_ORIGIN, appPath, getDeviceId } from './globals.js';
 import { showAlert } from './uiHelpers.js';
 import { announceMessage, wireAuthFormLabels } from './a11y.js';
 import { t, applyStaticTranslations } from './i18n.js';
@@ -44,8 +44,14 @@ export function redirectAfterLogin(user = {}) {
         intended = null;
     }
 
+    // An admin-issued temporary password must be replaced before anything else.
+    if (user.mustChangePassword) {
+        window.location.replace(appPath('set-password.html'));
+        return;
+    }
+
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth < 768;
-    const needsDni = user.role === 'professional' && user.verificationStatus !== 'approved' && (!user.verificationDocuments || user.verificationDocuments.length < 3);
+    const needsDni = user.role === 'professional' && user.verificationStatus !== 'approved' && !user.verificationDocumentsCount;
     if (needsDni && isMobile) {
         window.location.replace(appPath('captura-dni.html'));
         return;
@@ -113,6 +119,14 @@ function showLoginFailure(alert, data, email) {
         return;
     }
 
+    if (data.code === 'DEVICE_NOT_AUTHORIZED') {
+        alert.innerHTML = `
+            <p><strong>${t('This device is not authorized to access the admin.')}</strong></p>
+            <p style="margin-top:8px;font-size:0.92rem;">${t('Sign in from a registered device, or authorize this device from another session via Dashboard → Config → Security.')}</p>
+        `;
+        return;
+    }
+
     showAlert(alert, t(data.error || 'Access Denied'));
     revealLoginAlert(alert);
 }
@@ -147,7 +161,7 @@ async function submitLoginForm(e) {
         const res = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ email, password, deviceId: getDeviceId() })
         });
 
         let data;

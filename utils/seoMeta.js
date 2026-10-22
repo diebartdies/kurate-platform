@@ -1,4 +1,4 @@
-const PUBLIC_URL = process.env.PUBLIC_URL || 'http://localhost:5000';
+const PUBLIC_URL = process.env.PUBLIC_URL || 'https://kurate.drsrv.net.ar';
 
 const RESERVED_PROFILE_ALIASES = new Set(['admin', 'api', 'login', 'register', 'discover', 'dashboard', 'categories', 'perfil', 'acompanantes', 'sitemap', 'robots.txt']);
 

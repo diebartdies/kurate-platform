@@ -1,3 +1,11 @@
+pluginManagement {
+    repositories {
+        google()                  // Required for Android plugins (com.android.application)
+        mavenCentral()            // Required for general plugins
+        gradlePluginPortal()      // Required for community plugins
+    }
+}
+
 include ':app'
 include ':capacitor-cordova-android-plugins'
 project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')

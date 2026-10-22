@@ -14,6 +14,10 @@ async function authenticateToken(token) {
   const decoded = jwt.verify(token, config.jwtSecret);
   const user = await User.findById(decoded.id);
   if (!user) return null;
+  // Tokens issued before a password reset carry no tokenVersion; treat them as 0
+  // so legacy sessions survive normal logins but die the moment an admin bumps it.
+  const tokenVersion = typeof decoded.tokenVersion === 'number' ? decoded.tokenVersion : 0;
+  if (tokenVersion !== (user.tokenVersion || 0)) return null;
   return user;
 }
 

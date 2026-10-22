@@ -21,9 +21,9 @@
     .fm-back:hover { color: var(--primary-gold); border-color: var(--primary-gold); }
     .fm-top-right { display: flex; align-items: center; gap: 0.5rem; }
     .fm-lang-btn { background: transparent; border: none; border-bottom: 2px solid transparent; padding: 4px 8px; cursor: pointer; transition: opacity 0.2s, border-color 0.2s; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; color: #ccc; border-radius: 4px; }
-    .fm-lang-btn.active { border-bottom-color: var(--primary-gold); opacity: 1; color: var(--primary-gold); }
-    .fm-lang-btn.inactive { opacity: 0.4; }
-    .fm-lang-btn:hover { opacity: 1; }
+    .fm-lang-btn.active { border-bottom-color: var(--primary-gold); color: var(--primary-gold); }
+    .fm-lang-btn.inactive { color: #8a8a8a; }
+    .fm-lang-btn:hover { color: #B8922E; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f0f1a; color: #e0e0e0; margin: 0; }
     .container { max-width: 860px; margin: 0 auto; padding: 16px 16px 48px; }
     a.back { display: inline-flex; align-items: center; gap: 6px; color: var(--gold-light); text-decoration: none; font-size: 0.9rem; margin-bottom: 16px; }
@@ -60,10 +60,11 @@
     .contact-btn img { width: 20px; height: 20px; border-radius: 50%; background: rgba(15,15,26,0.85); padding: 2px; }
     .loader { text-align: center; padding: 60px 16px; color: #aaa; }
     .err { text-align: center; padding: 60px 16px; color: #e08; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
   </style>
 </head>
 <body>
-  <a href="#detail" class="skip-link" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;padding:8px 16px;background:var(--primary-gold);color:#0f0f1a;font-weight:700;text-decoration:none;border-radius:0 0 8px 0;">Saltar al contenido</a>
+  <a href="#detail" class="skip-link">Saltar al contenido</a>
   <div class="container">
     <header class="fm-top-bar">
       <a href="/hogar.html" class="fm-back" id="backBtn">← <span class="fm-back-text">Volver</span></a>
@@ -80,6 +81,7 @@
       <a href="/play" id="apkDownloadBtn" style="display:none;background:#fff;border:none;border-radius:5px;padding:0.3rem 0.7rem;font-weight:700;font-size:0.75rem;cursor:pointer;white-space:nowrap;text-decoration:none;">Descargar</a>
       <button onclick="document.getElementById('apkBanner').style.display='none';sessionStorage.setItem('apkBannerDismissed','1');" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:1.1rem;cursor:pointer;padding:0 0.2rem;line-height:1;margin-left:auto;">&times;</button>
     </div>
+    <h1 id="fallbackH1" class="sr-only">Detalle del técnico</h1>
     <div id="detail">
       <div class="loader" data-i18n="Cargando detalle...">Cargando detalle...</div>
     </div>
@@ -120,6 +122,7 @@
     }
 
     function render(d) {
+      document.getElementById('fallbackH1')?.remove();
       const hp = d.hogarProfile || {};
       const pp = d.professionalProfile || {};
       const rawContact = d.contact || hp.contact || {};
@@ -176,7 +179,9 @@
         return '<div class="gallery-item">' + img + '<div class="wm">KuraTe</div></div>';
       }).join('');
       const svcChips = services.map(s => {
-        const brands = (s.brands && s.brands.length) ? ' (' + s.brands.join(', ') + ')' : '';
+        const brands = (s.brands && s.brands.length)
+          ? ' (' + s.brands.map(b => String(b).replace(/^__otra__:\s*/, '')).filter(Boolean).join(', ') + ')'
+          : '';
         return '<span class="chip">' + esc(s.name || s.path) + esc(brands) + '</span>';
       }).join('');
 
@@ -390,5 +395,6 @@
       }
     })();
   </script>
+<script src="/js/imageViewer.js"></script>
 </body>
 </html>

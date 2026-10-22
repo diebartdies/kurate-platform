@@ -59,7 +59,7 @@ export function initBootstrap() {
         const effectivePage = isProfilePath ? 'treasure.html' : currentPage;
 
         const publicPages = ['index.html', 'login.html', 'register.html', 'verify.html', 'recover.html', 'detalles.html', 'conciencia-vih.html', 'conciencia-cancer-mama.html'];
-        const isPublicPage = publicPages.includes(effectivePage);
+        const isPublicPage = isProfilePath || publicPages.includes(effectivePage);
         const is18Plus = localStorage.getItem('is18Plus');
         const hasToken = localStorage.getItem('token');
 
@@ -131,7 +131,7 @@ export function initBootstrap() {
             }
 
             const publicAuthPages = new Set(['login.html', 'register.html', 'verify.html', 'recover.html']);
-            const skipAncestorCheck = isPublicPage && publicAuthPages.has(effectivePage);
+            const skipAncestorCheck = isProfilePath || (isPublicPage && publicAuthPages.has(effectivePage));
 
             if (!skipAncestorCheck && allowed && (!currentAncestorCode || !allowed.includes(currentAncestorCode))) {
                 console.warn(`[Flow Guardian] Access denied. Invalid ancestor code for ${effectivePage}. Redirecting to start.`);

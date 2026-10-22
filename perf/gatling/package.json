@@ -1,0 +1,15 @@
+{
+  "name": "kurate-perf",
+  "private": true,
+  "version": "1.0.0",
+  "description": "KuraTe - tests de carga (Gatling)",
+  "type": "module",
+  "scripts": {
+    "test": "gatling run",
+    "test:heavy": "gatling run -s com.example.simulation.SearchHeavy"
+  },
+  "devDependencies": {
+    "@gatling/core": "^3.11.0",
+    "@gatling/http": "^3.11.0"
+  }
+}

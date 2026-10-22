@@ -9,6 +9,10 @@ const Profession = require('../models/Profession');
 const Statistic = require('../models/Statistic');
 const Review = require('../models/Review');
 const { assignGpsToLocation } = require('../utils/cityCoordinates');
+const { servicePrefixRegex, servicePathMatches, servicePathDepth, normalizeServicePath, servicePathPrefixes, servicePathLookupValues, escapeRegex } = require('../utils/servicePathMatch');
+const { sanitizeServices, brandDisplayName } = require('../utils/otraBrand');
+const { esCaba, entesEsperados, padronParaVerificar, validarVerificacion, aplicarEstadoVerificacion, ENTES } = require('../utils/matriculaRules');
+const { flexibleTextRegex } = require('../utils/flexibleText');
 function normalizeAlias(s){ if(!s) return s; return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim(); }
 const Feedback = require('../models/Feedback');
 const Connection = require('../models/Connection');
@@ -25,6 +29,37 @@ const Aviso = require('../models/Aviso');
 
 const ALIAS_LOOKUP_FILTER = { role: 'professional', accountDeletedAt: null };
 const DEFAULT_WORKING_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+// El enum legacy de hogarProfile.area usa 'pime'; el arbol canonico lo llamo
+// 'casa-campo'. Aceptamos ambos en la URL para no romper links ya indexados.
+const AREA_ALIAS_PIME = new Set(['pime', 'casa-de-campo', 'campo']);
+
+// La matricula habilitante es un documento PRIVADO: el numero y el archivo
+// nunca salen en listados publicos. Solo viaja si el propio profesional la
+// pidio, y el listado muestra el estado de verificacion como insignia.
+function sanitizePublicProfessions(prof) {
+  if (!prof || typeof prof !== 'object') return prof;
+  const clone = { ...prof };
+  ['hogarProfile', 'professionalProfile'].forEach((k) => {
+    const p = clone[k];
+    if (!p || !Array.isArray(p.professions)) return;
+    p.professions = p.professions.map(({ slug, name, matriculado, matriculaVerificada, matriculaRechazada }) => ({
+      slug, name,
+      matriculado: !!matriculado,
+      matriculaVerificada: !!matriculaVerificada,
+      matriculaRechazada: !!matriculaRechazada
+    }));
+  });
+  if (Array.isArray(clone.professions)) {
+    clone.professions = clone.professions.map(({ slug, name, matriculado, matriculaVerificada, matriculaRechazada }) => ({
+      slug, name,
+      matriculado: !!matriculado,
+      matriculaVerificada: !!matriculaVerificada,
+      matriculaRechazada: !!matriculaRechazada
+    }));
+  }
+  return clone;
+}
 
 // Simple in-memory cache setup
 const cache = new Map();
@@ -110,7 +145,7 @@ exports.getProfessionals = async (req, res, next) => {
 
     // Filter by Alias (partial match)
     if (req.query.alias && req.query.alias.trim()) {
-      query['professionalProfile.alias'] = { $regex: req.query.alias.trim(), $options: 'i' };
+      query['professionalProfile.alias'] = { $regex: escapeRegex(req.query.alias.trim()), $options: 'i' };
     }
 
     // Filter by Specialty (searches both professionalProfile.services and hogarProfile.services)
@@ -134,7 +169,7 @@ exports.getProfessionals = async (req, res, next) => {
 
     // Hierarchical Location Search (checks both professionalProfile.location and hogarProfile.address)
     if (req.query.province && req.query.province.trim()) {
-      const provRegex = { $regex: req.query.province.trim(), $options: 'i' };
+      const provRegex = { $regex: escapeRegex(req.query.province.trim()), $options: 'i' };
       query.$and = query.$and || [];
       query.$and.push({ $or: [
         { 'professionalProfile.location.province': provRegex },
@@ -142,7 +177,7 @@ exports.getProfessionals = async (req, res, next) => {
       ]});
     }
     if (req.query.city && req.query.city.trim()) {
-      const cityRegex = { $regex: req.query.city.trim(), $options: 'i' };
+      const cityRegex = { $regex: escapeRegex(req.query.city.trim()), $options: 'i' };
       query.$and = query.$and || [];
       query.$and.push({ $or: [
         { 'professionalProfile.location.city': cityRegex },
@@ -150,7 +185,7 @@ exports.getProfessionals = async (req, res, next) => {
       ]});
     }
     if (req.query.neighborhood && req.query.neighborhood.trim()) {
-      const hoodRegex = { $regex: req.query.neighborhood.trim(), $options: 'i' };
+      const hoodRegex = { $regex: escapeRegex(req.query.neighborhood.trim()), $options: 'i' };
       query.$and = query.$and || [];
       query.$and.push({ $or: [
         { 'professionalProfile.location.neighborhood': hoodRegex },
@@ -283,9 +318,11 @@ exports.searchProfessionals = async (req, res, next) => {
     if (provincia && provincia.trim()) {
       const provRaw = provincia.trim();
       const provLower = provRaw.toLowerCase();
-      const provRegexes = [{ $regex: provRaw, $options: 'i' }];
+      // Texto de usuario dentro de $regex: hay que escapar.
+      const provRe = escapeRegex(provRaw);
+      const provRegexes = [{ $regex: provRe, $options: 'i' }];
       if (provLower === 'caba') provRegexes.push({ $regex: 'Ciudad Autónoma de Buenos Aires', $options: 'i' });
-      if (provLower.includes('ciudad autónoma')) provRegexes.push({ $regex: '^CABA$', $options: 'i' });
+      if (provLower.includes('ciudad autonoma') || provLower.includes('ciudad aut_noma')) provRegexes.push({ $regex: '^CABA$', $options: 'i' });
       const provOr = [];
       for (const pr of provRegexes) {
         provOr.push({ 'professionalProfile.location.province': pr });
@@ -303,17 +340,29 @@ exports.searchProfessionals = async (req, res, next) => {
         ]
       });
     }
+    const quiereMatriculado = req.query.matriculado === '1' || req.query.matriculado === 'true';
     if (req.query.profession && req.query.profession.trim()) {
       const profRaw = String(req.query.profession).trim();
       const profSlug = profRaw.toLowerCase().replace(/\s+/g, '-');
-      const orProf = [
+      // Texto de usuario dentro de $regex: hay que escapar (ver searchProfessionals).
+      const profRe = escapeRegex(profRaw);
+      const orProf = quiereMatriculado ? [
+        { 'professionalProfile.professions': { $elemMatch: { slug: profSlug, matriculado: true } } },
+        { 'hogarProfile.professions': { $elemMatch: { slug: profSlug, matriculado: true } } }
+      ] : [
         { 'professionalProfile.professions.slug': profSlug },
         { 'hogarProfile.professions.slug': profSlug },
-        { 'professionalProfile.professions.name': { $regex: profRaw, $options: 'i' } },
-        { 'hogarProfile.professions.name': { $regex: profRaw, $options: 'i' } }
+        { 'professionalProfile.professions.name': { $regex: profRe, $options: 'i' } },
+        { 'hogarProfile.professions.name': { $regex: profRe, $options: 'i' } }
       ];
       baseFilter.$and = baseFilter.$and || [];
       baseFilter.$and.push({ $or: orProf });
+    } else if (quiereMatriculado) {
+      baseFilter.$and = baseFilter.$and || [];
+      baseFilter.$and.push({ $or: [
+        { 'professionalProfile.professions': { $elemMatch: { matriculado: true } } },
+        { 'hogarProfile.professions': { $elemMatch: { matriculado: true } } }
+      ]});
     }
     const isCabaBarrio = ciudad && ciudad.trim() && provincia && provincia.trim().toLowerCase() === 'caba';
 
@@ -327,15 +376,42 @@ exports.searchProfessionals = async (req, res, next) => {
       parts.forEach(p => { if (p) searchTerms.add(p.replace(/-/g, ' ')); });
       patterns = [...searchTerms].map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
 
-      // Build flexible regex: treat /, ., - and space as interchangeable separators
-      const svcRegex = parts.filter(Boolean).map(p => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/-/g, '[- ]')).join('[- /.]+');
-      baseFilter.$and = baseFilter.$and || [];
-      baseFilter.$and.push({
-        $or: [
-          { 'professionalProfile.services': { $regex: svcRegex, $options: 'i' } },
-          { 'hogarProfile.services.path': { $regex: svcRegex, $options: 'i' } }
-        ]
-      });
+        // Matching jerarquico: buscar un area/categoria/dispositivo devuelve
+        // tambien quien guardo cualquier descendiente. Sin que 'heladera'
+        // matchee 'heladeras-industriales' (era substring match).
+        //
+        // servicePaths es un array con todos los prefijos del path guardado, asi
+        // que un $in de UN solo valor (el path buscado completo) matchea a la vez
+        // el path exacto, cualquier descendiente y el mismo dispositivo con la
+        // marca. Es igualdad pura: MongoDB acota el indice en vez de collscannear.
+        const lookupValues = servicePathLookupValues(service);
+        if (lookupValues) {
+          baseFilter.$and = baseFilter.$and || [];
+          baseFilter.$and.push({
+            $or: [
+              // professionalProfile.services guarda strings con '.' y marca
+              { 'professionalProfile.servicePaths': { $in: lookupValues } },
+              // hogarProfile.services guarda objetos; path con '/' o '.'
+              { 'hogarProfile.servicePaths': { $in: lookupValues } }
+            ]
+          });
+        } else {
+          // Solo un segmento (landings SEO mandan service=heladera sin area):
+          // hay que buscarlo en cualquier posicion de la ruta, lo resuelve el
+          // regex. Es el camino frio, no merece la desnormalizacion.
+          const svcRegex = servicePrefixRegex(service);
+          if (svcRegex) {
+            baseFilter.$and = baseFilter.$and || [];
+            baseFilter.$and.push({
+              $or: [
+                // professionalProfile.services guarda strings con '.' y marca
+                { 'professionalProfile.services': { $regex: svcRegex, $options: 'i' } },
+                // hogarProfile.services guarda objetos; path con '/' o '.'
+                { 'hogarProfile.services.path': { $regex: svcRegex, $options: 'i' } }
+              ]
+            });
+          }
+        }
     }
 
     // Legacy: still support descripcion if provided
@@ -369,6 +445,8 @@ exports.searchProfessionals = async (req, res, next) => {
         'professionalProfile.professions': 1,
         'professionalProfile.photos': 1,
         'professionalProfile.whatsappNumber': 1,
+        'professionalProfile.mobilePhone': 1,
+        'professionalProfile.usesWhatsApp': 1,
         'hogarProfile.firstName': 1,
         'hogarProfile.lastName': 1,
         'hogarProfile.bio': 1,
@@ -413,7 +491,17 @@ exports.searchProfessionals = async (req, res, next) => {
       if (!ppHasServices && p.hogarProfile && Array.isArray(p.hogarProfile.services) && p.hogarProfile.services.length > 0) {
         pp = p.hogarProfile;
       }
-      const svcs = Array.isArray(pp.services) ? pp.services.map(s => typeof s === 'string' ? s.toLowerCase() : (s.name || s.path || '').toLowerCase()) : [];
+      // Conservar path y name por separado. Antes se usaba (s.name || s.path),
+      // pero hogarProfile.services[].name es required, asi que el path NUNCA se
+      // comparaba y el matching jerarquico era imposible en el scoring.
+      const svcEntries = Array.isArray(pp.services) ? pp.services.map(s => {
+        if (typeof s === 'string') {
+          const p = normalizeServicePath(s);
+          return { path: p, name: s.toLowerCase() };
+        }
+        return { path: normalizeServicePath(s.path || ''), name: String(s.name || '').toLowerCase() };
+      }).filter(e => e.path || e.name) : [];
+      const svcs = svcEntries.map(e => e.name || e.path);
       const bio = (pp.bio || '').toLowerCase();
       const photos = Array.isArray(pp.photos) ? pp.photos : [];
       const firstPhoto = photos.length ? photos[0] : null;
@@ -427,15 +515,26 @@ exports.searchProfessionals = async (req, res, next) => {
       if (accion) score += W_ACTION;
       if (urgencia) score += W_URGENCY;
 
-      // Service matches (each matching service = full service weight)
+      // Service match. Primero matching jerarquico sobre el path: buscar un
+      // area/categoria encuentra a quien guardo cualquier descendiente.
       let serviceMatched = false;
-      for (const pat of patterns) {
-        for (const s of svcs) {
-          if (s.includes(pat) || pat.includes(s)) {
-            if (!serviceMatched) { score += W_SERVICE; serviceMatched = true; }
-          }
+      if (service) {
+        const wanted = normalizeServicePath(service);
+        for (const e of svcEntries) {
+          if (e.path && servicePathMatches(e.path, wanted)) { serviceMatched = true; break; }
         }
       }
+      // Fallback texto: cubre la rama legada de 'descripcion' y los nombres
+      // legibles. Se evita el 'includes' bidireccional (causaba falsos positivos).
+      if (!serviceMatched) {
+        for (const pat of patterns) {
+          for (const e of svcEntries) {
+            if ((e.name && e.name.includes(pat)) || (e.path && e.path.includes(pat))) { serviceMatched = true; break; }
+          }
+          if (serviceMatched) break;
+        }
+      }
+      if (serviceMatched) score += W_SERVICE;
 
       // Bio keyword matches
       let bioMatchCount = 0;
@@ -479,9 +578,13 @@ exports.searchProfessionals = async (req, res, next) => {
           score += W_MODEL;
           modelMatched = true;
         } else if (service) {
-          const deviceName = service.split('/').filter(Boolean).slice(-1)[0] || '';
-          const hasGenericEquipment = svcs.some(s => {
-            const sParts = s.split('/').filter(Boolean);
+          const deviceName = normalizeServicePath(service).split('/').filter(Boolean).slice(-1)[0] || '';
+          // Comparar el ULTIMO segmento del path guardado contra el dispositivo
+          // buscado. Se usa e.path (normalizado) y no svcs: antes se partia con
+          // '/' un valor que venia en formato 'a.b.c' o que era el name legible,
+          // por lo que sParts nunca tenia 3 elementos y esto siempre daba false.
+          const hasGenericEquipment = !!deviceName && svcEntries.some(e => {
+            const sParts = e.path.split('/').filter(Boolean);
             return sParts.length >= 3 && sParts[sParts.length - 1] === deviceName;
           });
           if (hasGenericEquipment) {
@@ -555,6 +658,16 @@ exports.searchProfessionals = async (req, res, next) => {
         professions: pp.professions && pp.professions.length ? pp.professions : (p.hogarProfile && p.hogarProfile.professions) || [],
         photo: firstPhoto,
         email: p.email,
+        // Contact flags: the cards render WhatsApp/Telegram badges from these.
+        // Uses the same resolution as getHogarProfessionals so both lists agree.
+        whatsapp: (() => {
+          const hc = (p.hogarProfile && p.hogarProfile.contact) || {};
+          if (hc.whatsapp) return true;
+          const profProfile = p.professionalProfile || {};
+          if (profProfile.usesWhatsApp === false) return false;
+          return Boolean(profProfile.whatsappNumber || profProfile.mobilePhone || hc.mobilePhone);
+        })(),
+        phone: (p.professionalProfile && (p.professionalProfile.whatsappNumber || p.professionalProfile.mobilePhone)) || ((p.hogarProfile && p.hogarProfile.contact && p.hogarProfile.contact.mobilePhone) || ''),
         telegram: !!(p.hogarProfile && p.hogarProfile.contact && p.hogarProfile.contact.telegram),
         onCall: !!(p.hogarProfile && p.hogarProfile.onCall),
         averageRating: avgRating,
@@ -601,6 +714,7 @@ exports.searchProfessionals = async (req, res, next) => {
         .select({
           'professionalProfile.alias': 1, 'professionalProfile.bio': 1, 'professionalProfile.location': 1,
           'professionalProfile.services': 1, 'professionalProfile.photos': 1, 'professionalProfile.whatsappNumber': 1,
+          'professionalProfile.mobilePhone': 1, 'professionalProfile.usesWhatsApp': 1,
           'hogarProfile.firstName': 1, 'hogarProfile.lastName': 1, 'hogarProfile.bio': 1, 'hogarProfile.area': 1,
           'hogarProfile.action': 1, 'hogarProfile.services': 1, 'hogarProfile.photos': 1,
           'hogarProfile.availability': 1, 'hogarProfile.address': 1, 'hogarProfile.contact': 1,
@@ -621,19 +735,40 @@ exports.searchProfessionals = async (req, res, next) => {
           let pp = p.professionalProfile || p.hogarProfile || {};
           const ppHasServices = Array.isArray(pp.services) && pp.services.length > 0;
           if (!ppHasServices && p.hogarProfile && Array.isArray(p.hogarProfile.services) && p.hogarProfile.services.length > 0) pp = p.hogarProfile;
-          const svcs = Array.isArray(pp.services) ? pp.services.map(s => typeof s === 'string' ? s.toLowerCase() : (s.name || s.path || '').toLowerCase()) : [];
+      // Conservar path y name por separado. Antes se usaba (s.name || s.path),
+      // pero hogarProfile.services[].name es required, asi que el path NUNCA se
+      // comparaba y el matching jerarquico era imposible en el scoring.
+      const svcEntries = Array.isArray(pp.services) ? pp.services.map(s => {
+        if (typeof s === 'string') {
+          const p = normalizeServicePath(s);
+          return { path: p, name: s.toLowerCase() };
+        }
+        return { path: normalizeServicePath(s.path || ''), name: String(s.name || '').toLowerCase() };
+      }).filter(e => e.path || e.name) : [];
+      const svcs = svcEntries.map(e => e.name || e.path);
           const bio = (pp.bio || '').toLowerCase();
           const avgRating = expandRatingMap[p._id.toString()] || 0;
           let score = 0;
           let maxPossible = W_ACTION + W_URGENCY + W_SERVICE + W_BIO + W_LOCATION + (usedBrand ? W_BRAND : 0) + (usedModel ? W_MODEL : 0);
           if (accion) score += W_ACTION;
           if (urgencia) score += W_URGENCY;
+          // mismo criterio que el bloque principal: jerarquico primero
           let serviceMatched = false;
-          for (const pat of patterns) {
-            for (const s of svcs) {
-              if (s.includes(pat) || pat.includes(s)) { if (!serviceMatched) { score += W_SERVICE; serviceMatched = true; } }
+          if (service) {
+            const wantedCaba = normalizeServicePath(service);
+            for (const e of svcEntries) {
+              if (e.path && servicePathMatches(e.path, wantedCaba)) { serviceMatched = true; break; }
             }
           }
+          if (!serviceMatched) {
+            for (const pat of patterns) {
+              for (const e of svcEntries) {
+                if ((e.name && e.name.includes(pat)) || (e.path && e.path.includes(pat))) { serviceMatched = true; break; }
+              }
+              if (serviceMatched) break;
+            }
+          }
+          if (serviceMatched) score += W_SERVICE;
           let bioMatchCount = 0;
           for (const pat of patterns) { if (bio.includes(pat)) bioMatchCount++; }
           if (bioMatchCount > 0) score += Math.min(W_BIO, bioMatchCount * 5);
@@ -681,7 +816,16 @@ exports.searchProfessionals = async (req, res, next) => {
             lat: pp.location?.lat || null, lng: pp.location?.lng || null, distance: dist || null,
             services: svcs, photo: photos[0] || null,
             email: p.email,
+            whatsapp: (() => {
+              const hc = (p.hogarProfile && p.hogarProfile.contact) || {};
+              if (hc.whatsapp) return true;
+              const profProfile = p.professionalProfile || {};
+              if (profProfile.usesWhatsApp === false) return false;
+              return Boolean(profProfile.whatsappNumber || profProfile.mobilePhone || hc.mobilePhone);
+            })(),
+            phone: (p.professionalProfile && (p.professionalProfile.whatsappNumber || p.professionalProfile.mobilePhone)) || ((p.hogarProfile && p.hogarProfile.contact && p.hogarProfile.contact.mobilePhone) || ''),
             telegram: !!(p.hogarProfile && p.hogarProfile.contact && p.hogarProfile.contact.telegram),
+            onCall: !!(p.hogarProfile && p.hogarProfile.onCall),
             averageRating: avgRating, brandMatched: false, brandGeneric: false,
             modelMatched: false, modelGeneric: false, mustMatch: false
           };
@@ -815,7 +959,7 @@ exports.searchProfessionals = async (req, res, next) => {
       }
     }
 
-    res.status(200).json({ results: allResults, suggestions });
+    res.status(200).json({ results: allResults.map(sanitizePublicProfessions), suggestions });
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
   }
@@ -1521,6 +1665,9 @@ exports.updateProfile = async (req, res, next) => {
     Object.keys(professionalProfile).forEach(key => {
       fieldsToUpdate[`professionalProfile.${key}`] = professionalProfile[key];
     });
+    // Cache de prefijos: sin esto professionalProfile se buscaria por regex y
+    // la query jerarquica no podria acotar el indice.
+    fieldsToUpdate['professionalProfile.servicePaths'] = servicePathPrefixes(professionalProfile.services);
     
     if (req.body.vacationStart && req.body.vacationEnd) {
       const vStart = new Date(req.body.vacationStart);
@@ -1911,8 +2058,12 @@ exports.updateHogarServices = async (req, res) => {
     if (description !== undefined) hp.description = description;
 
     if (services !== undefined) {
-      console.log('[KuraTe] updateHogarServices saving:', JSON.stringify(services));
-      hp.services = services || [];
+      // Sanitiza antes de guardar: la entrada "otra" de cada dispositivo llega
+      // como texto crudo y se normaliza a "__otra__:Nombre Propio". Tambien
+      // descarta servicios sin path o sin marcas.
+      hp.services = sanitizeServices(services);
+      // Cache de prefijos para que la busqueda sea por igualdad (indexada).
+      hp.servicePaths = servicePathPrefixes(hp.services);
     }
     if (photos !== undefined) hp.photos = photos || [];
     if (scope) hp.scope = scope;
@@ -1933,7 +2084,7 @@ exports.updateHogarServices = async (req, res) => {
 exports.getProfessions = async (req, res, next) => {
   try {
     const professions = await Profession.find({ active: true })
-      .select('slug name image description')
+      .select('slug name image description regulated')
       .sort({ name: 1 })
       .lean();
     res.json({ success: true, count: professions.length, data: professions });
@@ -1957,8 +2108,61 @@ exports.updateMyProfessions = async (req, res, next) => {
     const slugs = raw.map(p => (typeof p === 'string' ? p : p.slug)).filter(Boolean).map(s => String(s).trim().toLowerCase());
     const uniqueSlugs = [...new Set(slugs)];
 
-    const valid = await Profession.find({ active: true, slug: { $in: uniqueSlugs } }).select('slug name').lean();
-    const chosen = valid.map(p => ({ slug: p.slug, name: p.name }));
+    const valid = await Profession.find({ active: true, slug: { $in: uniqueSlugs } }).select('slug name regulated').lean();
+    if (valid.length !== uniqueSlugs.length) {
+      const found = new Set(valid.map(p => p.slug));
+      const rejected = uniqueSlugs.filter(s => !found.has(s));
+      return res.status(400).json({ success: false, error: 'unknown or inactive profession(s)', rejected });
+    }
+
+    // Los oficios regulados (gasista, electricista) exigen matricula: si el
+    // profesional la declara, se guardan numero y/o foto del titulo. El estado
+    // de verificacion no lo puede setear el profesional, solo el admin.
+    const previas = new Map();
+    const userPrevio = await User.findById(req.user.id).select('hogarProfile.professions professionalProfile.professions').lean();
+    for (const p of [...(userPrevio?.hogarProfile?.professions || []), ...(userPrevio?.professionalProfile?.professions || [])]) {
+      previas.set(p.slug, p);
+    }
+
+    const chosen = valid.map((p) => {
+      const entrada = raw.find((r) => typeof r === 'object' && r && String(r.slug || '').trim().toLowerCase() === p.slug) || {};
+      const previa = previas.get(p.slug) || {};
+      const item = { slug: p.slug, name: p.name, matriculado: false };
+      if (p.regulated) {
+        // 'matriculado' ausente = el cliente no lo manage (ej. edicion desde
+        // admin): se conserva lo que habia. Solo un false explicito desmatricula.
+        const mandaronElCampo = Object.prototype.hasOwnProperty.call(entrada, 'matriculado');
+        const matriculado = mandaronElCampo
+          ? (entrada.matriculado === true || entrada.matriculado === 'true')
+          : !!previa.matriculado;
+        item.matriculado = matriculado;
+        if (matriculado) {
+          const numero = String(entrada.matriculaNumero || previa.matriculaNumero || '').trim().slice(0, 40);
+          const fotoNueva = typeof entrada.matriculaFoto === 'string' ? entrada.matriculaFoto.trim() : '';
+          const foto = (fotoNueva || previa.matriculaFoto || '').slice(0, 500);
+          // Exigir al menos una acreditacion para evitar guardar matriculado=true vacio
+          if (!numero && !foto) {
+            return res.status(400).json({
+              success: false,
+              error: 'Cargá el número de matrícula o una foto del título para acreditar la matriculación.'
+            });
+          }
+          item.matriculaNumero = numero;
+          item.matriculaFoto = foto;
+        }
+        // si dejo de estar matriculado, se cae el documento adjunto
+        if (!matriculado) { item.matriculaNumero = ''; item.matriculaFoto = ''; }
+      }
+      // conservar el estado de verificacion del admin
+      if (previa.matriculaVerificada) { item.matriculaVerificada = true; item.matriculaVerificadaAt = previa.matriculaVerificadaAt; }
+      if (previa.matriculaRechazada) {
+        item.matriculaRechazada = true;
+        // Sin esto el motivo se pierde en cada guardado: el item se reconstruye
+        // desde cero y el admin tendria que volver a escribirlo.
+        if (previa.matriculaRechazadaMotivo) item.matriculaRechazadaMotivo = previa.matriculaRechazadaMotivo;
+      }
+      return item;
+    });
 
     const user = await User.findById(req.user.id);
     if (!user || user.role !== 'professional') {
@@ -1970,6 +2174,297 @@ exports.updateMyProfessions = async (req, res, next) => {
     await user.save();
 
     res.json({ success: true, data: chosen });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Sanea la entrada de matriculacion de un oficio regulado.
+// Devuelve {ok, valor, error} para no repetir la validacion en cada endpoint.
+function buildMatricula(p, entrada, previa = {}) {
+  const matriculado = entrada.matriculado === true || entrada.matriculado === 'true';
+  if (!matriculado) {
+    return { ok: true, valor: { matriculado: false, matriculaNumero: '', matriculaFoto: '' } };
+  }  const numero = String(entrada.matriculaNumero || previa.matriculaNumero || '').trim().slice(0, 40);
+  const fotoPrevia = String(previa.matriculaFoto || '');
+  const foto = String(entrada.matriculaFoto || fotoPrevia).trim().slice(0, 500);
+  // La matricula habilitante se acredita con numero O foto: exigir al menos
+  // una de las dos evita un "matriculado" sin ningun respaldo verificable.
+  if (!numero && !foto) {
+    return { ok: false, error: 'Cargá el número de matrícula o una foto del título para acreditar la matriculación.' };
+  }
+  return { ok: true, valor: { matriculado: true, matriculaNumero: numero, matriculaFoto: foto } };
+}
+
+// Las matriculas NO van a /public (que se sirve estaticamente) ni al
+// uploadsDir compartido: viven en un directorio privado, accesible solo por
+// el dueno del perfil y por un admin a traves del endpoint de descarga.
+const MATRICULA_DIR = path.join(__dirname, '..', 'private', 'matriculas');
+
+function getMatriculaFilePath(fileName) {
+  // Solo se aceptan nombres generados por multer (sin separadores de ruta).
+  if (!fileName || /[\\/]|\.\./.test(fileName)) return null;
+  const resolved = path.resolve(path.join(MATRICULA_DIR, fileName));
+  if (path.dirname(resolved) !== path.resolve(MATRICULA_DIR)) return null;
+  return resolved;
+}
+
+// @desc    Adjunta la foto de la matricula habilitante de un oficio regulado.
+//          El archivo vive FUERA de /public: no se sirve estaticamente.
+// @route   POST /api/v1/professionals/matricula
+// @access  Private/Professional
+exports.uploadMatricula = async (req, res, next) => {
+  try {
+    const slug = String(req.body.slug || '').trim().toLowerCase();
+    if (!slug) return res.status(400).json({ success: false, error: 'slug is required' });
+
+    const prof = await Profession.findOne({ slug, active: true }).select('slug name regulated').lean();
+    if (!prof) return res.status(404).json({ success: false, error: 'unknown profession' });
+    if (!prof.regulated) {
+      return res.status(400).json({ success: false, error: `"${prof.name}" no requiere matriculación.` });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user || user.role !== 'professional') return res.status(404).json({ success: false, error: 'Professional not found' });
+
+    const listas = [user.hogarProfile?.professions, user.professionalProfile?.professions].filter(Array.isArray);
+    let encontrada = null;
+    for (const lista of listas) {
+      const hit = lista.find(p => p.slug === slug);
+      if (hit) encontrada = hit;
+    }
+    if (!encontrada || !encontrada.matriculado) {
+      return res.status(400).json({ success: false, error: 'Marcá la matrícula como activa antes de adjuntar el título.' });
+    }
+
+    const anterior = encontrada.matriculaFoto || '';
+    if (req.file) {
+      encontrada.matriculaFoto = req.file.filename;
+      // al cambiar el documento, la verificacion anterior deja de ser valida
+      encontrada.matriculaVerificada = false;
+      encontrada.matriculaVerificadaAt = null;
+      encontrada.matriculaRechazada = false;
+    }
+
+    const check = buildMatricula({ regulated: true }, { matriculado: true, matriculaNumero: encontrada.matriculaNumero, matriculaFoto: encontrada.matriculaFoto }, encontrada);
+    if (!check.ok) return res.status(400).json({ success: false, error: check.error });
+
+    for (const lista of listas) {
+      const hit = lista.find(p => p.slug === slug);
+      if (hit) {
+        hit.matriculado = true;
+        hit.matriculaNumero = encontrada.matriculaNumero;
+        hit.matriculaFoto = encontrada.matriculaFoto;
+        hit.matriculaVerificada = !!encontrada.matriculaVerificada;
+        hit.matriculaVerificadaAt = encontrada.matriculaVerificadaAt || null;
+        hit.matriculaRechazada = !!encontrada.matriculaRechazada;
+      }
+    }
+    await user.save();
+
+    // el archivo viejo se bor recien despues de guardar bien el nuevo
+    if (req.file && anterior) {
+      const viejo = getMatriculaFilePath(anterior);
+      if (viejo && fs.existsSync(viejo)) { try { fs.unlinkSync(viejo); } catch (e) { /* no bloquea el flujo */ } }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        slug, name: prof.name, matriculado: true,
+        matriculaNumero: encontrada.matriculaNumero,
+        tieneFoto: !!encontrada.matriculaFoto,
+        matriculaVerificada: !!encontrada.matriculaVerificada
+      }
+    });
+  } catch (error) {
+    if (req.file) {
+      try { fs.unlinkSync(req.file.path); } catch (e) { /* ignore */ }
+    }
+    next(error);
+  }
+};
+
+// @desc    Descarga la matricula. Solo la ve el dueno del perfil o un admin.
+// @route   GET /api/v1/professionals/matricula/:slug
+// @access  Private
+exports.getMatricula = async (req, res, next) => {
+  try {
+    const slug = String(req.params.slug || '').trim().toLowerCase();
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ success: false, error: 'not found' });
+
+    let lista = [];
+    if (user.role === 'professional') {
+      lista = [...(user.hogarProfile?.professions || []), ...(user.professionalProfile?.professions || [])];
+    }
+    if (user.role !== 'admin' && !lista.some(p => p.slug === slug)) {
+      return res.status(403).json({ success: false, error: 'forbidden' });
+    }
+
+    // El admin puede auditar cualquier matricula; el profesional solo la propia.
+    let fileName = lista.find(p => p.slug === slug)?.matriculaFoto;
+    if (!fileName && user.role === 'admin' && req.query.userId) {
+      const dueno = await User.findById(String(req.query.userId)).select('hogarProfile.professions professionalProfile.professions').lean();
+      const propias = [...(dueno?.hogarProfile?.professions || []), ...(dueno?.professionalProfile?.professions || [])];
+      fileName = propias.find(p => p.slug === slug)?.matriculaFoto;
+    }
+
+    const filePath = getMatriculaFilePath(fileName);
+    if (!filePath || !fs.existsSync(filePath)) {
+      return res.status(404).json({ success: false, error: 'no hay archivo de matrícula' });
+    }
+    res.sendFile(filePath);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Que padron tiene que consultar el admin para verificar una matricula.
+//          Devuelve el ente emisor esperado segun oficio y provincia, con la
+//          URL del padron oficial.
+// @route   GET /api/v1/professionals/matricula/:slug/padron?userId=...
+// @access  Private/Admin
+exports.getMatriculaPadron = async (req, res, next) => {
+  try {
+    const slug = String(req.params.slug || '').trim().toLowerCase();
+    const userId = String(req.query.userId || '').trim();
+    if (!userId) return res.status(400).json({ success: false, error: 'userId is required' });
+
+    const user = await User.findById(userId)
+      .select('hogarProfile.professions hogarProfile.address.province professionalProfile.professions professionalProfile.location.province')
+      .lean();
+    if (!user) return res.status(404).json({ success: false, error: 'user not found' });
+
+    const provincia = (user.hogarProfile && user.hogarProfile.address && user.hogarProfile.address.province)
+      || (user.professionalProfile && user.professionalProfile.location && user.professionalProfile.location.province)
+      || '';
+
+    const padron = padronParaVerificar(slug, provincia);
+    if (!padron.ok) return res.status(400).json({ success: false, error: padron.error });
+
+    const listas = [user.hogarProfile?.professions, user.professionalProfile?.professions].filter(Array.isArray);
+    let encontrada = null;
+    for (const lista of listas) {
+      const hit = lista.find(p => p.slug === slug);
+      if (hit) encontrada = hit;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        slug,
+        provincia,
+        esCaba: esCaba(provincia),
+        ente: padron.ente,
+        enteLabel: padron.enteLabel,
+        padron: padron.padron,
+        nota: padron.nota || '',
+        alternativas: padron.alternativas || [],
+        matricula: encontrada ? {
+          matriculaNumero: encontrada.matriculaNumero || '',
+          matriculaTitular: encontrada.matriculaTitular || '',
+          matriculaEnteEmisor: encontrada.matriculaEnteEmisor || '',
+          matriculaEstado: encontrada.matriculaEstado || 'sin_verificar',
+          matriculaVerificada: !!encontrada.matriculaVerificada,
+          matriculaRechazada: !!encontrada.matriculaRechazada,
+          matriculaRechazadaMotivo: encontrada.matriculaRechazadaMotivo || '',
+          matriculaVerificadaAt: encontrada.matriculaVerificadaAt || null,
+          matriculaVerificadoEn: encontrada.matriculaVerificadoEn || null,
+          matriculaFuenteConsulta: encontrada.matriculaFuenteConsulta || ''
+        } : null
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Registra el resultado de verificar una matricula contra el padron
+//          oficial (solo admin). Guarda titular y ente emisor, y SOLO habilita
+//          la insignia de verificado si el padron la da como activa.
+// @route   PUT /api/v1/professionals/matricula/:slug/verificar
+// @access  Private/Admin
+exports.reviewMatricula = async (req, res, next) => {
+  try {
+    const slug = String(req.params.slug || '').trim().toLowerCase();
+    const userId = String(req.body.userId || '').trim();
+    if (!userId) return res.status(400).json({ success: false, error: 'userId is required' });
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ success: false, error: 'user not found' });
+
+    // La provincia decide que ente emisor es valido: gasista en CABA no es lo
+    // mismo que gasista en el interior.
+    const provincia = (user.hogarProfile && user.hogarProfile.address && user.hogarProfile.address.province)
+      || (user.professionalProfile && user.professionalProfile.location && user.professionalProfile.location.province)
+      || '';
+
+    const oficial = await Profession.findOne({ slug, active: true }).select('name regulated').lean();
+    const nombreOficio = (oficial && oficial.name) || slug;
+
+    const chk = validarVerificacion({
+      slug,
+      provincia,
+      titular: req.body.titular,
+      enteEmisor: req.body.enteEmisor,
+      estado: req.body.estado,
+      matriculaNumero: req.body.matriculaNumero
+    });
+    if (!chk.ok) {
+      return res.status(400).json({
+        success: false,
+        error: chk.error,
+        esperado: entesEsperados(slug, provincia).map(k => ({ ente: k, label: ENTES[k].label, padron: ENTES[k].padron }))
+      });
+    }
+
+    const efecto = aplicarEstadoVerificacion(chk.valor.estado, req.body.matriculaNumero, nombreOficio);
+    const ahora = new Date();
+    const revisor = (req.user && (req.user.email || req.user.name)) || '';
+    const fuente = String(req.body.fuenteConsulta || '').trim().slice(0, 300);
+
+    const listas = [user.hogarProfile?.professions, user.professionalProfile?.professions].filter(Array.isArray);
+    let tocadas = 0;
+    for (const lista of listas) {
+      for (const p of lista) {
+        if (p.slug !== slug) continue;
+        tocadas++;
+
+        p.matriculaTitular = chk.valor.titular;
+        p.matriculaEnteEmisor = chk.valor.enteEmisor;
+        p.matriculaEstado = chk.valor.estado;
+        p.matriculaFuenteConsulta = fuente;
+
+        p.matriculaVerificada = efecto.matriculaVerificada;
+        p.matriculaVerificadaAt = efecto.matriculaVerificada ? ahora : null;
+        p.matriculaVerificadoEn = ahora;
+        p.matriculaVerificadoPor = revisor;
+        p.matriculaRechazada = efecto.matriculaRechazada;
+        p.matriculaRechazadaMotivo = efecto.matriculaRechazadaMotivo;
+
+        // Si el padron la da de baja y el profesional habia declarado la
+        // matricula activa, se le desdeclara para que no se muestre.
+        if (!efecto.matriculaVerificada && p.matriculado && chk.valor.estado !== 'activa') {
+          p.matriculado = false;
+        }
+      }
+    }
+    if (!tocadas) return res.status(404).json({ success: false, error: 'ese profesional no tiene esa profesión' });
+
+    await user.save();
+    res.json({
+      success: true,
+      data: {
+        slug,
+        matriculaVerificada: efecto.matriculaVerificada,
+        matriculaRechazada: efecto.matriculaRechazada,
+        matriculaEstado: chk.valor.estado,
+        matriculaEnteEmisor: chk.valor.enteEmisor,
+        matriculaTitular: chk.valor.titular,
+        motivo: efecto.matriculaRechazadaMotivo || ''
+      }
+    });
   } catch (error) {
     next(error);
   }
@@ -2001,70 +2496,13 @@ exports.updateHogarPayment = async (req, res) => {
   }
 };
 
-// @desc    User-initiated profile deletion — hidden from public; data retained server-side
-// @route   DELETE /api/v1/professionals/me
-// @access  Private (Professional)
-exports.deleteMyProfile = async (req, res, next) => {
-  try {
-    const { password } = req.body || {};
-    if (!password || typeof password !== 'string') {
-      return res.status(400).json({ success: false, error: 'Please provide your password to confirm account deletion' });
-    }
-
-    const userId = req.user.id || req.user._id;
-    const user = await User.findById(userId).select('+password');
-    if (!user || user.role !== 'professional') {
-      return res.status(404).json({ success: false, error: 'Professional account not found' });
-    }
-
-    if (user.accountDeletedAt) {
-      return res.status(200).json({
-        success: true,
-        message: 'Your profile has been permanently deleted.'
-      });
-    }
-
-    const isMatch = await user.matchPassword(password);
-    if (!isMatch) {
-      return res.status(401).json({ success: false, error: 'Incorrect password. Please try again.' });
-    }
-
-    user.accountDeletedAt = new Date();
-    if (user.professionalProfile) {
-      user.professionalProfile.isExposed = false;
-      user.professionalProfile.subscriptionStatus = 'suspended';
-    }
-    await user.save();
-
-    try {
-      await ActivityLog.create({
-        professional: user._id,
-        action: 'account_soft_deleted',
-        actorType: 'professional',
-        ipAddress: getClientIp(req),
-        userAgent: req.headers['user-agent'] ? String(req.headers['user-agent']).slice(0, 500) : undefined,
-        details: { alias: user.professionalProfile?.alias || null }
-      });
-    } catch (err) {
-      console.error('Failed to log account soft delete:', err.message);
-    }
-
-    res.status(200).json({
-      success: true,
-      message: 'Your profile has been permanently deleted.'
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
 // @desc    Public directory of Hogar/Oficina technicians (search/filter engine)
 // @route   GET /api/v1/hogar/professionals
 // @access  Public
 exports.getHogarProfessionals = async (req, res, next) => {
   try {
     const b64 = (v) => (v ? Buffer.from(String(v)).toString('base64') : '');
-    const query = {
+    let query = {
       role: 'professional',
       accountDeletedAt: null,
       isVerified: true,
@@ -2074,25 +2512,32 @@ exports.getHogarProfessionals = async (req, res, next) => {
         { verificationStatus: null }
       ]
     };
+    // version de la busqueda sin palabras vacias, usada solo si la estricta
+    // no encuentra a nadie (ver bloque de texto libre)
+    let relaxedQuery = null;
 
     // Only professionals with an active/expiring aviso
     const activeAvisoProfessionals = await Aviso.distinct('professional', { status: { $in: ['active', 'expiring'] } });
     query._id = { $in: activeAvisoProfessionals };
 
-    // Professionals with hogarProfile serve only their registered area
-    // Professionals WITHOUT hogarProfile serve ALL environments
+    // Filtro de entorno. La fuente de verdad es el arbol canonico
+    // (hogarProfile.services[].path), NO el campo legacy hogarProfile.area:
+    // ese campo quedo desalineado (pime vs casa-campo, 25 pros sin servicios).
+    // 'pime' se acepta como alias de 'casa-campo' por URLs ya indexadas.
     if (req.query.area && req.query.area.trim()) {
-      const areaRegex = { $regex: '^' + req.query.area.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', $options: 'i' };
+      const rawArea = req.query.area.trim().toLowerCase();
+      const areaId = AREA_ALIAS_PIME.has(rawArea) ? 'casa-campo' : rawArea;
+      const areaRegex = { $regex: '^' + areaId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '/', $options: 'i' };
       query.$and = query.$and || [];
       query.$and.push({ $or: [
-        { 'hogarProfile.area': areaRegex },
+        { 'hogarProfile.services.path': areaRegex },
         { 'hogarProfile.firstName': { $exists: false } }
       ]});
     }
     if (req.query.action && req.query.action.trim()) {
       const actRaw = req.query.action.trim();
       const actLower = actRaw.toLowerCase();
-      const actMap = { 'reparar':'Reparo','arreglar':'Reparo','arregla':'Reparo','reparo':'Reparo','instalar':'Instalo','instalo':'Instalo','mantenimiento':'Hago mantenimiento','mantener':'Hago mantenimiento','hago mantenimiento':'Hago mantenimiento','vendo repuestos':'Vendo repuestos','vender':'Vendo repuestos','asesoro':'Asesoro','aprender':'Asesoro','mejorar':'Reparo','disenar':'Asesoro','diseñar':'Asesoro','descartar':'Vendo repuestos','busco':'Instalo','comprar':'Vendo repuestos','donar':'Vendo repuestos','recibir-donaciones':'Vendo repuestos' };
+      const actMap = { 'reparar':'Reparo','repara':'Reparo','repare':'Reparo','reparo':'Reparo','reparacion':'Reparo','arreglar':'Reparo','arregla':'Reparo','arreglo':'Reparo','componer':'Reparo','service':'Reparo','servicio':'Reparo','servicio tecnico':'Reparo','tecnico':'Reparo','reparo de bomba':'Reparo','instalar':'Instalo','instalo':'Instalo','montar':'Instalo','mantenimiento':'Hago mantenimiento','mantener':'Hago mantenimiento','hago mantenimiento':'Hago mantenimiento','podar':'Hago mantenimiento','poda':'Hago mantenimiento','cortar':'Hago mantenimiento','corte':'Hago mantenimiento','cesped':'Hago mantenimiento','fumigar':'Hago mantenimiento','desherbar':'Hago mantenimiento','pileta':'Hago mantenimiento','piletas':'Hago mantenimiento','piscina':'Hago mantenimiento','piscinas':'Hago mantenimiento','bomba':'Hago mantenimiento','bombas':'Hago mantenimiento','vendo repuestos':'Vendo repuestos','vender':'Vendo repuestos','asesoro':'Asesoro','aprender':'Asesoro','mejorar':'Reparo','disenar':'Asesoro','diseñar':'Asesoro','descartar':'Vendo repuestos','busco':'Instalo','comprar':'Vendo repuestos','donar':'Vendo repuestos','recibir-donaciones':'Vendo repuestos' };
       const actNorm = actMap[actLower] || actRaw;
       const actRegex = { $regex: '^' + actNorm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', $options: 'i' };
       query.$and = query.$and || [];
@@ -2115,9 +2560,10 @@ exports.getHogarProfessionals = async (req, res, next) => {
     if (req.query.province && req.query.province.trim()) {
       const provRaw = req.query.province.trim();
       const provLower = provRaw.toLowerCase();
-      const provRegexes = [{ $regex: provRaw, $options: 'i' }];
+      const provRe = escapeRegex(provRaw);
+      const provRegexes = [{ $regex: provRe, $options: 'i' }];
       if (provLower === 'caba') provRegexes.push({ $regex: 'Ciudad Autónoma de Buenos Aires', $options: 'i' });
-      if (provLower.includes('ciudad autónoma')) provRegexes.push({ $regex: '^CABA$', $options: 'i' });
+      if (provLower.includes('ciudad autonoma') || provLower.includes('ciudad aut_noma')) provRegexes.push({ $regex: '^CABA$', $options: 'i' });
       const provOr = [];
       for (const pr of provRegexes) {
         provOr.push({ 'hogarProfile.address.province': pr });
@@ -2128,7 +2574,7 @@ exports.getHogarProfessionals = async (req, res, next) => {
       query.$and.push({ $or: provOr });
     }
     if (req.query.city && req.query.city.trim()) {
-      const cityRegex = { $regex: req.query.city.trim(), $options: 'i' };
+      const cityRegex = { $regex: escapeRegex(req.query.city.trim()), $options: 'i' };
       query.$and = query.$and || [];
       query.$and.push({ $or: [
         { 'hogarProfile.address.city': cityRegex },
@@ -2137,48 +2583,75 @@ exports.getHogarProfessionals = async (req, res, next) => {
       ]});
     }
     if (req.query.neighborhood && req.query.neighborhood.trim()) {
-      const hoodRegex = { $regex: req.query.neighborhood.trim(), $options: 'i' };
+      const hoodRegex = { $regex: escapeRegex(req.query.neighborhood.trim()), $options: 'i' };
       query.$and = query.$and || [];
       query.$and.push({ $or: [
         { 'hogarProfile.address.neighborhood': hoodRegex },
         { 'hogarProfile.firstName': { $exists: false } }
       ]});
     }
+    // Matriculacion: es un requisito de la busqueda, no un dato del aviso.
+    // Si se pide matriculado, solo pueden aparecer profesionales matriculados:
+    //   ?matriculado=1                    -> matriculado en alguna profesion
+    //   ?matriculado=1&profession=gasista -> matriculado EN ESA profesion
+    const quiereMatriculado = req.query.matriculado === '1' || req.query.matriculado === 'true';
     if (req.query.profession && req.query.profession.trim()) {
       const profRaw = String(req.query.profession).trim();
       const profSlug = profRaw.toLowerCase().replace(/\s+/g, '-');
+      // El texto del usuario va a Mongo como regex: sin escapar, un input como
+      // '.*' matchearia todo y un patron catastrófico tipo '(a+)+' puede colgar
+      // la consulta. Los slugs ya son literales y no necesitan escape.
+      const profRe = escapeRegex(profRaw);
+      query.$and = query.$and || [];
+      if (quiereMatriculado) {
+        query.$and.push({ $or: [
+          { 'hogarProfile.professions': { $elemMatch: { slug: profSlug, matriculado: true } } },
+          { 'professionalProfile.professions': { $elemMatch: { slug: profSlug, matriculado: true } } }
+        ]});
+      } else {
+        query.$and.push({ $or: [
+          { 'hogarProfile.professions.slug': profSlug },
+          { 'hogarProfile.professions.name': { $regex: profRe, $options: 'i' } },
+          { 'professionalProfile.professions.slug': profSlug },
+          { 'professionalProfile.professions.name': { $regex: profRe, $options: 'i' } },
+          { 'hogarProfile.services.name': { $regex: profRe, $options: 'i' } },
+          { 'professionalProfile.services': { $regex: profRe, $options: 'i' } }
+        ]});
+      }
+    } else if (quiereMatriculado) {
       query.$and = query.$and || [];
       query.$and.push({ $or: [
-        { 'hogarProfile.professions.slug': profSlug },
-        { 'hogarProfile.professions.name': { $regex: profRaw, $options: 'i' } },
-        { 'professionalProfile.professions.slug': profSlug },
-        { 'professionalProfile.professions.name': { $regex: profRaw, $options: 'i' } },
-        { 'hogarProfile.services.name': { $regex: profRaw, $options: 'i' } },
-        { 'professionalProfile.services': { $regex: profRaw, $options: 'i' } }
+        { 'hogarProfile.professions': { $elemMatch: { matriculado: true } } },
+        { 'professionalProfile.professions': { $elemMatch: { matriculado: true } } }
       ]});
     }
-    // service filter: matches any selected service node path (contains match) — normalize separators so
-    // "hogar/linea-blanca/heladera" (web tree) matches DB "hogar.linea-blanca.heladera", and spaces/dashes are interchangeable
+    // service filter: matching jerarquico anclado. Buscar un area/categoria
+    // devuelve tambien quien guardo cualquier descendiente, y el anclaje con
+    // ^ evita que 'heladera' matchee 'heladeras-industriales'.
     if (req.query.service && req.query.service.trim()) {
-      const svcRaw = req.query.service.trim();
-      const svcNorm = svcRaw.replace(/\s+/g, '-');
-      const escaped = svcNorm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      // treat /, ., - and space interchangeably as path separators
-      const flexible = escaped
-        .replace(/\//g, '[./]')
-        .replace(/\\\./g, '[./]')
-        .replace(/-/g, '[- ]');
-      query['hogarProfile.services.path'] = { $regex: flexible, $options: 'i' };
+      const svcRegex = servicePrefixRegex(req.query.service);
+      if (svcRegex) query['hogarProfile.services.path'] = { $regex: svcRegex, $options: 'i' };
     }
     // free-text search (q): matches service name, path, action, area, bio — each word independently
     // Verb synonyms map so "reparar", "arreglar" etc. match action "Reparo"
     const VERB_MAP = {
       reparar: ['Reparo', 'reparar'],
+      repara: ['Reparo', 'reparar'],
+      repare: ['Reparo', 'reparar'],
+      reparo: ['Reparo', 'reparar'],
+      reparemos: ['Reparo', 'reparar'],
+      reparacion: ['Reparo', 'reparación', 'reparacion', 'service'],
       arreglar: ['Reparo', 'arreglar'],
+      arregla: ['Reparo', 'arreglar'],
+      arreglo: ['Reparo', 'arreglar', 'arreglo'],
+      compongo: ['Reparo', 'componer'],
       componer: ['Reparo', 'componer'],
-      service: ['Reparo', 'service', 'servicio técnico'],
-      reparacion: ['Reparo', 'reparación', 'service'],
-      'servicio técnico': ['Reparo', 'service', 'servicio técnico'],
+      service: ['Reparo', 'service', 'servicio técnico', 'servicio'],
+      'servicio técnico': ['Reparo', 'service', 'servicio técnico', 'servicio'],
+      'servicio tecnico': ['Reparo', 'service', 'servicio técnico', 'servicio'],
+      servicio: ['Reparo', 'service', 'servicio técnico', 'servicio'],
+      técnico: ['Reparo', 'técnico', 'tecnico'],
+      tecnico: ['Reparo', 'técnico', 'tecnico'],
       instalar: ['Instalo', 'instalar'],
       colocar: ['Instalo', 'colocar'],
       montar: ['Instalo', 'montar'],
@@ -2198,40 +2671,59 @@ exports.getHogarProfessionals = async (req, res, next) => {
     if (req.query.q && req.query.q.trim()) {
       const words = req.query.q.trim().split(/\s+/).filter(Boolean);
       if (words.length > 0) {
-        query.$and = query.$and || [];
-        words.forEach(w => {
+        const pushWordFilter = (target, w) => {
           const lower = w.toLowerCase();
           const orConditions = [];
-          // always match raw word
-          const rawEscaped = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          const rawRe = new RegExp(rawEscaped, 'i');
+          // always match raw word (tolerante a tildes, ñ y guion/espacio)
+          const rawRe = flexibleTextRegex(w);
           orConditions.push({ 'hogarProfile.services.path': rawRe });
           orConditions.push({ 'hogarProfile.services.name': rawRe });
+          orConditions.push({ 'hogarProfile.services.brands': rawRe });
           orConditions.push({ 'hogarProfile.professions.name': rawRe });
           orConditions.push({ 'professionalProfile.professions.name': rawRe });
+          orConditions.push({ 'professionalProfile.services': rawRe });
           orConditions.push({ 'hogarProfile.action': rawRe });
-          orConditions.push({ 'hogarProfile.area': rawRe });
-          orConditions.push({ 'professionalType': rawRe });
+          orConditions.push({ professionalType: rawRe });
           orConditions.push({ 'professionalProfile.bio': rawRe });
           orConditions.push({ 'professionalProfile.alias': rawRe });
+          orConditions.push({ 'hogarProfile.specialty': rawRe });
           orConditions.push({ name: rawRe });
           // if verb maps to action values, also match those
           if (VERB_MAP[lower]) {
             VERB_MAP[lower].forEach(actionVal => {
-              orConditions.push({ 'hogarProfile.action': actionVal });
+              const actRe = flexibleTextRegex(actionVal);
+              orConditions.push({ 'hogarProfile.action': actRe });
+              // la accion del dispositivo guardado tambien tiene que responder
+              orConditions.push({ 'hogarProfile.services.actions': actRe });
             });
           }
-          query.$and.push({ $or: orConditions });
-        });
+          target.$and.push({ $or: orConditions });
+        };
+        query.$and = query.$and || [];
+        const firstWordClause = query.$and.length;
+        words.forEach(w => pushWordFilter(query, w));
+
+        // El usuario escribe frases ("necesito un reparo de heladera", "casa de
+        // campo"). Cada palabra se exige con AND, asi que un conector o un
+        // verbo de intencion que no esta en ningun campo deja la busqueda en
+        // cero. Se prepara una version sin esas palabras, pero SOLO se usa si
+        // la version estricta no encontro a nadie: nunca se relajan criterios
+        // que ya devuelven resultados.
+        const STOP_WORDS = new Set(['de', 'del', 'la', 'el', 'los', 'las', 'un', 'una', 'unos', 'unas', 'y', 'e', 'o', 'u', 'en', 'para', 'con', 'sin', 'sobre', 'a', 'al', 'lo', 'me', 'mi', 'se', 'que', 'necesito', 'necesita', 'quiero', 'busco', 'buscar', 'hago', 'hacen', 'tengo', 'tiene', 'tienen', 'hay', 'falta', 'faltan', 'urgente', 'urgencia']);
+        const core = words.filter(w => !STOP_WORDS.has(w.toLowerCase()));
+        if (core.length > 0 && core.length < words.length) {
+          relaxedQuery = Object.assign({}, query, { $and: query.$and.slice(0, firstWordClause) });
+          core.forEach(w => pushWordFilter(relaxedQuery, w));
+        }
       }
     }
     // brand filter: matches any service's brands array
     if (req.query.brand && req.query.brand.trim()) {
-      query['hogarProfile.services.brands'] = { $regex: req.query.brand.trim(), $options: 'i' };
+      query['hogarProfile.services.brands'] = { $regex: escapeRegex(req.query.brand.trim()), $options: 'i' };
     }
     // action filter: matches any service's actions array (device-level)
     if (req.query.action && req.query.action.trim()) {
-      query['hogarProfile.services.actions'] = { $regex: req.query.action.trim(), $options: 'i' };
+      query['hogarProfile.services.actions'] = { $regex: escapeRegex(req.query.action.trim()), $options: 'i' };
     }
     // geolocation: sort by distance when lat/lng provided
     const userLat = parseFloat(req.query.lat) || null;
@@ -2251,6 +2743,12 @@ exports.getHogarProfessionals = async (req, res, next) => {
     };
 
     const needsDistance = userLat != null && userLng != null;
+
+    // Si la busqueda estricta por texto libre no trae resultados, se reintenta
+    // sin conectores ("necesito un reparo de heladera" -> reparo + heladera).
+    if (relaxedQuery && !(await User.exists(query))) {
+      query = relaxedQuery;
+    }
 
     let users;
     let total;
@@ -2291,7 +2789,12 @@ exports.getHogarProfessionals = async (req, res, next) => {
     const data = users.map(u => {
       const hp = u.hogarProfile || {};
       const pp = u.professionalProfile || {};
-      const services = hp.services || [];
+      // Vista publica: la entrada "otra" se muestra por su nombre, sin el
+      // prefijo interno "__otra__:". El prefijo solo existe en el dato guardado.
+      const services = (hp.services || []).map(s => ({
+        ...s,
+        brands: (s.brands || []).map(brandDisplayName).filter(Boolean)
+      }));
       const primary = services[0] || {};
       const photo = (hp.photos && hp.photos[0]) ? hp.photos[0] : ((pp.photos && pp.photos[0]) || null);
       const loc = hp.address || {};
@@ -2337,7 +2840,7 @@ exports.getHogarProfessionals = async (req, res, next) => {
       success: true,
       count: data.length,
       pagination: { total, page, limit, hasMore },
-      data
+      data: data.map(sanitizePublicProfessions)
     });
   } catch (error) {
     next(error);
@@ -2395,6 +2898,19 @@ exports.getHogarProfessionalById = async (req, res, next) => {
     } catch (err) { console.error('Activity log error:', err.message); }
 
     const { contact: _omit, ...hpClean } = hp;
+    // Ficha publica: la entrada "otra" se muestra por su nombre, sin el
+    // prefijo interno "__otra__:" que solo sirve para el round-trip del perfil.
+    const hpPublic = {
+      ...hpClean,
+      services: (hpClean.services || []).map(s => ({
+        ...s,
+        brands: (s.brands || []).map(brandDisplayName).filter(Boolean)
+      })),
+      photos
+    };
+    // Ficha publica: el numero y el archivo de la matricula son datos
+    // privados, solo viaja el estado de declaracion/verificacion.
+    const publico = sanitizePublicProfessions({ hogarProfile: hpPublic, professionalProfile: user.professionalProfile || undefined });
     res.status(200).json({
       success: true,
       data: {
@@ -2402,8 +2918,8 @@ exports.getHogarProfessionalById = async (req, res, next) => {
         name: hp.firstName ? `${hp.firstName} ${hp.lastName || ''}`.trim() : (user.name || 'Técnico'),
         email: b64(user.email),
         contact,
-        hogarProfile: { ...hpClean, photos },
-        professionalProfile: user.professionalProfile || undefined
+        hogarProfile: publico.hogarProfile,
+        professionalProfile: publico.professionalProfile
       }
     });
   } catch (error) {

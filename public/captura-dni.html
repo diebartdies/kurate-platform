@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <title>KuraTe - Escanear DNI</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
@@ -18,16 +18,16 @@ body.blueprint-theme{background:#0f0f1a;color:#eee}
 </style>
 </head>
 <body class="blueprint-theme">
-<div class="dni-wrap">
+<main class="dni-wrap" id="main-content">
   <a href="/profile.html" style="color:var(--primary-gold);text-decoration:none;font-size:0.85rem">← Volver</a>
-  <h2 class="gold-text" style="text-align:center;margin:16px 0 8px">📸 Escaneá tu DNI</h2>
+  <h1 class="gold-text" style="text-align:center;margin:16px 0 8px">📸 Escaneá tu DNI</h1>
   <p style="text-align:center;color:#aaa;font-size:0.85rem;line-height:1.5;margin-bottom:16px">Solo el <b style="color:#fff">frente</b> con código de barras. Extraemos tus datos automáticamente.<br><span style="color:#f59e0b">Usá buena luz, sin reflejos.</span></p>
   <div id="dniAlert" class="hidden" style="padding:10px;border-radius:6px;margin-bottom:12px;text-align:center;font-size:0.9rem"></div>
 
   <div class="dni-step" id="stepFront" style="border:1px solid rgba(212,175,55,0.3);border-radius:12px;padding:14px;background:rgba(255,255,255,0.03)">
     <div style="display:flex;justify-content:space-between;align-items:center"><b>Frente del DNI</b><span id="okFront" style="display:none;color:#22c55e">✓ capturado</span></div>
     <input type="file" id="fileFront" accept="image/*" capture="environment" style="display:none">
-    <img id="prevFront" class="dni-preview" alt="preview frente" style="display:none">
+    <img id="prevFront" class="dni-preview" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Vista previa del frente del documento" style="display:none">
     <button class="dni-btn dni-btn-cam" id="btnCam">📷 Capturar frente</button>
   </div>
 
@@ -37,8 +37,8 @@ body.blueprint-theme{background:#0f0f1a;color:#eee}
   </div>
 
   <button id="btnSubmitDni" class="dni-btn dni-btn-submit" disabled>Confirmar y continuar</button>
-  <p style="text-align:center;color:#666;font-size:0.75rem;margin-top:10px">Al confirmar quedás en revisión. Te avisamos cuando seas aprobado.</p>
-</div>
+  <p style="text-align:center;color:#7e7e7e;font-size:0.75rem;margin-top:10px">Al confirmar quedás en revisión. Te avisamos cuando seas aprobado.</p>
+</main>
 
 <script type="module">
 const API = (location.protocol==='file:'?'http://localhost:5000':location.origin)+'/api/v1';

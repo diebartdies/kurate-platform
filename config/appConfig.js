@@ -88,8 +88,10 @@ const config = {
   },
 
   platform: {
-    publicUrl: process.env.PLATFORM_URL || 'https://KuraTe.drsrv.net.ar',
-    registerUrl: process.env.PLATFORM_REGISTER_URL || 'https://KuraTe.drsrv.net.ar/register.html'
+    // Hostnames en minusculas: DNS no distingue mayusculas, pero un link con
+    // mayusculas se ve roto en mails y algunos clientes/antispam lo marcan.
+    publicUrl: (process.env.PLATFORM_URL || 'https://kurate.drsrv.net.ar').replace(/^(https?:\/\/)([^/]+)/i, (m, p, host) => p + host.toLowerCase()),
+    registerUrl: (process.env.PLATFORM_REGISTER_URL || 'https://kurate.drsrv.net.ar/register.html').replace(/^(https?:\/\/)([^/]+)/i, (m, p, host) => p + host.toLowerCase())
   },
 
   google: {
@@ -168,10 +170,11 @@ const config = {
 
     // Neutral outreach alias (same app, no "sex" in hostname). Used for WhatsApp
     // step-2 register links (manual reply), NOT in the cold drip caption.
-    // Env: WHATSAPP_DRIP_ALIAS_DOMAIN (unset = KuraTe.drsrv.net.ar; "" = off).
-    aliasDomain: process.env.WHATSAPP_DRIP_ALIAS_DOMAIN !== undefined
+    // Env: WHATSAPP_DRIP_ALIAS_DOMAIN (unset = kurate.drsrv.net.ar; "" = off).
+    // Se normaliza a minusculas: ver nota en platform.publicUrl.
+    aliasDomain: (process.env.WHATSAPP_DRIP_ALIAS_DOMAIN !== undefined
       ? process.env.WHATSAPP_DRIP_ALIAS_DOMAIN
-      : 'KuraTe.drsrv.net.ar',
+      : 'kurate.drsrv.net.ar').replace(/^https?:\/\//i, '').replace(/\/.*$/, '').toLowerCase(),
 
     // Hard ceiling (ms) for a single registration-check / send call so a hung
     // whatsapp-web.js call never stalls the scheduler.
@@ -267,6 +270,25 @@ const config = {
     // Hard ceiling (ms) for a single Twilio API call so a hung request never
     // stalls the loop. Env: SMS_SEND_TIMEOUT_MS (default 30000).
     sendTimeoutMs: parseInt(process.env.SMS_SEND_TIMEOUT_MS, 10) || 30000
+  },
+
+  // --- Prototipo dev: "Consultar a la IA" (Ollama local) ---
+  // Apagado por defecto: sin AI_ADVICE_ENABLED=true el backend no expone el
+  // endpoint y el frontend ni dibuja el campo. Env: AI_ADVICE_ENABLED.
+  aiAdvice: {
+    enabled: process.env.AI_ADVICE_ENABLED === 'true',
+    ollamaUrl: process.env.OLLAMA_URL || 'http://127.0.0.1:11434',
+    model: process.env.AI_ADVICE_MODEL || 'qwen2.5-coder',
+    // A diferencia de analyzeQuery (extraccion JSON, 2s), aca el modelo redacta.
+    // Medido en la dev box con qwen2.5-coder (4.4GB, CPU): 30-50s por
+    // respuesta, asi que el default tiene que ser holgado. Env: AI_ADVICE_TIMEOUT_MS.
+    timeoutMs: parseInt(process.env.AI_ADVICE_TIMEOUT_MS, 10) || 90000,
+    // Tope de caracteres de la pregunta para no kinder al modelo.
+    maxChars: parseInt(process.env.AI_ADVICE_MAX_CHARS, 10) || 800,
+    // Techo de tokens por respuesta. Las respuestas reales miden 80-160 tokens,
+    // asi que 250 alcanza y evita pagar latencia de mas.
+    // Env: AI_ADVICE_MAX_TOKENS.
+    maxTokens: parseInt(process.env.AI_ADVICE_MAX_TOKENS, 10) || 250
   }
 };
 

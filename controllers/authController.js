@@ -6,6 +6,7 @@ const fs = require('fs');
 const ActivityLog = require('../models/ActivityLog');
 const { getClientIp } = require('../utils/clientIp');
 const { recordAdminLoginIp, HOME_LABEL } = require('../utils/adminKnownIps');
+const { checkAdminDevice } = require('./adminDeviceController');
 const Specialty = require('../models/Specialty');
 const { normalizeRegistrationMobilePhone } = require('../utils/professionalInviteMessage');
 const { assignGpsToLocation } = require('../utils/cityCoordinates');
@@ -697,6 +698,15 @@ exports.login = async (req, res, next) => {
         userAgent: req.headers['user-agent']
       });
     } else if (user.role === 'admin') {
+      // Device-gated admin login (soft-MAC): when enabled, only registered devices may sign in.
+      const deviceCheck = await checkAdminDevice(user, req.body.deviceId, clientIp);
+      if (!deviceCheck.ok) {
+        return res.status(401).json({
+          success: false,
+          code: deviceCheck.error.code,
+          error: deviceCheck.error.message
+        });
+      }
       const recordedIp = await recordAdminLoginIp(user, clientIp);
       await ActivityLog.create({
         professional: user._id,
@@ -1083,10 +1093,19 @@ const sendTokenResponse = (user, statusCode, res, options = {}) => {
     cookieOptions.secure = true;
   }
 
+  // `select: false` only hides verificationDocuments on queried documents. A user
+  // just built in memory (User.create) or explicitly selected still carries the raw
+  // base64 ID images, so strip them here — every auth response funnels through this.
+  const safeUser = user.toObject ? user.toObject() : { ...user };
+  if (Array.isArray(safeUser.verificationDocuments)) {
+    safeUser.verificationDocumentsCount = safeUser.verificationDocuments.length;
+    delete safeUser.verificationDocuments;
+  }
+
   const payload = {
     success: true,
     token,
-    user
+    user: safeUser
   };
   if (options.needsProfileCompletion === true) {
     payload.needsProfileCompletion = true;
@@ -1114,6 +1133,38 @@ exports.setPassword = async (req, res, next) => {
     if (!password || String(password).length < 6) return res.status(400).json({ success: false, error: 'Password must be at least 6 characters.' });
     if (password !== confirmPassword) return res.status(400).json({ success: false, error: 'Passwords do not match' });
     user.password = password;
+    user.mustChangePassword = false;
+    await user.save();
+    res.status(200).json({ success: true, message: 'Password updated' });
+  } catch (e) { res.status(400).json({ success: false, error: e.message }); }
+};
+
+// @desc    Change password while logged in (used to complete a forced change after
+//          an admin issued a temporary one). Requires the current password so a
+//          stolen session cannot lock the real owner out.
+// @route   POST /api/v1/auth/change-password
+// @access  Private
+exports.changePassword = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id).select('+password');
+    if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+    const { currentPassword, password, confirmPassword } = req.body || {};
+    if (!password || String(password).length < 6) {
+      return res.status(400).json({ success: false, error: 'Password must be at least 6 characters.' });
+    }
+    if (password !== confirmPassword) {
+      return res.status(400).json({ success: false, error: 'Passwords do not match' });
+    }
+    const isMatch = await user.matchPassword(currentPassword || '');
+    if (!isMatch) {
+      return res.status(401).json({ success: false, error: 'Current password is incorrect.' });
+    }
+    // tokenVersion is intentionally left untouched: the user is rotating their own
+    // password, so their current session stays alive.
+    user.password = password;
+    user.mustChangePassword = false;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
     await user.save();
     res.status(200).json({ success: true, message: 'Password updated' });
   } catch (e) { res.status(400).json({ success: false, error: e.message }); }

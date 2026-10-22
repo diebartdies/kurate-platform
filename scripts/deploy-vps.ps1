@@ -10,7 +10,7 @@
   Fails fast if the VPS is not reachable (single SSH probe, no retry loop).
 
 .PARAMETER VpsIp
-  Target VPS IP. Default: 192.168.1.67
+  Target VPS IP. Default: 192.168.1.95
 
 .PARAMETER User
   SSH user. Default: root
@@ -34,7 +34,7 @@
   powershell -ExecutionPolicy Bypass -File scripts\deploy-vps.ps1 -KeyPath C:\keys\kurate_vps
 #>
 param(
-  [string]$VpsIp      = "192.168.1.67",
+  [string]$VpsIp      = "192.168.1.95",
   [string]$User       = "root",
   [string]$KeyPath    = "$HOME\.ssh\id_rsa",
   [string]$DeployDir  = "/root/KuraTe-platform",

@@ -127,6 +127,29 @@ h3 {
     letter-spacing: 2px;
 }
 
+/*
+ * Semantic heading levels vs. visual weight.
+ * Promoting a heading to <h1> for accessibility must not change how it looks,
+ * so these lock the size/weight the element already had as a lower level.
+ */
+.main-title {
+    font-size: 1.5em;
+}
+
+.sub-title {
+    font-size: 1em;
+}
+
+.landing-tagline {
+    font-size: 0.95rem;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: normal;
+    line-height: normal;
+    margin: 0;
+    color: #888;
+}
+
 .gold-text {
     background: var(--gold-gradient-text);
     background-size: 200% auto;
@@ -825,7 +848,7 @@ textarea:focus:not(:focus-visible) {
     display: inline-block;
     padding: clamp(4px, 1vw, 6px) clamp(6px, 1.5vw, 12px);
     background: #25D366;
-    color: #fff;
+    color: #08281d;
     text-decoration: none;
     border-radius: 4px;
     font-weight: bold;
@@ -2324,7 +2347,7 @@ body.small-grid-mode #treasureGrid .treasure-card {
 
 .admin-overlay-modal {
     box-sizing: border-box;
-    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    padding: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
 }
 
 .admin-overlay-modal > button:first-of-type,
@@ -2356,7 +2379,7 @@ body.small-grid-mode #treasureGrid .treasure-card {
     justify-content: flex-end;
     align-items: center;
     position: sticky;
-    top: max(0px, env(safe-area-inset-top));
+    top: max(0px, env(safe-area-inset-top, 0px));
     z-index: 10;
     flex-shrink: 0;
     pointer-events: none;
@@ -3029,7 +3052,7 @@ body.categories-page {
 
 body.categories-page .categories-container {
     max-width: min(1720px, 100%);
-    padding: 12px max(12px, env(safe-area-inset-right)) 40px max(12px, env(safe-area-inset-left));
+    padding: 12px max(12px, env(safe-area-inset-right, 0px)) 40px max(12px, env(safe-area-inset-left, 0px));
 }
 
 body.categories-page header.page-header {
@@ -3125,7 +3148,7 @@ body.categories-page header.page-header {
 
 .area-chip.is-active {
     background: rgba(var(--gold-rgb), 0.15);
-    color: var(--primary-gold);
+    color: var(--gold-light);
     border-color: var(--primary-gold);
 }
 

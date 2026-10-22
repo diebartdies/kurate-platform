@@ -1,0 +1,41 @@
+#!/bin/bash
+# The ONE delivery that ends "ningun usuario funciona" forever:
+# a real fresh user created through the live public HTTPS, email-verified,
+# then logged-in with the SAME password -> JWT -> protected /me works.
+B="https://kurate.drvsrv.net.ar"
+J=''
+echo "=== STEP 1: REGISTER fresh user (public front door) ==="
+REG=$(curl -sk -w '\nCODES-BEGIN\n%{http_code}' -X POST "$B/api/v1/auth/register" \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"carlo.kurate@drsrv.net.ar","password":"Palo1010Comodo2026!","name":"Carlo Kura","role":"user"}')
+RC=$(echo "$REG" | tail -1)
+echo "register_http=$RC"
+echo "$REG" | grep -oE '"(success|email|message)": ?([^,}"]*)' | head -3
+
+echo "=== STEP 2: what verification code did the app generate for THIS email? ==="
+CODE=$(ssh root@127.0.0.1 "true")  # placeholder no-op
+# best-effort: the app may return the code inline in dev/prod-log; else capture via logs right after
+CODE=$(docker exec KuraTe_mongo mongo --quiet --authenticationDatabase admin -u kurateApp -p 'Kurate2026Secure!' KuraTe --eval "var c=db.users.findOne({email:'carlo.kurate@drsrv.net.ar'}); print(c&&c.emailVerificationCode?c.emailVerificationCode:'')" 2>/dev/null)
+echo "code_from_db=$CODE"
+
+echo "=== STEP 3: verify email (public HTTPS) ==="
+V=$(curl -sk -w '\n%{http_code}' -X POST "$B/api/v1/auth/verify-email" \
+  -H 'Content-Type: application/json' \
+  -d "{\"email\":\"carlo.kurate@drsrv.net.ar\",\"code\":\"$CODE\"}")
+VC=$(echo "$V" | tail -1)
+echo "verify_http=$VC"
+TJ=$(echo "$V" | grep -oE 'eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+' | head -1)
+echo "jwt_after_verify=$([ -n "$TJ" ] && echo YES || echo NO)"
+echo "=== STEP 4: LOGIN with the SAME known password ==="
+L=$(curl -sk -w '\n%{http_code}' -X POST "$B/api/v1/auth/login" -H 'Content-Type: application/json' \
+  -d '{"email":"carlo.kurate@drsrv.net.ar","password":"Palo1010Comodo2026!"}')
+LC=$(echo "$L" | tail -1)
+echo "login_http=$LC"
+JT=$(echo "$L" | grep -oE 'eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+' | head -1)
+echo "jwt=$([ -n "$JT" ] && echo YES || echo NO)"
+[ -n "$JT" ] && echo "$JT" > /tmp/kurate.working.jwt
+echo "=== STEP 5: protected /me with that JWT ==="
+for p in /api/v1/users/me /api/v1/users/profile /api/v1/me /api/users/me /api/v1/auth/users/me; do
+  c=$(curl -sk -o /dev/null -w '%{http_code}' "$B$p" -H "Authorization: Bearer $JT")
+  echo "  $p = $c"
+done

@@ -1,0 +1,145 @@
+[
+  {
+    "file": "admin.html",
+    "errors": [],
+    "warnings": []
+  },
+  {
+    "file": "avisos.html",
+    "errors": [],
+    "warnings": []
+  },
+  {
+    "file": "captura-dni.html",
+    "errors": [],
+    "warnings": []
+  },
+  {
+    "file": "conciencia-cancer-mama.html",
+    "errors": [],
+    "warnings": []
+  },
+  {
+    "file": "conciencia-vih.html",
+    "errors": [],
+    "warnings": []
+  },
+  {
+    "file": "dashboard.html",
+    "errors": [],
+    "warnings": []
+  },
+  {
+    "file": "discover.html",
+    "errors": [],
+    "warnings": []
+  },
+  {
+    "file": "feedback.html",
+    "errors": [],
+    "warnings": []
+  },
+  {
+    "file": "hogar-detail.html",
+    "errors": [],
+    "warnings": []
+  },
+  {
+    "file": "hogar.html",
+    "errors": [],
+    "warnings": []
+  },
+  {
+    "file": "home.html",
+    "errors": [],
+    "warnings": []
+  },
+  {
+    "file": "index.html",
+    "errors": [],
+    "warnings": []
+  },
+  {
+    "file": "login.html",
+    "errors": [],
+    "warnings": []
+  },
+  {
+    "file": "precios-aire-acondicionado.html",
+    "errors": [],
+    "warnings": []
+  },
+  {
+    "file": "profDashboard.html",
+    "errors": [],
+    "warnings": []
+  },
+  {
+    "file": "profile.html",
+    "errors": [],
+    "warnings": []
+  },
+  {
+    "file": "recover.html",
+    "errors": [],
+    "warnings": [
+      {
+        "type": "info",
+        "lastLine": 50,
+        "lastColumn": 185,
+        "firstColumn": 25,
+        "subType": "warning",
+        "message": "The “inputmode” attribute is not supported in all browsers. Please be sure to test, and consider using a polyfill.",
+        "extract": "          <input type=\"text\" placeholder=\"6-Digit Code\" required id=\"resetCode\" maxlength=\"6\" inputmode=\"numeric\" autocomplete=\"one-time-code\" class=\"recovery-code-input\">\n     ",
+        "hiliteStart": 10,
+        "hiliteLength": 161
+      }
+    ]
+  },
+  {
+    "file": "register.html",
+    "errors": [
+      {
+        "type": "error",
+        "lastLine": 14,
+        "lastColumn": 127,
+        "message": "CSS: “padding-bottom”: Parse Error.",
+        "extract": "t-bottom, 0px))); }\n        .f",
+        "hiliteStart": 15,
+        "hiliteLength": 1
+      },
+      {
+        "type": "error",
+        "lastLine": 29,
+        "lastColumn": 126,
+        "message": "CSS: “scroll-margin-top”: Parse Error.",
+        "extract": "op, 0px) + 12px); }\n        .r",
+        "hiliteStart": 15,
+        "hiliteLength": 1
+      }
+    ],
+    "warnings": [
+      {
+        "type": "info",
+        "lastLine": 278,
+        "lastColumn": 170,
+        "firstColumn": 29,
+        "subType": "warning",
+        "message": "The “inputmode” attribute is not supported in all browsers. Please be sure to test, and consider using a polyfill.",
+        "extract": "          <input type=\"text\" id=\"regBirthDate\" class=\"reg-input reg-date-text\" autocomplete=\"bday\" inputmode=\"text\" placeholder=\"dd/mm/aaaa (opcional)\">\n     ",
+        "hiliteStart": 10,
+        "hiliteLength": 142
+      }
+    ]
+  },
+  {
+    "file": "treasure.html",
+    "errors": [],
+    "warnings": []
+  },
+  {
+    "file": "verify.html",
+    "errors": [],
+    "warnings": []
+  }
+]

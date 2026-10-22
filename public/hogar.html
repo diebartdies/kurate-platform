@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -15,15 +15,9 @@
   <link rel="canonical" href="https://kurate.drsrv.net.ar/hogar.html">
   <script>
     // Dynamic canonical: always point to base URL without query params
-    // Also noindex filtered versions to avoid thin content penalties
     (function() {
       var canonical = document.querySelector('link[rel="canonical"]');
       if (canonical) canonical.setAttribute('href', 'https://kurate.drsrv.net.ar/hogar.html');
-      if (location.search) {
-        var meta = document.querySelector('meta[name="robots"]');
-        if (meta) meta.setAttribute('content', 'noindex, follow');
-      }
-    })();
       // Also set og:url
       var ogUrl = document.querySelector('meta[property="og:url"]');
       if (ogUrl) ogUrl.setAttribute('content', 'https://kurate.drsrv.net.ar/hogar.html');
@@ -90,18 +84,32 @@
     .fm-back:hover { color: var(--primary-gold); border-color: var(--primary-gold); }
     .fm-top-right { display: flex; align-items: center; gap: 0.5rem; }
     .fm-lang-btn { background: transparent; border: none; border-bottom: 2px solid transparent; padding: 4px 8px; cursor: pointer; transition: opacity 0.2s, border-color 0.2s; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; color: #ccc; border-radius: 4px; }
-    .fm-lang-btn.active { border-bottom-color: var(--primary-gold); opacity: 1; color: var(--primary-gold); }
-    .fm-lang-btn.inactive { opacity: 0.4; }
-    .fm-lang-btn:hover { opacity: 1; }
+    .fm-lang-btn.active { border-bottom-color: var(--primary-gold); color: var(--primary-gold); }
+    .fm-lang-btn.inactive { color: #8a8a8a; }
+    .fm-lang-btn:hover { color: #B8922E; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: #0f0f1a; color: #e0e0e0; margin: 0;
     }
     .container { max-width: min(1720px, 100%); margin: 0 auto; padding: 12px 14px 40px; }
-    .categories-shell {
-      display: grid; grid-template-columns: minmax(88px, 11%) minmax(0, 1fr) minmax(88px, 11%);
-      gap: 14px; align-items: stretch; min-height: calc(100vh - 100px);
-    }
+.categories-shell {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(88px, 11%) minmax(0, 1fr) minmax(88px, 11%) minmax(0, 1fr);
+        gap: 14px; align-items: stretch; min-height: calc(100vh - 100px);
+      }
+      .categories-shell > .ad-slot {
+        display: flex; flex-direction: column; align-items: center; gap: 16px;
+        padding: 8px; min-width: 0;
+      }
+      .categories-shell > .ad-slot .ad-placeholder {
+        width: 100%; max-width: 120px; aspect-ratio: 1/2;
+        background: rgba(184,146,46,0.08); border: 1px dashed rgba(184,146,46,0.3);
+        border-radius: 8px; display: flex; align-items: center; justify-content: center;
+        color: #666; font-size: 0.65rem; text-align: center; padding: 6px; font-family: inherit;
+      }
+      .categories-shell > .ad-slot .ad-placeholder img {
+        max-width: 100%; max-height: 100%; object-fit: contain;
+      }
     .categories-frame {
       border: 1px solid rgba(var(--gold-rgb), 0.38); border-radius: 6px; background: #1a1a2e;
       box-shadow: inset 0 0 0 1px rgba(var(--gold-rgb), 0.08);
@@ -146,7 +154,7 @@
       font-size: clamp(0.78rem, 0.9vw, 0.95rem); text-align: left; transition: background 0.2s, color 0.2s, border-color 0.2s; font-family: inherit;
     }
     .area-chip:hover { border-color: var(--primary-gold); color: var(--primary-gold); }
-    .area-chip.is-active { background: rgba(var(--gold-rgb), 0.15); color: var(--primary-gold); border-color: var(--primary-gold); }
+    .area-chip.is-active { background: rgba(var(--gold-rgb), 0.15); color: var(--gold-light); border-color: var(--primary-gold); }
     hr.gold-rule { border: none; border-top: 1px solid rgba(var(--gold-rgb), 0.2); margin: 16px 0; }
     .contact-note { font-size: 0.85rem; color: #aaa; line-height: 1.6; }
     .contact-note img { width: 18px; height: 18px; vertical-align: middle; margin-right: 6px; border-radius: 50%; background: rgba(15,15,26,0.85); padding: 2px; }
@@ -178,13 +186,14 @@
     .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: none; opacity: 0; transition: opacity 0.3s ease; }
     .burger { background: transparent; border: 1px solid var(--primary-gold); color: var(--primary-gold); border-radius: 6px; font-size: 1.1rem; cursor: pointer; margin-right: 12px; padding: 4px 10px; }
 
-    @media (max-width: 1100px) { .categories-shell { grid-template-columns: minmax(72px, 9%) minmax(0, 1fr) minmax(72px, 9%); gap: 10px; } }
-    @media (max-width: 768px) {
-      .categories-shell { grid-template-columns: 1fr; min-height: 0; }
-      .categories-frame-side { min-height: 0; width: 100%; }
-      .area-chips { flex-direction: row; flex-wrap: wrap; justify-content: center; }
-      .area-chip { width: auto; flex: 1 1 calc(50% - 8px); text-align: center; }
-    }
+@media (max-width: 1100px) { .categories-shell { grid-template-columns: minmax(0, 1fr) minmax(72px, 9%) minmax(0, 1fr) minmax(72px, 9%) minmax(0, 1fr); gap: 10px; } }
+      @media (max-width: 768px) {
+        .categories-shell { grid-template-columns: 1fr; min-height: 0; }
+        .categories-frame-side { min-height: 0; width: 100%; }
+        .area-chips { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+        .area-chip { width: auto; flex: 1 1 calc(50% - 8px); text-align: center; }
+      }
+      @media (max-width: 480px) { .area-chip { flex: 1 1 100%; } }
     @media (max-width: 480px) { .area-chip { flex: 1 1 100%; } }
   </style>
   <style>
@@ -198,8 +207,9 @@
   </style>
 </head>
 <body>
-  <a href="#main-content" class="sr-only" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;z-index:9999;background:#B8922E;color:#000;padding:8px 16px;font-weight:700;">Saltar al contenido principal</a>
+  <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
   <div class="container">
+    <header class="page-chrome">
     <div class="apk-banner" id="apkBanner">
       <img src="/images/apks_android_IOS.png" alt="APK">
       <span id="apkBannerText">KuraTe funciona mejor en la app</span>
@@ -207,27 +217,34 @@
       <button class="apk-banner-close" id="apkBannerClose">&times;</button>
     </div>
 
-    <header class="fm-top-bar">
-      <a href="/index.html" class="fm-back">← <span class="fm-back-text">Volver</span></a>
+<div class="fm-top-bar">
+      <a href="/index.html" class="fm-back">&#8592; <span class="fm-back-text">Volver</span></a>
+      <button type="button" class="burger" id="filtersBurger" aria-label="Abrir filtros" aria-expanded="false" aria-controls="hogarFilterDrawer" title="Filtros">&#9776;</button>
       <div class="fm-top-right">
-        <button class="fm-lang-btn active" id="langEs" title="Español" role="switch" aria-checked="true" aria-label="Español">ES</button>
-        <button class="fm-lang-btn inactive" id="langEn" title="English" role="switch" aria-checked="false" aria-label="English">EN</button>
-        <button class="fm-lang-btn inactive" id="langZh" title="中文" role="switch" aria-checked="false" aria-label="中文" style="display:none">ZH</button>
+        <button type="button" class="fm-lang-btn active" id="langEs" title="Espa&#241;ol" role="switch" aria-checked="true" aria-label="Espa&#241;ol">ES</button>
+        <button type="button" class="fm-lang-btn inactive" id="langEn" title="English" role="switch" aria-checked="false" aria-label="English">EN</button>
+        <button type="button" class="fm-lang-btn inactive" id="langZh" title="&#20013;&#25991;" role="switch" aria-checked="false" aria-label="&#20013;&#25991;" style="display:none">ZH</button>
       </div>
     </header>
-    <main class="categories-shell" id="main-content">
+    </header>
+<main class="categories-shell" id="main-content">
+      <div class="ad-slot" aria-label="Publicidad">
+        <div class="ad-placeholder" data-ad-slot="left-1">Publicidad</div>
+        <div class="ad-placeholder" data-ad-slot="left-2">Publicidad</div>
+      </div>
       <aside class="categories-frame categories-frame-side categories-frame-left" aria-label="Filtros">
         <a href="index.html" class="categories-brand-logo"><img src="/KuraTe_logo_black.png" alt="KuraTe Logo" class="page-logo"></a>
         <div class="card" id="hogarFilters" style="margin-top:18px; width:100%;">
           <h3 class="sub-title" data-i18n="Filtros">Filtros</h3>
           <div class="filter-group"><label for="fQuery" data-i18n="Buscar">Buscar</label><input type="text" id="fQuery" placeholder="reparar heladera, instalar aire..." data-i18n-placeholder="reparar heladera, instalar aire..."></div>
-          <div class="filter-group"><label for="fArea" data-i18n="Área">Área</label><select id="fArea"><option value="" data-i18n="Todas">Todas</option><option value="hogar" data-i18n="Hogar">Hogar</option><option value="oficina" data-i18n="Oficina">Oficina</option><option value="pime" data-i18n="PIME">PIME</option><option value="industria" data-i18n="Industria">Industria</option></select></div>
-          <div class="filter-group"><label for="fAction" data-i18n="Acción">Acción</label><select id="fAction"><option value="" data-i18n="Todas">Todas</option><option value="aprender">Aprender</option><option value="reparar">Reparar / Arreglar</option><option value="instalar">Instalar</option><option value="mantener">Mantener</option><option value="verificar">Verificar</option><option value="desinstalar">Desinstalar</option><option value="mejorar">Mejorar</option><option value="disenar">Diseñar</option><option value="descartar">Descartar</option><option value="busco">Busco</option><option value="vender">Vender</option><option value="comprar">Comprar</option><option value="donar">Donar</option><option value="recibir-donaciones">Recibir donaciones</option></select></div>
+          <div class="filter-group"><label for="fArea" data-i18n="Área">Área</label><select id="fArea"><option value="" data-i18n="Todas">Todas</option><option value="hogar" data-i18n="Hogar">Hogar</option><option value="oficina" data-i18n="Oficina">Oficina</option><option value="casa-campo" data-i18n="Casa de Campo">Casa de Campo</option><option value="industria" data-i18n="Industria">Industria</option></select></div>
+          <div class="filter-group"><label for="fAction" data-i18n="Acción">Acción</label><select id="fAction"><option value="" data-i18n="Todas">Todas</option><option value="educar">Educar</option><option value="reparar">Reparar / Arreglar</option><option value="instalar">Instalar</option><option value="mantener">Mantener</option><option value="verificar">Verificar</option><option value="desinstalar">Desinstalar</option><option value="mejorar">Mejorar</option><option value="disenar">Diseñar</option><option value="descartar">Descartar</option><option value="busco">Busco</option><option value="vender">Vender</option><option value="comprar">Comprar</option><option value="donar">Donar</option><option value="recibir-donaciones">Recibir donaciones</option></select></div>
           <div class="filter-group"><label for="fCategory" data-i18n="Categoría">Categoría</label><select id="fCategory"><option value="" data-i18n="Todas">Todas</option><option value="profesional_matriculado">Profesional matriculado</option><option value="tecnico_matriculado">Técnico matriculado</option><option value="tecnico_no_matriculado">Técnico no matriculado</option><option value="idoneo">Idóneo</option></select></div>
           <div class="filter-group"><label for="fAvailability" data-i18n="Disponibilidad">Disponibilidad</label><select id="fAvailability"><option value="" data-i18n="Todas">Todas</option><option value="inmediata">Inmediata</option><option value="rapida">Rápida (&lt;2 días)</option><option value="puedo_esperar">2–4 días</option><option value="sin_apuro">&gt;4 días</option></select></div>
           <div class="filter-group"><label for="fProvince" data-i18n="Provincia">Provincia</label><select id="fProvince"><option value="" data-i18n="Todas">Todas</option><option value="CABA">CABA</option><option value="Buenos Aires">Buenos Aires</option><option value="Catamarca">Catamarca</option><option value="Chaco">Chaco</option><option value="Chubut">Chubut</option><option value="Córdoba">Córdoba</option><option value="Corrientes">Corrientes</option><option value="Entre Ríos">Entre Ríos</option><option value="Formosa">Formosa</option><option value="Jujuy">Jujuy</option><option value="La Pampa">La Pampa</option><option value="La Rioja">La Rioja</option><option value="Mendoza">Mendoza</option><option value="Misiones">Misiones</option><option value="Neuquén">Neuquén</option><option value="Río Negro">Río Negro</option><option value="Salta">Salta</option><option value="San Juan">San Juan</option><option value="San Luis">San Luis</option><option value="Santa Cruz">Santa Cruz</option><option value="Santa Fe">Santa Fe</option><option value="Santiago del Estero">Santiago del Estero</option><option value="Tierra del Fuego">Tierra del Fuego</option><option value="Tucumán">Tucumán</option></select></div>
           <div class="filter-group"><label for="fCity" data-i18n="Localidad">Localidad</label><select id="fCity" disabled><option value="">Todas las ciudades / barrios</option></select></div>
           <div class="filter-group"><label for="fService" data-i18n="Servicio / Equipo">Servicio / Equipo</label><select id="fService"><option value="">Todos</option></select><input type="text" id="fServiceCustom" placeholder="Escribí el servicio" style="display:none;margin-top:6px;"></div>
+          <div class="filter-group"><label for="fProfession" data-i18n="Profesión">Profesión</label><select id="fProfession"><option value="" data-i18n="Todas">Todas</option></select><label for="fMatriculado" style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:0.8rem;cursor:pointer;"><input type="checkbox" id="fMatriculado" style="width:14px;height:14px;"><span data-i18n="Solo matriculados">Solo matriculados</span></label></div>
           <div class="filter-group"><label for="fBrand" data-i18n="Marca">Marca</label><select id="fBrand"><option value="">Todas</option></select><input type="text" id="fBrandCustom" placeholder="Escribí la marca" style="display:none;margin-top:6px;"></div>
           <div style="display:flex; gap:10px; margin-top:14px;">
             <button id="btnNearMe" class="sa-btn sa-btn--ghost" style="flex:1;" data-i18n="Cerca de mí">📍 Cerca de mí</button>
@@ -254,10 +271,10 @@
 
       <aside class="categories-frame categories-frame-side categories-frame-right" aria-label="Áreas">
         <div class="card" style="margin-top:18px; width:100%; position:sticky; top:18px;">
-          <h3 class="sub-title" data-i18n="Áreas">Áreas</h3>
+          <h2 class="sub-title" data-i18n="Áreas">Áreas</h2>
           <div id="areaChips" class="area-chips"></div>
           <hr class="gold-rule">
-          <h3 class="sub-title">Contacto</h3>
+          <h2 class="sub-title">Contacto</h2>
           <p class="contact-note">
             <img src="/images/whatsapp.png" alt="WhatsApp"> <span data-i18n="WhatsApp disponible">WhatsApp disponible</span><br>
             <img src="/images/Telegram.png" alt="Telegram"> <span data-i18n="Telegram disponible">Telegram disponible</span><br>
@@ -269,9 +286,13 @@
             <span data-i18n="Cómo leer las tarjetas">Cómo leer las tarjetas</span>
           </button>
         </div>
-      </aside>
+</aside>
+      <div class="ad-slot" aria-label="Publicidad">
+        <div class="ad-placeholder" data-ad-slot="right-1">Publicidad</div>
+        <div class="ad-placeholder" data-ad-slot="right-2">Publicidad</div>
+      </div>
     </main>
-    <footer style="text-align:center;padding:1.5rem 1rem;border-top:1px solid #222;color:#666;font-size:0.8rem;">
+    <footer style="text-align:center;padding:1.5rem 1rem;border-top:1px solid #222;color:#7e7e7e;font-size:0.8rem;">
       <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:0.5rem;">
         <a href="https://www.w3.org/WAI/WCAG21/quickref/" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;font-size:0.7rem;text-decoration:none;border:1px solid #333;border-radius:4px;padding:3px 8px;" aria-label="Cumple WCAG 2.1 nivel AA">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B8922E" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
@@ -434,7 +455,85 @@
 
     function hasSearchParams() {
       const p = getSearchParams();
-      return p.has('service') || p.has('brand') || p.has('accion') || p.has('provincia') || p.has('ciudad');
+      return p.has('service') || p.has('brand') || p.has('accion') || p.has('provincia') || p.has('ciudad') || p.has('profession') || p.has('matriculado');
+    }
+
+    // Los valores que llegan por URL deben quedar visibles en los filtros.
+    // Las localidades y los servicios se cargan por fetch, asi que la opcion
+    // puede no existir todavia: en ese caso se agrega para que se vea el filtro.
+    function setSelectValue(sel, value, label) {
+      if (!sel || !value) return false;
+      const found = Array.prototype.some.call(sel.options, function(o) { return o.value === value; });
+      if (found) {
+        sel.value = value;
+        if (sel.disabled) sel.disabled = false;
+        return true;
+      }
+      // La URL puede venir sin tildes ("Entre Rios"): se usa la opcion que ya
+      // existe en lugar de duplicarla.
+      const norm = function(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); };
+      const wanted = norm(value);
+      const twin = Array.prototype.find.call(sel.options, function(o) { return norm(o.value) === wanted; });
+      if (twin) {
+        sel.value = twin.value;
+        if (sel.disabled) sel.disabled = false;
+        return true;
+      }
+      const opt = document.createElement('option');
+      opt.value = value;
+      opt.textContent = label || value;
+      sel.appendChild(opt);
+      sel.value = value;
+      if (sel.disabled) sel.disabled = false;
+      return false;
+    }
+
+    function loadCityOptions(prov) {
+      const sel = document.getElementById('fCity');
+      if (!sel) return Promise.resolve();
+      if (!prov) {
+        sel.innerHTML = '<option value="">Todas las ciudades / barrios</option>';
+        sel.disabled = true;
+        return Promise.resolve();
+      }
+      sel.innerHTML = '<option value="">Cargando...</option>';
+      sel.disabled = true;
+      return fetch('/api/v1/locations/provinces/name/' + encodeURIComponent(prov) + '/cities')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          sel.innerHTML = '<option value="">Todas las ciudades / barrios</option>';
+          (data || []).forEach(function(c) { sel.innerHTML += '<option value="' + c.name + '">' + c.name + '</option>'; });
+          sel.disabled = false;
+        })
+        .catch(function() { sel.innerHTML = '<option value="">Todas las ciudades / barrios</option>'; });
+    }
+
+    // Servicio y marca se re-aplican cuando los dropdowns terminan de cargarse.
+    function applyUrlServiceFilters(params) {
+      const p = params || getSearchParams();
+      const svc = p.get('service');
+      const brd = p.get('brand');
+      if (svc) setSelectValue(document.getElementById('fService'), svc);
+      if (brd) setSelectValue(document.getElementById('fBrand'), brd);
+    }
+
+    // Profesiones: mismo origen que el landing (GET /professions). Si la URL
+    // trae profession/matriculado, se reflejan en los controles del drawer.
+    async function loadProfessionFilter() {
+      const sel = document.getElementById('fProfession');
+      const chk = document.getElementById('fMatriculado');
+      if (!sel) return;
+      try {
+        const res = await fetch(apiBase() + '/professions');
+        const json = await res.json();
+        const list = (json && json.success && Array.isArray(json.data)) ? json.data : [];
+        sel.innerHTML = '<option value="">Todas</option>' + list.map(p =>
+          '<option value="' + p.slug + '">' + p.name + (p.regulated ? ' (matriculable)' : '') + '</option>'
+        ).join('');
+        const wanted = getSearchParams().get('profession');
+        if (wanted) setSelectValue(sel, wanted);
+        if (chk && getSearchParams().get('matriculado')) chk.checked = true;
+      } catch (e) { /* filtro opcional */ }
     }
 
     async function loadSearchResults() {
@@ -446,10 +545,20 @@
       if (loader) { loader.style.display = 'block'; loader.textContent = 'Buscando profesionales...'; }
       const params = getSearchParams();
       // Propagate URL params to filter dropdowns
-      if (params.get('accion')) document.getElementById('fAction').value = params.get('accion');
-      if (params.get('provincia')) document.getElementById('fProvince').value = params.get('provincia');
-      if (params.get('ciudad')) { document.getElementById('fCity').value = params.get('ciudad'); document.getElementById('fCity').disabled = false; }
-      if (params.get('service')) document.getElementById('fService').value = params.get('service');
+      if (params.get('accion')) setSelectValue(document.getElementById('fAction'), params.get('accion'));
+      if (params.get('profession')) setSelectValue(document.getElementById('fProfession'), params.get('profession'));
+      if (params.get('matriculado')) document.getElementById('fMatriculado').checked = true;
+      if (params.get('area')) {
+        // 'pime' era el id del enum legacy; el arbol canonico lo llama casa-campo
+        const areaUrl = params.get('area');
+        const areaAlias = ['pime', 'casa-de-campo', 'campo'].includes(areaUrl) ? 'casa-campo' : areaUrl;
+        setSelectValue(document.getElementById('fArea'), areaAlias);
+      }
+      if (params.get('provincia')) setSelectValue(document.getElementById('fProvince'), params.get('provincia'));
+      const ciudadUrl = params.get('ciudad');
+      if (params.get('provincia') && ciudadUrl) await loadCityOptions(params.get('provincia'));
+      if (ciudadUrl) setSelectValue(document.getElementById('fCity'), ciudadUrl);
+      applyUrlServiceFilters(params);
       const url = new URL(apiBase() + '/professionals/search');
       for (const [k, v] of params.entries()) { if (v) url.searchParams.set(k, v); }
       try {
@@ -497,17 +606,18 @@
       img.onerror = () => { img.onerror = null; img.src = NO_PHOTO; };
       imgContainer.appendChild(img);
 
-      // Green "available now" light for on-call professionals
+      // Green "available now" light for on-call professionals.
+      // Anchored left so it never sits under the WhatsApp/Telegram badges (top-right).
       if (p.onCall) {
         const onCallDot = el('div');
-        onCallDot.style.cssText = 'position:absolute;top:8px;right:8px;width:14px;height:14px;background:#22c55e;border-radius:50%;border:2px solid rgba(0,0,0,0.5);box-shadow:0 0 6px rgba(34,197,94,0.7);z-index:2;cursor:default;';
+        onCallDot.style.cssText = 'position:absolute;top:8px;left:8px;width:14px;height:14px;background:#22c55e;border-radius:50%;border:2px solid rgba(0,0,0,0.5);box-shadow:0 0 6px rgba(34,197,94,0.7);z-index:2;cursor:default;';
         onCallDot.title = 'Disponible ahora — servicio urgente';
         imgContainer.appendChild(onCallDot);
       }
 
       const btnRow = el('div', 'contact-badge');
       function imgBadge(src, title) { const i = el('img'); i.src = src; i.alt = title; i.title = title; i.onerror = () => { i.style.display = 'none'; }; return i; }
-      if (p.phone) btnRow.appendChild(imgBadge('/images/whatsapp.png', 'WhatsApp'));
+      if (p.whatsapp) btnRow.appendChild(imgBadge('/images/whatsapp.png', 'WhatsApp'));
       if (p.telegram) btnRow.appendChild(imgBadge('/images/Telegram.png', 'Telegram'));
       if (btnRow.childElementCount) imgContainer.appendChild(btnRow);
 
@@ -516,9 +626,11 @@
       if (p.location) caption.appendChild(el('span', 'treasure-caption-location', p.location));
       var badges = [];
       if (p.nearBarrio) badges.push('Barrios cercanos');
-      if (p.distance != null) badges.push(p.distance + ' km');
-      if (p.averageRating > 0) badges.push('★ ' + p.averageRating.toFixed(1));
-      if (p.pct != null) badges.push(p.pct + '%');
+      if (p.distance != null) { badges.push(p.distance.toFixed(1) + ' km'); }
+      else { badges.push('Ubicación no disponible'); }
+      if (p.averageRating > 0) { badges.push('★ ' + p.averageRating.toFixed(1)); }
+      else { badges.push('★ Sin calificar'); }
+      if (p.pct != null) badges.push(p.pct + '% coincidencia');
       if (badges.length) caption.appendChild(el('span', 'treasure-caption-specialty', badges.join(' · ')));
       imgContainer.appendChild(caption);
       card.appendChild(imgContainer);
@@ -534,6 +646,24 @@
         info.appendChild(b);
       }
       card.appendChild(info);
+      // Insignia de matriculacion: solo se muestra si el profesional la
+      // declara. El documento nunca viaja al cliente, solo el estado.
+      const profs = (p.hogarProfile && p.hogarProfile.professions) || p.professions || [];
+      const matriculados = (Array.isArray(profs) ? profs : []).filter(f => f && f.matriculado);
+      if (matriculados.length > 0) {
+        const wrap = el('div', '');
+        wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;';
+        matriculados.slice(0, 3).forEach(f => {
+          const b = el('span', '', (f.matriculaVerificada ? '✓ ' : '') + f.name + ' matriculado');
+          b.style.cssText = 'font-size:0.68rem;padding:2px 8px;border-radius:9999px;display:inline-block;' +
+            (f.matriculaVerificada
+              ? 'background:rgba(34,197,94,0.15);color:#5cb85c;'
+              : 'background:rgba(184,146,46,0.15);color:#D9BC6A;');
+          b.title = f.matriculaVerificada ? 'Matrícula verificada por la administración' : 'Matrícula declarada, pendiente de verificación';
+          wrap.appendChild(b);
+        });
+        info.appendChild(wrap);
+      }
       grid.appendChild(card);
     }
 
@@ -593,25 +723,53 @@
         area: document.getElementById('fArea').value, action: document.getElementById('fAction').value,
         category: document.getElementById('fCategory').value, availability: document.getElementById('fAvailability').value,
         province: document.getElementById('fProvince').value, city: document.getElementById('fCity').value.trim(),
-        service: service, brand: brand
+        service: service, brand: brand,
+        profession: document.getElementById('fProfession').value,
+        matriculado: document.getElementById('fMatriculado').checked ? '1' : ''
       };
     }
 
     function initFilterDrawer() {
       const filterCard = document.getElementById('hogarFilters');
       if (!filterCard || document.getElementById('hogarFilterDrawer')) return;
-      const drawer = document.createElement('div'); drawer.id = 'hogarFilterDrawer'; drawer.setAttribute('aria-hidden', 'true');
+      const drawer = document.createElement('div'); drawer.id = 'hogarFilterDrawer';
+      drawer.setAttribute('role', 'dialog'); drawer.setAttribute('aria-modal', 'true'); drawer.setAttribute('aria-label', 'Filtros');
+      // WCAG 4.1.2 / axe aria-hidden-focus: mientras esta oculto, aria-hidden=true + inert
+      // impiden que sus controles nativos (selects, botones) sigan siendo tabulables.
+      drawer.setAttribute('aria-hidden', 'true');
+      if ('inert' in HTMLElement.prototype) drawer.inert = true;
       const header = document.createElement('div'); header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;';
       header.innerHTML = '<h3>Filtros</h3>';
       const closeBtn = document.createElement('button'); closeBtn.type = 'button'; closeBtn.textContent = '×'; closeBtn.setAttribute('aria-label', 'Cerrar');
       Object.assign(closeBtn.style, { background: 'transparent', color: 'var(--primary-gold)', border: 'none', fontSize: '32px', cursor: 'pointer', padding: '0', lineHeight: '1' });
       header.appendChild(closeBtn); drawer.appendChild(header); drawer.appendChild(filterCard); document.body.appendChild(drawer);
       const overlay = document.createElement('div'); overlay.className = 'drawer-overlay'; document.body.appendChild(overlay);
-      const open = () => { drawer.style.left = '0'; overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10); document.body.style.overflow = 'hidden'; };
-      const close = () => { drawer.style.left = '-100%'; overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300); document.body.style.overflow = ''; };
+      const open = () => {
+        drawer.style.left = '0'; overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
+        document.body.style.overflow = 'hidden';
+        drawer.setAttribute('aria-hidden', 'false');
+        if ('inert' in HTMLElement.prototype) drawer.inert = false;
+        if (burgerRef) burgerRef.setAttribute('aria-expanded', 'true');
+        closeBtn.focus();
+      };
+      const close = () => {
+        drawer.style.left = '-100%'; overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
+        document.body.style.overflow = '';
+        drawer.setAttribute('aria-hidden', 'true');
+        if ('inert' in HTMLElement.prototype) drawer.inert = true;
+        if (burgerRef) burgerRef.setAttribute('aria-expanded', 'false');
+        if (burgerRef) burgerRef.focus();
+      };
       closeBtn.onclick = close; overlay.onclick = close;
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && drawer.getAttribute('aria-hidden') === 'false') close(); });
       const title = document.querySelector('.categories-frame-center h2');
-      if (title) { const burger = document.createElement('button'); burger.type = 'button'; burger.textContent = '☰'; burger.setAttribute('aria-label', 'Filtros'); burger.className = 'burger'; burger.onclick = open; title.insertBefore(burger, title.firstChild); }
+      let burgerRef = null;
+      if (title) {
+        const burger = document.createElement('button'); burger.type = 'button'; burger.textContent = '☰'; burger.setAttribute('aria-label', 'Filtros');
+        burger.setAttribute('aria-expanded', 'false'); burger.setAttribute('aria-controls', 'hogarFilterDrawer');
+        burger.className = 'burger'; burger.onclick = open; title.insertBefore(burger, title.firstChild);
+        burgerRef = burger;
+      }
     }
 
     // Language switch (shared with landing page) — persists preference, translates labels
@@ -778,29 +936,21 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       initFilterDrawer();
+      loadProfessionFilter();
       const fProvince = document.getElementById('fProvince');
       const fCity = document.getElementById('fCity');
       fProvince.addEventListener('change', function() {
-        const prov = this.value;
-        fCity.innerHTML = '<option value="">Cargando...</option>';
-        fCity.disabled = true;
-        if (!prov) { fCity.innerHTML = '<option value="">Todas las ciudades / barrios</option>'; fCity.disabled = true; return; }
-        fetch('/api/v1/locations/provinces/name/' + encodeURIComponent(prov) + '/cities')
-          .then(r => r.json())
-          .then(data => {
-            fCity.innerHTML = '<option value="">Todas las ciudades / barrios</option>';
-            (data || []).forEach(c => { fCity.innerHTML += '<option value="' + c.name + '">' + c.name + '</option>'; });
-            fCity.disabled = false;
-          });
+        loadCityOptions(this.value);
       });
       document.getElementById('btnApply').addEventListener('click', () => loadHogar(readFilters()));
       document.getElementById('btnClear').addEventListener('click', () => {
-        ['fArea','fAction','fCategory','fAvailability','fProvince','fCity','fService','fBrand'].forEach(id => { document.getElementById(id).value = ''; });
+        ['fArea','fAction','fCategory','fAvailability','fProvince','fCity','fService','fBrand','fProfession'].forEach(id => { document.getElementById(id).value = ''; });
+        document.getElementById('fMatriculado').checked = false;
         document.getElementById('fCity').innerHTML = '<option value="">Todas las ciudades / barrios</option>';
         document.getElementById('fCity').disabled = true;
         loadHogar({});
       });
-      const AREAS = [{ value: '', label: 'Todas' }, { value: 'hogar', label: 'Hogar' }, { value: 'oficina', label: 'Oficina' }, { value: 'pime', label: 'PIME' }, { value: 'industria', label: 'Industria' }];
+      const AREAS = [{ value: '', label: 'Todas' }, { value: 'hogar', label: 'Hogar' }, { value: 'oficina', label: 'Oficina' }, { value: 'casa-campo', label: 'Casa de Campo' }, { value: 'industria', label: 'Industria' }, { value: 'educacion', label: 'Educación' }];
       const chipWrap = document.getElementById('areaChips'); const fArea = document.getElementById('fArea');
       AREAS.forEach(a => {
         const chip = document.createElement('button'); chip.type = 'button';
@@ -891,6 +1041,8 @@
         var allDevices = getAllDevices();
         fillService(allDevices);
         fillBrand(getBrandsForDevices(allDevices));
+        // Los filtros que vienen por URL se re-aplican despues del fetch
+        applyUrlServiceFilters();
         // On area change — filter services to that area
         fArea.addEventListener('change', function() {
           var area = this.value;
@@ -997,6 +1149,88 @@
             document.body.prepend(div);
         }
     })();
+</script>
+<script src="/js/imageViewer.js"></script>
+
+  <div id="hogarFilterDrawer" role="dialog" aria-modal="true" aria-label="Filtros" aria-hidden="true">
+    <div style="position:sticky;top:0;background:rgba(15,15,26,0.98);backdrop-filter:blur(10px);border-bottom:1px solid var(--primary-gold);padding:12px 16px;z-index:1;display:flex;justify-content:space-between;align-items:center;">
+      <h3>Filtros</h3>
+      <button type="button" id="closeFilterDrawer" aria-label="Cerrar filtros" style="background:transparent;border:none;color:var(--primary-gold);font-size:1.5rem;cursor:pointer;line-height:1;padding:0;">&times;</button>
+    </div>
+    <div id="hogarFiltersDrawerContent"></div>
+  </div>
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+
+  <script>
+    (function() {
+      const drawer = document.getElementById('hogarFilterDrawer');
+      const overlay = document.getElementById('drawerOverlay');
+      const burger = document.getElementById('filtersBurger');
+      const closeBtn = document.getElementById('closeFilterDrawer');
+      const drawerContent = document.getElementById('hogarFiltersDrawerContent');
+      let originalFilters = null;
+
+      function openDrawer() {
+        if (!originalFilters) {
+          const src = document.getElementById('hogarFilters');
+          if (src) {
+            originalFilters = src.cloneNode(true);
+            originalFilters.id = 'hogarFiltersDrawerContentClone';
+            originalFilters.style.display = 'block';
+            originalFilters.style.width = '100%';
+            drawerContent.appendChild(originalFilters);
+          }
+        }
+        document.getElementById('hogarFilterDrawer').style.left = '0';
+        document.getElementById('drawerOverlay').style.display = 'block';
+        setTimeout(() => document.getElementById('drawerOverlay').style.opacity = '1', 10);
+        document.body.style.overflow = 'hidden';
+        document.getElementById('filtersBurger').setAttribute('aria-expanded', 'true');
+        document.getElementById('hogarFilterDrawer').setAttribute('aria-hidden', 'false');
+        const closeBtn = document.getElementById('closeFilterDrawer');
+        if (closeBtn) closeBtn.focus();
+      }
+
+      function closeDrawer() {
+        document.getElementById('hogarFilterDrawer').style.left = '-100%';
+        document.getElementById('drawerOverlay').style.opacity = '0';
+        setTimeout(() => document.getElementById('drawerOverlay').style.display = 'none', 300);
+        document.body.style.overflow = '';
+        document.getElementById('filtersBurger').setAttribute('aria-expanded', 'false');
+      }
+
+      document.getElementById('filtersBurger').addEventListener('click', () => {
+        const isOpen = document.getElementById('hogarFilterDrawer').style.left === '0px';
+        if (isOpen) closeDrawer(); else openDrawer();
+      });
+      document.getElementById('closeFilterDrawer').addEventListener('click', () => {
+        document.getElementById('hogarFilterDrawer').style.left = '-100%';
+        document.getElementById('drawerOverlay').style.opacity = '0';
+        setTimeout(() => document.getElementById('drawerOverlay').style.display = 'none', 300);
+        document.body.style.overflow = '';
+      });
+      document.getElementById('drawerOverlay').addEventListener('click', () => {
+        document.getElementById('hogarFilterDrawer').style.left = '-100%';
+        document.getElementById('drawerOverlay').style.opacity = '0';
+        setTimeout(() => document.getElementById('drawerOverlay').style.display = 'none', 300);
+        document.body.style.overflow = '';
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && document.getElementById('hogarFilterDrawer').style.left === '0px') {
+          document.getElementById('hogarFilterDrawer').style.left = '-100%';
+          document.getElementById('drawerOverlay').style.opacity = '0';
+          setTimeout(() => document.getElementById('drawerOverlay').style.display = 'none', 300);
+          document.body.style.overflow = '';
+        }
+      });
+    })();
   </script>
+<script src="/js/imageViewer.js"></script>
 </body>
 </html>
+
+
+
+
+
+

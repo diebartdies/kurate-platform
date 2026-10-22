@@ -34,7 +34,7 @@
     .cta a { display: inline-block; padding: 14px 32px; background: #B8922E; color: #0f0f1a; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 1rem; }
     .cta a:hover { background: #D9BC6A; }
     .cta p { color: #888; margin-top: 12px; font-size: 0.9rem; }
-    footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #333; text-align: center; color: #666; font-size: 0.85rem; }
+    footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #333; text-align: center; color: #8c8c8c; font-size: 0.85rem; }
     @media (max-width: 600px) {
       table { font-size: 0.85rem; }
       thead th, tbody td { padding: 8px 10px; }
@@ -57,7 +57,7 @@
   </script>
 </head>
 <body>
-  <div class="container">
+  <main class="container" id="main-content">
     <h1>Precios de Referencia — Aire Acondicionado 2026</h1>
 
     <div class="disclaimer">
@@ -66,6 +66,7 @@
       Consultá directamente con el técnico para obtener un presupuesto exacto y personalizado.
     </div>
 
+    <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;" tabindex="0" role="region" aria-label="Tabla de precios de instalaci&oacute;n de aire acondicionado">
     <table>
       <thead>
         <tr>
@@ -155,12 +156,16 @@
         </tr>
       </tbody>
     </table>
+    </div>
 
     <div class="cta">
       <a href="https://kurate.drsrv.net.ar/servicios/instalar-aire-acondicionado">Encontrar técnico de A. Acondicionado</a>
       <p>Compará presupuestos de técnicos verificados en KuraTe</p>
     </div>
 
+  </main>
+
+  <div class="container">
     <footer>
       <p>Precios de referencia para Argentina — Septiembre 2026 — Solo mano de obra, no incluye materiales ni repuestos.</p>
       <p>© 2026 KuraTe — Tu respuesta rápida y directa.</p>

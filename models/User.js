@@ -3,6 +3,58 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const config = require('../config/appConfig');
 
+// Un oficio que el profesional declara idoneo. Para los oficios regulados
+// (gasista, electricista) puede acreditar la matricula: numero y/o foto del
+// titulo, con su estado de verificacion para que el admin la apruebe.
+//
+// La verificacion no es solo "el numero existe": el registro oficial se
+// consulta segun el ofício y la provincia, y el ente emisor esperado depende
+// de la combinacion (ver utils/matriculaRules.js):
+//   gasista  + CABA      -> Metrogas o Enargas
+//   gasista  + Provincia -> Enargas
+//   electricista         -> COPIME
+// Por eso se guardan titular, ente emisor y estado segun el padron oficial.
+const matriculaSchema = {
+  titular: { type: String, trim: true, default: '' },
+  enteEmisor: { type: String, trim: true, default: '', lowercase: true },
+  estado: { type: String, trim: true, default: 'sin_verificar' },
+  verificadoEn: Date,
+  verificadoPor: { type: String, trim: true, default: '' },
+  fuenteConsulta: { type: String, trim: true, default: '' }
+};
+
+const ENTE_EMISOR_VALIDOS = ['metrogas', 'enargas', 'copime', 'otro', ''];
+
+const professionSchema = new mongoose.Schema({
+  slug: { type: String, index: true, trim: true, lowercase: true },
+  name: { type: String, index: true, trim: true },
+  matriculado: { type: Boolean, default: false },
+  matriculaNumero: { type: String, trim: true, default: '' },
+  matriculaFoto: { type: String, default: '' },
+  matriculaVerificada: { type: Boolean, default: false },
+  matriculaVerificadaAt: Date,
+  matriculaRechazada: { type: Boolean, default: false },
+  matriculaRechazadaMotivo: { type: String, trim: true, default: '' },
+  matriculaTitular: matriculaSchema.titular,
+  matriculaEnteEmisor: {
+    type: String,
+    trim: true,
+    lowercase: true,
+    default: '',
+    enum: ENTE_EMISOR_VALIDOS
+  },
+  matriculaEstado: {
+    type: String,
+    trim: true,
+    default: 'sin_verificar',
+    enum: ['sin_verificar', 'activa', 'suspendida', 'vencida', 'no_encontrada']
+  },
+  matriculaVerificadoEn: matriculaSchema.verificadoEn,
+  matriculaVerificadoPor: matriculaSchema.verificadoPor,
+  matriculaFuenteConsulta: matriculaSchema.fuenteConsulta
+}, { _id: false });
+
+
 const UserSchema = new mongoose.Schema({
   name: {
     type: String
@@ -21,6 +73,18 @@ const UserSchema = new mongoose.Schema({
     required: [true, 'Please add a password'],
     minlength: 6,
     select: false // Do not return the password by default in queries
+  },
+  /** Bumped whenever the password is reset by an admin. The JWT carries the value
+      it was issued with, so a mismatch logs every previously issued token out. */
+  tokenVersion: {
+    type: Number,
+    default: 0
+  },
+  /** Set when an admin issues a temporary password: the user must replace it on
+      first login before using the app normally. */
+  mustChangePassword: {
+    type: Boolean,
+    default: false
   },
   role: {
     type: String,
@@ -75,6 +139,12 @@ const UserSchema = new mongoose.Schema({
     type: [String],
     select: false
   },
+  /** Number of stored verification documents. Kept in sync via pre-save hook so the
+      frontend can know whether a DNI was submitted without ever receiving the images. */
+  verificationDocumentsCount: {
+    type: Number,
+    default: 0
+  },
   phoneVerified: {
     type: Boolean,
     default: false
@@ -117,7 +187,18 @@ const UserSchema = new mongoose.Schema({
       ip: { type: String, trim: true },
       label: { type: String, default: 'ho' },
       lastSeenAt: { type: Date, default: Date.now }
-    }]
+    }],
+    /** Device-gated admin login: only approved device IDs can sign in (soft-MAC). */
+    devices: {
+      enabled: { type: Boolean, default: false },
+      allowedDevices: [{
+        deviceId: { type: String, trim: true },
+        label: { type: String, trim: true, default: '' },
+        createdAt: { type: Date, default: Date.now },
+        lastSeenAt: { type: Date, default: Date.now },
+        ipAddress: { type: String, trim: true }
+      }]
+    }
   },
   professionalProfile: {
     alias: {
@@ -193,12 +274,16 @@ const UserSchema = new mongoose.Schema({
       type: String,
       index: true
     }],
+    // Cache desnormalizado de los prefijos de services[].path, para que la
+    // busqueda por jerarquia resuelva con igualdad y no con regex. Se llena
+    // con servicePathPrefixes() y se mantiene con el backfill.
+    servicePaths: [String],
     // Trades/professions the professional exercises (e.g. "Plomero", "Cerrajero").
     // Each entry mirrors the professions taxonomy collection: { slug, name }.
-    professions: [{
-      slug: { type: String, index: true },
-      name: { type: String, index: true }
-    }],
+    // Para las profesiones reguladas (gasista, electricista) el profesional
+    // declara si esta matriculado y adjunta el numero de matricula y/o el
+    // titulo escaneado: eso es lo que le da veracidad al anuncio.
+    professions: [professionSchema],
     whatsappNumber: String,
     photos: [String],
     location: {
@@ -352,12 +437,16 @@ const UserSchema = new mongoose.Schema({
       actions: [{ type: String }],
       brands: [String]
     }],
+    // Cache derivado de services[].path con TODOS los prefijos:
+    // 'hogar/linea-blanca/heladera/Ariston' -> ['hogar', 'hogar/linea-blanca',
+    // 'hogar/linea-blanca/heladera', 'hogar/linea-blanca/heladera/Ariston'].
+    // Es lo que permite buscar por igualdad (usa indice) en vez de con regex
+    // anclado parcial que MongoDB no puede acotar -> collscan.
+    // Derivado: lo regenera servicePathPrefixes() en cada guardado.
+    servicePaths: [String],
     // Trades/professions the professional exercises (e.g. "Plomero", "Cerrajero").
     // Each entry mirrors the professions taxonomy collection: { slug, name }.
-    professions: [{
-      slug: { type: String, index: true },
-      name: { type: String, index: true }
-    }],
+    professions: [professionSchema],
     photos: [String],
     specialty: String,
     availability: {
@@ -420,6 +509,11 @@ const UserSchema = new mongoose.Schema({
 
 // Encrypt password using bcrypt before saving
 UserSchema.pre('save', async function() {
+  if (this.isModified('verificationDocuments') || this.isNew) {
+    this.verificationDocumentsCount = Array.isArray(this.verificationDocuments)
+      ? this.verificationDocuments.length
+      : 0;
+  }
   if (!this.isModified('password')) {
     return;
   }
@@ -434,7 +528,7 @@ UserSchema.methods.matchPassword = async function(enteredPassword) {
 
 // Sign JWT and return
 UserSchema.methods.getSignedJwtToken = function() {
-  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
+  return jwt.sign({ id: this._id, tokenVersion: this.tokenVersion || 0 }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE
   });
 };
@@ -452,5 +546,43 @@ UserSchema.methods.getResetPasswordToken = function() {
 
   return resetToken;
 };
+
+// --- Índices de búsqueda ---
+// Antes cada /professionals/search era un collection scan de `users`: ninguno de
+// los campos del filtro base tenía índice. El compuesto cubre el camino caliente
+// (rol + vivo + estado verificado + servicios). Los de servicios.path / .brands
+// soportan el filtro jerárquico y el match por marca.
+UserSchema.index({ role: 1, accountDeletedAt: 1, verificationStatus: 1 });
+UserSchema.index({ role: 1, accountDeletedAt: 1, 'hogarProfile.services.path': 1 });
+UserSchema.index({ 'hogarProfile.services.path': 1 });
+UserSchema.index({ 'hogarProfile.services.brands': 1 });
+UserSchema.index({ 'hogarProfile.area': 1, 'hogarProfile.action': 1 });
+UserSchema.index({ 'hogarProfile.address.province': 1, 'hogarProfile.address.city': 1 });
+UserSchema.index({ 'professionalProfile.location.province': 1, 'professionalProfile.location.city': 1 });
+
+// servicePaths: cache desnormalizado de los prefijos de services[].path.
+// Es lo que permite que el filtro jerarquico sea IGUALDAD en vez de regex.
+// Un $in de un solo valor sobre este array corta el indice; el regex alternado
+// de servicePrefixRegex() no arrancaba con '^' y no podia acotarlo.
+//
+// El campo va primero a proposito: el filtro siempre trae $in sobre
+// servicePaths, asi que el indice se acota en la primera clave y despues
+// filtra role / verificationStatus / accountDeletedAt desde el doc.
+UserSchema.index({ 'hogarProfile.servicePaths': 1, role: 1, verificationStatus: 1, accountDeletedAt: 1 });
+UserSchema.index({ 'professionalProfile.servicePaths': 1, role: 1, verificationStatus: 1, accountDeletedAt: 1 });
+
+// Ordenar/filtrar por area y accion: el listing los trae siempre juntos.
+UserSchema.index({ role: 1, 'hogarProfile.area': 1, 'hogarProfile.action': 1, accountDeletedAt: 1 });
+
+// busqueda por profesion + solo matriculados. Los dos campos salen del MISMO
+// array (professionalProfile.professions / hogarProfile.professions), asi que
+// el compuesto es valido como multikey.
+UserSchema.index({ 'professionalProfile.professions.slug': 1, 'professionalProfile.professions.matriculado': 1, role: 1, accountDeletedAt: 1 });
+UserSchema.index({ 'hogarProfile.professions.slug': 1, 'hogarProfile.professions.matriculado': 1, role: 1, accountDeletedAt: 1 });
+
+// Listar solo matriculados sin filtrar profesion: cubre el caso
+// matriculado=1 sin profession.
+UserSchema.index({ 'professionalProfile.professions.matriculado': 1, role: 1, accountDeletedAt: 1 });
+UserSchema.index({ 'hogarProfile.professions.matriculado': 1, role: 1, accountDeletedAt: 1 });
 
 module.exports = mongoose.model('User', UserSchema);

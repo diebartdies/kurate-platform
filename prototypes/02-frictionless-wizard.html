@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KuraTe — Wizard de 5 Pasos (Prototipo)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"></noscript>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0B0F19;
+            --bg-elevated: #121721;
+            --bg-card: #161B2A;
+            --bg-glass: rgba(22, 27, 42, 0.7);
+            --border: rgba(148, 163, 184, 0.15);
+            --border-focus: #A855F7;
+            --text: #F0F2F5;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            --violet: #A855F7;
+            --cyan: #06B6D4;
+            --green: #10B981;
+            --red: #EF4444;
+            --yellow: #F59E0B;
+            --radius: 16px;
+            --radius-sm: 12px;
+            --radius-xs: 8px;
+            --shadow: 0 20px 40px rgba(0,0,0,0.4);
+            --glow-violet: 0 0 32px rgba(168,85,247,0.25);
+            --font-heading: 'Clash Display', sans-serif;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ---- Focus visible WCAG 2.4.7 ---- */
+        :focus-visible {
+            outline: 3px solid var(--border-focus);
+            outline-offset: 3px;
+            border-radius: 4px;
+        }
+
+        /* ---- Skip link WCAG 2.4.1 ---- */
+        .skip-link {
+            position: absolute;
+            top: -100%;
+            left: 1rem;
+            z-index: 9999;
+            padding: 0.75rem 1.5rem;
+            background: var(--violet);
+            color: #fff;
+            font-weight: 600;
+            border-radius: 0 0 var(--radius-xs) var(--radius-xs);
+            text-decoration: none;
+        }
+        .skip-link:focus { top: 0; }
+
+        /* ---- Layout ---- */
+        .wizard-layout {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+            min-height: 100vh;
+        }
+
+        @media (max-width: 960px) {
+            .wizard-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ---- Header / Progress ---- */
+        .wizard-header {
+            grid-column: 1 / -1;
+        }
+
+        .wizard-title {
+            font-family: var(--font-heading);
+            font-size: clamp(1.5rem, 3vw, 2.25rem);
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #FFFFFF, #E0E7FF, #A5F3FC);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .progress {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            margin-bottom: 0.5rem;
+            list-style: none;
+            padding: 0;
+        }
+
+        .progress li {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .progress li:not(:last-child)::after {
+            content: '';
+            flex: 1;
+            height: 3px;
+            background: var(--border);
+            margin: 0 0.5rem;
+            border-radius: 2px;
+            transition: background 0.4s ease;
+        }
+
+        .progress li.completed:not(:last-child)::after,
+        .progress li.active:not(:last-child)::after {
+            background: linear-gradient(90deg, var(--violet), var(--cyan));
+        }
+
+        .progress .step-dot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            font-size: 0.8125rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .progress li.active .step-dot {
+            border-color: var(--violet);
+            color: var(--violet);
+            box-shadow: var(--glow-violet);
+        }
+
+        .progress li.completed .step-dot {
+            background: var(--violet);
+            border-color: var(--violet);
+            color: #fff;
+        }
+
+        .progress .step-label {
+            position: absolute;
+            top: 44px;
+            left: 0;
+            font-size: 0.6875rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .progress li.active .step-label { color: var(--violet); }
+        .progress li.completed .step-label { color: var(--green); }
+
+        .progress-spacer { height: 40px; }
+
+        /* ---- Wizard Panel ---- */
+        .wizard-panel {
+            background: var(--bg-glass);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 2rem;
+            backdrop-filter: blur(20px);
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .wizard-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--violet), var(--cyan), var(--green));
+        }
+
+        .step-content { display: none; }
+        .step-content.active { display: block; animation: fadeStep 0.4s ease; }
+
+        @keyframes fadeStep {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .step-title {
+            font-family: var(--font-heading);
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.375rem;
+        }
+
+        .step-hint {
+            color: var(--text-secondary);
+            font-size: 0.9375rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* ---- Action Cards (large, keyboard accessible) ---- */
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .action-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1.5rem 1rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-family: var(--font-body);
+            font-size: 0.9375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .action-card:hover {
+            border-color: rgba(168,85,247,0.4);
+            background: rgba(168,85,247,0.08);
+            transform: translateY(-3px);
+        }
+
+        .action-card[aria-pressed="true"] {
+            border-color: var(--violet);
+            background: rgba(168,85,247,0.12);
+            box-shadow: var(--glow-violet);
+        }
+
+        .action-card .action-thumb {
+            width: 84px;
+            height: 84px;
+            object-fit: contain;
+        }
+
+        .action-card .card-desc {
+            font-size: 0.75rem;
+            font-weight: 400;
+            color: var(--text-muted);
+        }
+
+        /* ---- Qué trabajo: pick buttons ---- */
+        .pick-group { margin-bottom: 1.5rem; }
+        .pick-label { font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.625rem; }
+        .pick-grid { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+        .pick-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.625rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-xs);
+            color: var(--text);
+            font-family: var(--font-body);
+            font-size: 0.8125rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+        .pick-card img { width: 96px; height: 64px; object-fit: cover; border-radius: 8px; display: block; }
+        .pick-card:hover { border-color: rgba(168,85,247,0.4); transform: translateY(-2px); }
+        .pick-card[aria-pressed="true"] { border-color: var(--violet); background: rgba(168,85,247,0.12); box-shadow: var(--glow-violet); }
+
+        /* ---- Location ---- */
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .field-group label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .field-group .hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .text-input, .textarea {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-xs);
+            color: var(--text);
+            font-family: var(--font-body);
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .text-input::placeholder, .textarea::placeholder { color: var(--text-muted); }
+        .text-input:focus, .textarea:focus { border-color: var(--violet); outline: none; }
+        .textarea { min-height: 120px; resize: vertical; }
+
+        .geolocate-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            background: rgba(6,182,212,0.12);
+            border: 2px solid rgba(6,182,212,0.35);
+            border-radius: var(--radius-xs);
+            color: var(--cyan);
+            font-family: var(--font-body);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .geolocate-btn:hover { background: rgba(6,182,212,0.2); }
+
+        /* ---- Urgency Buttons ---- */
+        .urgency-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .urgency-btn {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.25rem 1.5rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-family: var(--font-body);
+            font-size: 1.0625rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .urgency-btn .u-icon { font-size: 1.75rem; }
+        .urgency-btn .u-desc {
+            font-size: 0.8125rem;
+            font-weight: 400;
+            color: var(--text-muted);
+            display: block;
+            margin-top: 0.125rem;
+        }
+
+        .urgency-btn:hover { transform: translateX(4px); }
+        .urgency-btn[data-level="urgente"]:hover { border-color: rgba(239,68,68,0.5); background: rgba(239,68,68,0.08); }
+        .urgency-btn[data-level="dias"]:hover { border-color: rgba(245,158,11,0.5); background: rgba(245,158,11,0.08); }
+        .urgency-btn[data-level="sinapuro"]:hover { border-color: rgba(16,185,129,0.5); background: rgba(16,185,129,0.08); }
+
+        .urgency-btn[aria-pressed="true"][data-level="urgente"] { border-color: var(--red); background: rgba(239,68,68,0.12); box-shadow: 0 0 24px rgba(239,68,68,0.2); }
+        .urgency-btn[aria-pressed="true"][data-level="dias"] { border-color: var(--yellow); background: rgba(245,158,11,0.12); box-shadow: 0 0 24px rgba(245,158,11,0.2); }
+        .urgency-btn[aria-pressed="true"][data-level="sinapuro"] { border-color: var(--green); background: rgba(16,185,129,0.12); box-shadow: 0 0 24px rgba(16,185,129,0.2); }
+
+        /* ---- Confirm Summary ---- */
+        .summary-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 1.5rem;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9375rem;
+        }
+
+        .summary-row:last-child { border-bottom: none; }
+        .summary-row .label { color: var(--text-muted); }
+        .summary-row .value { font-weight: 600; text-align: right; }
+
+        /* ---- Nav Buttons ---- */
+        .wizard-nav {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.75rem;
+            border-radius: var(--radius-xs);
+            font-family: var(--font-body);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--violet), var(--cyan));
+            color: #0B0F19;
+            box-shadow: 0 4px 24px rgba(168,85,247,0.3);
+        }
+
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(168,85,247,0.4); }
+        .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:hover { border-color: var(--text-secondary); color: var(--text); }
+        .btn-secondary:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* ---- Live Results Panel ---- */
+        .results-panel {
+            background: var(--bg-glass);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            backdrop-filter: blur(20px);
+            height: fit-content;
+            position: sticky;
+            top: 2rem;
+        }
+
+        @media (max-width: 960px) {
+            .results-panel { position: static; }
+        }
+
+        .results-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .results-title {
+            font-family: var(--font-heading);
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .results-badge {
+            padding: 0.25rem 0.75rem;
+            background: rgba(16,185,129,0.15);
+            border: 1px solid rgba(16,185,129,0.35);
+            border-radius: 9999px;
+            color: var(--green);
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .results-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            list-style: none;
+            padding: 0;
+            max-height: 480px;
+            overflow-y: auto;
+        }
+
+        .result-card {
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+            padding: 0.875rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xs);
+            transition: border-color 0.2s ease;
+        }
+
+        .result-card:hover { border-color: rgba(168,85,247,0.35); }
+
+        .result-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--violet), var(--cyan));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.875rem;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .result-info { flex: 1; min-width: 0; }
+        .result-name { font-weight: 600; font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .result-meta { font-size: 0.75rem; color: var(--text-muted); }
+        .result-rating { color: var(--yellow); font-size: 0.8125rem; font-weight: 700; flex-shrink: 0; }
+
+        .results-empty {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .results-empty .empty-icon { font-size: 2.5rem; display: block; margin-bottom: 0.75rem; }
+
+        /* ---- Toast / Live region ---- */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0,0,0,0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* ---- Reduced motion WCAG 2.3.3 ---- */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+            html { scroll-behavior: auto; }
+        }
+
+        /* ---- High contrast WCAG 1.4.11 ---- */
+        @media (prefers-contrast: high) {
+            :root { --border: #888; }
+            .action-card, .urgency-btn, .result-card { border-width: 3px; }
+        }
+    </style>
+</head>
+<body>
+    <a href="#wizard-main" class="skip-link">Saltar al contenido principal</a>
+
+    <div class="wizard-layout">
+
+        <!-- Header + Progress -->
+        <header class="wizard-header">
+            <h1 class="wizard-title">Encontrá tu profesional en 6 pasos</h1>
+            <nav aria-label="Progreso del formulario">
+                <ol class="progress" id="progressList">
+                    <li class="active" aria-current="step"><span class="step-dot">1</span><span class="step-label">Qué</span></li>
+                    <li><span class="step-dot">2</span><span class="step-label">Trabajo</span></li>
+                    <li><span class="step-dot">3</span><span class="step-label">Dónde</span></li>
+                    <li><span class="step-dot">4</span><span class="step-label">Cuándo</span></li>
+                    <li><span class="step-dot">5</span><span class="step-label">Detalles</span></li>
+                    <li><span class="step-dot">6</span><span class="step-label">Confirmar</span></li>
+                </ol>
+            </nav>
+            <div class="progress-spacer" aria-hidden="true"></div>
+        </header>
+
+        <!-- Wizard Main -->
+        <main id="wizard-main" class="wizard-panel" role="main">
+            <div id="stepAnnouncer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+            <!-- STEP 1: QUÉ -->
+            <section class="step-content active" id="step1" role="group" aria-labelledby="step1-title" tabindex="-1">
+                <h2 class="step-title" id="step1-title">¿Qué necesitás?</h2>
+                <p class="step-hint">Elegí la acción que mejor describa lo que necesitás resolver.</p>
+                <div class="action-grid" role="group" aria-label="Acciones disponibles">
+                    <button type="button" class="action-card" data-action="reparar" aria-label="Reparar" aria-pressed="false">
+                        <img class="action-thumb" src="/public/images/actions/reparar.png?v=3" alt="" aria-hidden="true" width="64" height="64">
+                        <span class="card-desc">Averías, roturas, fallas</span>
+                    </button>
+                    <button type="button" class="action-card" data-action="instalar" aria-label="Instalar" aria-pressed="false">
+                        <img class="action-thumb" src="/public/images/actions/instalar.png?v=3" alt="" aria-hidden="true" width="64" height="64">
+                        <span class="card-desc">Equipos, sistemas, redes</span>
+                    </button>
+                    <button type="button" class="action-card" data-action="educar" aria-label="Educar" aria-pressed="false">
+                        <img class="action-thumb" src="/public/images/actions/educar.png?v=3" alt="" aria-hidden="true" width="64" height="64">
+                        <span class="card-desc">Clases, tutorías, apoyo</span>
+                    </button>
+                    <button type="button" class="action-card" data-action="disenar" aria-label="Diseñar" aria-pressed="false">
+                        <img class="action-thumb" src="/public/images/actions/disenar.png?v=3" alt="" aria-hidden="true" width="64" height="64">
+                        <span class="card-desc">Interiores, gráfica, web</span>
+                    </button>
+                    <button type="button" class="action-card" data-action="mantener" aria-label="Mantener" aria-pressed="false">
+                        <img class="action-thumb" src="/public/images/actions/mantener.png?v=3" alt="" aria-hidden="true" width="64" height="64">
+                        <span class="card-desc">Limpieza, jardín, preventivo</span>
+                    </button>
+                    <button type="button" class="action-card" data-action="verificar" aria-label="Verificar" aria-pressed="false">
+                        <img class="action-thumb" src="/public/images/actions/verificar.png?v=3" alt="" aria-hidden="true" width="64" height="64">
+                        <span class="card-desc">Inspecciones, peritajes</span>
+                    </button>
+                    <button type="button" class="action-card" data-action="desinstalar" aria-label="Desinstalar" aria-pressed="false">
+                        <img class="action-thumb" src="/public/images/actions/desinstalar.png?v=3" alt="" aria-hidden="true" width="64" height="64">
+                        <span class="card-desc">Retiro y desmontaje de equipos</span>
+                    </button>
+                    <button type="button" class="action-card" data-action="mejorar" aria-label="Mejorar" aria-pressed="false">
+                        <img class="action-thumb" src="/public/images/actions/mejorar.png?v=3" alt="" aria-hidden="true" width="64" height="64">
+                        <span class="card-desc">Actualizar, optimizar, renovar</span>
+                    </button>
+                    <button type="button" class="action-card" data-action="comprar" aria-label="Comprar" aria-pressed="false">
+                        <img class="action-thumb" src="/public/images/actions/comprar.png?v=3" alt="" aria-hidden="true" width="64" height="64">
+                        <span class="card-desc">Asesoría, presupuestos, compra</span>
+                    </button>
+                    <button type="button" class="action-card" data-action="buscar" aria-label="Buscar" aria-pressed="false">
+                        <img class="action-thumb" src="/public/images/actions/buscar.png?v=3" alt="" aria-hidden="true" width="64" height="64">
+                        <span class="card-desc">Búsqueda, localización, rastreo</span>
+                    </button>
+                    <button type="button" class="action-card" data-action="vender" aria-label="Vender" aria-pressed="false">
+                        <img class="action-thumb" src="/public/images/actions/vender.png?v=3" alt="" aria-hidden="true" width="64" height="64">
+                        <span class="card-desc">Venta, publicación, tasación</span>
+                    </button>
+                    <button type="button" class="action-card" data-action="donar" aria-label="Donar" aria-pressed="false">
+                        <img class="action-thumb" src="/public/images/actions/donar.png?v=3" alt="" aria-hidden="true" width="64" height="64">
+                        <span class="card-desc">Donar, regalar, entregar</span>
+                    </button>
+                    <button type="button" class="action-card" data-action="descartar" aria-label="Descartar" aria-pressed="false">
+                        <img class="action-thumb" src="/public/images/actions/descartar.png?v=3" alt="" aria-hidden="true" width="64" height="64">
+                        <span class="card-desc">Descarte, reciclaje, retiro</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- STEP 2: QUÉ TRABAJO -->
+            <section class="step-content" id="step2" role="group" aria-labelledby="step2-title" tabindex="-1">
+                <h2 class="step-title" id="step2-title">¿Qué trabajo?</h2>
+                <p class="step-hint">Elegí el entorno, la categoría y, si querés, el dispositivo.</p>
+
+                <div class="pick-group" role="group" aria-labelledby="lblEntorno">
+                    <h3 class="pick-label" id="lblEntorno">1 · Entorno</h3>
+                    <div class="pick-grid" id="entornoGrid" role="group" aria-label="Entornos"></div>
+                </div>
+
+                <div class="pick-group" role="group" aria-labelledby="lblCategoria">
+                    <h3 class="pick-label" id="lblCategoria">2 · Categoría</h3>
+                    <div class="pick-grid" id="categoriaGrid" role="group" aria-label="Categorías"></div>
+                </div>
+
+                <div class="pick-group" role="group" aria-labelledby="lblDispositivo">
+                    <h3 class="pick-label" id="lblDispositivo">3 · Dispositivo</h3>
+                    <div class="pick-grid" id="dispositivoGrid" role="group" aria-label="Dispositivos"></div>
+                </div>
+            </section>
+
+            <!-- STEP 3: DÓNDE -->
+            <section class="step-content" id="step3" role="group" aria-labelledby="step3-title" tabindex="-1">
+                <h2 class="step-title" id="step3-title">¿Dónde?</h2>
+                <p class="step-hint">Ubicación aproximada para encontrar profesionales cercanos.</p>
+                <div class="field-group">
+                    <label for="fLocation">Ciudad, barrio o dirección</label>
+                    <input type="text" id="fLocation" class="text-input" placeholder="Ej: Palermo, Buenos Aires" autocomplete="address-level2">
+                    <span class="hint" id="locationHint">Podés usar tu ubicación actual o escribir manualmente.</span>
+                </div>
+                <button type="button" class="geolocate-btn" id="btnGeolocate">
+                    <span aria-hidden="true">📍</span> Usar mi ubicación actual
+                </button>
+                <span class="hint" id="gpsDetail" role="status"></span>
+            </section>
+
+            <!-- STEP 4: CUÁNDO -->
+            <section class="step-content" id="step4" role="group" aria-labelledby="step4-title" tabindex="-1">
+                <h2 class="step-title" id="step4-title">¿Qué tan urgente es?</h2>
+                <p class="step-hint">Esto nos ayuda a priorizar profesionales disponibles.</p>
+                <div class="urgency-list" role="group" aria-label="Nivel de urgencia">
+                    <button type="button" class="urgency-btn" data-level="urgente" aria-pressed="false">
+                        <span class="u-icon" aria-hidden="true">🔴</span>
+                        <span>Urgente ya<span class="u-desc">Necesito ayuda lo antes posible</span></span>
+                    </button>
+                    <button type="button" class="urgency-btn" data-level="dias" aria-pressed="false">
+                        <span class="u-icon" aria-hidden="true">🟡</span>
+                        <span>En estos días<span class="u-desc">Puedo esperar 2-5 días</span></span>
+                    </button>
+                    <button type="button" class="urgency-btn" data-level="sinapuro" aria-pressed="false">
+                        <span class="u-icon" aria-hidden="true">🟢</span>
+                        <span>Sin apuro<span class="u-desc">Sin fecha límite, busco la mejor opción</span></span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- STEP 5: DETALLES -->
+            <section class="step-content" id="step5" role="group" aria-labelledby="step5-title" tabindex="-1">
+                <h2 class="step-title" id="step5-title">Contanos más (opcional)</h2>
+                <p class="step-hint">Cuanto más detalles, mejores coincidencias.</p>
+                <div class="field-group">
+                    <label for="fDetails">Descripción del trabajo</label>
+                    <textarea id="fDetails" class="textarea" placeholder="Ej: La pileta de la cocina pierde agua por la base desde ayer..." aria-describedby="detailsHint"></textarea>
+                    <span class="hint" id="detailsHint">Podés escribir o dictar por voz.</span>
+                </div>
+                <button type="button" class="geolocate-btn" id="btnVoice">
+                    <span aria-hidden="true">🎤</span> Dictar por voz
+                </button>
+            </section>
+
+            <!-- STEP 6: CONFIRMAR -->
+            <section class="step-content" id="step6" role="group" aria-labelledby="step6-title" tabindex="-1">
+                <h2 class="step-title" id="step6-title">Confirmá tu pedido</h2>
+                <p class="step-hint">Revisá los datos antes de enviar.</p>
+                <div class="summary-card">
+                    <div class="summary-row"><span class="label">Acción</span><span class="value" id="sumAction">—</span></div>
+                    <div class="summary-row"><span class="label">Entorno</span><span class="value" id="sumEntorno">—</span></div>
+                    <div class="summary-row"><span class="label">Categoría</span><span class="value" id="sumCategoria">—</span></div>
+                    <div class="summary-row"><span class="label">Dispositivo</span><span class="value" id="sumDispositivo">—</span></div>
+                    <div class="summary-row"><span class="label">Ubicación</span><span class="value" id="sumLocation">—</span></div>
+                    <div class="summary-row"><span class="label">Urgencia</span><span class="value" id="sumUrgency">—</span></div>
+                    <div class="summary-row"><span class="label">Detalles</span><span class="value" id="sumDetails">—</span></div>
+                </div>
+            </section>
+
+            <!-- Navigation -->
+            <div class="wizard-nav">
+                <button type="button" class="btn btn-secondary" id="btnPrev" disabled aria-label="Paso anterior">
+                    ← Anterior
+                </button>
+                <button type="button" class="btn btn-primary" id="btnNext" disabled aria-label="Siguiente paso">
+                    Siguiente →
+                </button>
+            </div>
+        </main>
+
+        <!-- Live Results Panel -->
+        <aside class="results-panel" aria-label="Resultados en tiempo real">
+            <div class="results-header">
+                <h2 class="results-title">Profesionales</h2>
+                <span class="results-badge" id="resultsCount" aria-live="polite">0 encontrados</span>
+            </div>
+            <ul class="results-list" id="resultsList" aria-label="Lista de profesionales disponibles">
+                <li class="results-empty" id="resultsEmpty">
+                    <span class="empty-icon" aria-hidden="true">🔍</span>
+                    Elegí una acción para ver profesionales disponibles
+                </li>
+            </ul>
+        </aside>
+
+    </div>
+
+    <script>
+    (function() {
+        'use strict';
+
+        // ---- State ----
+        const state = { step: 1, maxStep: 1, action: null, location: '', urgency: null, details: '', entorno: '', categoria: '', categoriaId: '', dispositivo: '', dispositivoName: '' };
+
+        const ACTION_LABELS = { reparar: '🔧 Reparar', instalar: '⚡ Instalar', educar: '📚 Educar', disenar: '🎨 Diseñar', mantener: '🧹 Mantener', verificar: '🔍 Verificar', desinstalar: '🗑️ Desinstalar', mejorar: '⭐ Mejorar', comprar: '🛒 Comprar', buscar: '🔎 Buscar', vender: '💰 Vender', donar: '🎁 Donar', descartar: '🚮 Descartar' };
+        const ACTION_KEYS = { reparar: 'Reparar', instalar: 'Instalar', educar: 'Educar', disenar: 'Diseñar', mantener: 'Mantener', verificar: 'Verificar', desinstalar: 'Desinstalar', mejorar: 'Mejorar', comprar: 'Comprar', buscar: 'Buscar', vender: 'Vender', donar: 'Donar', descartar: 'Descartar' };
+        const URGENCY_LABELS = { urgente: '🔴 Urgente ya', dias: '🟡 En estos días', sinapuro: '🟢 Sin apuro' };
+
+        // Taxonomía: Entorno > Categoría > Dispositivo (reducida de data/serviceTree.js)
+        const TAXONOMY = [{"id":"hogar","name":"Hogar","categories":[{"id":"linea-blanca","name":"Línea Blanca","devices":[{"id":"heladera","name":"Heladera"},{"id":"freezer","name":"Freezer"},{"id":"lavarropas","name":"Lavarropas"},{"id":"microondas","name":"Microondas"},{"id":"cocina-horno","name":"Cocina y Horno"}]},{"id":"linea-marron","name":"Línea Marrón","devices":[{"id":"smart-tv","name":"Smart TV"},{"id":"audio-parlantes","name":"Sistemas de Audio y Parlantes"},{"id":"secarropa","name":"Secarropa"}]},{"id":"climatizacion","name":"Climatización","devices":[{"id":"aire-acondicionado","name":"Aire Acondicionado"},{"id":"calefactores-estufas","name":"Calefactores y Estufas"}]},{"id":"calentamiento-agua","name":"Calentamiento de Agua","devices":[{"id":"termotanque-calefon","name":"Termotanque y Calefón"}]},{"id":"bano-sanitarios","name":"Baño, Sanitarios y Cuidado Personal","devices":[{"id":"inodoros-bidets","name":"Inodoros y Bidets"},{"id":"duchas-termostaticos","name":"Duchas y Sistemas Termostáticos"},{"id":"lavamanos-bachas","name":"Lavamanos y Bachas"},{"id":"extractores-bano","name":"Extractores de Aire de Baño"},{"id":"secadores-pelo","name":"Secadores de Pelo y Estilizadores"},{"id":"balanzas","name":"Balanzas Digitales (Smart / Bioimpedancia)"},{"id":"hidromasajes-jacuzzis","name":"Hidromasajes y Jacuzzis"}]},{"id":"linea-gris","name":"Línea Gris (Informática y Conectividad)","devices":[{"id":"pcs-notebooks","name":"PCs de Escritorio y Notebooks"},{"id":"consolas-streaming","name":"Consolas de Videojuegos y Streaming"},{"id":"impresoras-domesticas","name":"Impresoras Domésticas y Multifunción"},{"id":"nas-domestico","name":"Servidores Domésticos y Almacenamiento NAS"},{"id":"routers-wifi","name":"Dispositivos de Red y Routers Wi-Fi"}]},{"id":"obra-construccion","name":"Obra y Construcción","devices":[{"id":"obras-y-reformas","name":"Obras y Reformas Integrales"},{"id":"revoque-mamposteria","name":"Revoque y Mampostería"},{"id":"pisos-y-revocados","name":"Pisos y Revocados"},{"id":"demoliciones","name":"Demoliciones y Retiro de Escombros"}]},{"id":"carpinteria","name":"Carpintería","devices":[{"id":"muebles-a-medida","name":"Muebles a Medida"},{"id":"placards-closets","name":"Placards y Closets"},{"id":"puertas-ventanas-madera","name":"Puertas, Ventanas y Marcos"},{"id":"reparacion-muebles","name":"Reparación de Muebles"}]},{"id":"cerrajeria","name":"Cerrajería y Seguridad","devices":[{"id":"apertura-cerraduras","name":"Apertura de Cerraduras"},{"id":"cambio-cerraduras","name":"Cambio de Cerraduras y Cerrojos"},{"id":"llaves-vinculadas","name":"Llaves Vinculadas y coded"},{"id":"puertas-blindadas","name":"Puertas Blindadas y Reforzos"}]},{"id":"durlock-cielorrasos","name":"Durlock y Cielorrasos","devices":[{"id":"tabiqueria","name":"Tabiquería en Seco"},{"id":"cielorrasos","name":"Cielorrasos y Placas"},{"id":"trasdosados","name":"Trasdosados y Revestimientos"},{"id":"aislacion-termica","name":"Aislación Térmica y Acústica"}]},{"id":"cubiertas-toldos","name":"Cubiertas, Toldos y Cortinas","devices":[{"id":"toldos-retráctiles","name":"Toldos Retractiles y de Fila"},{"id":"cubiertas-metalicas","name":"Cubiertas y Techos"},{"id":"cortinas-enrollable","name":"Cortinas Enrollables"},{"id":"mosquiteros","name":"Mosquiteros y Telas de Insectos"}]},{"id":"pintura-revestimientos","name":"Pintura y Revestimientos","devices":[{"id":"pintura-interior","name":"Pintura Interior"},{"id":"pintura-exterior","name":"Pintura Exterior"},{"id":"esmalte-industrial","name":"Esmalte y Pintura Industrial"},{"id":"revestimientos","name":"Revestimientos y Amoblados"}]},{"id":"gas-cocinas","name":"Gas y Cocinas","devices":[{"id":"hornos-y-pavas","name":"Hornos y Pavas"},{"id":"cooktops-campanas","name":"Cooktops y Campanas"},{"id":"estufas-a-gas","name":"Estufas y Calefactores a Gas"},{"id":"deteccion-fugas","name":"Detección de Fugas y Prueba de Gas"}]},{"id":"herreria","name":"Herrería","devices":[{"id":"portones-rejas","name":"Portones y Rejas"},{"id":"barandas-pasamanos","name":"Barandas y Pasamanos"},{"id":"estructuras-metalicas","name":"Estructuras Metálicas"},{"id":"tingidos-aros","name":"Tingidos y Aros de Bicicleta"}]},{"id":"cameras-seguridad","name":"Cámaras y Seguridad","devices":[{"id":"camaras-ip","name":"Cámaras IP y CCTV"},{"id":"grabadores-dvr-nvr","name":"Grabadores DVR y NVR"},{"id":"videovigilancia-inalambrica","name":"Videovigilancia Inalámbrica"},{"id":"control-acceso","name":"Control de Acceso y Presencia"}]},{"id":"fumigacion-saneamiento","name":"Fumigación y Saneamiento","devices":[{"id":"fumigacion-domestica","name":"Fumigación Doméstica"},{"id":"fumigacion-industrial","name":"Fumigación Industrial"},{"id":"control-plagas","name":"Control de Plagas"},{"id":"limpieza-sanitizacion","name":"Limpieza y Sanitización"}]},{"id":"plomeria","name":"Plomería y Desagotes","devices":[{"id":"detapaciones","name":"Detapaciones y Destrancamientos"},{"id":"instalacion-tuberias","name":"Instalación de Tuberías"},{"id":"llaves-griferas","name":"Llaves y Griferías"},{"id":"cambio-tanques","name":"Cambio y Reparación de Tanques"}]},{"id":"vidrieria","name":"Vidriería y Espejos","devices":[{"id":"vidrios-templados","name":"Vidrios Templados y Dobles"},{"id":"espejos","name":"Espejos"},{"id":"filtros-uv","name":"Filtros UV y Vidrios de Protección"},{"id":"cerramientos-vidriados","name":"Cerramientos y Fachadas de Vidrio"}]},{"id":"tapiceria","name":"Tapicería y Sombrillas","devices":[{"id":"retapizado","name":"Retapizado"},{"id":"reparacion-sillones","name":"Reparación de Sillones y Tapizados"},{"id":"cambio-tapizados","name":"Cambio de Tapizados"},{"id":"sombra-playa","name":"Sombrillas y Sombrillas de Playa"}]},{"id":"generadores","name":"Generadores y Motores","devices":[{"id":"generadores","name":"Generadores"},{"id":"motores-electricos","name":"Motores Eléctricos"},{"id":"variadores","name":"Variadores de Velocidad"},{"id":"compresores","name":"Compresores"}]}]},{"id":"oficina","name":"Oficina","categories":[{"id":"linea-blanca-oficina","name":"Línea Blanca de Oficina","devices":[{"id":"frigobar-exhibidoras","name":"Frigobar y Exhibidoras"},{"id":"cafeteras-profesionales","name":"Cafeteras Profesionales y de Cápsula"},{"id":"heladera","name":"Heladera"},{"id":"freezer","name":"Freezer"},{"id":"lavarropas","name":"Lavarropas"},{"id":"microondas","name":"Microondas"},{"id":"cocina-horno","name":"Cocina y Horno"}]},{"id":"linea-marron-oficina","name":"Línea Marrón de Oficina","devices":[{"id":"monitores-proyeccion","name":"Monitores y Pantallas de Proyección"},{"id":"videoconferencia-audio","name":"Sistemas de Videoconferencia y Audio"},{"id":"smart-tv","name":"Smart TV"},{"id":"audio-parlantes","name":"Sistemas de Audio y Parlantes"},{"id":"secarropa","name":"Secarropa"}]},{"id":"climatizacion-oficina","name":"Climatización de Oficina","devices":[{"id":"aire-acondicionado-oficina","name":"Aire Acondicionado (Cassette y Baja Silueta)"},{"id":"calefaccion-corporativa","name":"Calefacción Corporativa y Paneles"}]},{"id":"calentamiento-agua-oficina","name":"Calentamiento de Agua de Oficina","devices":[{"id":"dispensers-termotanques","name":"Dispensers de Agua y Termotanques"}]},{"id":"bano-sanidad-oficina","name":"Baño y Sanidad de Oficina","devices":[{"id":"secadores-manos","name":"Secadores de Manos por Aire (Soplado de Alta Velocidad)"},{"id":"dispensers-automaticos","name":"Dispensers Automáticos (Jabón y Sanitizante con Sensor)"},{"id":"inodoros-mingitorios-oficina","name":"Inodoros, Mingitorios y Flujómetros con Sensor"},{"id":"griferias-sensor","name":"Griferías Electrónicas con Sensor de Presencia"},{"id":"extractores-industriales","name":"Extractores de Aire Industriales y Forzadores"}]},{"id":"linea-gris-oficina","name":"Línea Gris (Informática y Conectividad)","devices":[{"id":"pcs-corporativas","name":"PCs Corporativas y Thin Clients"},{"id":"impresoras-corporativas","name":"Impresoras Corporativas y Fotocopiadoras"},{"id":"servidores-empresariales","name":"Servidores Empresariales y Racks"},{"id":"switches-administrables","name":"Dispositivos de Red y Switches Administrables"},{"id":"pcs-notebooks","name":"PCs de Escritorio y Notebooks"},{"id":"consolas-streaming","name":"Consolas de Videojuegos y Streaming"},{"id":"impresoras-domesticas","name":"Impresoras Domésticas y Multifunción"},{"id":"nas-domestico","name":"Servidores Domésticos y Almacenamiento NAS"},{"id":"routers-wifi","name":"Dispositivos de Red y Routers Wi-Fi"}]},{"id":"instalaciones-electricas-oficina","name":"Instalaciones Eléctricas","devices":[{"id":"tableros","name":"Tableros y Cuadros Eléctricos"},{"id":"cableado","name":"Cableado y Conductoras"},{"id":"iluminacion","name":"Iluminación"},{"id":"automatizacion","name":"Automatización"}]},{"id":"maquinaria-oficina","name":"Maquinaria y Electroherramientas","devices":[{"id":"motores-electricos-oficina","name":"Motores Eléctricos"},{"id":"electroherramientas","name":"Electroherramientas"},{"id":"bombas","name":"Bombas"},{"id":"generadores-oficina","name":"Generadores"}]},{"id":"redes-pime-telefonia","name":"Redes, Telefonía IP y PIME","devices":[{"id":"access-points","name":"Access Points y WiFi Profesional"},{"id":"servidores","name":"Servidores"},{"id":"telefonia-ip","name":"Telefonía IP y Centrales"},{"id":"fibra-optica","name":"Fibra Óptica"}]},{"id":"refrigeracion-comercial-oficina","name":"Refrigeración Comercial","devices":[{"id":"expositores","name":"Expositores y Vitrinas Refrigeradas"},{"id":"camaras-frigorificas","name":"Cámaras Frigoríficas"},{"id":"freezers-comerciales","name":"Freezers y Congeladores"},{"id":"muebles-refrigerados","name":"Muebles Refrigerados"}]}]},{"id":"casa-campo","name":"Casa de Campo","categories":[{"id":"linea-blanca-campo","name":"Línea Blanca de Campo","devices":[{"id":"freezer-horizontal","name":"Freezer Horizontal y Heladeras Duales/12V"},{"id":"cocinas-multi-gas","name":"Cocinas Multi-gas y Semi-Industriales"},{"id":"lavarropas","name":"Lavarropas"},{"id":"microondas","name":"Microondas"},{"id":"cocina-horno","name":"Cocina y Horno"}]},{"id":"linea-marron-campo","name":"Línea Marrón de Campo","devices":[{"id":"smart-tv-campo","name":"Smart TV y Receptores Satelitales"},{"id":"radios-multibanda","name":"Radios Multibanda y Audio a Batería"},{"id":"audio-parlantes","name":"Sistemas de Audio y Parlantes"},{"id":"secarropa","name":"Secarropa"}]},{"id":"climatizacion-campo","name":"Climatización de Campo","devices":[{"id":"estufas-lena","name":"Estufas a Leña y Salamandras Eficientes"},{"id":"aires-inverter-ventiladores","name":"Aires Inverter y Ventiladores de Techo"}]},{"id":"calentamiento-agua-campo","name":"Calentamiento de Agua de Campo","devices":[{"id":"termotanques-solares","name":"Termotanques Solares y Multi-gas"}]},{"id":"bano-sanidad-campo","name":"Baño y Sanidad de Campo","devices":[{"id":"inodoros-bidets-campo","name":"Inodoros y Bidets (Bajo Consumo Hídrico / Aptos Pozo)"},{"id":"duchas-baja-presion","name":"Duchas y Sistemas Termostáticos (Aptos Baja Presión)"},{"id":"bombas-presurizadoras","name":"Bombas Presurizadoras y Elevadoras de Agua"},{"id":"extractores-campo","name":"Extractores de Aire de Baño (Bajo Consumo / 12V)"},{"id":"balanzas-eficiencia","name":"Balanzas Digitales y Secadores (Eficiencia Energética A+)"}]},{"id":"jardin-piscinas-campo","name":"Jardín y Piscinas de Campo","devices":[{"id":"podar-arboles","name":"Podar Árboles"},{"id":"podar-cortar-cesped","name":"Podar o Cortar Césped"},{"id":"mantenimiento-bombas-piletas","name":"Mantenimiento de Bombas y Piletas de Natación"}]},{"id":"linea-gris-campo","name":"Línea Gris (Informática y Conectividad)","devices":[{"id":"notebooks-robustas","name":"Notebooks Robustas y Equipos Bajo Consumo"},{"id":"impresoras-continuo","name":"Impresoras de Sistema Continuo"},{"id":"micro-servers","name":"Micro-Servers y Almacenamiento Local"},{"id":"antenas-satelitales","name":"Antenas Satelitales y Routers 4G Rurales"},{"id":"pcs-notebooks","name":"PCs de Escritorio y Notebooks"},{"id":"consolas-streaming","name":"Consolas de Videojuegos y Streaming"},{"id":"impresoras-domesticas","name":"Impresoras Domésticas y Multifunción"},{"id":"nas-domestico","name":"Servidores Domésticos y Almacenamiento NAS"},{"id":"routers-wifi","name":"Dispositivos de Red y Routers Wi-Fi"}]}]},{"id":"industria","name":"Industria","categories":[{"id":"linea-blanca-industrial","name":"Línea Blanca Industrial / Gastronomía","devices":[{"id":"refrigeracion-comercial","name":"Refrigeración Comercial y Cámaras Frigoríficas"},{"id":"cocinas-industriales","name":"Cocinas Industriales y Hornos Convectores"}]},{"id":"linea-marron-industrial","name":"Línea Marrón Industrial / Señalización","devices":[{"id":"pantallas-industriales","name":"Pantallas de Cartelería y Monitores Industriales"},{"id":"audio-evacuacion","name":"Sistemas de Audio Evacuación y Megafonía IP"}]},{"id":"climatizacion-industrial","name":"Climatización Industrial (HVAC)","devices":[{"id":"vrf-chillers","name":"Sistemas VRF, Chillers y Roof-Tops"},{"id":"cortinas-aire","name":"Cortinas de Aire y Ventilación Axial"}]},{"id":"vapor-industrial","name":"Calentamiento de Agua / Vapor Industrial","devices":[{"id":"calderas-industriales","name":"Calderas Humotubulares y Termotanques Alta Potencia"}]},{"id":"sanidad-planta","name":"Sanidad, Vestuarios y Seguridad de Planta","devices":[{"id":"lavamanos-mecanico","name":"Lavamanos de Accionamiento Mecánico (Pedal / Rodilla) y Bachas de Inox"},{"id":"duchas-emergencia","name":"Duchas de Emergencia y Estaciones Lavaojos de Seguridad"},{"id":"secadores-antivandalicos","name":"Secadores de Manos Antivandalicos (Uso Intensivo)"},{"id":"inodoros-alto-transito","name":"Inodoros, Mingitorios y Flujómetros Pesados (Aptos Alto Tránsito)"},{"id":"estaciones-sanitizacion","name":"Estaciones de Sanitización y Dispensers Industriales IP"}]},{"id":"linea-gris-industrial","name":"Línea Gris (Informática y Conectividad Industrial)","devices":[{"id":"computadoras-industriales","name":"Computadoras Industriales (IPC) y Paneles Táctiles IP65"},{"id":"impresoras-industriales","name":"Impresoras Industriales de Código de Barras"},{"id":"servidores-planta","name":"Servidores de Planta Rugerizados y Racks IP"},{"id":"switches-din-rail","name":"Switches Industriales DIN-Rail y Firewalls OT"}]},{"id":"instalaciones-electricas-industrial","name":"Instalaciones Eléctricas","devices":[{"id":"tableros-industriales","name":"Tableros y Cuadros Industriales"},{"id":"cableado-industrial","name":"Cableado Industrial"},{"id":"instalaciones-hidraulicas","name":"Instalaciones Hidráulicas"},{"id":"instalaciones-pneumaticas","name":"Instalaciones Neumáticas"},{"id":"automatizacion-industrial","name":"Automatización Industrial"}]},{"id":"maquinaria-industrial","name":"Maquinaria y Electroherramientas","devices":[{"id":"compresores-industriales","name":"Compresores Industriales"},{"id":"variadores-velocidad","name":"Variadores de Velocidad"},{"id":"reductores","name":"Reductores"},{"id":"motores-industriales","name":"Motores Industriales"}]},{"id":"redes-industriales","name":"Redes Industriales y Fibra","devices":[{"id":"fibra-optica-industrial","name":"Fibra Óptica Industrial"},{"id":"switches-industriales","name":"Switches Industriales"},{"id":"redes-inalambricas-industriales","name":"Redes Inalámbricas Industriales"},{"id":"gateways-iiot","name":"Gateways IoT y SCADA"}]}]},{"id":"educacion","name":"Educación","categories":[{"id":"ciencias-exactas","name":"Ciencias Exactas y Naturales","devices":[{"id":"matematicas","name":"Matemáticas"},{"id":"fisica","name":"Física"},{"id":"quimica","name":"Química"},{"id":"biologia","name":"Biología"}]},{"id":"lengua-humanidades","name":"Lengua y Humanidades","devices":[{"id":"lengua-literatura","name":"Lengua y Literatura"},{"id":"ingles","name":"Inglés"},{"id":"historia","name":"Historia"},{"id":"geografia","name":"Geografía"},{"id":"formacion-etica","name":"Formación Ética y Ciudadana"}]}]}];
+
+        const ENT_ICON = { hogar: '🏠', educacion: '📚', oficina: '💼', industria: '🏭', 'casa-campo': '🌿' };
+        const ENT_IMG = {
+            hogar: '/public/images/Hogar comedor-400.webp',
+            educacion: '/public/images/Educar-400.webp',
+            oficina: '/public/images/Oficina-400.webp',
+            industria: '/public/images/Industria1-400.webp',
+            'casa-campo': '/public/images/casa de campo-400.webp'
+        };
+        const CAT_IMG = {
+            'Línea Blanca': '/public/images/linea blanca 1-800.webp',
+            'Línea Marrón': '/public/images/linea Marron-800.webp',
+            'Línea Gris (Informática y Conectividad)': '/public/images/Linea Gris-800.webp',
+            'Baño, Sanitarios y Cuidado Personal': '/public/images/Baños sanitarios cuidado personal-800.webp',
+            'Carpintería': '/public/images/Carpinteria-800.webp',
+            'Plomería y Desagotes': '/public/images/plomeria y desagotes-800.webp',
+            'Vidriería y Espejos': '/public/images/vidrieria y espejos-800.webp'
+        };
+
+        const TOTAL_STEPS = 6;
+        const steps = document.querySelectorAll('.step-content');
+        const progressItems = document.querySelectorAll('#progressList li');
+        const btnPrev = document.getElementById('btnPrev');
+        const btnNext = document.getElementById('btnNext');
+        const announcer = document.getElementById('stepAnnouncer');
+
+        // ---- Mock professionals for live results ----
+        const PROFESSIONALS = [
+            { name: 'Carlos G.', trade: 'Plomero', area: ['reparar','instalar','mantener'], rating: 4.9, location: 'Palermo' },
+            { name: 'María L.', trade: 'Electricista', area: ['reparar','instalar','verificar'], rating: 4.8, location: 'Caballito' },
+            { name: 'Prof. Ana S.', trade: 'Matemática', area: ['educar'], rating: 4.9, location: 'Palermo' },
+            { name: 'Prof. Diego M.', trade: 'Inglés', area: ['educar'], rating: 4.7, location: 'Villa Crespo' },
+            { name: 'Lucía R.', trade: 'Diseñadora de Interiores', area: ['disenar'], rating: 4.9, location: 'Recoleta' },
+            { name: 'Roberto T.', trade: 'Jardinero', area: ['mantener'], rating: 4.6, location: 'Belgrano' },
+            { name: 'Andrés P.', trade: 'Carpintero', area: ['reparar','disenar'], rating: 4.8, location: 'Flores' },
+            { name: 'Valentina C.', trade: 'Tech Support', area: ['instalar','verificar'], rating: 4.7, location: 'Microcentro' },
+            { name: 'Martín F.', trade: 'Gasista', area: ['reparar','instalar','verificar'], rating: 4.9, location: 'San Telmo' },
+            { name: 'Sofía B.', trade: 'Prof. Química', area: ['educar'], rating: 4.8, location: 'Almagro' },
+            { name: 'Jorge W.', trade: 'Pintor', area: ['reparar','disenar','mantener'], rating: 4.5, location: 'Boedo' },
+            { name: 'Camila H.', trade: 'Arquitecta', area: ['disenar','verificar'], rating: 4.9, location: 'Palermo' },
+            { name: 'Fernando D.', trade: 'A/C Técnico', area: ['reparar','instalar','mantener'], rating: 4.6, location: 'Caballito' },
+            { name: 'Prof. Laura V.', trade: 'Lengua', area: ['educar'], rating: 4.8, location: 'Chacarita' },
+        ];
+
+        // ---- Announce step change ----
+        function announce(msg) { announcer.textContent = msg; }
+
+        // ---- Update progress ----
+        function updateProgress() {
+            progressItems.forEach((li, i) => {
+                const n = i + 1;
+                li.classList.toggle('active', n === state.step);
+                li.classList.toggle('completed', n < state.step || n <= state.maxStep);
+                if (n === state.step) { li.setAttribute('aria-current', 'step'); }
+                else { li.removeAttribute('aria-current'); }
+            });
+        }
+
+        // ---- Show step ----
+        function showStep(n) {
+            state.step = n;
+            steps.forEach(s => s.classList.remove('active'));
+            const el = document.getElementById('step' + n);
+            el.classList.add('active');
+            el.focus();
+            updateProgress();
+            updateNav();
+
+            if (n === 6) updateSummary();
+
+            const titles = ['Qué necesitás', 'Qué trabajo', 'Dónde', 'Qué tan urgente', 'Detalles opcionales', 'Confirmar'];
+            announce('Paso ' + n + ' de 6: ' + titles[n - 1]);
+
+            if (n === 3) maybeAutoGeolocate();
+        }
+
+        // ---- Nav state ----
+        function updateNav() {
+            btnPrev.disabled = state.step === 1;
+            const valid = validateStep(state.step);
+            btnNext.disabled = !valid;
+            btnNext.textContent = state.step === 6 ? '✓ Encontrar profesionales' : 'Siguiente →';
+            btnNext.setAttribute('aria-label', state.step === 6 ? 'Encontrar profesionales' : 'Siguiente paso');
+        }
+
+        function validateStep(n) {
+            if (n === 1) return !!state.action;
+            if (n === 2) return !!(state.entorno && state.categoriaId && state.dispositivo);
+            if (n === 3) return state.location.trim().length >= 2;
+            if (n === 4) return !!state.urgency;
+            return true; // steps 5, 6 always valid
+        }
+
+        // ---- Update summary ----
+        function updateSummary() {
+            document.getElementById('sumAction').textContent = ACTION_LABELS[state.action] || '—';
+            const _ent = currentEntorno();
+            document.getElementById('sumEntorno').textContent = _ent ? (ENT_ICON[_ent.id] || '') + ' ' + _ent.name : '—';
+            document.getElementById('sumCategoria').textContent = state.categoria || '—';
+            document.getElementById('sumDispositivo').textContent = state.dispositivoName || '—';
+            document.getElementById('sumLocation').textContent = state.location || '—';
+            document.getElementById('sumUrgency').textContent = URGENCY_LABELS[state.urgency] || '—';
+            document.getElementById('sumDetails').textContent = state.details ? (state.details.substring(0, 60) + (state.details.length > 60 ? '…' : '')) : 'Sin detalles';
+        }
+
+        // ---- Live results (progressive disclosure) ----
+        function renderResults() {
+            const list = document.getElementById('resultsList');
+            const count = document.getElementById('resultsCount');
+            const empty = document.getElementById('resultsEmpty');
+
+            if (!state.action) {
+                list.innerHTML = '<li class="results-empty" id="resultsEmpty"><span class="empty-icon" aria-hidden="true">🔍</span>Elegí una acción para ver profesionales disponibles</li>';
+                count.textContent = '0 encontrados';
+                return;
+            }
+
+            let filtered = PROFESSIONALS.filter(p => p.area.includes(state.action));
+            if (state.location.trim()) {
+                const loc = state.location.toLowerCase();
+                const locMatch = filtered.filter(p => p.location.toLowerCase().includes(loc));
+                if (locMatch.length > 0) filtered = locMatch;
+            }
+
+            count.textContent = filtered.length + ' encontrados';
+
+            if (filtered.length === 0) {
+                list.innerHTML = '<li class="results-empty" id="resultsEmpty"><span class="empty-icon" aria-hidden="true">😔</span>No hay profesionales aún. Probá con otra ubicación.</li>';
+                return;
+            }
+
+            list.innerHTML = filtered.map(p =>
+                '<li class="result-card">' +
+                    '<div class="result-avatar" aria-hidden="true">' + p.name.split(' ').map(w => w[0]).join('').substring(0,2) + '</div>' +
+                    '<div class="result-info">' +
+                        '<div class="result-name">' + p.name + '</div>' +
+                        '<div class="result-meta">' + p.trade + ' · ' + p.location + '</div>' +
+                    '</div>' +
+                    '<div class="result-rating" aria-label="Calificación ' + p.rating + ' de 5">★ ' + p.rating + '</div>' +
+                '</li>'
+            ).join('');
+        }
+
+        // ---- Action cards ----
+        document.querySelectorAll('.action-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.action-card').forEach(c => c.setAttribute('aria-pressed', 'false'));
+                card.setAttribute('aria-pressed', 'true');
+                state.action = card.dataset.action;
+                updateNav();
+                renderResults();
+                announce('Acción seleccionada: ' + (ACTION_LABELS[card.dataset.action] || 'acción'));
+                showStep(2);
+            });
+        });
+
+        // ---- Qué trabajo: Entorno → Categoría → Dispositivo ----
+        const EXTERNAL_CAT = '__external__';
+        function clearPicked(gridId) {
+            document.querySelectorAll('#' + gridId + ' .pick-card').forEach(b => b.setAttribute('aria-pressed', 'false'));
+        }
+        function makePick(cls, inner, val) {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = cls;
+            b.dataset.val = val;
+            b.innerHTML = inner;
+            return b;
+        }
+        function currentEntorno() { return TAXONOMY.find(e => e.id === state.entorno) || null; }
+        function renderEntornos() {
+            const grid = document.getElementById('entornoGrid');
+            grid.innerHTML = '';
+            TAXONOMY.forEach(e => {
+                const b = makePick('pick-card pick-img',
+                    '<img src="' + ENT_IMG[e.id] + '" alt="" aria-hidden="true" width="96" height="64" loading="lazy">' +
+                    '<span class="pick-name">' + (ENT_ICON[e.id] || '') + ' ' + e.name + '</span>',
+                    e.id);
+                if (e.id === state.entorno) b.setAttribute('aria-pressed', 'true');
+                grid.appendChild(b);
+            });
+        }
+        function renderCategorias() {
+            const grid = document.getElementById('categoriaGrid');
+            const ent = currentEntorno();
+            grid.innerHTML = '';
+            if (!ent) return;
+            ent.categories.forEach(c => {
+                const img = CAT_IMG[c.name];
+                const inner = img
+                    ? '<img src="' + img + '" alt="" aria-hidden="true" width="96" height="64" loading="lazy"><span class="pick-name">' + c.name + '</span>'
+                    : '<span class="pick-name">' + c.name + '</span>';
+                const b = makePick(img ? 'pick-card pick-img' : 'pick-card', inner, c.id);
+                if (c.id === state.categoriaId) b.setAttribute('aria-pressed', 'true');
+                grid.appendChild(b);
+            });
+            if (state.categoriaId === EXTERNAL_CAT) {
+                const b = makePick('pick-card', '<span class="pick-name">' + state.categoria + '</span>', EXTERNAL_CAT);
+                b.setAttribute('aria-pressed', 'true');
+                grid.appendChild(b);
+            }
+        }
+        function renderDispositivos() {
+            const grid = document.getElementById('dispositivoGrid');
+            const cat = (state.categoriaId && state.categoriaId !== EXTERNAL_CAT && currentEntorno())
+                ? currentEntorno().categories.find(c => c.id === state.categoriaId) : null;
+            grid.innerHTML = '';
+            const any = makePick('pick-card', '<span class="pick-name">Cualquier dispositivo</span>', 'cualquiera');
+            if (state.dispositivo === 'cualquiera') any.setAttribute('aria-pressed', 'true');
+            grid.appendChild(any);
+            (cat ? cat.devices : []).forEach(d => {
+                const b = makePick('pick-card', '<span class="pick-name">' + d.name + '</span>', d.id);
+                if (d.id === state.dispositivo) b.setAttribute('aria-pressed', 'true');
+                grid.appendChild(b);
+            });
+        }
+        function onEntornoClick(ev) {
+            const b = ev.target.closest('.pick-card');
+            if (!b) return;
+            state.entorno = b.dataset.val;
+            state.categoriaId = '';
+            state.categoria = '';
+            state.dispositivo = '';
+            state.dispositivoName = '';
+            clearPicked('entornoGrid');
+            b.setAttribute('aria-pressed', 'true');
+            renderCategorias();
+            renderDispositivos();
+            updateNav();
+            announce('Entorno: ' + currentEntorno().name + '. Elegí la categoría.');
+        }
+        function onCategoriaClick(ev) {
+            const b = ev.target.closest('.pick-card');
+            if (!b) return;
+            state.categoriaId = b.dataset.val;
+            state.categoria = b.dataset.val === EXTERNAL_CAT
+                ? state.categoria
+                : currentEntorno().categories.find(c => c.id === b.dataset.val).name;
+            state.dispositivo = '';
+            state.dispositivoName = '';
+            clearPicked('categoriaGrid');
+            b.setAttribute('aria-pressed', 'true');
+            renderDispositivos();
+            updateNav();
+            announce('Categoría: ' + state.categoria + '. Elegí el dispositivo.');
+        }
+        function onDispositivoClick(ev) {
+            const b = ev.target.closest('.pick-card');
+            if (!b) return;
+            state.dispositivo = b.dataset.val;
+            state.dispositivoName = b.dataset.val === 'cualquiera' ? 'Cualquier dispositivo' : b.querySelector('.pick-name').textContent;
+            clearPicked('dispositivoGrid');
+            b.setAttribute('aria-pressed', 'true');
+            updateNav();
+            announce('Dispositivo: ' + state.dispositivoName + '.');
+        }
+        document.getElementById('entornoGrid').addEventListener('click', onEntornoClick);
+        document.getElementById('categoriaGrid').addEventListener('click', onCategoriaClick);
+        document.getElementById('dispositivoGrid').addEventListener('click', onDispositivoClick);
+
+        // ---- Urgency buttons ----
+        document.querySelectorAll('.urgency-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.urgency-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
+                btn.setAttribute('aria-pressed', 'true');
+                state.urgency = btn.dataset.level;
+                updateNav();
+                announce('Urgencia: ' + btn.querySelector('span:last-child').childNodes[0].textContent.trim());
+            });
+        });
+
+        // ---- Location input ----
+        const fLocation = document.getElementById('fLocation');
+        let locTimer;
+        fLocation.addEventListener('input', () => {
+            state.location = fLocation.value;
+            clearTimeout(locTimer);
+            locTimer = setTimeout(() => { updateNav(); renderResults(); }, 300);
+        });
+
+        // ---- Geolocation (ubicación del dispositivo) ----
+        const gpsDetail = document.getElementById('gpsDetail');
+        let gpsAttempted = false;
+
+        function reverseGeocode(lat, lng) {
+            const url = 'https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&zoom=18&addressdetails=1&accept-language=es';
+            return fetch(url).then(function(r) { return r.json(); }).then(function(data) {
+                const a = data.address || {};
+                return {
+                    street: a.road || a.pedestrian || a.footway || a.cycleway || '',
+                    number: a.house_number || '',
+                    postcode: a.postcode || '',
+                    suburb: a.suburb || a.neighbourhood || a.quarter || '',
+                    city: a.city || a.town || a.village || '',
+                    municipality: a.municipality || a.county || a.state_district || '',
+                    province: a.state || ''
+                };
+            }).catch(function() { return null; });
+        }
+
+        function composeGPSField(g) {
+            if (!g) return '';
+            const streetLine = [g.street, g.number].filter(Boolean).join(' ');
+            const zone = [g.suburb, g.city].filter(Boolean).join(', ');
+            if (zone) return zone;
+            if (streetLine) return streetLine;
+            if (g.postcode) return 'CP ' + g.postcode;
+            return [g.city, g.municipality, g.province].filter(Boolean).join(', ');
+        }
+
+        function composeGPSDetail(g) {
+            if (!g) return '';
+            const parts = [];
+            const streetLine = [g.street, g.number].filter(Boolean).join(' ');
+            if (streetLine) parts.push(streetLine);
+            if (g.postcode) parts.push('CP ' + g.postcode);
+            const zone = [g.suburb, g.city, g.municipality, g.province].filter(Boolean).join(', ');
+            if (zone) parts.push(zone);
+            return parts.join(' · ');
+        }
+
+        function runGeolocate(auto) {
+            const btn = document.getElementById('btnGeolocate');
+            if (typeof navigator === 'undefined' || !navigator.geolocation) {
+                if (gpsDetail) gpsDetail.textContent = 'La geolocalización no está disponible en este navegador. Completá la dirección manualmente.';
+                announce('Geolocalización no disponible. Completá la dirección a mano.');
+                return;
+            }
+            const restore = function() {
+                if (btn) { btn.disabled = false; btn.innerHTML = '<span aria-hidden="true">📍</span> Usar mi ubicación actual'; }
+            };
+            if (btn) { btn.disabled = true; btn.innerHTML = '<span aria-hidden="true">⏳</span> Buscando la ubicación del dispositivo...'; }
+            if (gpsDetail) gpsDetail.textContent = 'Obteniendo la ubicación del dispositivo…';
+            try {
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    const lat = pos.coords.latitude, lng = pos.coords.longitude;
+                    reverseGeocode(lat, lng).then(function(g) {
+                        if (!g) throw new Error('geo-sin-datos');
+                        const field = composeGPSField(g);
+                        if (auto && fLocation.value.trim()) {
+                            // auto: no piso lo que el usuario escribió mientras tanto
+                            if (gpsDetail) gpsDetail.textContent = 'Ubicación del dispositivo detectada: ' + composeGPSDetail(g) + '.';
+                            return;
+                        }
+                        fLocation.value = field;
+                        state.location = field;
+                        state.gpsData = g;
+                        if (gpsDetail) gpsDetail.textContent = 'Según la ubicación del dispositivo: ' + composeGPSDetail(g) + '.';
+                        updateNav(); renderResults();
+                        announce('Ubicación del dispositivo: ' + field + '.');
+                    }).catch(function() {
+                        if (gpsDetail) gpsDetail.textContent = 'No pudimos obtener la dirección exacta desde la ubicación del dispositivo. Completala manualmente.';
+                        announce('No se pudo obtener la dirección exacta. Escribí manualmente.');
+                    }).then(restore);
+                }, function() {
+                    if (gpsDetail) gpsDetail.textContent = 'No pudimos obtener la ubicación del dispositivo (permiso denegado o sin cobertura). Completala manualmente.';
+                    announce('Permiso de ubicación denegado. Escribí manualmente.');
+                    restore();
+                }, { timeout: 8000 });
+            } catch (e) {
+                if (gpsDetail) gpsDetail.textContent = 'No pudimos obtener la ubicación del dispositivo. Completala manualmente.';
+                restore();
+            }
+        }
+
+        // el dispositivo es la primera opción: si el campo está vacío y el permiso lo permite, lo usamos solo
+        function maybeAutoGeolocate() {
+            if (gpsAttempted) return;
+            gpsAttempted = true;
+            if (typeof navigator === 'undefined' || !navigator.geolocation) return;
+            if (fLocation.value.trim()) return;
+            let permCheck = null;
+            try {
+                if (navigator.permissions && navigator.permissions.query) {
+                    permCheck = navigator.permissions.query({ name: 'geolocation' });
+                }
+            } catch (e) { permCheck = null; }
+            if (permCheck && permCheck.then) {
+                permCheck.then(function(status) {
+                    if (status.state === 'denied') {
+                        if (gpsDetail) gpsDetail.textContent = 'La ubicación del dispositivo está deshabilitada en este navegador. Completala manualmente o activá el permiso de ubicación.';
+                    } else {
+                        runGeolocate(true);
+                    }
+                }).catch(function() { runGeolocate(true); });
+            } else {
+                runGeolocate(true);
+            }
+        }
+
+        document.getElementById('btnGeolocate').addEventListener('click', function() { runGeolocate(false); });
+
+        // ---- Details ----
+        const fDetails = document.getElementById('fDetails');
+        fDetails.addEventListener('input', () => { state.details = fDetails.value; });
+
+        // ---- Voice (placeholder) ----
+        document.getElementById('btnVoice').addEventListener('click', function() {
+            announce('Dictado por voz no disponible en este prototipo.');
+        });
+
+        // ---- Navigation ----
+        btnPrev.addEventListener('click', () => { if (state.step > 1) showStep(state.step - 1); });
+
+        btnNext.addEventListener('click', () => {
+            if (state.step < TOTAL_STEPS) {
+                state.maxStep = Math.max(state.maxStep, state.step + 1);
+                showStep(state.step + 1);
+            } else {
+                announce('¡Pedido enviado! Te conectamos con los profesionales.');
+                btnNext.textContent = '✓ ¡Enviado!';
+                btnNext.disabled = true;
+            }
+        });
+
+        // ---- Keyboard: Escape = back, Enter = next ----
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && state.step > 1) {
+                showStep(state.step - 1);
+            }
+        });
+
+        // ---- Init ----
+        (function initFromUrl() {
+            const q = new URLSearchParams(location.search);
+
+            const startAction = q.get('accion');
+            if (startAction && ACTION_KEYS[startAction]) {
+                state.action = startAction;
+                document.querySelectorAll('.action-card').forEach(c => {
+                    c.setAttribute('aria-pressed', c.dataset.action === startAction ? 'true' : 'false');
+                });
+                renderResults();
+                announce('Acción: ' + ACTION_LABELS[startAction]);
+            }
+
+            const startLocation = q.get('ubicacion');
+            if (startLocation) {
+                state.location = startLocation;
+                fLocation.value = startLocation;
+            }
+
+            const startCategoria = q.get('categoria');
+            if (startCategoria) {
+                let found = null;
+                for (const e of TAXONOMY) {
+                    const c = e.categories.find(x => x.name.toLowerCase() === startCategoria.toLowerCase());
+                    if (c) { found = { e, c }; break; }
+                }
+                if (found) {
+                    state.entorno = found.e.id;
+                    state.categoriaId = found.c.id;
+                    state.categoria = found.c.name;
+                } else {
+                    state.entorno = 'hogar';
+                    state.categoriaId = EXTERNAL_CAT;
+                    state.categoria = startCategoria;
+                }
+                announce('Categoría: ' + state.categoria + '.');
+            }
+
+            renderEntornos();
+            renderCategorias();
+            renderDispositivos();
+
+            const startStep = q.get('paso');
+            if (startStep) {
+                const n = Math.min(TOTAL_STEPS, Math.max(1, parseInt(startStep, 10) || 1));
+                state.maxStep = Math.max(state.maxStep, n);
+                showStep(n);
+                return;
+            }
+            if (startAction && ACTION_KEYS[startAction]) {
+                state.maxStep = Math.max(state.maxStep, 2);
+                showStep(2);
+            } else {
+                updateProgress();
+                updateNav();
+                renderResults();
+                document.getElementById('step1').focus();
+            }
+        })();
+    })();
+    </script>
+</body>
+</html>

@@ -23,6 +23,7 @@
     "seo:locations": "node scripts/generate-seo-locations.js",
     "seo:locations:dry-run": "node scripts/generate-seo-locations.js --dry-run",
     "sitemap:generate": "node scripts/generate-sitemaps.js",
+    "brochure:build": "node scripts/build-brochure-pdf.js",
     "seed": "node seed.js",
     "seed:leads": "node seed.js --with-leads",
     "clean:users": "node scripts/clean-users.js --confirm",
@@ -72,6 +73,7 @@
     "twilio": "^6.0.2"
   },
   "devDependencies": {
+    "axe-core": "^4.13.0",
     "browser-sync": "^3.0.4",
     "nodemon": "^3.1.14"
   },

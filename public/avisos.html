@@ -49,9 +49,9 @@
     .fm-back:hover { color: var(--primary-gold); border-color: var(--primary-gold); }
     .fm-top-right { display: flex; align-items: center; gap: 0.5rem; }
     .fm-lang-btn { background: transparent; border: none; border-bottom: 2px solid transparent; padding: 4px 8px; cursor: pointer; transition: opacity 0.2s, border-color 0.2s; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.05em; color: #ccc; border-radius: 4px; }
-    .fm-lang-btn.active { border-bottom-color: var(--primary-gold); opacity: 1; color: var(--primary-gold); }
-    .fm-lang-btn.inactive { opacity: 0.4; }
-    .fm-lang-btn:hover { opacity: 1; }
+    .fm-lang-btn.active { border-bottom-color: var(--primary-gold); color: var(--primary-gold); }
+    .fm-lang-btn.inactive { color: #8a8a8a; }
+    .fm-lang-btn:hover { color: #B8922E; }
 
     .env-chips { display: flex; flex-direction: column; gap: 8px; width: 100%; }
     .env-chip {
@@ -60,8 +60,8 @@
       font-size: 0.9rem; text-align: left; transition: background 0.2s, color 0.2s, border-color 0.2s; font-family: inherit;
     }
     .env-chip:hover { border-color: var(--primary-gold); color: var(--primary-gold); }
-    .env-chip.is-active { background: rgba(var(--gold-rgb), 0.15); color: var(--primary-gold); border-color: var(--primary-gold); }
-    .env-chip .env-price { float: right; font-weight: 700; color: var(--primary-gold); }
+    .env-chip.is-active { background: rgba(var(--gold-rgb), 0.15); color: var(--gold-light); border-color: var(--primary-gold); }
+    .env-chip .env-price { float: right; font-weight: 700; color: var(--gold-light); }
 
     .filter-group { margin-bottom: 12px; }
     .filter-group label { display: block; margin-bottom: 5px; color: var(--gold-light); font-weight: 600; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -144,7 +144,7 @@
 <body>
   <a href="#main-content" class="sr-only" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;">Skip to content</a>
   <div class="container">
-    <div class="fm-top-bar">
+    <div class="fm-top-bar" role="banner">
       <a href="/index.html" class="fm-back" data-i18n="back">&larr; Inicio</a>
       <div class="fm-top-right">
         <button class="fm-lang-btn active" data-lang="es" aria-label="Español">ES</button>
@@ -155,12 +155,12 @@
 
     <div class="categories-shell" id="main-content" role="main">
       <!-- Left Sidebar: Filters -->
-      <aside class="categories-frame categories-frame-side categories-frame-left">
+      <aside id="avisoFilterDrawer" class="categories-frame categories-frame-side categories-frame-left" aria-label="Filtros de búsqueda">
         <a href="/index.html" class="categories-brand-logo" aria-label="KuraTe Home">
           <img src="/KuraTe_logo_black.png" alt="KuraTe" class="page-logo">
         </a>
         <div class="card" style="width:100%; margin-top: 14px;">
-          <h3 class="sub-title" data-i18n="filters">Filtros</h3>
+          <h2 class="sub-title" data-i18n="filters">Filtros</h2>
           <div class="env-chips" id="envChips">
             <button class="env-chip is-active" data-env="hogar">🏠 Hogar <span class="env-price">$5.000</span></button>
             <button class="env-chip" data-env="oficina">🏢 Oficina <span class="env-price">$10.000</span></button>
@@ -185,28 +185,28 @@
           <button type="button" id="avisoFilterBurger" aria-label="Abrir filtros" aria-expanded="false" aria-controls="avisoFilterDrawer" style="display:inline-flex;align-items:center;justify-content:center;background:rgba(184,146,46,0.12);border:1px solid var(--primary-gold);color:var(--primary-gold);border-radius:6px;cursor:pointer;padding:8px 10px;min-width:44px;min-height:44px;flex-shrink:0;">
             <span aria-hidden="true" style="display:inline-flex;flex-direction:column;gap:4px;"><span style="display:block;width:18px;height:2px;background:currentColor;border-radius:2px;"></span><span style="display:block;width:18px;height:2px;background:currentColor;border-radius:2px;"></span><span style="display:block;width:18px;height:2px;background:currentColor;border-radius:2px;"></span></span>
           </button>
-          <h2 class="main-title" data-i18n="title">📋 Avisos disponibles</h2>
+          <h1 class="main-title" data-i18n="title">📋 Avisos disponibles</h1>
         </div>
         <div class="aviso-grid-slot">
           <div id="avisoLoader" class="loader">Preparando avisos...</div>
           <div id="avisoGrid" class="aviso-grid hidden"></div>
           <div id="avisoEmpty" class="empty hidden">
-            <h3>No hay avisos</h3>
+            <h2 style="font-size: 1.17em;">No hay avisos</h2>
             <p>No se encontraron avisos para este entorno.</p>
           </div>
         </div>
       </section>
 
       <!-- Right Sidebar: Info -->
-      <aside class="categories-frame categories-frame-side categories-frame-right">
+      <aside class="categories-frame categories-frame-side categories-frame-right" aria-label="Sobre los Avisos">
         <div class="card" style="width:100%;">
-          <h3 class="sub-title" data-i18n="aboutAvisos">Sobre los Avisos</h3>
+          <h2 class="sub-title" data-i18n="aboutAvisos">Sobre los Avisos</h2>
           <p class="contact-note" data-i18n="aboutAvisosText">
             Los avisos son publicaciones de servicios técnicos creadas por profesionales verificados. Cada aviso incluye los datos del profesional, sus servicios y disponibilidad.
           </p>
 
           <hr class="gold-rule">
-          <h3 class="sub-title" data-i18n="profTitle">¿Sos profesional?</h3>
+          <h2 class="sub-title" data-i18n="profTitle">¿Sos profesional?</h2>
           <p class="contact-note" data-i18n="profText">
             Creá tu aviso desde tu perfil y llegá a miles de clientes potenciales.
           </p>
@@ -215,7 +215,7 @@
       </aside>
     </div>
 
-    <footer style="text-align:center;padding:24px 0;color:#666;font-size:0.8rem;">
+    <footer style="text-align:center;padding:24px 0;color:#7e7e7e;font-size:0.8rem;">
       &copy; 2026 KuraTe &mdash; Servicios Técnicos en Argentina
     </footer>
   </div>
@@ -228,8 +228,10 @@
     </div>
   </div>
 
-  <script src="/js/i18n.js"></script>
-  <script src="/js/ui.js"></script>
+  <script type="module">
+    import { applyStaticTranslations } from '/js/i18n.js';
+    applyStaticTranslations();
+  </script>
   <script>
   (() => {
     const API = '/api/v1/avisos';
@@ -339,7 +341,7 @@
             : `<div class="detail-avatar-placeholder" style="width:64px;height:64px;border-radius:50%;background:rgba(var(--gold-rgb),0.15);display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:var(--primary-gold);border:2px solid rgba(var(--gold-rgb),0.4);">${(prof.alias || '?')[0].toUpperCase()}</div>`
           }
           <div>
-            <div style="font-size:1.2rem;font-weight:700;color:#fff;">${prof.alias || 'Sin alias'}</div>
+            <h3 style="font-size:1.2rem;font-weight:700;color:#fff;margin:0;">${prof.alias || 'Sin alias'}</h3>
             <div style="font-size:0.85rem;color:#aaa;">${prof.firstName || ''} ${prof.surname || ''}</div>
             <div style="font-size:0.8rem;color:var(--primary-gold);">${ENV_LABELS[a.environment] || a.environment}${a.serviceLineName ? ' — ' + a.serviceLineName : ''}</div>
           </div>
@@ -358,7 +360,9 @@
             <div class="detail-services">
               ${services.map(s => {
                 const name = s.name || s.path || '';
-                const brands = (s.brands || []).join(', ');
+                // La entrada "otra" llega sin prefijo desde la API; si por
+                // defecto sobrevive el prefijo crudo, se muestra igual.
+                const brands = (s.brands || []).map(b => String(b).replace(/^__otra__:\s*/, '')).filter(Boolean).join(', ');
                 return `<div class="detail-service-tag">${name}${brands ? ' — ' + brands : ''}</div>`;
               }).join('')}
             </div>
@@ -430,5 +434,6 @@
     loadAvisos();
   })();
   </script>
+<script src="/js/imageViewer.js"></script>
 </body>
 </html>

@@ -27,6 +27,39 @@ function adminLogDetails(req, extra = {}) {
   };
 }
 
+// El modal de edicion del admin manda solo {slug, name}. Reemplazar la lista a
+// ciegas borraria la matricula habilitante (numero, foto y estado de
+// verificacion) de los oficios regulados, asi que esos campos se heredan del
+// valor guardado salvo que el payload los mande explicito.
+function mergeProfessionsPreservingMatricula(current, incoming) {
+  const lista = Array.isArray(incoming) ? incoming : [];
+  const previos = new Map();
+  (Array.isArray(current) ? current : []).forEach((p) => {
+    if (p && p.slug) previos.set(String(p.slug).toLowerCase(), p);
+  });
+  return lista.map((p) => {
+    if (!p || !p.slug) return p;
+    const previo = previos.get(String(p.slug).toLowerCase());
+    if (!previo) return p;
+    const out = { ...p };
+    if (out.matriculado === undefined) out.matriculado = !!previo.matriculado;
+    if (out.matriculado) {
+      if (out.matriculaNumero === undefined) out.matriculaNumero = previo.matriculaNumero || '';
+      if (out.matriculaFoto === undefined) out.matriculaFoto = previo.matriculaFoto || '';
+      if (out.matriculaVerificada === undefined) out.matriculaVerificada = !!previo.matriculaVerificada;
+      if (out.matriculaVerificadaAt === undefined) out.matriculaVerificadaAt = previo.matriculaVerificadaAt || null;
+      if (out.matriculaRechazada === undefined) out.matriculaRechazada = !!previo.matriculaRechazada;
+    } else {
+      out.matriculaNumero = '';
+      out.matriculaFoto = '';
+      out.matriculaVerificada = false;
+      out.matriculaVerificadaAt = null;
+      out.matriculaRechazada = false;
+    }
+    return out;
+  });
+}
+
 async function enrichActivityLogs(logs) {
   const adminIds = [
     ...new Set(
@@ -650,6 +683,12 @@ exports.updateProfessionalProfile = async (req, res, next) => {
         ...user.professionalProfile.toObject(),
         ...req.body.professionalProfile
       };
+      if (req.body.professionalProfile.professions !== undefined) {
+        user.professionalProfile.professions = mergeProfessionsPreservingMatricula(
+          user.professionalProfile.professions,
+          req.body.professionalProfile.professions
+        );
+      }
       user.professionalProfile.whatsappNumber = resolveWhatsappNumber(user.professionalProfile);
 
       if (!req.body.professionalProfile.categoryChangeLog) {
@@ -673,8 +712,11 @@ exports.updateProfessionalProfile = async (req, res, next) => {
       const hp = user.hogarProfile;
       if (req.body.hogarProfile.companyName !== undefined) hp.companyName = req.body.hogarProfile.companyName;
       if (req.body.hogarProfile.taxId !== undefined) hp.taxId = req.body.hogarProfile.taxId;
-      if (req.body.hogarProfile.services !== undefined) hp.services = req.body.hogarProfile.services || [];
-      if (req.body.hogarProfile.professions !== undefined) hp.professions = req.body.hogarProfile.professions || [];
+      if (req.body.hogarProfile.services !== undefined) {
+        const { sanitizeServices } = require('../utils/otraBrand');
+        hp.services = sanitizeServices(req.body.hogarProfile.services);
+      }
+      if (req.body.hogarProfile.professions !== undefined) hp.professions = mergeProfessionsPreservingMatricula(hp.professions, req.body.hogarProfile.professions);
       user.hogarProfile = hp;
     }
 
@@ -729,6 +771,76 @@ exports.updateProfessionalProfile = async (req, res, next) => {
       success: false,
       error: error.message
     });
+  }
+};
+
+// @desc    Issue a temporary password for any user (admin support action)
+// @route   PUT /api/v1/admin/users/:id/password
+// @access  Private/Admin
+// Sets mustChangePassword so the temp password is single-use, and bumps tokenVersion
+// so every already-issued JWT for that account stops authenticating immediately.
+exports.setUserPassword = async (req, res, next) => {
+  try {
+    const { password, confirmPassword } = req.body || {};
+    if (!password || String(password).length < 6) {
+      return res.status(400).json({ success: false, error: 'Password must be at least 6 characters.' });
+    }
+    if (password !== confirmPassword) {
+      return res.status(400).json({ success: false, error: 'Passwords do not match.' });
+    }
+
+    const user = await User.findById(req.params.id).select('+password');
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+    if (user.accountDeletedAt) {
+      return res.status(400).json({ success: false, error: 'Cannot reset the password of a deleted account.' });
+    }
+
+    // Hashed by the User pre-save hook.
+    user.password = password;
+    user.mustChangePassword = true;
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save();
+
+    const isSelf = String(user._id) === String(req.user.id);
+    const clientIp = getClientIp(req);
+    // Never log the password itself — only that an admin issued one.
+    await ActivityLog.create({
+      professional: user._id,
+      action: 'admin_set_password',
+      actorType: 'admin',
+      ipAddress: clientIp,
+      userAgent: req.headers['user-agent'],
+      isGuest: false,
+      details: adminLogDetails(req, {
+        targetId: user._id,
+        targetEmail: user.email,
+        self: isSelf
+      })
+    });
+
+    const emailDelivered = await sendEmail({
+      email: user.email,
+      subject: 'KuraTe - Tu contraseña temporal',
+      message: `Hola ${user.professionalProfile?.alias || user.hogarProfile?.firstName || ''},\n\nUn administrador de KuraTe generó una contraseña temporal para tu cuenta.\n\nContraseña temporal: ${password}\n\nPor seguridad, todas tus sesiones abiertas se cerraron. La próxima vez que ingreses vas a tener que definir una contraseña nueva.\n\nSi no esperabas este cambio, respondé este correo de inmediato.`
+    }).then(() => true).catch((err) => {
+      console.error(`Failed to send temp password email to ${user.email}:`, err.message);
+      return false;
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Password set. The user must change it on next login.',
+      data: {
+        emailDelivered,
+        self: isSelf
+      }
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
   }
 };
 

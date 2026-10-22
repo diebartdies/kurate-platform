@@ -24,7 +24,7 @@
     'arreglo': 'reparar', 'reparacion': 'reparar', 'reparar': 'reparar',
     'limpiar': 'mantener', 'limpieza': 'mantener', 'mantenimiento': 'mantener',
     'limpio': 'mantener', 'asear': 'mantener',
-    'aprender': 'aprender', 'clase': 'aprender', 'clases': 'aprender', 'curso': 'aprender',
+    'educar': 'educar', 'enseñar': 'educar', 'clase': 'educar', 'clases': 'educar', 'curso': 'educar', 'tutor': 'educar', 'tutoria': 'educar', 'apoyo': 'educar', 'apoyo escolar': 'educar', 'profesor': 'educar', 'docente': 'educar', 'clase particular': 'educar', 'clases particulares': 'educar',
     'mejorar': 'mejorar', 'upgrade': 'mejorar', 'actualizar': 'mejorar',
     'disenar': 'disenar', 'diseno': 'disenar', 'diseñar': 'disenar',
     'comprar': 'comprar', 'busco': 'busco', 'necesito': 'busco', 'preciso': 'busco',

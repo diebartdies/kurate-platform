@@ -807,7 +807,7 @@ function setupInstructions(type = currentRegistrationType || 'professional') {
 
     if (type === 'guest') {
         host.innerHTML = `
-        <h3 class="gold-text" style="margin-top:0;">${t('Guest signup')}</h3>
+        <h2 class="gold-text" style="margin-top:0;font-size:1.17em;">${t('Guest signup')}</h2>
         <p style="font-size:0.95rem;line-height:1.5;margin:0 0 12px;">${t('Use Google for instant access (no verification code), or register with email. Email signup sends a 6-digit code — check Spam if needed.')}</p>
         <ol style="font-size:0.9rem;margin:0 0 0 20px;line-height:1.6;padding:0;">
             <li>${t('Sign in with Google, or enter your email (alias optional).')}</li>
@@ -819,7 +819,7 @@ function setupInstructions(type = currentRegistrationType || 'professional') {
     }
 
     host.innerHTML = `
-        <h3 class="gold-text" style="margin-top:0;">${t('Quick registration')}</h3>
+        <h2 class="gold-text" style="margin-top:0;font-size:1.17em;">${t('Quick registration')}</h2>
         <p style="font-size:0.95rem;line-height:1.5;margin:0 0 12px;">${t('Use Google for instant access (no verification code), or fill in email, phone and birth date below. Our team completes your profile and uploads your photos.')}</p>
         <p style="font-size:0.88rem;line-height:1.5;margin:0 0 12px;color:#8fdfb0;">${t('Already browsing as a guest? You can register here as a model with the same email.')}</p>
         <ol style="font-size:0.9rem;margin:0 0 0 20px;line-height:1.6;padding:0;">

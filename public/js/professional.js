@@ -2,7 +2,7 @@ import { BASE_ORIGIN, API_URL, CATEGORY_META, resolvePhotoSrc, appPath } from '.
 import { showAlert, getPendingApprovalBannerHtml, getResubmissionBannerHtml, getGeneralRejectionBannerHtml } from './uiHelpers.js';
 import { t, applyStaticTranslations } from './i18n.js';
 import { activateAccessibleModal, deactivateAccessibleModal, announceMessage, confirmDialog, fixUnassociatedLabels } from './a11y.js';
-import { renderSpecialtyDropdown, setupLocationDropdowns, initCpaAutofill, collectTreeServices, renderProfessionsPicker, collectProfessions } from './helpers.js';
+import { renderSpecialtyDropdown, setupLocationDropdowns, initCpaAutofill, collectTreeServices, renderProfessionsPicker, collectProfessions, collectMatriculaFiles } from './helpers.js';
 import { beginDashboardLoad, finishDashboardLoad, failDashboardLoad } from './dashboardShell.js';
 import { navigateBack } from './ui.js';
 import { logoutToEntrance } from './navReturn.js';
@@ -369,7 +369,7 @@ export function injectProfessionalSupportSection(content, insertRef) {
     supportSection.innerHTML = `
         <h3 class="gold-text" style="margin-bottom: 10px;">🆘 ${t('Need help?')}</h3>
         <p style="color: #ccc; line-height: 1.6; margin-bottom: 15px;">${t('Have a question or a problem? Send a message to the platform admin and we will get back to you.')}</p>
-        <button type="button" id="btnRequestAdminHelp" style="display:inline-flex;align-items:center;gap:8px;background:#25D366;color:#fff;border:none;padding:10px 18px;border-radius:4px;font-weight:bold;cursor:pointer;">
+        <button type="button" id="btnRequestAdminHelp" style="display:inline-flex;align-items:center;gap:8px;background:#25D366;color:#08281d;border:none;padding:10px 18px;border-radius:4px;font-weight:bold;cursor:pointer;">
             💬 ${t('Request help / Solicitar ayuda al admin')}
         </button>
     `;
@@ -408,7 +408,7 @@ function openSupportModal() {
             <textarea id="supportProblemText" rows="5" style="width:100%;background:#222;color:#fff;border:1px solid #444;border-radius:4px;padding:10px;box-sizing:border-box;"></textarea>
             <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;">
                 <button type="button" id="supportCancelBtn" style="flex:1;min-width:120px;background:transparent;border:1px solid var(--primary-gold);color:var(--primary-gold);padding:10px;border-radius:4px;cursor:pointer;font-weight:bold;">${t('Cancel')}</button>
-                <button type="button" id="supportSendBtn" style="flex:1;min-width:120px;padding:10px;border-radius:4px;cursor:pointer;font-weight:bold;border:none;background:#25D366;color:#fff;">${t('Send request')}</button>
+                <button type="button" id="supportSendBtn" style="flex:1;min-width:120px;padding:10px;border-radius:4px;cursor:pointer;font-weight:bold;border:none;background:#25D366;color:#08281d;">${t('Send request')}</button>
             </div>
         </div>`;
 
@@ -786,6 +786,32 @@ export function bindProfessionalProfileForm() {
                             });
                             const profData = await profRes.json();
                             console.log('[KuraTe] professions response:', JSON.stringify(profData));
+                            if (!profRes.ok) {
+                                const detalle = (profData && (profData.error || (profData.rejected || []).join(', '))) || 'rechazadas';
+                                if (!silent) showAlert(null, 'No pudimos guardar tus profesiones: ' + detalle, true);
+                            } else {
+                                // La matricula va en un segundo paso: el endpoint de
+                                // archivo exige que el oficio ya figure como matriculado.
+                                const archivos = typeof collectMatriculaFiles === 'function' ? collectMatriculaFiles() : [];
+                                for (const item of archivos) {
+                                    try {
+                                        const fd = new FormData();
+                                        fd.append('slug', item.slug);
+                                        fd.append('matricula', item.file);
+                                        const upRes = await fetch(`${API_URL}/professionals/matricula`, {
+                                            method: 'POST',
+                                            headers: profAuthHeaders(),
+                                            credentials: 'include',
+                                            body: fd
+                                        });
+                                        const upData = await upRes.json();
+                                        if (!upRes.ok) {
+                                            console.error('[KuraTe] matricula upload error:', upData);
+                                            if (!silent) showAlert(null, 'Matrícula: ' + ((upData && upData.error) || 'no se pudo adjuntar el título'), true);
+                                        }
+                                    } catch (err) { console.error('[KuraTe] Error uploading matricula:', err); }
+                                }
+                            }
                         } catch (err) { console.error('[KuraTe] Error saving professions:', err); }
                     }
                 } catch (err) { console.error('[KuraTe] Error saving hogar services:', err); }
@@ -1213,6 +1239,62 @@ export function addPhotoToGrid(fileOrUrl) {
     refreshCoverHighlight();
 }
 
+// Self-contained image viewer for pages that do not load admin.js (e.g. profDashboard).
+// Exposed on window so addPhotoToGrid click handlers keep working everywhere.
+export function openImageModal(src) {
+    let modal = document.getElementById('imageViewerModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'imageViewerModal';
+        Object.assign(modal.style, {
+            position: 'fixed', top: '0', left: '0', width: '100%', height: '100%',
+            backgroundColor: 'rgba(0,0,0,0.95)', zIndex: '4000', display: 'flex',
+            flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            padding: '20px', boxSizing: 'border-box'
+        });
+
+        const closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.innerHTML = '&times;';
+        closeBtn.setAttribute('aria-label', t('Close'));
+        Object.assign(closeBtn.style, {
+            position: 'absolute', top: '20px', right: '30px',
+            background: 'transparent', color: 'var(--primary-gold)', border: 'none',
+            fontSize: '50px', cursor: 'pointer', lineHeight: '1', zIndex: '1'
+        });
+
+        const imgEl = document.createElement('img');
+        Object.assign(imgEl.style, {
+            maxWidth: '95%', maxHeight: '92vh', objectFit: 'contain',
+            border: '2px solid var(--primary-gold)', borderRadius: '8px', background: '#111'
+        });
+
+        const closeModal = () => {
+            modal.style.display = 'none';
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+        };
+
+        closeBtn.onclick = closeModal;
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.style.display === 'flex') closeModal();
+        });
+
+        modal.appendChild(closeBtn);
+        modal.appendChild(imgEl);
+        document.body.appendChild(modal);
+    }
+
+    modal.querySelector('img').src = src;
+    modal.style.display = 'flex';
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+}
+window.openImageModal = openImageModal;
+
 const newPhotoInput = document.getElementById('newPhotoInput');
 if (newPhotoInput) {
     newPhotoInput.addEventListener('change', (e) => {
@@ -1360,6 +1442,21 @@ function setupDeleteProfileUI() {
 
 let profDashboardLoadInFlight = null;
 
+// Regions that scroll (overflow auto/scroll) but contain no focusable items
+// must be reachable by keyboard (WCAG 2.1.2/2.1.3).
+function makeScrollRegionsFocusable(root) {
+    if (!root) return;
+    root.querySelectorAll('.fileteado-section > div, .card.fileteado-section > div').forEach((el) => {
+        const cs = getComputedStyle(el);
+        const canScroll = /(auto|scroll)/.test(cs.overflowY) || /(auto|scroll)/.test(cs.overflow);
+        if (!canScroll || el.scrollHeight <= el.clientHeight + 1) return;
+        if (el.querySelector('a, button, input, select, textarea, [tabindex]')) return;
+        el.setAttribute('tabindex', '0');
+        el.setAttribute('role', 'region');
+        if (!el.getAttribute('aria-label')) el.setAttribute('aria-label', 'Contenido desplazable');
+    });
+}
+
 export async function loadProfDashboard() {
     if (profDashboardLoadInFlight) return profDashboardLoadInFlight;
 
@@ -1387,7 +1484,9 @@ export async function loadProfDashboard() {
             photosDirty = false;
             const user = data.data;
             const prof = user.professionalProfile || {};
-            const stats = data.stats || { photoCount: 0, whatsappcCount: 0, callCount: 0 };
+            // Las 3 metricas de visitas/contactos se movieron al bloque
+            // "📊 Mis Estadísticas" (avisos.js -> loadMyStats), asi que data.stats
+            // ya no se usa aca.
             const isApproved = user.verificationStatus === 'approved';
             const allowResubmission = user.allowResubmission === true;
             const needsCategorySetup = needsProfessionalCategorySetup(user);
@@ -1460,24 +1559,9 @@ export async function loadProfDashboard() {
                     </div>
                 </div>
 
-                <!-- Estadísticas -->
-                <div class="card fileteado-section" style="margin-bottom: 20px; border: 1px solid var(--primary-gold); background: rgba(212,175,55,0.05);">
-                    <h3 class="gold-text" style="margin-bottom: 12px;">📊 Estadísticas</h3>
-                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                        <div style="flex: 1; min-width: 120px; text-align: center; padding: 12px; background: rgba(212,175,55,0.08); border-radius: 8px;">
-                            <div style="font-size: 1.8rem; font-weight: bold; color: var(--primary-gold);">${stats.photoCount || 0}</div>
-                            <div style="font-size: 0.8rem; color: #aaa;">👁 Visualizaciones</div>
-                        </div>
-                        <div style="flex: 1; min-width: 120px; text-align: center; padding: 12px; background: rgba(37,211,102,0.08); border-radius: 8px;">
-                            <div style="font-size: 1.8rem; font-weight: bold; color: #25D366;">${stats.whatsappcCount || 0}</div>
-                            <div style="font-size: 0.8rem; color: #aaa;">💬 WhatsApp</div>
-                        </div>
-                        <div style="flex: 1; min-width: 120px; text-align: center; padding: 12px; background: rgba(59,130,246,0.08); border-radius: 8px;">
-                            <div style="font-size: 1.8rem; font-weight: bold; color: #3B82F6;">${stats.callCount || 0}</div>
-                            <div style="font-size: 0.8rem; color: #aaa;">📞 Llamadas</div>
-                        </div>
-                    </div>
-                </div>
+                <!-- Las estadisticas viven arriba del panel, en el bloque
+                     "📊 Mis Estadísticas" de profDashboard.html (5 KPIs + grafico
+                     de 12 meses, alimentado por loadMyStats en avisos.js). -->
 
                 ${statusBannerHtml}
                 ${firstApprovedBannerHtml}
@@ -1551,6 +1635,7 @@ export async function loadProfDashboard() {
                 <div class="card fileteado-section" style="margin-bottom: 20px; border: 1px solid var(--primary-gold);">
                     <h3 class="gold-text" style="margin-bottom: 10px;">${t('Service Description')}</h3>
                     <p style="font-size: 0.85rem; color: #aaa; margin-bottom: 12px;">${t('Describe your services for visitors on your public profile.')}</p>
+                    <label for="upBio" style="color: var(--primary-gold); font-size: 0.85rem; font-weight: 600;">Bio</label>
                     <textarea id="upBio" rows="6" maxlength="500" style="width: 100%; padding: 10px; background: #222; color: white; border: 1px solid #444; border-radius: 4px; resize: vertical; box-sizing: border-box; min-height: 120px;">${safeBio}</textarea>
                 </div>
 
@@ -1569,7 +1654,7 @@ export async function loadProfDashboard() {
                                 <button type="button" id="btnSendPhoneCode" style="padding: 6px 14px; background: var(--primary-gold); color: #111; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">${t('Send verification code')}</button>
                                 <div id="phoneCodeInputRow" class="hidden" style="gap: 8px; margin-top: 8px; align-items: center;">
                                     <input type="text" id="phoneVerificationCode" maxlength="6" placeholder="${t('6-digit code')}" style="width: 120px; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px; text-align: center; letter-spacing: 4px; font-size: 1.1rem;">
-                                    <button type="button" id="btnVerifyPhoneCode" style="padding: 6px 14px; background: #25D366; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">${t('Verify')}</button>
+                                    <button type="button" id="btnVerifyPhoneCode" style="padding: 6px 14px; background: #25D366; color: #08281d; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">${t('Verify')}</button>
                                     <span id="phoneCodeDeliveryStatus" style="font-size: 0.8rem; color: #aaa;"></span>
                                 </div>
                                 <div id="phoneCodeAlert" class="hidden" style="margin-top: 6px; font-size: 0.8rem; color: var(--accent-red);"></div>
@@ -1662,7 +1747,7 @@ export async function loadProfDashboard() {
                 
                 <div id="updateAlert" class="alert hidden" style="padding: 10px; border-radius: 4px; border: 1px solid transparent; margin-bottom: 20px;"></div>
 
-                <button type="button" id="explicitSaveBtn" class="hidden" style="background: #25D366; color: white; font-weight: bold; width: 100%; padding: 12px; border-radius: 4px; border: none; cursor: pointer; margin-bottom: 15px;">💾 Save Changes</button>
+                <button type="button" id="explicitSaveBtn" class="hidden" style="background: #25D366; color: #08281d; font-weight: bold; width: 100%; padding: 12px; border-radius: 4px; border: none; cursor: pointer; margin-bottom: 15px;">💾 Save Changes</button>
                 <button type="button" id="bottomBackBtn" style="background: var(--primary-gold); color: var(--dark-bg); font-weight: bold; width: 100%; padding: 12px; border-radius: 4px; border: none; cursor: pointer;">&#8592; Back to Main Dashboard</button>
 
                 <div class="card fileteado-section" style="margin-top: 20px; margin-bottom: 20px; border: 1px solid var(--accent-red);">
@@ -1674,6 +1759,9 @@ export async function loadProfDashboard() {
 
             // Logic to populate the components
             loadCategoryPricingTable(document.querySelector('#profCategoryTable tbody'));
+            makeScrollRegionsFocusable(formObj);
+            window.addEventListener('load', () => makeScrollRegionsFocusable(formObj));
+            setTimeout(() => makeScrollRegionsFocusable(formObj), 1200);
 
             if (needsCategorySetup) {
                 setTimeout(() => {

@@ -137,14 +137,47 @@ export function syncDocumentLang(lang = currentLang) {
 }
 
 export function initSkipLink() {
-    if (document.getElementById('skipToMain')) return;
+    let skip = document.getElementById('skipToMain');
 
-    const skip = document.createElement('a');
-    skip.id = 'skipToMain';
-    skip.href = '#main-content';
-    skip.className = 'skip-link';
-    skip.textContent = t('Skip to main content');
-    document.body.insertBefore(skip, document.body.firstChild);
+    // Pages may ship their own skip link (optionally pointing at a narrower
+    // target such as a form). Reuse it instead of adding a second one, so the
+    // keyboard user gets a single, consistently positioned entry point.
+    if (!skip) {
+        const existing = document.querySelector('a.skip-link[href^="#"]');
+        if (existing) {
+            existing.id = 'skipToMain';
+            skip = existing;
+        }
+    }
+
+    if (!skip) {
+        skip = document.createElement('a');
+        skip.id = 'skipToMain';
+        skip.href = '#main-content';
+        skip.className = 'skip-link';
+        skip.textContent = t('Skip to main content');
+        const firstNav = document.body.querySelector('nav');
+        if (firstNav) {
+            firstNav.insertBefore(skip, firstNav.firstChild);
+        } else {
+            const skipNav = document.createElement('nav');
+            skipNav.setAttribute('aria-label', 'Saltar a contenido');
+            skipNav.appendChild(skip);
+            document.body.insertBefore(skipNav, document.body.firstChild);
+        }
+    }
+
+    if (skip && !skip.closest('nav, header, footer, main, aside, section, form')) {
+        const firstNav = document.body.querySelector('nav');
+        if (firstNav) {
+            firstNav.insertBefore(skip, firstNav.firstChild);
+        } else {
+            const skipNav = document.createElement('nav');
+            skipNav.setAttribute('aria-label', 'Saltar a contenido');
+            skip.parentNode.replaceChild(skipNav, skip);
+            skipNav.appendChild(skip);
+        }
+    }
 
     ensureMainLandmark();
 }
