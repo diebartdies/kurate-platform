@@ -20,7 +20,7 @@ DB-BACK/
 tmp_restore.gz
 
 # Padrones de matriculados: datos de terceros, nunca a GitHub.
-*matriculad*.txt
+*maticulad*.txt
 *padron*.txt
 *padrones*.txt
 
