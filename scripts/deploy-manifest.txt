@@ -69,7 +69,7 @@ controllers/potentialProfessionalController.js  # busqueda q, filtro por lote, o
 scripts/import-padron-gasistas.js       # importa el padron (dry-run por defecto, --apply)
 
 # --- outreach por lote (email async con rate) ---
-services/emailOutreachService.js        # cola en segundo plano del envio de mails (202 + GET /bulk-email/status)
+services/emailOutreachService.js        # cola en segundo plano del envio de mails (202 + GET /bulk-email/status); un envio exitoso marca el lead como 'contacted'
 public/js/i18n.js                       # claves ES de leads, bloquedos y emails/min en el admin
 
 # --- scripts que corren DENTRO del contenedor (docker cp, no se montan) ---

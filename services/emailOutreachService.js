@@ -47,6 +47,11 @@ async function markLeadEmail(leadDoc, { status, error, subject }) {
       leadDoc.emailSentAt = new Date();
       leadDoc.emailSubject = subject || undefined;
       leadDoc.emailError = undefined;
+      // Un mail efectivo marca al lead como contactado, igual que hace
+      // whatsappOutreachService.markLeadStatus. Sin esto la columna de estado
+      // quedaba en 'pending' tras un envio exitoso y "Select pending" volvia
+      // a ofrecer el mismo lead, produciendo invitaciones duplicadas.
+      leadDoc.status = 'contacted';
     } else if (status === 'failed') {
       leadDoc.emailError = (error && String(error).slice(0, 500)) || 'unknown error';
     }
