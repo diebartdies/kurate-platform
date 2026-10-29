@@ -2489,7 +2489,14 @@ if (data.success) {
                 const waLink = lead.whatsappLink || '#';
                 const blocked = Boolean(lead.doNotContact);
                 const waDisabled = !lead.whatsappLink || blocked;
-                const isPending = (lead.status || 'pending') === 'pending' && !blocked;
+                // El checkbox solo se habilita para leads todavia pendientes y no
+                // bloqueados. Un lead ya enviado por correo (emailStatus 'sent') queda
+                // deshabilitado —y por tanto desmarcado— tambien, aunque el status
+                // principal no se haya actualizado: asi "seleccionar pendiente" nunca
+                // vuelve a ofrecer un lead que ya recibio la invitacion.
+                const isPending = (lead.status || 'pending') === 'pending'
+                    && !blocked
+                    && (lead.emailStatus || 'pending') !== 'sent';
 
                 const statusLabel = t(lead.status || 'pending');
                 const smsLabel = `${t('SMS')}: ${t(smsState)}`;
@@ -2499,10 +2506,20 @@ if (data.success) {
 
                 const mailState = lead.emailStatus || 'pending';
                 const mailColor = mailState === 'sent' ? '#15803d' : (mailState === 'failed' ? '#dc2626' : '#a16207');
-                const mailDisabled = blocked || !lead.email;
+                // Un envio ya aceptado por el relay se muestra como "entregado".
+                // En la base el valor sigue siendo 'sent': lo unico que el sistema
+                // conoce es que el relay acepto el mensaje, no que llego a la
+                // bandeja. El rotulo cambia para que el estado se lea igual en la
+                // tabla, y el boton queda deshabilitado para no reenviar al mismo
+                // lead (evita invitaciones duplicadas).
+                const mailDelivered = mailState === 'sent';
+                const mailLabel = mailDelivered ? t('Delivered') : t(mailState);
+                const mailDisabled = blocked || !lead.email || mailDelivered;
                 const mailTip = blocked
                     ? (lead.doNotContactReason || 'Blocked')
-                    : (lead.email ? '' : 'No email');
+                    : (mailDelivered
+                        ? t('Already delivered — not re-sent.')
+                        : (lead.email ? '' : 'No email'));
 
                 const tr = document.createElement('tr');
                 tr.style.borderBottom = '1px solid #333';
@@ -2521,7 +2538,7 @@ if (data.success) {
                         <div class="lead-status-stack">
                             <span class="admin-status-badge admin-status-badge--${lead.status || 'pending'}" style="background: ${statusColor};">${statusLabel}</span>
                             <span class="admin-status-badge admin-status-badge--sms" style="background: ${smsColor};">${smsLabel}</span>
-                            <span class="admin-status-badge admin-status-badge--email" style="background: ${mailColor};" title="${escapeHtml(mailTip)}">${t('Email')}: ${t(mailState)}</span>
+                            <span class="admin-status-badge admin-status-badge--email" style="background: ${mailColor};" title="${escapeHtml(mailTip)}">${t('Email')}: ${mailLabel}</span>
                             ${blockBadge}
                         </div>
                     </td>
@@ -2878,6 +2895,11 @@ function onInviteChannelChange(e) {
 // de correo con su plantilla propia para los prospectos tildados.
 async function applyInvitationToSelected() {
     if (inviteChannel === 'email') {
+        const ids = selectedLeadIds();
+        if (!ids.length) {
+            notifyNoSelectableLeads();
+            return;
+        }
         await sendLeadInviteEmail(null);
         return;
     }
@@ -6235,22 +6257,28 @@ function startEmailProgress(alertEl, sendBtn) {
 
             if (s.phase === 'sending') {
                 const sent = Number(s.sent) || 0;
+                const failed = Number(s.failed) || 0;
+                const skipped = Number(s.skipped) || 0;
                 const total = Number(s.total) || 0;
-                showAlert(alertEl, t('Sending... ({sent}/{total})').replace('{sent}', String(sent)).replace('{total}', String(total)), false);
+                const processed = sent + failed + skipped;
+                showAlert(alertEl, `${processed} / ${total} — ${t('Sent')}: ${sent}, ${t('Failed')}: ${failed}, ${t('Skipped')}: ${skipped}`, false);
                 return;
             }
 
             stopEmailProgress();
-            let msg = t('Email outreach complete.');
-            msg = `${msg} ${t('Sent')}: ${s.sent}`;
-            if (s.skipped) msg += ` · ${t('Skipped')}: ${s.skipped}`;
-            if (s.failed) msg += ` · ${t('Failed')}: ${s.failed}`;
-            if (s.notFound) msg += ` · ${t('Not found')}: ${s.notFound}`;
-            if (s.skipped && !s.sent) {
+            const sent = Number(s.sent) || 0;
+            const failed = Number(s.failed) || 0;
+            const skipped = Number(s.skipped) || 0;
+            const notFound = Number(s.notFound) || 0;
+            const total = Number(s.total) || 0;
+            const processed = sent + failed + skipped;
+            let msg = `${processed} / ${total} — ${t('Sent')}: ${sent}, ${t('Failed')}: ${failed}, ${t('Skipped')}: ${skipped}`;
+            if (notFound) msg += ` · ${t('Not found')}: ${notFound}`;
+            if (skipped && !sent) {
                 msg += ` — ${t('Blocked leads are never emailed. Unblock them first in the Invitation column.')}`;
             }
             if (s.phase === 'error' && s.lastError) msg += ` (${s.lastError})`;
-            showAlert(alertEl, msg, s.phase === 'error' || (!s.sent && (s.failed || s.notFound)));
+            showAlert(alertEl, msg, s.phase === 'error' || (!sent && (failed || notFound)));
             sendBtn.disabled = false;
             loadLeads(leadsCurrentPage);
         } catch (err) {
@@ -6279,9 +6307,9 @@ function createLeadEmailModal() {
             <div style="padding:16px;">
                 <div id="leAlert" style="margin-bottom:12px;font-size:0.9rem;"></div>
                 <p id="leCounter" style="color:#aaa;font-size:0.85rem;margin:0 0 12px;"></p>
-                <label style="display:block;color:var(--primary-gold);font-weight:bold;font-size:0.85rem;margin-bottom:4px;">${t('Subject')}</label>
+                <label for="leSubject" style="display:block;color:var(--primary-gold);font-weight:bold;font-size:0.85rem;margin-bottom:4px;">${t('Subject')}</label>
                 <input id="leSubject" type="text" style="width:100%;padding:9px;background:#222;color:#fff;border:1px solid #444;border-radius:4px;margin-bottom:12px;">
-                <label style="display:block;color:var(--primary-gold);font-weight:bold;font-size:0.85rem;margin-bottom:4px;">${t('Message')}</label>
+                <label for="leBody" style="display:block;color:var(--primary-gold);font-weight:bold;font-size:0.85rem;margin-bottom:4px;">${t('Message')}</label>
                 <textarea id="leBody" rows="14" style="width:100%;padding:9px;background:#222;color:#fff;border:1px solid #444;border-radius:4px;font-family:inherit;font-size:0.9rem;"></textarea>
                 <div style="display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap;">
                     <label for="leRate" style="display:block;color:var(--primary-gold);font-weight:bold;font-size:0.85rem;">${t('Emails per minute')}</label>

@@ -316,6 +316,8 @@ const translations = {
         'pending': 'pendiente',
         'sent': 'enviado',
         'failed': 'fallido',
+        'Delivered': 'Entregado',
+        'Already delivered — not re-sent.': 'Ya fue entregado — no se reenvía.',
         'Paused — waiting for the sending window.': 'En pausa — esperando la ventana de envío.',
         'Scan QR with WhatsApp on your phone': 'Escaneá el QR con WhatsApp en tu teléfono',
         'Send the welcome WhatsApp message to ALL pending leads? This cannot be undone easily.': '¿Enviar el mensaje de bienvenida por WhatsApp a TODOS los leads pendientes?',
