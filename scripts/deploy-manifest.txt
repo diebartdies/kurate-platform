@@ -70,7 +70,7 @@ scripts/import-padron-gasistas.js       # importa el padron (dry-run por defecto
 
 # --- outreach por lote (email async con rate) ---
 services/emailOutreachService.js        # cola en segundo plano del envio de mails (202 + GET /bulk-email/status); un envio exitoso marca el lead como 'contacted'
-public/js/i18n.js                       # claves ES de leads, bloquedos y emails/min en el admin
+public/js/i18n.js                       # claves ES de leads, bloquedos y emails/min en el admin; applyStaticTranslations memoiza el fallback por regex (evita ~1.2M replace por render)
 
 # --- scripts que corren DENTRO del contenedor (docker cp, no se montan) ---
 scripts/sync-service-tree.js               # 97 -> 182 servicios, idempotentescripts/seed-professions.js                # 0 -> 32 profesiones, idempotente (subir el archivo NO siembra; correr el seed aparte)

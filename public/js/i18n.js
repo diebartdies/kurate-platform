@@ -1315,6 +1315,14 @@ export function t(text) {
 
 let esRegexList = null;
 
+// Cache del fallback por regex. El admin/grid repiten las mismas cadenas
+// ("Edit", "Delete", estados, emails), y sin cache cada nodo pagaba hasta
+// ~1200 regex.replace() en el peor caso (~1.2M de operaciones con 125 cards).
+// Con esta cache cada cadena unica paga el costo una sola vez por sesion.
+// Clave = lang + NUL + texto original; valor = traduccion o null si no cambio.
+const regexFallbackCache = new Map();
+const REGEX_FALLBACK_CACHE_MAX = 8000;
+
 export function applyStaticTranslations(rootNode = document.body) {
     if (currentLang === 'en') return;
     
@@ -1332,6 +1340,29 @@ export function applyStaticTranslations(rootNode = document.body) {
         });
         esRegexList = regexList;
     }
+
+    // Fallback por regex, memoizado por cadena unica. Reproduce exactamente el
+    // bucle original (claves ordenadas por longitud, mutacion progresiva del
+    // texto), solo que cachea el resultado final: devuelve la traduccion o
+    // null si ninguna clave cambio el texto.
+    const applyRegexFallback = (original) => {
+        const cacheKey = currentLang + '\u0000' + original;
+        const cached = regexFallbackCache.get(cacheKey);
+        if (cached !== undefined) return cached;
+        let updatedText = original;
+        let changed = false;
+        for (const { key, regex } of regexList) {
+            const newText = updatedText.replace(regex, dict[key]);
+            if (newText !== updatedText) {
+                updatedText = newText;
+                changed = true;
+            }
+        }
+        const result = changed ? updatedText : null;
+        if (regexFallbackCache.size >= REGEX_FALLBACK_CACHE_MAX) regexFallbackCache.clear();
+        regexFallbackCache.set(cacheKey, result);
+        return result;
+    };
     
     // Walk DOM to translate text nodes
     const walk = document.createTreeWalker(rootNode, NodeFilter.SHOW_TEXT, null, false);
@@ -1350,17 +1381,9 @@ export function applyStaticTranslations(rootNode = document.body) {
         } else if (dict[text.trim()]) {
             nodesToReplace.push({ node, newText: text.replace(text.trim(), dict[text.trim()]) });
         } else {
-            let updatedText = text;
-            let changed = false;
-            for (const { key, regex } of regexList) {
-                const newText = updatedText.replace(regex, dict[key]);
-                if (newText !== updatedText) {
-                    updatedText = newText;
-                    changed = true;
-                }
-            }
-            if (changed) {
-                nodesToReplace.push({ node, newText: updatedText });
+            const translated = applyRegexFallback(text);
+            if (translated !== null) {
+                nodesToReplace.push({ node, newText: translated });
             }
         }
     }
@@ -1379,16 +1402,8 @@ export function applyStaticTranslations(rootNode = document.body) {
             } else if (dict[input.value.trim()]) {
                 input.value = dict[input.value.trim()];
             } else {
-                let text = input.value;
-                let changed = false;
-                for (const { key, regex } of regexList) {
-                    const newText = text.replace(regex, dict[key]);
-                    if (newText !== text) {
-                        text = newText;
-                        changed = true;
-                    }
-                }
-                if (changed) input.value = text;
+                const translated = applyRegexFallback(input.value);
+                if (translated !== null) input.value = translated;
             }
         }
     });
@@ -1403,16 +1418,8 @@ export function applyStaticTranslations(rootNode = document.body) {
             } else if (dict[input.placeholder.trim()]) {
                 input.placeholder = dict[input.placeholder.trim()];
             } else {
-                let text = input.placeholder;
-                let changed = false;
-                for (const { key, regex } of regexList) {
-                    const newText = text.replace(regex, dict[key]);
-                    if (newText !== text) {
-                        text = newText;
-                        changed = true;
-                    }
-                }
-                if (changed) input.placeholder = text;
+                const translated = applyRegexFallback(input.placeholder);
+                if (translated !== null) input.placeholder = translated;
             }
         }
     });
@@ -1429,16 +1436,8 @@ export function applyStaticTranslations(rootNode = document.body) {
             el.setAttribute(attr, dict[val.trim()]);
             return;
         }
-        let text = val;
-        let changed = false;
-        for (const { key, regex } of regexList) {
-            const newText = text.replace(regex, dict[key]);
-            if (newText !== text) {
-                text = newText;
-                changed = true;
-            }
-        }
-        if (changed) el.setAttribute(attr, text);
+        const translated = applyRegexFallback(val);
+        if (translated !== null) el.setAttribute(attr, translated);
     };
 
     if (rootNode.querySelectorAll) {
