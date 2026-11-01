@@ -405,7 +405,9 @@ app.get('/categorias/:slug', async (req, res) => {
     return res.redirect(301, `/niveles/${slug}${lang}`);
   }
   const item = CATEGORIES.find(c => c.slug === slug);
-  if (!item) return res.status(404).send('Not found');
+  // Slug de categoría inválido (p. ej. "electrohogar", que Google arma por
+  // sinonimia): en vez de 404, redirigir al índice real de categorías.
+  if (!item) return res.redirect(301, '/categorias');
   const lang = req.query.lang === 'en' ? 'en' : 'es';
   res.setHeader('Cache-Control', 'public, max-age=3600');
   const topRated = await getTopRatedForSeo();
@@ -449,7 +451,8 @@ const ACTION_SYNONYM_MAP = {
   'sacar': 'reparar',
   'desinstalar': 'reparar',
   // comercial
-  'venta': 'comprar'
+  'venta': 'comprar',
+  'vender': 'comprar'
 };
 
 function normalizeActionSlug(slug) {
@@ -465,12 +468,89 @@ function normalizeActionSlug(slug) {
   return slug;
 }
 
+// --- Resolver de URLs /servicios/ inventadas por Google -------------------
+// Google genero decenas de variantes combinando una accion con el nombre de
+// una profesion o categoria en vez de con un id de dispositivo del arbol:
+// "reparar-plomeria" (plomeria es CATEGORIA), "reparar-impresoras" (el
+// dispositivo es impresoras-domesticas), "reparar-pc-notebook" (es
+// pcs-notebooks), "instalar-camaras-seguridad" (es camaras-ip). El sitio nunca
+// las linkeo ni las puso en el sitemap, pero Search Console las marca 404.
+// En vez de devolver 404 crudo, se redirigen 301 a su destino real (una
+// landing de categoria, la accion canonica del dispositivo, o el buscador).
+const SERVICE_TOPIC_KEYWORDS = [
+  { keys: ['plomeria', 'canilla', 'canillas', 'griferia', 'inodoro', 'ducha', 'desagote'], target: '/categorias/plomeria' },
+  { keys: ['gas', 'gasista', 'termotanque', 'calefon', 'caldera', 'estufa', 'estufas'], target: '/categorias/gas' },
+  { keys: ['electricidad', 'electrico', 'electrica', 'tablero', 'iluminacion'], target: '/categorias/electricidad' },
+  { keys: ['impresora', 'impresoras', 'notebook', 'notebooks', 'pc', 'pcs', 'computadora', 'computadoras', 'informatica', 'router'], target: '/categorias/informatica' },
+  { keys: ['camara', 'camaras', 'seguridad', 'alarma', 'alarmas', 'cctv', 'control-acceso'], target: '/categorias/seguridad' },
+  { keys: ['heladera', 'lavarropas', 'microondas', 'secarropa', 'lavavajilla', 'linea-blanca'], target: '/categorias/linea-blanca' },
+  { keys: ['aire', 'acondicionado', 'calefactor', 'calefactores', 'clima', 'climatizacion'], target: '/categorias/clima' }
+];
+
+function resolveServiceSlugRedirect(rawSlug) {
+  const { getDevices, ACTION_ALIASES } = require('./utils/seoServicePages');
+  const { CATEGORIES } = require('./utils/seoLandingPages');
+
+  const normalized = normalizeActionSlug(String(rawSlug || ''));
+  const parts = normalized.split('-').filter(Boolean);
+  if (parts.length < 2) return null;
+
+  const actionToken = parts[0];
+  const topic = parts.slice(1).join('-');
+
+  // 1) El "topic" es una categoria valida → landing de esa categoria.
+  if (CATEGORIES.some((c) => c.slug === topic)) return `/categorias/${topic}`;
+
+  // 2) El "topic" es un dispositivo valido pero la accion no existe
+  //    (p. ej. "disenar-hidromasajes-jacuzzis", "mejorar-termotanque-calefon")
+  //    → usar la accion canonica "reparar" sobre ese dispositivo.
+  if (getDevices().has(topic) && !ACTION_ALIASES[actionToken]) {
+    return `/servicios/reparar-${topic}`;
+  }
+
+  // 2b) El "topic" no es un id exacto pero coincide con uno por tokens
+  //    ("impresoras" → impresoras-domesticas, "pc-notebook" → pcs-notebooks).
+  //    Se exige que TODOS los tokens del topic aparezcan en el id (plural
+  //    flexible), asi "camaras-seguridad" no matchea "camaras-ip".
+  if (!getDevices().has(topic)) {
+    const topicTokens = topic.split('-').filter(Boolean);
+    const singular = (t) => (t.length > 2 && t.endsWith('s') ? t.slice(0, -1) : t);
+    if (topicTokens.length) {
+      for (const [deviceId] of getDevices()) {
+        const devTokens = deviceId.split('-').filter(Boolean).map(singular);
+        if (topicTokens.every((t) => devTokens.includes(singular(t)))) {
+          const action = ACTION_ALIASES[actionToken] ? actionToken : 'reparar';
+          const target = `/servicios/${action}-${deviceId}`;
+          if (target !== `/servicios/${rawSlug}` && target !== `/servicios/${normalized}`) return target;
+        }
+      }
+    }
+  }
+
+  // 3) El "topic" menciona una palabra clave de categoria → esa categoria.
+  const lower = topic.toLowerCase();
+  for (const { keys, target } of SERVICE_TOPIC_KEYWORDS) {
+    if (keys.some((k) => lower === k || lower.startsWith(`${k}-`) || lower.endsWith(`-${k}`) || lower.includes(`-${k}-`))) {
+      return target;
+    }
+  }
+
+  // 4) Sin coincidencia clara → el buscador (pagina real, evita el 404).
+  return '/hogar.html';
+}
+
 // Landing nacional: /servicios/reparar-heladera
 app.get('/servicios/:slug', (req, res) => {
   const { parseServiceSlug, buildServiceLandingPage, LOCATIONS } = require('./utils/seoServicePages');
   const normalizedSlug = normalizeActionSlug(req.params.slug);
   const { actionSlug, deviceSlug, locationSlug } = parseServiceSlug(normalizedSlug);
-  if (!actionSlug || !deviceSlug) return res.status(404).send('Not found');
+  if (!actionSlug || !deviceSlug) {
+    // Slug inventado por Google (p. ej. "reparar-plomeria"): en vez de 404 crudo,
+    // redirigir 301 a su landing real (categoria, accion canonica o buscador).
+    const resolved = resolveServiceSlugRedirect(req.params.slug);
+    if (resolved && resolved !== `/servicios/${req.params.slug}`) return res.redirect(301, resolved);
+    return res.status(404).send('Not found');
+  }
 
   // El canonical de las locales va con path ("/caba"), no con sufijo ("-caba").
   if (locationSlug && LOCATIONS[locationSlug]) {
@@ -478,7 +558,11 @@ app.get('/servicios/:slug', (req, res) => {
   }
 
   const page = buildServiceLandingPage(actionSlug, deviceSlug);
-  if (!page) return res.status(404).send('Not found');
+  if (!page) {
+    const resolved = resolveServiceSlugRedirect(req.params.slug);
+    if (resolved) return res.redirect(301, resolved);
+    return res.status(404).send('Not found');
+  }
 
   // Si el slug pedido no era el canónico, redirigir 301 al canónico para SEO
   if (normalizedSlug !== req.params.slug) {
@@ -497,7 +581,11 @@ app.get('/servicios/:slug/:location', (req, res) => {
 
   const normalizedSlug = normalizeActionSlug(req.params.slug);
   const { actionSlug, deviceSlug } = parseServiceSlug(normalizedSlug);
-  if (!actionSlug || !deviceSlug) return res.status(404).send('Not found');
+  if (!actionSlug || !deviceSlug) {
+    const resolved = resolveServiceSlugRedirect(req.params.slug);
+    if (resolved) return res.redirect(301, resolved);
+    return res.status(404).send('Not found');
+  }
 
   const page = buildServiceLocationLandingPage(actionSlug, deviceSlug, locationSlug);
   if (!page) return res.status(404).send('Not found');
