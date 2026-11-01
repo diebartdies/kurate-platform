@@ -112,3 +112,8 @@ scripts/git-backup-push.sh                 # git commit+push de respaldo (rechaz
 # SEO canonical actions fix - 2026-10-22 04:29
 utils/seoServicePages.js
 server.js
+# SEO 404 GSC fix - 2026-11-01 (resolver de /servicios/* inventados por Google)
+# NOTA: nginx/conf.d/default.conf NO lo despliega deploy-features.ps1; hay que
+# subirlo aparte y recargar el contenedor KuraTe_nginx (bind mount read-only).
+server.js                              # resolveServiceSlugRedirect + /categorias invalido -> 301
+nginx/conf.d/default.conf              # quita redirect que ocultaba /categorias y /entornos
