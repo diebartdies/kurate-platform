@@ -2289,8 +2289,12 @@ export async function openViewLeadsModal() {
                 <div id="leadBlockedNoticeText" style="color:#f1a4a4;font-size:.9rem;line-height:1.5;margin-bottom:10px;"></div>
                 <button id="unblockVisibleLeadsBtn" type="button" style="background:#b91c1c;color:#fff;font-weight:bold;border:1px solid #7f1d1d;border-radius:4px;padding:8px 12px;cursor:pointer;"></button>
             </div>
+            <!-- Panel de progreso compartido por los tres canales (WhatsApp, SMS,
+                 correo). Antes el correo mostraba el avance en un div chico dentro
+                 del modal de edicion: si el admin lo cerraba se perdia el resumen y
+                 no habia forma de saber si el lote salio o no. -->
             <div id="bulkWhatsappPanel" class="hidden" style="margin-bottom: 20px; padding: 16px; border: 1px solid rgba(37,211,102,0.4); border-radius: 8px; background: rgba(37,211,102,0.08);">
-                <h4 class="gold-text" style="margin: 0 0 10px 0;">${t('Bulk outreach progress')}</h4>
+                <h4 class="gold-text" style="margin: 0 0 10px 0;"><span id="outreachProgressTitle">${t('Bulk outreach progress')}</span></h4>
                 <p id="bulkWhatsappStatusText" style="color: #ccc; margin: 0 0 12px 0; font-size: 0.9rem;">—</p>
                 <div id="bulkWhatsappQrWrap" class="hidden" style="margin-bottom: 12px; text-align: center;">
                     <p style="color: #aaa; font-size: 0.85rem; margin-bottom: 8px;">${t('Scan QR with WhatsApp on your phone')}</p>
@@ -2594,7 +2598,6 @@ async function applyInvitationToSelectedLeads() {
     if (btn) btn.disabled = true;
 
     try {
-        const token = localStorage.getItem('token');
         const res = await fetch(outreachEndpoints().targeted, {
             method: 'POST',
             headers: {
@@ -2606,19 +2609,36 @@ async function applyInvitationToSelectedLeads() {
         });
         const data = await parseAdminApiResponse(res);
         if (!data.success) {
-            announceMessage(data.error || t('Could not start invitation outreach'));
+            reportOutreachStartFailure(data.error || t('Could not start invitation outreach'));
             if (btn) btn.disabled = false;
             return;
         }
 
-        document.getElementById('bulkWhatsappPanel').classList.remove('hidden');
-        if (bulkWhatsappPollTimer) clearInterval(bulkWhatsappPollTimer);
-        bulkWhatsappPollTimer = setInterval(pollBulkWhatsappStatus, 2500);
-        pollBulkWhatsappStatus();
+        outreachPollChannel = inviteChannel;
+        startOutreachProgressPolling();
     } catch {
-        announceMessage(t('Could not start invitation outreach'));
+        reportOutreachStartFailure(t('Could not start invitation outreach'));
         if (btn) btn.disabled = false;
     }
+}
+
+// Muestra un error de arranque en el panel de la tabla. Antes iba solo por
+// announceMessage, que escribe en una live region sr-only: para un admin que
+// ve la pantalla el envio "no hacía nada" y no aparecia ningun motivo.
+function reportOutreachStartFailure(message) {
+    announceMessage(message, { isError: true });
+    showAlert(selectionFeedbackEl(), message, true);
+}
+
+// Abre el panel de progreso y arranca el polling. Compartido por los tres
+// canales: el correo antes progresaba en un div dentro del modal de edicion y
+// cerrar el modal borraba el resumen.
+function startOutreachProgressPolling() {
+    const panel = document.getElementById('bulkWhatsappPanel');
+    if (panel) panel.classList.remove('hidden');
+    if (outreachPollTimer) clearInterval(outreachPollTimer);
+    outreachPollTimer = setInterval(pollOutreachProgress, 2500);
+    pollOutreachProgress();
 }
 
 async function markLeadContacted(id) {
@@ -2840,16 +2860,30 @@ async function previewInviteMessage() {
     }
 }
 
-let bulkWhatsappPollTimer = null;
+let outreachPollTimer = null;
 
 // Selected outreach channel for the invitations panel. Defaults to WhatsApp so
 // the existing behavior is preserved unless the admin explicitly picks SMS.
 let inviteChannel = 'whatsapp';
 
 // Per-channel endpoint map so the shared list / buttons / polling can drive
-// either the WhatsApp or the SMS outreach engine without duplicating logic.
-function outreachEndpoints() {
-    return inviteChannel === 'sms'
+// any of the three outreach engines without duplicating logic.
+//
+// Email es el caso distinto: no tiene "bulk" (el backend solo admite ids
+// tildados, para no disparar un envio sin consentimiento a todo el padron) y su
+// POST pide subject/message/rate, asi que no entra en el shape generico de
+// targeted. Lo que SI comparte con los otros dos es el polling de progreso:
+// por eso el mapa tambien expone `status` para correo, y el panel de la tabla
+// puede leer las tres corridas con la misma funcion.
+function outreachEndpointsFor(channel) {
+    if (channel === 'email') {
+        return {
+            bulk: null,
+            targeted: `${API_URL}/admin/potential-professionals/send-email`,
+            status: `${API_URL}/admin/outreach/bulk-email/status`
+        };
+    }
+    return channel === 'sms'
         ? {
             bulk: `${API_URL}/admin/outreach/bulk-sms`,
             targeted: `${API_URL}/admin/outreach/sms/targeted`,
@@ -2862,12 +2896,16 @@ function outreachEndpoints() {
         };
 }
 
+function outreachEndpoints() {
+    return outreachEndpointsFor(inviteChannel);
+}
+
 function onInviteChannelChange(e) {
     const picked = e.target.value;
     inviteChannel = (picked === 'sms' || picked === 'email') ? picked : 'whatsapp';
-    if (bulkWhatsappPollTimer) {
-        clearInterval(bulkWhatsappPollTimer);
-        bulkWhatsappPollTimer = null;
+    if (outreachPollTimer) {
+        clearInterval(outreachPollTimer);
+        outreachPollTimer = null;
     }
     const panel = document.getElementById('bulkWhatsappPanel');
     const qrWrap = document.getElementById('bulkWhatsappQrWrap');
@@ -2887,7 +2925,10 @@ function onInviteChannelChange(e) {
         bulkBtn.style.opacity = isEmail ? '0.5' : '';
         bulkBtn.style.cursor = isEmail ? 'not-allowed' : 'pointer';
     }
-    if (inviteChannel !== 'email') pollBulkWhatsappStatus();
+    // Refresca el panel con el estado del motor recien elegido: si el correo
+    // quedo a medio enviar (el admin cerro el modal) se vuelve a ver aca.
+    outreachPollChannel = inviteChannel;
+    pollOutreachProgress();
 }
 
 // Un solo boton verde "Aplicar invitacion a seleccionadas" que respeta el canal
@@ -2906,8 +2947,18 @@ async function applyInvitationToSelected() {
     return applyInvitationToSelectedLeads();
 }
 
-function renderBulkWhatsappStatus(status) {
+// Panel de progreso compartido por los tres canales. Lee el status de
+// whatsappOutreachService / smsOutreachService / emailOutreachService, que
+// comparten el shape base (phase, total, sent, failed, skipped, currentLead,
+// lastError) con dos diferencias que este render absorbe:
+//   - Solo WhatsApp puede tener fase 'qr' (el wrap del QR queda oculto si no).
+//   - Solo el correo trae `notFound` (ids pedidos que ya no existen en la base).
+//
+// Renombrada de renderBulkWhatsappStatus: el panel ya no es exclusivo de
+// WhatsApp, y el correo ahora dejaba el avance enterrado en el modal de edicion.
+function renderOutreachProgress(status, channel = inviteChannel) {
     const panel = document.getElementById('bulkWhatsappPanel');
+    const titleEl = document.getElementById('outreachProgressTitle');
     const textEl = document.getElementById('bulkWhatsappStatusText');
     const barEl = document.getElementById('bulkWhatsappBar');
     const countsEl = document.getElementById('bulkWhatsappCounts');
@@ -2916,13 +2967,21 @@ function renderBulkWhatsappStatus(status) {
     if (!panel || !status) return;
 
     panel.classList.remove('hidden');
+    if (titleEl) {
+        const label = channel === 'email' ? t('Email') : (channel === 'sms' ? t('SMS') : t('WhatsApp'));
+        titleEl.textContent = `${t('Bulk outreach progress')} — ${label}`;
+    }
 
-    const processed = (status.sent || 0) + (status.failed || 0) + (status.skipped || 0);
+    const processed = (status.sent || 0) + (status.failed || 0) + (status.skipped || 0) + (status.notFound || 0);
     const total = status.total || 0;
     const pct = total > 0 ? Math.min(100, Math.round((processed / total) * 100)) : 0;
 
     if (barEl) barEl.style.width = `${pct}%`;
-    if (countsEl) countsEl.textContent = `${processed} / ${total} — ${t('Sent')}: ${status.sent || 0}, ${t('Failed')}: ${status.failed || 0}, ${t('Skipped')}: ${status.skipped || 0}`;
+    if (countsEl) {
+        let counts = `${processed} / ${total} — ${t('Sent')}: ${status.sent || 0}, ${t('Failed')}: ${status.failed || 0}, ${t('Skipped')}: ${status.skipped || 0}`;
+        if (status.notFound) counts += ` · ${t('Not found')}: ${status.notFound}`;
+        countsEl.textContent = counts;
+    }
 
     if (status.phase === 'qr' && status.qr && qrWrap && qrImg) {
         qrWrap.classList.remove('hidden');
@@ -2932,11 +2991,12 @@ function renderBulkWhatsappStatus(status) {
         qrWrap.classList.add('hidden');
     }
 
+    const sendingLabel = channel === 'email' ? t('Sending emails...') : t('Sending messages...');
     const phaseText = {
         idle: t('Ready'),
         initializing: t('Connecting to WhatsApp...'),
         qr: t('Waiting for WhatsApp login — scan the QR code.'),
-        sending: `${t('Sending messages...')} ${status.currentLead ? `(${status.currentLead})` : ''}`,
+        sending: `${sendingLabel} ${status.currentLead ? `(${status.currentLead})` : ''}`,
         waiting_window: t('Paused — waiting for the sending window.'),
         complete: t('Bulk outreach complete.'),
         error: status.lastError || t('Bulk outreach failed.')
@@ -2946,44 +3006,68 @@ function renderBulkWhatsappStatus(status) {
         textEl.textContent = phaseText[status.phase] || status.phase;
     }
 
+    const bulkBtn = document.getElementById('bulkWhatsappBtn');
+    const selectedBtn = document.getElementById('applySelectedInviteBtn');
+    const sendEmailBtn = document.getElementById('leSend');
+
     if (status.phase === 'complete' || status.phase === 'error') {
-        if (bulkWhatsappPollTimer) {
-            clearInterval(bulkWhatsappPollTimer);
-            bulkWhatsappPollTimer = null;
+        if (outreachPollTimer) {
+            clearInterval(outreachPollTimer);
+            outreachPollTimer = null;
         }
-        const bulkBtn = document.getElementById('bulkWhatsappBtn');
-        const selectedBtn = document.getElementById('applySelectedInviteBtn');
-        if (bulkBtn) bulkBtn.disabled = false;
+        if (bulkBtn) {
+            // Re-habilitar segun el canal: en correo nunca vuelve el "bulk".
+            const isEmail = inviteChannel === 'email';
+            bulkBtn.disabled = isEmail;
+            bulkBtn.style.opacity = isEmail ? '0.5' : '';
+        }
         if (selectedBtn) selectedBtn.disabled = false;
+        if (sendEmailBtn) sendEmailBtn.disabled = false;
+        // Un envio efectivo marca los leads como contacted: recargar la tabla
+        // refleja el nuevo estado y desengancha los que ya recibieron la
+        // invitacion, evitando reenvios duplicados.
         loadLeads(leadsCurrentPage);
     } else if (status.phase === 'sending' || status.phase === 'qr' || status.phase === 'initializing' || status.phase === 'waiting_window') {
-        const bulkBtn = document.getElementById('bulkWhatsappBtn');
-        const selectedBtn = document.getElementById('applySelectedInviteBtn');
         if (bulkBtn) bulkBtn.disabled = true;
         if (selectedBtn) selectedBtn.disabled = true;
-        if (!bulkWhatsappPollTimer) {
-            bulkWhatsappPollTimer = setInterval(pollBulkWhatsappStatus, 2500);
+        if (sendEmailBtn) sendEmailBtn.disabled = true;
+        if (!outreachPollTimer) {
+            outreachPollTimer = setInterval(pollOutreachProgress, 2500);
         }
     }
 }
 
-async function pollBulkWhatsappStatus() {
+// Compat: los call sites historicos de WhatsApp usan este nombre.
+function renderBulkWhatsappStatus(status) {
+    renderOutreachProgress(status, inviteChannel);
+}
+
+// Canal cuya corrida esta corriendo ahora. Se captura al iniciar el envio para
+// que el polling no consulte el endpoint equivocado si el admin cambia el radio
+// de canal a mitad de corrida (onInviteChannelChange igualmente corta el timer).
+let outreachPollChannel = 'whatsapp';
+
+async function pollOutreachProgress() {
     try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(outreachEndpoints().status, {
+        const res = await fetch(outreachEndpointsFor(outreachPollChannel).status, {
             headers: authHeaders(),
             credentials: 'include'
         });
         const data = await parseAdminApiResponse(res);
-        if (data.success) renderBulkWhatsappStatus(data.data);
+        if (data.success) renderOutreachProgress(data.data, outreachPollChannel);
     } catch (err) {
-        console.error('Bulk outreach status poll failed', err);
+        console.error('Outreach status poll failed', err);
     }
+}
+
+// Compat: call sites historicos de WhatsApp.
+function pollBulkWhatsappStatus() {
+    return pollOutreachProgress();
 }
 
 async function startBulkWhatsappOutreach() {
     if (inviteChannel === 'email') {
-        announceMessage(t('Bulk email is not available. Select recipients and use Apply invitation to selected.'));
+        reportOutreachStartFailure(t('Bulk email is not available. Select recipients and use Apply invitation to selected.'));
         return;
     }
     if (!(await confirmDialog(t('Apply the platform invitation to ALL pending potential professionals? This cannot be undone easily.')))) return;
@@ -2992,7 +3076,6 @@ async function startBulkWhatsappOutreach() {
     if (btn) btn.disabled = true;
 
     try {
-        const token = localStorage.getItem('token');
         const res = await fetch(outreachEndpoints().bulk, {
             method: 'POST',
             headers: {
@@ -3003,18 +3086,16 @@ async function startBulkWhatsappOutreach() {
         });
         const data = await parseAdminApiResponse(res);
         if (!data.success) {
-            announceMessage(data.error || t('Could not start bulk outreach'));
+            reportOutreachStartFailure(data.error || t('Could not start bulk outreach'));
             if (btn) btn.disabled = false;
             return;
         }
 
-        renderBulkWhatsappStatus(data.data);
-
-        if (bulkWhatsappPollTimer) clearInterval(bulkWhatsappPollTimer);
-        bulkWhatsappPollTimer = setInterval(pollBulkWhatsappStatus, 2500);
-        pollBulkWhatsappStatus();
+        outreachPollChannel = inviteChannel;
+        renderOutreachProgress(data.data, outreachPollChannel);
+        startOutreachProgressPolling();
     } catch (err) {
-        announceMessage(t('Could not start bulk outreach'));
+        reportOutreachStartFailure(t('Could not start bulk outreach'));
         if (btn) btn.disabled = false;
     }
 }
@@ -6168,9 +6249,6 @@ async function sendLeadInviteEmail(leadId) {
     const bodyEl = document.getElementById('leBody');
     const sendBtn = document.getElementById('leSend');
     const counter = document.getElementById('leCounter');
-    // Si quedo polling de un envio anterior (cerrado a mano a mitad de corrida),
-    // cortarlo antes de reabrir el modal.
-    stopEmailProgress();
     const single = !!leadId;
     const ids = single ? [leadId] : selectedLeadIds();
 
@@ -6222,72 +6300,20 @@ async function sendLeadInviteEmail(leadId) {
             if (!res.ok || !d || d.success !== true) {
                 throw new Error(d?.error || `HTTP ${res.status}`);
             }
-            // El envio arranca en segundo plano (respuesta 202) y la UI pollea
-            // el status para mostrar el progreso y el resumen al terminar.
-            startEmailProgress(alertEl, sendBtn);
+            // El envio arranca en segundo plano (respuesta 202) y el progreso
+            // vive en el panel de la tabla, igual que WhatsApp/SMS. Cerrar el
+            // modal de edicion aqui no pierde el resumen: antes el avance iba en
+            // #leAlert, asi que si el admin cerraba el modal no volvia a ver si
+            // el lote salio o no — que era justo la queja.
+            sendBtn.disabled = false;
+            closeAdminOverlay(modal);
+            outreachPollChannel = 'email';
+            startOutreachProgressPolling();
         } catch (err) {
             showAlert(alertEl, adminConnectionErrorMessage(err), true);
             sendBtn.disabled = false;
         }
     };
-}
-
-let emailProgressTimer = null;
-
-function stopEmailProgress() {
-    if (emailProgressTimer) {
-        clearInterval(emailProgressTimer);
-        emailProgressTimer = null;
-    }
-}
-
-// Pollea /bulk-email/status mientras corre el envio en segundo plano. Se reusa
-// la misma caja de alerta del modal para el progreso y el resumen final.
-function startEmailProgress(alertEl, sendBtn) {
-    stopEmailProgress();
-    const poll = async () => {
-        try {
-            const res = await fetch(`${API_URL}/admin/outreach/bulk-email/status`, {
-                headers: authHeaders(),
-                credentials: 'include'
-            });
-            const d = await res.json().catch(() => null);
-            if (!res.ok || !d || d.success !== true) return;
-            const s = d.data || {};
-
-            if (s.phase === 'sending') {
-                const sent = Number(s.sent) || 0;
-                const failed = Number(s.failed) || 0;
-                const skipped = Number(s.skipped) || 0;
-                const total = Number(s.total) || 0;
-                const processed = sent + failed + skipped;
-                showAlert(alertEl, `${processed} / ${total} — ${t('Sent')}: ${sent}, ${t('Failed')}: ${failed}, ${t('Skipped')}: ${skipped}`, false);
-                return;
-            }
-
-            stopEmailProgress();
-            const sent = Number(s.sent) || 0;
-            const failed = Number(s.failed) || 0;
-            const skipped = Number(s.skipped) || 0;
-            const notFound = Number(s.notFound) || 0;
-            const total = Number(s.total) || 0;
-            const processed = sent + failed + skipped;
-            let msg = `${processed} / ${total} — ${t('Sent')}: ${sent}, ${t('Failed')}: ${failed}, ${t('Skipped')}: ${skipped}`;
-            if (notFound) msg += ` · ${t('Not found')}: ${notFound}`;
-            if (skipped && !sent) {
-                msg += ` — ${t('Blocked leads are never emailed. Unblock them first in the Invitation column.')}`;
-            }
-            if (s.phase === 'error' && s.lastError) msg += ` (${s.lastError})`;
-            showAlert(alertEl, msg, s.phase === 'error' || (!sent && (failed || notFound)));
-            sendBtn.disabled = false;
-            loadLeads(leadsCurrentPage);
-        } catch (err) {
-            showAlert(alertEl, adminConnectionErrorMessage(err), true);
-            stopEmailProgress();
-        }
-    };
-    emailProgressTimer = setInterval(poll, 2000);
-    poll();
 }
 
 function createLeadEmailModal() {
@@ -6324,11 +6350,10 @@ function createLeadEmailModal() {
         </div>
     `;
     modal.querySelectorAll('.admin-modal-close').forEach((b) => {
-        // Mismo motivo que en el envio: cerrar a mano dejaba el modal "vivo".
-        b.onclick = () => {
-            stopEmailProgress();
-            closeAdminOverlay(modal);
-        };
+        // Cerrar el modal NO corta el polling: el progreso vive en el panel de
+        // la tabla (el mismo de WhatsApp/SMS). Antes se cortaba y el admin
+        // perdía el resumen al cerrar.
+        b.onclick = () => closeAdminOverlay(modal);
     });
 
     const rateInput = modal.querySelector('#leRate');

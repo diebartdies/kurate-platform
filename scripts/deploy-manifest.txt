@@ -50,7 +50,7 @@ public/avisos.html                         # detalle del aviso: idem
 public/js/autoFill.js                      # autocompletado de busqueda: sinonimos "educar/enseñar"
 public/js/helpers.js                       # selector multiple, entrada "otra" por dispositivo
 public/js/professional.js                  # edicion y upload de matricula
-public/js/admin.js                         # menu + modal del reporte de performance; leads enviados quedan sin tilde y el mail se muestra "Entregado"
+public/js/admin.js                         # menu + modal del reporte de performance; leads enviados quedan sin tilde y el mail se muestra "Entregado"; panel de progreso de outreach unificado para WhatsApp/SMS/correo
 public/js/avisos.js                        # bloquea el alta de aviso si faltan requisitos de perfil
 public/profDashboard.html                  # modal y popup de requisitos para crear aviso
 public/js/sessionIdle.js                   # cierre por inactividad: 5 min para no-admins
