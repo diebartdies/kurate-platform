@@ -1,7 +1,7 @@
 import { API_URL } from './globals.js';
 import { logoutToEntrance } from './navReturn.js';
 
-/** Inactivity limit for non-admin sessions (ms). */
+/** Inactivity limit for ALL sessions incl. admin (ms). */
 export const SESSION_IDLE_MS = 5 * 60 * 1000;
 
 const PUBLIC_AUTH_PAGES = new Set(['login.html', 'register.html', 'verify.html', 'recover.html']);
@@ -41,7 +41,9 @@ export function isAdminSession() {
 
 export function shouldEnforceSessionIdle() {
     if (isPublicAuthPage()) return false;
-    return hasAuthToken() && !isAdminSession();
+    // Admin also enforces idle logout (2026-11-03): an abandoned admin session
+    // used to live the full 30d JWT with no inactivity cutoff.
+    return hasAuthToken();
 }
 
 /** Modules register pollers / timers to stop on idle logout. */
