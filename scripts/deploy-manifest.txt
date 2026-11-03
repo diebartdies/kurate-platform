@@ -137,3 +137,31 @@ controllers/seoController.js           # CTA "Encontrar tecnico ahora" -> /hogar
 # leads modal. No requiere restart (estatico), pero el script lo hace igual.
 public/css/style.css                   # .admin-modal-overlay + #leadEmailModal z-index 10070
 public/admin.html                     # cache-bust CSS v8.32 para el fix del modal de correo
+
+# GSC "Pagina alternativa con etiqueta canonica adecuada" - 2026-11-03
+# Tres grupos reportados por GSC, todos servian 200 con canonical a OTRA url:
+# 1) ~60 URLs /env/cat/dev/action?brand=X - seoController emitia links de
+#    marca con ?brand= que NADIE leia (pagina identica a la limpia). Ahora los
+#    links van sin el parametro y el handler 301 lo elimina (consolida las
+#    variantes ya rastreadas).
+# 2) /acciones|entornos|categorias|niveles?lang=en y landings EN - el
+#    canonical nunca incluia ?lang=en (variable canonicalLang existia pero no
+#    se usaba en el tag), asi que las paginas EN canonicalizaban al ES y
+#    rompian el cluster hreflang. Ahora self-canonical por idioma.
+# 3) /reparaciones/caba - en el sitemap con prioridad 0.9 pero canonical ->
+#    /acciones/reparar. Ahora self-canonical (contenido propio de provincia);
+#    /reparaciones (301) se quita del sitemap.
+server.js                              # canonical EN en indices + canonicalPath de /reparaciones/:slug
+controllers/seoController.js           # 301-strip ?brand + links de marca sin el param
+utils/seoLandingPages.js               # pagePath/self-canonical EN + sitemap sin /reparaciones
+
+# Fix doble barra en canonical de /reparaciones/caba - 2026-11-03
+# canonicalPath llegaba con "/" inicial y el template interpola "/".
+utils/seoLandingPages.js               # pagePath sin barra inicial (replace ^/+)
+
+# Idle logout tambien para admin - 2026-11-03
+# shouldEnforceSessionIdle excluia admin (!isAdminSession): una sesion admin
+# abandonada vivia los 30d del JWT sin corte por inactividad. Ahora aplica
+# el mismo timeout de 5 min a todos. Estatico (nginx sirve JS con
+# max-age=0, must-revalidate) - no requiere cache-bust.
+public/js/sessionIdle.js               # shouldEnforceSessionIdle sin excepcion admin
