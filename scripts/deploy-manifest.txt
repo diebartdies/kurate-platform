@@ -126,3 +126,14 @@ nginx/conf.d/default.conf              # quita redirect que ocultaba /categorias
 # "return 301 /$is_args$args" (conserva params) - subirlo aparte + reload.
 server.js                              # middleware: / y /index.html con specialty -> 301 /hogar.html?service=...
 controllers/seoController.js           # CTA "Encontrar tecnico ahora" -> /hogar.html?service=...&provincia=CABA
+
+# Email compose modal invisible - 2026-11-03 (invites nunca se enviaban)
+# #leadEmailModal (admin.js createLeadEmailModal) usa la clase
+# "admin-modal-overlay" que no tenia NINGUNA regla CSS: el modal se abria
+# como bloque estatico atras del #leadsModal (fixed, z-index 10060) y el
+# admin nunca veia la ventana de redaccion -> GET invite-email si, pero
+# NUNCA POST send-email desde el navegador. CSS puro: posiciona el overlay
+# y le da #leadEmailModal z-index 10070 !important para quedar sobre el
+# leads modal. No requiere restart (estatico), pero el script lo hace igual.
+public/css/style.css                   # .admin-modal-overlay + #leadEmailModal z-index 10070
+public/admin.html                     # cache-bust CSS v8.32 para el fix del modal de correo
