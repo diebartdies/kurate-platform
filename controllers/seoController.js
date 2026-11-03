@@ -249,7 +249,12 @@ exports.handleServiceSeoPage = async (req, res) => {
     const title = verbInfo.verb + ' ' + dev.name + ' en ' + envName + ' | ' + cat.name + ' | KuraTe';
     const metaDesc = 'Servicio de ' + verbInfo.verb.toLowerCase() + ' ' + dev.name.toLowerCase() + ' en ' + envName + '. Profesionales verificados en ' + cat.name + '. ' + dev.brands.slice(0, 5).join(', ') + ' y mas.';
     const canonicalUrl = 'https://kurate.drsrv.net.ar/' + env.id + '/' + cat.id + '/' + dev.id + '/' + action;
-    const searchUrl = '/index.html?specialty=' + encodeURIComponent(env.id + '.' + cat.id + '.' + dev.id) + '&province=CABA';
+    // CTA de busqueda: apunta al buscador real (hogar.html) con el path de
+    // servicio en formato slash (env/cat/dev), que es el que leen los filtros
+    // y /api/v1/professionals/search. Antes era /index.html?specialty=... y
+    // nginx tiraba el query string en el 301 a /, asi que Google reportaba la
+    // URL como "Redirect" que aterriza en la home sin filtro alguno.
+    const searchUrl = '/hogar.html?service=' + [env.id, cat.id, dev.id].map(encodeURIComponent).join('/') + '&provincia=CABA';
     const kwList = [verbInfo.verb.toLowerCase() + ' ' + dev.name.toLowerCase(), verbInfo.verb.toLowerCase() + ' ' + dev.name.toLowerCase() + ' ' + envName.toLowerCase(), dev.name.toLowerCase() + ' ' + cat.name.toLowerCase(), 'tecnico ' + dev.name.toLowerCase(), 'reparacion ' + dev.name.toLowerCase(), 'service ' + dev.name.toLowerCase(), 'arreglo ' + dev.name.toLowerCase()];
     dev.brands.slice(0, 10).forEach(function(b) { kwList.push(verbInfo.verb.toLowerCase() + ' ' + dev.name.toLowerCase() + ' ' + b); });
     const keywords = kwList.join(', ');

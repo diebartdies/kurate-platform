@@ -117,3 +117,12 @@ server.js
 # subirlo aparte y recargar el contenedor KuraTe_nginx (bind mount read-only).
 server.js                              # resolveServiceSlugRedirect + /categorias invalido -> 301
 nginx/conf.d/default.conf              # quita redirect que ocultaba /categorias y /entornos
+# SEO redirect GSC fix - 2026-11-02 (CTA de landings /servicios/* al buscador real)
+# Los landings emitian /index.html?specialty=env.cat.dev&province=X: nginx
+# tiraba el query string en el 301 a / y ninguna pagina lee `specialty`, asi que
+# GSC reportaba "Redirect" que aterriza en la home sin filtro. Ahora el CTA va
+# directo a /hogar.html?service=env/cat/dev&provincia=X y server.js reescribe
+# las URLs viejas ya indexadas. nginx: location = /index.html pasa a
+# "return 301 /$is_args$args" (conserva params) - subirlo aparte + reload.
+server.js                              # middleware: / y /index.html con specialty -> 301 /hogar.html?service=...
+controllers/seoController.js           # CTA "Encontrar tecnico ahora" -> /hogar.html?service=...&provincia=CABA

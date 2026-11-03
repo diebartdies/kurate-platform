@@ -673,6 +673,23 @@ app.use((req, res, next) => {
   next();
 });
 
+// /index.html?specialty=env.cat.dev&province=X — CTAs viejos emitidos por los
+// landings SEO (seoController). specialty va en formato punto y ninguna pagina
+// lo lee: /index.html no filtra nada. Se reescribe al buscador real, que si
+// consume service (formato slash) y provincia. Tambien cubre /?specialty=...
+// porque nginx redirige /index.html -> / conservando el query string.
+app.use((req, res, next) => {
+  if (req.method !== 'GET') return next();
+  if (req.path !== '/' && req.path !== '/index.html') return next();
+  const { specialty, province } = req.query;
+  if (!specialty || typeof specialty !== 'string') return next();
+  const service = specialty.split('.').filter(Boolean).map(encodeURIComponent).join('/');
+  if (!service) return next();
+  let target = '/hogar.html?service=' + service;
+  if (province) target += '&provincia=' + encodeURIComponent(String(province));
+  res.redirect(301, target);
+});
+
 // Set static folder
 // La politica de cache la gobierna nginx (default.conf) con locations dedicados.
 // Aqui solo fijamos algo razonable por si el app se sirve directo (p.ej. :5001)
