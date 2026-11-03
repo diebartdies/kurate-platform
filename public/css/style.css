@@ -2350,6 +2350,42 @@ body.small-grid-mode #treasureGrid .treasure-card {
     padding: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
 }
 
+/* Modal de composicion de correo a leads (#leadEmailModal, admin.js
+   createLeadEmailModal): la clase "admin-modal-overlay" no tenia ninguna regla
+   en ningun stylesheet, asi que el modal se abria como bloque estatico DETRAS
+   del #leadsModal (fixed + z-index 10060) y el admin nunca veia la ventana de
+   redaccion: cargaba la plantilla (GET invite-email) pero nunca podia pulsar
+   Send, por eso no salia ningun POST /send-email desde el navegador. */
+.admin-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10060;
+    background: rgba(0, 0, 0, 0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+
+/* openAdminOverlay() agrega .admin-overlay-modal (z-index 10060 !important):
+   con el ID por delante este modal queda por encima del #leadsModal aunque
+   ambos compartan la capa, sin depender del orden en el DOM. */
+#leadEmailModal.admin-overlay-modal {
+    z-index: 10070 !important;
+}
+
+.admin-modal-overlay .admin-modal {
+    width: 100%;
+    background: var(--dark-bg, #1a1a1a);
+    color: #fff;
+    border: 1px solid #333;
+    border-radius: 8px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
 .admin-overlay-modal > button:first-of-type,
 .admin-modal-close-btn,
 .modal-close-external {
