@@ -308,7 +308,8 @@ function buildSeoLandingPage(type, item, lang = 'es', topRated = [], canonicalPa
   // (p. ej. /reparaciones/caba se arma con buildSeoLandingPage('action', ...)
   // pero esta en el sitemap con prioridad 0.9 y con contenido propio de
   // provincia: debe ser self-canonical, no apuntar a /acciones/reparar).
-  const pagePath = canonicalPath || `${basePath}/${item.slug}`;
+  // Sin barra inicial: el template ya interpola "${KURATE_BASE}/${pagePath}".
+  const pagePath = (canonicalPath || `${basePath}/${item.slug}`).replace(/^\/+/, '');
   const altLang = lang === 'es' ? 'en' : 'es';
   const altTitle = typeof item.title === 'object' ? (item.title[altLang] || item.title.es) : item.title;
 
