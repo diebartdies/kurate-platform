@@ -287,7 +287,7 @@ const UI = {
   }
 };
 
-function buildSeoLandingPage(type, item, lang = 'es', topRated = []) {
+function buildSeoLandingPage(type, item, lang = 'es', topRated = [], canonicalPath = null) {
   const t = UI[lang] || UI.es;
   const title = typeof item.title === 'object' ? (item.title[lang] || item.title.es) : item.title;
   const description = typeof item.description === 'object' ? (item.description[lang] || item.description.es) : item.description;
@@ -304,6 +304,11 @@ function buildSeoLandingPage(type, item, lang = 'es', topRated = []) {
 
   const basePath = type === 'action' ? 'acciones' : type === 'environment' ? 'entornos' : type === 'level' ? 'niveles' : 'categorias';
   const canonicalLang = lang === 'en' ? '?lang=en' : '';
+  // pagePath: ruta propia de la landing cuando no vive en /<basePath>/<slug>
+  // (p. ej. /reparaciones/caba se arma con buildSeoLandingPage('action', ...)
+  // pero esta en el sitemap con prioridad 0.9 y con contenido propio de
+  // provincia: debe ser self-canonical, no apuntar a /acciones/reparar).
+  const pagePath = canonicalPath || `${basePath}/${item.slug}`;
   const altLang = lang === 'es' ? 'en' : 'es';
   const altTitle = typeof item.title === 'object' ? (item.title[altLang] || item.title.es) : item.title;
 
@@ -367,13 +372,13 @@ function buildSeoLandingPage(type, item, lang = 'es', topRated = []) {
   <meta name="description" content="${description}">
   <meta name="keywords" content="${keywords}">
   <meta name="robots" content="index, follow">
-  <link rel="canonical" href="${KURATE_BASE}/${basePath}/${item.slug}">
-  <link rel="alternate" hreflang="es" href="${KURATE_BASE}/${basePath}/${item.slug}">
-  <link rel="alternate" hreflang="en" href="${KURATE_BASE}/${basePath}/${item.slug}?lang=en">
-  <link rel="alternate" hreflang="x-default" href="${KURATE_BASE}/${basePath}/${item.slug}">
+  <link rel="canonical" href="${KURATE_BASE}/${pagePath}${canonicalLang}">
+  <link rel="alternate" hreflang="es" href="${KURATE_BASE}/${pagePath}">
+  <link rel="alternate" hreflang="en" href="${KURATE_BASE}/${pagePath}?lang=en">
+  <link rel="alternate" hreflang="x-default" href="${KURATE_BASE}/${pagePath}">
   <meta property="og:title" content="${title} | KuraTe">
   <meta property="og:description" content="${description}">
-  <meta property="og:url" content="${KURATE_BASE}/${basePath}/${item.slug}${canonicalLang}">
+  <meta property="og:url" content="${KURATE_BASE}/${pagePath}${canonicalLang}">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="KuraTe">
   <meta property="og:image" content="${KURATE_BASE}/images/reparacion.png">
@@ -419,8 +424,8 @@ function buildSeoLandingPage(type, item, lang = 'es', topRated = []) {
 </head>
 <body>
   <div class="lang-switch">
-    <a href="/${basePath}/${item.slug}" class="${lang === 'es' ? 'active' : ''}">ES</a>
-    <a href="/${basePath}/${item.slug}?lang=en" class="${lang === 'en' ? 'active' : ''}">EN</a>
+    <a href="/${pagePath}" class="${lang === 'es' ? 'active' : ''}">ES</a>
+    <a href="/${pagePath}?lang=en" class="${lang === 'en' ? 'active' : ''}">EN</a>
   </div>
   <div class="container">
     <div class="breadcrumb"><a href="/${lang === 'en' ? '?lang=en' : ''}">${t.breadcrumb}</a> &rsaquo; <a href="/${basePath}${canonicalLang}">${breadcrumbLabel}</a> &rsaquo; ${title}</div>
@@ -475,7 +480,9 @@ function getAllSeoUrls() {
   CATEGORIES.forEach(c => urls.push({ loc: `/categorias/${c.slug}`, priority: 0.6, changefreq: 'monthly' }));
   NIVELES.forEach(n => urls.push({ loc: `/niveles/${n.slug}`, priority: 0.6, changefreq: 'monthly' }));
   urls.push({ loc: '/reparaciones/caba', priority: 0.9, changefreq: 'weekly' });
-  urls.push({ loc: '/reparaciones', priority: 0.5, changefreq: 'monthly' });
+  // OJO: /reparaciones (sin provincia) es un 301 a /acciones/reparar: no puede
+  // estar en el sitemap (Google reporta "Redirect" en el sitemap). Solo la
+  // variante por provincia, que sirve 200 con contenido propio.
   return urls;
 }
 

@@ -235,6 +235,16 @@ function getAllServiceSeoPages() {
 
 exports.handleServiceSeoPage = async (req, res) => {
   try {
+    // ?brand=X nunca se leyó: la landing servida es idéntica a la URL limpia
+    // (el canonical ya apuntaba a ella), así que Google reportaba cada variante
+    // como "Página alternativa con etiqueta canónica adecuada". Los links ya no
+    // emiten el parámetro; las variantes ya rastreadas se consolidan con 301.
+    if ('brand' in req.query) {
+      const q = new URLSearchParams(req.query);
+      q.delete('brand');
+      const qs = q.toString();
+      return res.redirect(301, req.path + (qs ? '?' + qs : ''));
+    }
     const { environment, category, device, action: rawAction } = req.params;
     const action = resolveActionSeo(rawAction);
     if (!action) return res.status(404).send('Action not found');
@@ -258,7 +268,10 @@ exports.handleServiceSeoPage = async (req, res) => {
     const kwList = [verbInfo.verb.toLowerCase() + ' ' + dev.name.toLowerCase(), verbInfo.verb.toLowerCase() + ' ' + dev.name.toLowerCase() + ' ' + envName.toLowerCase(), dev.name.toLowerCase() + ' ' + cat.name.toLowerCase(), 'tecnico ' + dev.name.toLowerCase(), 'reparacion ' + dev.name.toLowerCase(), 'service ' + dev.name.toLowerCase(), 'arreglo ' + dev.name.toLowerCase()];
     dev.brands.slice(0, 10).forEach(function(b) { kwList.push(verbInfo.verb.toLowerCase() + ' ' + dev.name.toLowerCase() + ' ' + b); });
     const keywords = kwList.join(', ');
-    const brandLinks = dev.brands.map(function(b) { return '<li><a href="/' + env.id + '/' + cat.id + '/' + dev.id + '/' + action + '?brand=' + encodeURIComponent(b) + '">' + b + '</a></li>'; }).join('\n');
+    // Links de marca SIN ?brand=: el parámetro no se leía en ningún lado y
+    // generaba cientos de variantes que Google reportaba como "página
+    // alternativa con canónica adecuada". Ahora apuntan a la URL limpia.
+    const brandLinks = dev.brands.map(function(b) { return '<li><a href="/' + env.id + '/' + cat.id + '/' + dev.id + '/' + action + '">' + b + '</a></li>'; }).join('\n');
     const envLinks = serviceTree.map(function(e) { return '<a href="/' + e.id + '">' + (ENV_NAMES_SEO[e.id] || e.name) + '</a>'; }).join(' | ');
     const deviceLinks = env.categories.flatMap(function(c2) { return c2.devices.map(function(d) { return '<a href="/' + env.id + '/' + c2.id + '/' + d.id + '/reparar">' + d.name + '</a>'; }); }).join(' | ');
     const sd = JSON.stringify({ '@context': 'https://schema.org', '@type': 'Service', name: verbInfo.verb + ' ' + dev.name, description: metaDesc, url: canonicalUrl, provider: { '@type': 'Organization', name: 'KuraTe', url: 'https://kurate.drsrv.net.ar' }, areaServed: { '@type': 'Country', name: 'Argentina' }, serviceType: verbInfo.verb + ' ' + dev.name, category: cat.name });

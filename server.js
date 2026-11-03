@@ -257,13 +257,13 @@ app.get('/acciones', async (req, res) => {
   <title>${t.title} | KuraTe — ${lang === 'en' ? 'Verified professionals in Argentina' : 'Profesionales verificados en Argentina'}</title>
   <meta name="description" content="${t.desc}">
   <meta name="robots" content="index, follow">
-  <link rel="canonical" href="https://kurate.drsrv.net.ar/acciones">
+  <link rel="canonical" href="https://kurate.drsrv.net.ar/acciones${lang === 'en' ? '?lang=en' : ''}">
   <link rel="alternate" hreflang="es" href="https://kurate.drsrv.net.ar/acciones">
   <link rel="alternate" hreflang="en" href="https://kurate.drsrv.net.ar/acciones?lang=en">
   <link rel="alternate" hreflang="x-default" href="https://kurate.drsrv.net.ar/acciones">
   <meta property="og:title" content="${t.title} | KuraTe">
   <meta property="og:description" content="${t.desc}">
-  <meta property="og:url" content="https://kurate.drsrv.net.ar/acciones">
+  <meta property="og:url" content="https://kurate.drsrv.net.ar/acciones${lang === 'en' ? '?lang=en' : ''}">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="KuraTe">
   <meta property="og:image" content="https://kurate.drsrv.net.ar/images/reparacion.png">
@@ -317,7 +317,7 @@ app.get('/entornos', async (req, res) => {
   res.type('html').send(`<!DOCTYPE html>
 <html lang="${lang}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>${t.title} | KuraTe</title><meta name="description" content="${t.desc}"><meta name="robots" content="index, follow">
-<link rel="canonical" href="https://kurate.drsrv.net.ar/entornos">
+<link rel="canonical" href="https://kurate.drsrv.net.ar/entornos${lang === 'en' ? '?lang=en' : ''}">
 <link rel="alternate" hreflang="es" href="https://kurate.drsrv.net.ar/entornos"><link rel="alternate" hreflang="en" href="https://kurate.drsrv.net.ar/entornos?lang=en"><link rel="alternate" hreflang="x-default" href="https://kurate.drsrv.net.ar/entornos">
 <meta name="theme-color" content="#B8922E"><meta name="color-scheme" content="dark">
 <style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f0f1a;color:#e0e0e0;margin:0}.container{max-width:800px;margin:0 auto;padding:2rem 1.5rem}h1{color:#B8922E;font-size:2rem;margin-bottom:0.5rem}p{line-height:1.7;font-size:1.1rem;color:#ccc}.cards{display:grid;gap:16px;margin:2rem 0}footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid #333;color:#666;font-size:0.85rem;text-align:center}.lang-switch{position:fixed;top:12px;right:12px;z-index:100;display:flex;gap:4px}.lang-switch a{display:inline-block;padding:4px 8px;border-radius:4px;font-size:0.75rem;text-decoration:none;color:#ccc;background:rgba(255,255,255,0.1)}.lang-switch a.active{background:#B8922E;color:#fff}</style></head>
@@ -345,7 +345,7 @@ app.get('/categorias', async (req, res) => {
   res.type('html').send(`<!DOCTYPE html>
 <html lang="${lang}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>${t.title} | KuraTe</title><meta name="description" content="${t.desc}"><meta name="robots" content="index, follow">
-<link rel="canonical" href="https://kurate.drsrv.net.ar/categorias">
+<link rel="canonical" href="https://kurate.drsrv.net.ar/categorias${lang === 'en' ? '?lang=en' : ''}">
 <link rel="alternate" hreflang="es" href="https://kurate.drsrv.net.ar/categorias"><link rel="alternate" hreflang="en" href="https://kurate.drsrv.net.ar/categorias?lang=en"><link rel="alternate" hreflang="x-default" href="https://kurate.drsrv.net.ar/categorias">
 <meta name="theme-color" content="#B8922E"><meta name="color-scheme" content="dark">
 <style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f0f1a;color:#e0e0e0;margin:0}.container{max-width:800px;margin:0 auto;padding:2rem 1.5rem}h1{color:#B8922E;font-size:2rem;margin-bottom:0.5rem}p{line-height:1.7;font-size:1.1rem;color:#ccc}.cards{display:grid;gap:16px;margin:2rem 0}footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid #333;color:#666;font-size:0.85rem;text-align:center}.lang-switch{position:fixed;top:12px;right:12px;z-index:100;display:flex;gap:4px}.lang-switch a{display:inline-block;padding:4px 8px;border-radius:4px;font-size:0.75rem;text-decoration:none;color:#ccc;background:rgba(255,255,255,0.1)}.lang-switch a.active{background:#B8922E;color:#fff}</style></head>
@@ -379,9 +379,9 @@ app.get('/niveles', async (req, res) => {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${t.title} | KuraTe</title><meta name="description" content="${t.desc}"><meta name="robots" content="index, follow">
-<link rel="canonical" href="https://kurate.drsrv.net.ar/niveles">
+<link rel="canonical" href="https://kurate.drsrv.net.ar/niveles${lang === 'en' ? '?lang=en' : ''}">
 <link rel="alternate" hreflang="es" href="https://kurate.drsrv.net.ar/niveles"><link rel="alternate" hreflang="en" href="https://kurate.drsrv.net.ar/niveles?lang=en"><link rel="alternate" hreflang="x-default" href="https://kurate.drsrv.net.ar/niveles">
-<meta property="og:title" content="${t.title} | KuraTe"><meta property="og:description" content="${t.desc}"><meta property="og:url" content="https://kurate.drsrv.net.ar/niveles">
+<meta property="og:title" content="${t.title} | KuraTe"><meta property="og:description" content="${t.desc}"><meta property="og:url" content="https://kurate.drsrv.net.ar/niveles${lang === 'en' ? '?lang=en' : ''}">
 <meta property="og:type" content="website"><meta property="og:site_name" content="KuraTe"><meta property="og:image" content="https://kurate.drsrv.net.ar/images/reparacion.png">
 <meta name="theme-color" content="#B8922E"><meta name="color-scheme" content="dark"><link rel="sitemap" type="application/xml" href="/sitemap.xml">
 <style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f0f1a;color:#e0e0e0;margin:0}.container{max-width:800px;margin:0 auto;padding:2rem 1.5rem}h1{color:#B8922E;font-size:2rem;margin-bottom:0.5rem}p{line-height:1.7;font-size:1.1rem;color:#ccc}.cards{display:grid;gap:16px;margin:2rem 0}footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid #333;color:#666;font-size:0.85rem;text-align:center}.lang-switch{position:fixed;top:12px;right:12px;z-index:100;display:flex;gap:4px}.lang-switch a{display:inline-block;padding:4px 8px;border-radius:4px;font-size:0.75rem;text-decoration:none;color:#ccc;background:rgba(255,255,255,0.1)}.lang-switch a.active{background:#B8922E;color:#fff}</style>
@@ -649,7 +649,7 @@ app.get('/reparaciones/:provinceSlug', async (req, res) => {
   }catch{} 
   const title = lang==='en' ? `Repairs in ${province} | KuraTe` : `Reparaciones en ${province} | KuraTe`;
   const desc = lang==='en' ? `Verified repair technicians in ${province}. White goods, climate, gas and more.` : `Técnicos verificados para reparaciones en ${province}. Línea blanca, climatización, gas y más.`;
-  const base = buildSeoLandingPage('action', {...item, title:{es:title,en:title}, description:{es:desc,en:desc}}, lang, topRated);
+  const base = buildSeoLandingPage('action', {...item, title:{es:title,en:title}, description:{es:desc,en:desc}}, lang, topRated, `/reparaciones/${raw}`);
   // inject province-specific CTA search url
   const html = base.replace(`/hogar.html?accion=reparar`, `/hogar.html?accion=reparar&province=${encodeURIComponent(province)}`);
   res.setHeader('Cache-Control','public, max-age=3600');
