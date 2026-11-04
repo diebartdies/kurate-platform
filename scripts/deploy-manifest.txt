@@ -165,3 +165,11 @@ utils/seoLandingPages.js               # pagePath sin barra inicial (replace ^/+
 # el mismo timeout de 5 min a todos. Estatico (nginx sirve JS con
 # max-age=0, must-revalidate) - no requiere cache-bust.
 public/js/sessionIdle.js               # shouldEnforceSessionIdle sin excepcion admin
+
+# Busqueda: plurales y stop words - 2026-11-04
+# services.actions guarda infinitivos ('reparar') y action guarda etiquetas
+# ('Reparo'): VERB_MAP cubria solo una cara, asi que 'arreglar heladera' daba 0
+# y 'reparar heladera' daba 2. Plurales (servicios/instalaciones/mantenimientos)
+# + stop words (servicio, servicios, service, services) para que la relajacion
+# se dispare y "servicios heladera" no quede en 0.
+controllers/professionalController.js   # VERB_MAP plurales + STOP_WORDS genericas

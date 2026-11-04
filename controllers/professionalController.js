@@ -2640,23 +2640,35 @@ exports.getHogarProfessionals = async (req, res, next) => {
       repare: ['Reparo', 'reparar'],
       reparo: ['Reparo', 'reparar'],
       reparemos: ['Reparo', 'reparar'],
-      reparacion: ['Reparo', 'reparación', 'reparacion', 'service'],
-      arreglar: ['Reparo', 'arreglar'],
-      arregla: ['Reparo', 'arreglar'],
-      arreglo: ['Reparo', 'arreglar', 'arreglo'],
+      reparacion: ['Reparo', 'reparación', 'reparacion', 'reparar', 'service'],
+      reparaciones: ['Reparo', 'reparación', 'reparacion', 'reparar'],
+      // Los actions guardados en services.actions son infinitivos ("reparar"),
+      // no etiquetas ("Reparo"): sin 'reparar' el plural/_sinonimo no matcheaba
+      // y "arreglar heladera" devolvia 0 mientras "reparar heladera" devolvia 2.
+      arreglar: ['Reparo', 'arreglar', 'reparar'],
+      arregla: ['Reparo', 'arreglar', 'reparar'],
+      arreglo: ['Reparo', 'arreglar', 'arreglo', 'reparar'],
+      arreglos: ['Reparo', 'arreglar', 'reparar'],
       compongo: ['Reparo', 'componer'],
       componer: ['Reparo', 'componer'],
       service: ['Reparo', 'service', 'servicio técnico', 'servicio'],
       'servicio técnico': ['Reparo', 'service', 'servicio técnico', 'servicio'],
       'servicio tecnico': ['Reparo', 'service', 'servicio técnico', 'servicio'],
       servicio: ['Reparo', 'service', 'servicio técnico', 'servicio'],
+      // plurales: el usuario escribe "servicios"/"instalaciones", lo guardado
+      // es infinitivo ("reparar") o etiqueta ("Reparo")
+      servicios: ['Reparo', 'service', 'servicio', 'servicio técnico'],
+      services: ['Reparo', 'service', 'servicio'],
       técnico: ['Reparo', 'técnico', 'tecnico'],
       tecnico: ['Reparo', 'técnico', 'tecnico'],
       instalar: ['Instalo', 'instalar'],
+      instalacion: ['Instalo', 'instalar', 'instalación'],
+      instalaciones: ['Instalo', 'instalar', 'instalación'],
       colocar: ['Instalo', 'colocar'],
       montar: ['Instalo', 'montar'],
       mantener: ['Hago mantenimiento', 'mantener'],
       mantenimiento: ['Hago mantenimiento', 'mantenimiento'],
+      mantenimientos: ['Hago mantenimiento', 'mantener', 'mantenimiento'],
       revisar: ['Hago mantenimiento', 'revisar'],
       chequear: ['Hago mantenimiento', 'chequear'],
       verificar: ['verificar', 'Verificar'],
@@ -2709,7 +2721,7 @@ exports.getHogarProfessionals = async (req, res, next) => {
         // cero. Se prepara una version sin esas palabras, pero SOLO se usa si
         // la version estricta no encontro a nadie: nunca se relajan criterios
         // que ya devuelven resultados.
-        const STOP_WORDS = new Set(['de', 'del', 'la', 'el', 'los', 'las', 'un', 'una', 'unos', 'unas', 'y', 'e', 'o', 'u', 'en', 'para', 'con', 'sin', 'sobre', 'a', 'al', 'lo', 'me', 'mi', 'se', 'que', 'necesito', 'necesita', 'quiero', 'busco', 'buscar', 'hago', 'hacen', 'tengo', 'tiene', 'tienen', 'hay', 'falta', 'faltan', 'urgente', 'urgencia']);
+        const STOP_WORDS = new Set(['de', 'del', 'la', 'el', 'los', 'las', 'un', 'una', 'unos', 'unas', 'y', 'e', 'o', 'u', 'en', 'para', 'con', 'sin', 'sobre', 'a', 'al', 'lo', 'me', 'mi', 'se', 'que', 'necesito', 'necesita', 'quiero', 'busco', 'buscar', 'hago', 'hacen', 'tengo', 'tiene', 'tienen', 'hay', 'falta', 'faltan', 'servicio', 'servicios', 'service', 'services', 'urgente', 'urgencia']);
         const core = words.filter(w => !STOP_WORDS.has(w.toLowerCase()));
         if (core.length > 0 && core.length < words.length) {
           relaxedQuery = Object.assign({}, query, { $and: query.$and.slice(0, firstWordClause) });
