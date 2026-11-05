@@ -1,5 +1,23 @@
 apply plugin: 'com.android.application'
 
+// --- Release signing: android/key.properties (nunca se commitea) ---
+def keystorePropertiesFile = rootProject.file('key.properties')
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+// --- versionName sincronizado con package.json (fallback si no se puede leer) ---
+def packageJsonVersion = '1.0.1'
+try {
+    def pkg = new groovy.json.JsonSlurper().parseText(rootProject.file('../package.json').text)
+    if (pkg?.version) {
+        packageJsonVersion = pkg.version.toString()
+    }
+} catch (Exception ignored) {
+    logger.warn("No se pudo leer ../package.json para versionName, usando fallback: " + packageJsonVersion)
+}
+
 android {
     namespace = "com.kurate.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +25,9 @@ android {
         applicationId "com.kurate.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // versionCode: incrementar en cada release publicado (Play Store lo exige)
+        versionCode 2
+        versionName packageJsonVersion
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,10 +35,23 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                storeFile rootProject.file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (keystorePropertiesFile.exists()) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }

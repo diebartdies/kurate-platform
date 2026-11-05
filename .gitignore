@@ -34,6 +34,8 @@ android/build/
 android/app/build/
 android/captures/
 android/local.properties
+android/key.properties
+android/*.keystore
 ios/App/Pods/
 ios/build/
 ios/*.xcworkspace
@@ -42,3 +44,6 @@ ios/*.xcworkspace
 *.ipa
 tmp_*.json
 .vscode/
+
+# Salidas locales de builds de la app (APKs, screenshots, credenciales)
+dist/

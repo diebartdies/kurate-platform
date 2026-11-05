@@ -11,7 +11,9 @@
     "cap:sync": "node node_modules/@capacitor/cli/bin/capacitor sync",
     "cap:open:android": "node node_modules/@capacitor/cli/bin/capacitor open android",
     "cap:open:ios": "node node_modules/@capacitor/cli/bin/capacitor open ios",
-    "cap:build:android": "node node_modules/@capacitor/cli/bin/capacitor sync android && cd android && ./gradlew assembleDebug",
+    "cap:build:android": "node scripts/build-android.js debug",
+    "cap:build:android:release": "node scripts/build-android.js release",
+    "cap:assets:generate": "node scripts/generate-app-assets.js && npx --no-install @capacitor/assets generate",
     "cap:build:ios": "node node_modules/@capacitor/cli/bin/capacitor sync ios",
     "audit:check": "npm audit",
     "audit:fix": "npm audit fix",
@@ -73,6 +75,7 @@
     "twilio": "^6.0.2"
   },
   "devDependencies": {
+    "@capacitor/assets": "^4.0.0",
     "axe-core": "^4.13.0",
     "browser-sync": "^3.0.4",
     "nodemon": "^3.1.14"
