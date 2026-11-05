@@ -32,6 +32,12 @@ const PreRegistrationSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  // true cuando el email se verifico con Google: la cuenta no crea contrasena
+  // (entra con Google, ver preRegistrationController.complete)
+  emailVerifiedViaGoogle: {
+    type: Boolean,
+    default: false
+  },
   step: {
     type: String,
     enum: ['phone', 'email', 'verified', 'dni', 'complete'],

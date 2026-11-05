@@ -151,12 +151,18 @@
                     <button id="findOnGridBtn" style="width: 100%; padding: 14px; background: var(--primary-gold); color: #0f0f1a; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">
                         Buscar mi anuncio en el grid
                     </button>
+                    <button id="createAvisoBtn" style="width: 100%; padding: 14px; background: transparent; color: var(--primary-gold); border: 2px solid var(--primary-gold); border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">
+                        Crear aviso
+                    </button>
                 </div>
             </div>
         `;
 
         document.getElementById('findOnGridBtn').addEventListener('click', function () {
             window.location.href = '/perfil/' + encodeURIComponent(alias);
+        });
+        document.getElementById('createAvisoBtn').addEventListener('click', function () {
+            window.location.href = '/profDashboard.html';
         });
         function getCapturaUrl(){ return (window.location.origin && window.location.origin!=='null' ? window.location.origin : 'https://kurate.drsrv.net.ar') + '/captura-dni.html'; }
         const sendLinkBtn=document.getElementById('sendLinkToPhoneBtn');

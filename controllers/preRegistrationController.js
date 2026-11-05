@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const { sendSms } = require('../services/smsService');
 const { OAuth2Client } = require('google-auth-library');
+const crypto = require('crypto');
 const { decodeDniBarcode, parseDniDate, calculateAge } = require('../utils/dniBarcode');
 function normalizeAlias(s){ if(!s) return s; return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim(); }
 const { assignGpsToLocation } = require('../utils/cityCoordinates');
@@ -159,6 +160,7 @@ exports.verifyEmailViaGoogle = async (req, res) => {
       return res.status(400).json({ error: 'El email de Google no coincide.' });
     }
     prereg.emailVerified = true;
+    prereg.emailVerifiedViaGoogle = true;
     prereg.emailCode = undefined;
     prereg.emailCodeExpire = undefined;
     prereg.step = 'verified';
@@ -256,19 +258,24 @@ exports.complete = async (req, res) => {
   try {
     let { id, password, role, alias, bio, street, number, floor, apartment, postalCode, province, city, neighborhood, services, height, measurements, originCountry, instagram, facebook } = req.body;
     alias = normalizeAlias(alias);
-    if (!id || !password) return res.status(400).json({ error: 'Faltan datos requeridos.' });
-    if (password.length < 6) return res.status(400).json({ error: 'La password debe tener al menos 6 caracteres.' });
+    if (!id) return res.status(400).json({ error: 'Faltan datos requeridos.' });
     const prereg = await PreRegistration.findById(id).select('+password');
     if (!prereg) return res.status(404).json({ error: 'Sesion no encontrada.' });
     if (prereg.step !== 'dni') return res.status(400).json({ error: 'Escanea tu DNI primero.' });
     if (!prereg.emailVerified || !prereg.phoneVerified) {
       return res.status(400).json({ error: 'Completa la verificacion de email y telefono.' });
     }
+    // Quien verifico el email con Google no crea contrasena: la cuenta entra
+    // con Google (mismo criterio que authController.googleAuth, que guarda un
+    // hash aleatorio que el usuario nunca ve).
+    const usedGoogle = !!prereg.emailVerifiedViaGoogle;
+    if (password && password.length < 6) return res.status(400).json({ error: 'La password debe tener al menos 6 caracteres.' });
+    if (!usedGoogle && !password) return res.status(400).json({ error: 'Faltan datos requeridos.' });
     const userRole = role || 'professional';
     const parsedBirthDate = parseDniDate(prereg.dniFechaNacimiento);
     const user = await User.create({
       email: prereg.email,
-      password,
+      password: password || crypto.randomBytes(16).toString('hex'),
       role: userRole,
       isEmailVerified: true,
       isVerified: userRole !== 'professional',
