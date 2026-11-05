@@ -173,3 +173,17 @@ public/js/sessionIdle.js               # shouldEnforceSessionIdle sin excepcion 
 # + stop words (servicio, servicios, service, services) para que la relajacion
 # se dispare y "servicios heladera" no quede en 0.
 controllers/professionalController.js   # VERB_MAP plurales + STOP_WORDS genericas
+
+# Registro unico: wizard compartido home + register.html - 2026-11-05
+# Un solo flujo de 4 pasos (email+tel, SMS, email/Google, DNI) en ambos
+# hosts. Con Google NO se pide password (backend guarda hash aleatorio);
+# sin Google password obligatoria. Boton home 'Crear aviso' -> 'Registrarse'
+# (oculto con sesion) y 'Crear aviso' agregado en profile.js (Mi Perfil).
+# registerWizard.js se importa con ?v=1 (nginx: max-age=0 igual, pero el
+# query string lo garantiza en proxies).
+public/js/registerWizard.js                # wizard compartido (nuevo)
+public/index.html                          # modal -> host + openPrereg dinamico + dict i18n
+public/register.html                       # form propio -> mount del wizard
+public/js/profile.js                       # boton Crear aviso -> profDashboard
+controllers/preRegistrationController.js   # complete: password solo sin Google
+models/PreRegistration.js                  # flag emailVerifiedViaGoogle
