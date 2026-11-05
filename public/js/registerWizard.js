@@ -407,10 +407,22 @@ export function mountRegisterWizard(target, options = {}) {
                 renderCompleteForm();
             }
 
-            // Clic en el marco para reintentar
+            // Clic en el marco: si hay errorMostrado, muestra botón "Reintentar",
+            // sino permite recargar la foto existente.
             msg.querySelectorAll('.dni-frame').forEach(frame => {
                 frame.addEventListener('click', () => {
                     const side = frame.dataset.side;
+                    if (side === 'front' && dniFront && window.dniErrorCount) {
+                        // Ya falló antes: preguntamos si quiere reintentar limpio
+                        if (confirm('La lectura anterior falló. ¿Querés tomar una foto nueva del DNI?')) {
+                            window.dniErrorCount = 0; // resetear contador
+                            dniFront = null;
+                            captureDni(side);
+                        }
+                        // si no hace nada, no vuelve a abrir el input automáticamente
+                        return;
+                    }
+                    // caso normal: permite cargar/change la foto
                     if (side === 'front' && dniFront) {
                         if (confirm('¿Querés volver a tomar esta foto?')) {
                             dniFront = null;
@@ -526,16 +538,31 @@ export function mountRegisterWizard(target, options = {}) {
                                 });
                                 const data = await r.json();
                                 if (!r.ok) {
+                                    // Incrementar contador de errores y mostrar mensaje mejorado
+                                    window.dniErrorCount = (window.dniErrorCount || 0) + 1;
+                                    const errMsg = data.error || 'Error al validar el DNI';
+                                    status.innerHTML = '<p style="color:#e74c3c;font-size:0.85rem;">' + errMsg + '</p>';
+                                    // Mostrar contador solo si hubo varios intentos
+                                    if (window.dniErrorCount >= 2) {
+                                        status.innerHTML += ' <span style="color:#7e7e7e;font-size:0.7rem;">Intento ' + window.dniErrorCount + ' fallido - la foto debe mostrar el DNI completo y bien iluminado, con el código de barras visible.</span>';
+                                    }
                                     dniFront = null;
-                                    status.innerHTML = '<p style="color:#e74c3c;font-size:0.85rem;">' + data.error + '</p>';
                                     renderDniUi();
                                     return;
                                 }
                                 const dni = data.dni || {};
+                                // Resetear contador en éxito
+                                window.dniErrorCount = 0;
                                 status.innerHTML = '<p style="color:#2ecc71;font-size:0.85rem;">DNI escaneado: ' + (dni.apellido || '') + ', ' + (dni.nombre || '') + ' (DNI ' + (dni.dni || '') + ')</p>';
                                 renderCompleteForm();
                             } catch (err) {
-                                status.innerHTML = '<p style="color:#e74c3c;font-size:0.85rem;">Error al validar el DNI.</p>';
+                                window.dniErrorCount = (window.dniErrorCount || 0) + 1;
+                                status.innerHTML = '<p style="color:#e74c3c;font-size:0.85rem;">Error de conexión al validar el DNI.</p>';
+                                if (window.dniErrorCount >= 2) {
+                                    status.innerHTML += ' <span style="color:#7e7e7e;font-size:0.7rem;">Intento ' + window.dniErrorCount + ' fallido.</span>';
+                                }
+                                dniFront = null;
+                                renderDniUi();
                             }
                         } else {
                             dniBack = ev.target.result;
