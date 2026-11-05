@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Wizard de registro unico de KuraTe.
  *
  * Un solo flujo para todos los accesos (home, /register.html, login, avisos):
@@ -45,67 +45,67 @@ const WIZARD_STYLES = `
 
 const WIZARD_HTML = `
     <div class="fm-step active" data-step="1">
-        <h2 id="preregModalTitle">Creá tu cuenta</h2>
-        <p>Primero contanos quién sos para registrarte.</p>
+        <h2 id="preregModalTitle">CreÃ¡ tu cuenta</h2>
+        <p>Primero contanos quiÃ©n sos para registrarte.</p>
         <div class="fm-card" style="padding:0;border:none;background:none;">
             <div style="margin-bottom:1rem;">
                 <label for="preregEmail">Email</label>
                 <input type="email" id="preregEmail" class="fm-input" placeholder="tucorreo@ejemplo.com" autocomplete="email">
             </div>
             <div style="margin-bottom:1rem;">
-                <label for="preregPhone">Teléfono</label>
+                <label for="preregPhone">TelÃ©fono</label>
                 <input type="tel" id="preregPhone" class="fm-input" placeholder="11 2345-6789" autocomplete="tel">
             </div>
             <div class="fm-error" id="preregStep1Error"></div>
-            <button class="fm-btn fm-btn-block" id="preregStep1Btn">Enviar código SMS</button>
+            <button class="fm-btn fm-btn-block" id="preregStep1Btn">Enviar cÃ³digo SMS</button>
         </div>
     </div>
 
     <div class="fm-step" data-step="2">
-        <h2>Verificá tu teléfono</h2>
-        <p id="smsCodeLabel">Ingresá el código de 6 dígitos que enviamos por SMS.</p>
+        <h2>VerificÃ¡ tu telÃ©fono</h2>
+        <p id="smsCodeLabel">IngresÃ¡ el cÃ³digo de 6 dÃ­gitos que enviamos por SMS.</p>
         <div class="fm-code-inputs" role="group" aria-labelledby="smsCodeLabel">
-            <input type="text" maxlength="1" class="fm-code-digit" data-idx="0" id="smsCode0" name="smsCode0" aria-label="Dígito 1 de 6">
-            <input type="text" maxlength="1" class="fm-code-digit" data-idx="1" id="smsCode1" name="smsCode1" aria-label="Dígito 2 de 6">
-            <input type="text" maxlength="1" class="fm-code-digit" data-idx="2" id="smsCode2" name="smsCode2" aria-label="Dígito 3 de 6">
-            <input type="text" maxlength="1" class="fm-code-digit" data-idx="3" id="smsCode3" name="smsCode3" aria-label="Dígito 4 de 6">
-            <input type="text" maxlength="1" class="fm-code-digit" data-idx="4" id="smsCode4" name="smsCode4" aria-label="Dígito 5 de 6">
-            <input type="text" maxlength="1" class="fm-code-digit" data-idx="5" id="smsCode5" name="smsCode5" aria-label="Dígito 6 de 6">
+            <input type="text" maxlength="1" class="fm-code-digit" data-idx="0" id="smsCode0" name="smsCode0" aria-label="DÃ­gito 1 de 6">
+            <input type="text" maxlength="1" class="fm-code-digit" data-idx="1" id="smsCode1" name="smsCode1" aria-label="DÃ­gito 2 de 6">
+            <input type="text" maxlength="1" class="fm-code-digit" data-idx="2" id="smsCode2" name="smsCode2" aria-label="DÃ­gito 3 de 6">
+            <input type="text" maxlength="1" class="fm-code-digit" data-idx="3" id="smsCode3" name="smsCode3" aria-label="DÃ­gito 4 de 6">
+            <input type="text" maxlength="1" class="fm-code-digit" data-idx="4" id="smsCode4" name="smsCode4" aria-label="DÃ­gito 5 de 6">
+            <input type="text" maxlength="1" class="fm-code-digit" data-idx="5" id="smsCode5" name="smsCode5" aria-label="DÃ­gito 6 de 6">
         </div>
         <div class="fm-error" id="preregStep2Error"></div>
         <button class="fm-btn fm-btn-block" id="preregStep2Btn" disabled>Verificar</button>
-        <button class="fm-btn fm-btn-ghost fm-btn-block fm-btn-sm" id="preregResendSms" style="margin-top:0.5rem;">Reenviar código</button>
+        <button class="fm-btn fm-btn-ghost fm-btn-block fm-btn-sm" id="preregResendSms" style="margin-top:0.5rem;">Reenviar cÃ³digo</button>
     </div>
 
     <div class="fm-step" data-step="3">
-        <h2>Verificá tu email</h2>
-        <p>Elegí cómo verificar tu correo.</p>
+        <h2>VerificÃ¡ tu email</h2>
+        <p>ElegÃ­ cÃ³mo verificar tu correo.</p>
         <div style="display:flex;flex-direction:column;gap:0.75rem;">
             <div id="preregGoogleMount"></div>
-            <button class="fm-btn fm-btn-outline fm-btn-block" id="preregEmailCodeBtn">Verificar con código por email</button>
+            <button class="fm-btn fm-btn-outline fm-btn-block" id="preregEmailCodeBtn">Verificar con cÃ³digo por email</button>
         </div>
         <div class="fm-error" id="preregStep3Error"></div>
     </div>
 
     <div class="fm-step" data-step="3b">
-        <h2>Código de email</h2>
-        <p id="emailCodeLabel">Enviamos un código a tu email. Ingresalo abajo.</p>
+        <h2>CÃ³digo de email</h2>
+        <p id="emailCodeLabel">Enviamos un cÃ³digo a tu email. Ingresalo abajo.</p>
         <div class="fm-code-inputs" role="group" aria-labelledby="emailCodeLabel">
-            <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="0" id="emailCode0" name="emailCode0" aria-label="Dígito 1 de 6">
-            <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="1" id="emailCode1" name="emailCode1" aria-label="Dígito 2 de 6">
-            <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="2" id="emailCode2" name="emailCode2" aria-label="Dígito 3 de 6">
-            <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="3" id="emailCode3" name="emailCode3" aria-label="Dígito 4 de 6">
-            <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="4" id="emailCode4" name="emailCode4" aria-label="Dígito 5 de 6">
-            <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="5" id="emailCode5" name="emailCode5" aria-label="Dígito 6 de 6">
+            <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="0" id="emailCode0" name="emailCode0" aria-label="DÃ­gito 1 de 6">
+            <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="1" id="emailCode1" name="emailCode1" aria-label="DÃ­gito 2 de 6">
+            <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="2" id="emailCode2" name="emailCode2" aria-label="DÃ­gito 3 de 6">
+            <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="3" id="emailCode3" name="emailCode3" aria-label="DÃ­gito 4 de 6">
+            <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="4" id="emailCode4" name="emailCode4" aria-label="DÃ­gito 5 de 6">
+            <input type="text" maxlength="1" class="fm-code-digit-email" data-idx="5" id="emailCode5" name="emailCode5" aria-label="DÃ­gito 6 de 6">
         </div>
         <div class="fm-error" id="preregStep3bError"></div>
         <button class="fm-btn fm-btn-block" id="preregStep3bBtn" disabled>Verificar</button>
-        <button class="fm-btn fm-btn-ghost fm-btn-block fm-btn-sm" id="preregResendEmail" style="margin-top:0.5rem;">Reenviar código</button>
-        <button class="fm-btn fm-btn-ghost fm-btn-block fm-btn-sm" id="preregBackToGoogle" style="margin-top:0.25rem;">Volver y elegir otra opción</button>
+        <button class="fm-btn fm-btn-ghost fm-btn-block fm-btn-sm" id="preregResendEmail" style="margin-top:0.5rem;">Reenviar cÃ³digo</button>
+        <button class="fm-btn fm-btn-ghost fm-btn-block fm-btn-sm" id="preregBackToGoogle" style="margin-top:0.25rem;">Volver y elegir otra opciÃ³n</button>
     </div>
 
     <div class="fm-step" data-step="4">
-        <h2>Ya casi está</h2>
+        <h2>Ya casi estÃ¡</h2>
         <div id="preregDeviceMsg"></div>
     </div>
 `;
@@ -121,7 +121,7 @@ function injectStyles() {
 /**
  * Monta el wizard dentro de `target` (selector o nodo). Idempotente: si el
  * host ya esta montado devuelve la misma api.
- * options.defaultRole: 'professional' | 'user' — preselecciona el rol final.
+ * options.defaultRole: 'professional' | 'user' â€” preselecciona el rol final.
  */
 export function mountRegisterWizard(target, options = {}) {
     const root = typeof target === 'string' ? document.querySelector(target) : target;
@@ -200,8 +200,8 @@ export function mountRegisterWizard(target, options = {}) {
         const err = q('#preregStep1Error');
         err.style.display = 'none';
 
-        if (!email) { err.textContent = 'Ingresá tu email.'; err.style.display = 'block'; return; }
-        if (!phone) { err.textContent = 'Ingresá tu teléfono.'; err.style.display = 'block'; return; }
+        if (!email) { err.textContent = 'IngresÃ¡ tu email.'; err.style.display = 'block'; return; }
+        if (!phone) { err.textContent = 'IngresÃ¡ tu telÃ©fono.'; err.style.display = 'block'; return; }
 
         this.disabled = true;
         this.textContent = 'Enviando...';
@@ -213,12 +213,12 @@ export function mountRegisterWizard(target, options = {}) {
                 body: JSON.stringify({ email, phone })
             });
             const data = await r.json();
-            if (!r.ok) { err.textContent = data.error || 'Error al enviar SMS.'; err.style.display = 'block'; this.disabled = false; this.textContent = 'Enviar código SMS'; return; }
+            if (!r.ok) { err.textContent = data.error || 'Error al enviar SMS.'; err.style.display = 'block'; this.disabled = false; this.textContent = 'Enviar cÃ³digo SMS'; return; }
             preregId = data.id;
             showStep(2);
-        } catch (e) { err.textContent = 'Error de conexión.'; err.style.display = 'block'; }
+        } catch (e) { err.textContent = 'Error de conexiÃ³n.'; err.style.display = 'block'; }
         this.disabled = false;
-        this.textContent = 'Enviar código SMS';
+        this.textContent = 'Enviar cÃ³digo SMS';
     });
 
     // Step 2: verifica codigo SMS
@@ -226,7 +226,7 @@ export function mountRegisterWizard(target, options = {}) {
         const err = q('#preregStep2Error');
         err.style.display = 'none';
         const code = Array.from(qa('.fm-code-digit')).map(i => i.value).join('');
-        if (code.length !== 6) { err.textContent = 'Ingresá los 6 dígitos.'; err.style.display = 'block'; return; }
+        if (code.length !== 6) { err.textContent = 'IngresÃ¡ los 6 dÃ­gitos.'; err.style.display = 'block'; return; }
         this.disabled = true; this.textContent = 'Verificando...';
         try {
             const r = await fetch('/api/v1/public/pre-register/verify-phone', {
@@ -235,10 +235,10 @@ export function mountRegisterWizard(target, options = {}) {
                 body: JSON.stringify({ id: preregId, code })
             });
             const data = await r.json();
-            if (!r.ok) { err.textContent = data.error || 'Código incorrecto.'; err.style.display = 'block'; this.disabled = false; this.textContent = 'Verificar'; return; }
+            if (!r.ok) { err.textContent = data.error || 'CÃ³digo incorrecto.'; err.style.display = 'block'; this.disabled = false; this.textContent = 'Verificar'; return; }
             showStep(3);
             tryMountGoogle();
-        } catch (e) { err.textContent = 'Error de conexión.'; err.style.display = 'block'; }
+        } catch (e) { err.textContent = 'Error de conexiÃ³n.'; err.style.display = 'block'; }
         this.disabled = false; this.textContent = 'Verificar';
     });
 
@@ -254,9 +254,9 @@ export function mountRegisterWizard(target, options = {}) {
             });
             const data = await r.json();
             if (!r.ok) { err.textContent = data.error || 'Error.'; err.style.display = 'block'; return; }
-            err.textContent = 'Código reenviado.'; err.style.color = '#2ecc71'; err.style.display = 'block';
+            err.textContent = 'CÃ³digo reenviado.'; err.style.color = '#2ecc71'; err.style.display = 'block';
             setTimeout(() => { err.style.display = 'none'; err.style.color = '#e74c3c'; }, 3000);
-        } catch (e) { err.textContent = 'Error de conexión.'; err.style.display = 'block'; }
+        } catch (e) { err.textContent = 'Error de conexiÃ³n.'; err.style.display = 'block'; }
     });
 
     // Step 3: elegir verificar con codigo por email
@@ -278,7 +278,7 @@ export function mountRegisterWizard(target, options = {}) {
             });
             const data = await r.json();
             if (!r.ok) { err.textContent = data.error || 'Error.'; err.style.display = 'block'; }
-        } catch (e) { err.textContent = 'Error de conexión.'; err.style.display = 'block'; }
+        } catch (e) { err.textContent = 'Error de conexiÃ³n.'; err.style.display = 'block'; }
     }
 
     // Step 3b: verifica codigo de email
@@ -286,7 +286,7 @@ export function mountRegisterWizard(target, options = {}) {
         const err = q('#preregStep3bError');
         err.style.display = 'none';
         const code = Array.from(qa('.fm-code-digit-email')).map(i => i.value).join('');
-        if (code.length !== 6) { err.textContent = 'Ingresá los 6 dígitos.'; err.style.display = 'block'; return; }
+        if (code.length !== 6) { err.textContent = 'IngresÃ¡ los 6 dÃ­gitos.'; err.style.display = 'block'; return; }
         this.disabled = true; this.textContent = 'Verificando...';
         try {
             const r = await fetch('/api/v1/public/pre-register/verify-email', {
@@ -295,9 +295,9 @@ export function mountRegisterWizard(target, options = {}) {
                 body: JSON.stringify({ id: preregId, code })
             });
             const data = await r.json();
-            if (!r.ok) { err.textContent = data.error || 'Código incorrecto.'; err.style.display = 'block'; this.disabled = false; this.textContent = 'Verificar'; return; }
+            if (!r.ok) { err.textContent = data.error || 'CÃ³digo incorrecto.'; err.style.display = 'block'; this.disabled = false; this.textContent = 'Verificar'; return; }
             showDeviceStep();
-        } catch (e) { err.textContent = 'Error de conexión.'; }
+        } catch (e) { err.textContent = 'Error de conexiÃ³n.'; }
         this.disabled = false; this.textContent = 'Verificar';
     });
 
@@ -313,9 +313,9 @@ export function mountRegisterWizard(target, options = {}) {
             });
             const data = await r.json();
             if (!r.ok) { err.textContent = data.error || 'Error.'; err.style.display = 'block'; return; }
-            err.textContent = 'Código reenviado.'; err.style.color = '#2ecc71'; err.style.display = 'block';
+            err.textContent = 'CÃ³digo reenviado.'; err.style.color = '#2ecc71'; err.style.display = 'block';
             setTimeout(() => { err.style.display = 'none'; err.style.color = '#e74c3c'; }, 3000);
-        } catch (e) { err.textContent = 'Error de conexión.'; err.style.display = 'block'; }
+        } catch (e) { err.textContent = 'Error de conexiÃ³n.'; err.style.display = 'block'; }
     });
 
     q('#preregBackToGoogle').addEventListener('click', function () {
@@ -332,7 +332,7 @@ export function mountRegisterWizard(target, options = {}) {
             const data = await r.json();
             const clientId = data.success && data.data && data.data.googleClientId ? data.data.googleClientId : '';
             if (!clientId) { mount.innerHTML = ''; return; }
-            mount.innerHTML = '<p style="font-size:0.85rem;margin-bottom:0.5rem;">O verificá con Google</p><div id="googleBtnMount"></div>';
+            mount.innerHTML = '<p style="font-size:0.85rem;margin-bottom:0.5rem;">O verificÃ¡ con Google</p><div id="googleBtnMount"></div>';
             await loadGoogleSdk();
             window.handleGooglePrereg = async (response) => {
                 const err = q('#preregStep3Error');
@@ -347,7 +347,7 @@ export function mountRegisterWizard(target, options = {}) {
                     if (!r2.ok) { err.textContent = data2.error || 'Error con Google.'; err.style.display = 'block'; return; }
                     usedGoogle = true;
                     showDeviceStep();
-                } catch (e) { err.textContent = 'Error de conexión.'; err.style.display = 'block'; }
+                } catch (e) { err.textContent = 'Error de conexiÃ³n.'; err.style.display = 'block'; }
             };
             window.google.accounts.id.initialize({ client_id: clientId, callback: window.handleGooglePrereg });
             window.google.accounts.id.renderButton(mount.querySelector('#googleBtnMount'), { theme: 'outline', size: 'large', type: 'standard', width: 380, text: 'continue_with', locale: 'es' });
@@ -387,11 +387,11 @@ export function mountRegisterWizard(target, options = {}) {
 
         function renderDniUi() {
             const lead = isMobile
-                ? 'Tomá la foto del frente de tu DNI para escanear el código de barras.'
-                : 'Subí una foto o escaneo del frente de tu DNI (con el código de barras). Si la tenés en el celular, pasala a la computadora o usá la webcam.';
+                ? 'TomÃ¡ la foto del frente de tu DNI para escanear el cÃ³digo de barras.'
+                : 'SubÃ­ una foto o escaneo del frente de tu DNI (con el cÃ³digo de barras). Si la tenÃ©s en el celular, pasala a la computadora o usÃ¡ la webcam.';
             msg.innerHTML = `
                 <p style="margin-bottom:1rem;">${lead}</p>
-                ${dniFrame('front', 'Frente del DNI (con código de barras)')}
+                ${dniFrame('front', 'Frente del DNI (con cÃ³digo de barras)')}
                 <div id="dniActions" style="display:flex;flex-direction:column;gap:0.75rem;"></div>
                 <div id="dniStatus" style="margin-top:0.75rem;"></div>
             `;
@@ -407,24 +407,24 @@ export function mountRegisterWizard(target, options = {}) {
                 renderCompleteForm();
             }
 
-            // Clic en el marco: si hay errorMostrado, muestra botón "Reintentar",
+            // Clic en el marco: si hay errorMostrado, muestra botÃ³n "Reintentar",
             // sino permite recargar la foto existente.
             msg.querySelectorAll('.dni-frame').forEach(frame => {
                 frame.addEventListener('click', () => {
                     const side = frame.dataset.side;
                     if (side === 'front' && dniFront && window.dniErrorCount) {
-                        // Ya falló antes: preguntamos si quiere reintentar limpio
-                        if (confirm('La lectura anterior falló. ¿Querés tomar una foto nueva del DNI?')) {
+                        // Ya fallÃ³ antes: preguntamos si quiere reintentar limpio
+                        if (confirm('La lectura anterior fallÃ³. Â¿QuerÃ©s tomar una foto nueva del DNI?')) {
                             window.dniErrorCount = 0; // resetear contador
                             dniFront = null;
                             captureDni(side);
                         }
-                        // si no hace nada, no vuelve a abrir el input automáticamente
+                        // si no hace nada, no vuelve a abrir el input automÃ¡ticamente
                         return;
                     }
                     // caso normal: permite cargar/change la foto
                     if (side === 'front' && dniFront) {
-                        if (confirm('¿Querés volver a tomar esta foto?')) {
+                        if (confirm('Â¿QuerÃ©s volver a tomar esta foto?')) {
                             dniFront = null;
                             captureDni(side);
                         }
@@ -437,25 +437,25 @@ export function mountRegisterWizard(target, options = {}) {
             const actions = q('#dniActions');
             const proSel = defaultRole === 'professional' ? 'selected' : '';
             const userSel = defaultRole === 'user' ? 'selected' : '';
-            // Con Google no se pide contraseña: la cuenta entra con Google
+            // Con Google no se pide contraseÃ±a: la cuenta entra con Google
             // (el backend guarda un hash aleatorio, igual que googleAuth).
             const passwordBlock = usedGoogle ? '' : `
                 <div style="margin-bottom:0.75rem;">
-                    <label style="font-size:0.8rem;">Contraseña</label>
-                    <input type="password" id="preregFinalPassword" placeholder="Mínimo 6 caracteres" style="width:100%;padding:0.6rem;border:1px solid #2a2a3e;border-radius:8px;background:#0f0f1a;color:#fff;font-size:0.9rem;box-sizing:border-box;">
+                    <label style="font-size:0.8rem;">ContraseÃ±a</label>
+                    <input type="password" id="preregFinalPassword" placeholder="MÃ­nimo 6 caracteres" style="width:100%;padding:0.6rem;border:1px solid #2a2a3e;border-radius:8px;background:#0f0f1a;color:#fff;font-size:0.9rem;box-sizing:border-box;">
                 </div>
                 <div style="margin-bottom:0.75rem;">
-                    <label style="font-size:0.8rem;">Confirmar contraseña</label>
-                    <input type="password" id="preregFinalPasswordConfirm" placeholder="Repetí la contraseña" style="width:100%;padding:0.6rem;border:1px solid #2a2a3e;border-radius:8px;background:#0f0f1a;color:#fff;font-size:0.9rem;box-sizing:border-box;">
+                    <label style="font-size:0.8rem;">Confirmar contraseÃ±a</label>
+                    <input type="password" id="preregFinalPasswordConfirm" placeholder="RepetÃ­ la contraseÃ±a" style="width:100%;padding:0.6rem;border:1px solid #2a2a3e;border-radius:8px;background:#0f0f1a;color:#fff;font-size:0.9rem;box-sizing:border-box;">
                 </div>`;
-            const googleNote = usedGoogle ? '<p style="color:#7e7e7e;font-size:0.8rem;margin-bottom:0.75rem;">Entraste con Google: no hace falta crear una contraseña.</p>' : '';
+            const googleNote = usedGoogle ? '<p style="color:#7e7e7e;font-size:0.8rem;margin-bottom:0.75rem;">Entraste con Google: no hace falta crear una contraseÃ±a.</p>' : '';
             actions.innerHTML = `
-                <p style="color:#2ecc71;font-size:0.85rem;margin-bottom:0.75rem;">DNI escaneado correctamente. Completá tu perfil.</p>
+                <p style="color:#2ecc71;font-size:0.85rem;margin-bottom:0.75rem;">DNI escaneado correctamente. CompletÃ¡ tu perfil.</p>
                 ${passwordBlock}
                 ${googleNote}
                 <div style="margin-bottom:0.75rem;">
-                    <label style="font-size:0.8rem;">Alias (mostrado públicamente)</label>
-                    <input type="text" id="preregFinalAlias" placeholder="Tu nombre de fantasía" style="width:100%;padding:0.6rem;border:1px solid #2a2a3e;border-radius:8px;background:#0f0f1a;color:#fff;font-size:0.9rem;box-sizing:border-box;">
+                    <label style="font-size:0.8rem;">Alias (mostrado pÃºblicamente)</label>
+                    <input type="text" id="preregFinalAlias" placeholder="Tu nombre de fantasÃ­a" style="width:100%;padding:0.6rem;border:1px solid #2a2a3e;border-radius:8px;background:#0f0f1a;color:#fff;font-size:0.9rem;box-sizing:border-box;">
                 </div>
                 <div style="margin-bottom:0.75rem;">
                     <label style="font-size:0.8rem;">Tipo de cuenta</label>
@@ -480,8 +480,8 @@ export function mountRegisterWizard(target, options = {}) {
             const alias = q('#preregFinalAlias').value.trim();
             const role = q('#preregFinalRole').value;
             if (!usedGoogle) {
-                if (!password || password.length < 6) { err.textContent = 'La contraseña debe tener al menos 6 caracteres.'; err.style.display = 'block'; return; }
-                if (password !== passwordConfirm) { err.textContent = 'Las contraseñas no coinciden.'; err.style.display = 'block'; return; }
+                if (!password || password.length < 6) { err.textContent = 'La contraseÃ±a debe tener al menos 6 caracteres.'; err.style.display = 'block'; return; }
+                if (password !== passwordConfirm) { err.textContent = 'Las contraseÃ±as no coinciden.'; err.style.display = 'block'; return; }
             }
             const btn = q('#preregFinalBtn');
             btn.disabled = true; btn.textContent = 'Creando cuenta...';
@@ -498,7 +498,7 @@ export function mountRegisterWizard(target, options = {}) {
                 localStorage.setItem('is18Plus', 'true');
                 sessionStorage.setItem('valid_entry', 'true');
                 window.location.href = role === 'professional' ? '/profDashboard.html' : '/hogar.html';
-            } catch (e) { err.textContent = 'Error de conexión.'; err.style.display = 'block'; btn.disabled = false; btn.textContent = 'Crear cuenta'; }
+            } catch (e) { err.textContent = 'Error de conexiÃ³n.'; err.style.display = 'block'; btn.disabled = false; btn.textContent = 'Crear cuenta'; }
         }
 
         function _resizeImg(file, maxW, maxH, quality) {
@@ -518,7 +518,7 @@ export function mountRegisterWizard(target, options = {}) {
 
         async function captureDni(side) {
             const inp = document.createElement('input');
-            inp.type = 'file'; inp.accept = 'image/*'; inp.capture = 'environment';
+            inp.type = 'file'; inp.accept = 'image/*'; inp.capture = 'user';  // Permite elegir cámara O galería
             inp.onchange = function (e) {
                 const file = e.target.files[0];
                 if (!file) return;
@@ -544,20 +544,20 @@ export function mountRegisterWizard(target, options = {}) {
                                     status.innerHTML = '<p style="color:#e74c3c;font-size:0.85rem;">' + errMsg + '</p>';
                                     // Mostrar contador solo si hubo varios intentos
                                     if (window.dniErrorCount >= 2) {
-                                        status.innerHTML += ' <span style="color:#7e7e7e;font-size:0.7rem;">Intento ' + window.dniErrorCount + ' fallido - la foto debe mostrar el DNI completo y bien iluminado, con el código de barras visible.</span>';
+                                        status.innerHTML += ' <span style="color:#7e7e7e;font-size:0.7rem;">Intento ' + window.dniErrorCount + ' fallido - la foto debe mostrar el DNI completo y bien iluminado, con el cÃ³digo de barras visible.</span>';
                                     }
                                     dniFront = null;
                                     renderDniUi();
                                     return;
                                 }
                                 const dni = data.dni || {};
-                                // Resetear contador en éxito
+                                // Resetear contador en Ã©xito
                                 window.dniErrorCount = 0;
                                 status.innerHTML = '<p style="color:#2ecc71;font-size:0.85rem;">DNI escaneado: ' + (dni.apellido || '') + ', ' + (dni.nombre || '') + ' (DNI ' + (dni.dni || '') + ')</p>';
                                 renderCompleteForm();
                             } catch (err) {
                                 window.dniErrorCount = (window.dniErrorCount || 0) + 1;
-                                status.innerHTML = '<p style="color:#e74c3c;font-size:0.85rem;">Error de conexión al validar el DNI.</p>';
+                                status.innerHTML = '<p style="color:#e74c3c;font-size:0.85rem;">Error de conexiÃ³n al validar el DNI.</p>';
                                 if (window.dniErrorCount >= 2) {
                                     status.innerHTML += ' <span style="color:#7e7e7e;font-size:0.7rem;">Intento ' + window.dniErrorCount + ' fallido.</span>';
                                 }
