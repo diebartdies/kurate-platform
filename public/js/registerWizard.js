@@ -516,7 +516,7 @@ export function mountRegisterWizard(target, options = {}) {
             });
         }
 
-        async function captureDni(side) {
+        async function captureDni(side) { /* NEW FUNCTION STARTS HERE */
             const inp = document.createElement('input');
             inp.type = 'file'; inp.accept = 'image/*'; inp.capture = 'user';  // Permite elegir cámara O galería
             inp.onchange = function (e) {
