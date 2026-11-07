@@ -656,11 +656,17 @@ app.get('/reparaciones/:provinceSlug', async (req, res) => {
   res.type('html').send(html);
 });
 
-// Favicon (browsers request /favicon.ico by default)
+// Favicon (browsers request /favicon.ico by default). Serve the real ICO
+// generated from apk_white1.png; the SVG stays as a fallback.
 app.get('/favicon.ico', (req, res) => {
   res.setHeader('Cache-Control', 'public, max-age=2592000');
+  const icoPath = path.join(__dirname, 'public', 'favicon.ico');
+  if (fs.existsSync(icoPath)) {
+    res.type('image/x-icon');
+    return res.sendFile(icoPath);
+  }
   res.type('image/svg+xml');
-  res.sendFile(path.join(__dirname, 'public', 'favicon.svg'));
+  return res.sendFile(path.join(__dirname, 'public', 'favicon.svg'));
 });
 
 // SEO: Add noindex to static HTML pages with query parameters
