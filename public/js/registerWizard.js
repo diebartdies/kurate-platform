@@ -492,7 +492,7 @@ export function mountRegisterWizard(target, options = {}) {
             }
             if (dniScanState === 'failed') {
                 return `<div id="dniStatus" style="margin-top:0.75rem;">
-                    <p style="color:#e74c3c;font-size:0.85rem;margin:0 0 0.35rem;">${escapeHtml(dniError || 'No pudimos leer el c&oacute;digo de barras del DNI.')}</p>
+                    <p style="color:#e74c3c;font-size:0.85rem;margin:0 0 0.35rem;">${escapeHtml(dniError || 'No pudimos leer el c\u00f3digo de barras del DNI.')}</p>
                     <p class="fm-note" style="margin:0;">La foto qued&oacute; guardada. Pod&eacute;s probar con otra foto m&aacute;s n&iacute;tida o completar los datos a mano.</p>
                 </div>`;
             }
