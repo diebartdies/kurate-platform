@@ -253,6 +253,74 @@ exports.scanDni = async (req, res) => {
   }
 };
 
+// Step 4 bis: DNI data entered by hand when the PDF417 barcode can't be read.
+// The photo is still stored (verificationDocuments) and the record is flagged
+// as manual so admin can review it; without this path a blurry photo left the
+// registration stuck in an endless "upload the DNI again" loop.
+exports.submitDniManual = async (req, res) => {
+  try {
+    const { id, image, nombre, apellido, dni, fechaNacimiento } = req.body;
+    if (!id) return res.status(400).json({ error: 'Faltan datos.' });
+    const prereg = await PreRegistration.findById(id);
+    if (!prereg) return res.status(404).json({ error: 'Sesion no encontrada.' });
+    if (!['verified', 'dni'].includes(prereg.step)) {
+      return res.status(400).json({ error: 'Completa la verificacion de email primero.' });
+    }
+
+    const cleanNombre = String(nombre || '').trim();
+    const cleanApellido = String(apellido || '').trim();
+    const cleanDni = String(dni || '').replace(/[^\d]/g, '');
+    const cleanFecha = String(fechaNacimiento || '').trim();
+
+    if (!cleanNombre || !cleanApellido) {
+      return res.status(400).json({ error: 'Ingresa nombre y apellido.' });
+    }
+    if (cleanDni.length < 7 || cleanDni.length > 8) {
+      return res.status(400).json({ error: 'El numero de DNI debe tener 7 u 8 digitos.' });
+    }
+    if (!parseDniDate(cleanFecha)) {
+      return res.status(400).json({ error: 'La fecha de nacimiento debe ser DD/MM/AAAA.' });
+    }
+    const age = calculateAge(cleanFecha);
+    if (age === null) {
+      return res.status(400).json({ error: 'Fecha de nacimiento invalida.' });
+    }
+    if (age < 18) {
+      return res.status(400).json({ error: 'Segun el DNI, sos menor de 18 anios.' });
+    }
+    if (age > 110) {
+      return res.status(400).json({ error: 'Revisa la fecha de nacimiento.' });
+    }
+
+    if (image) prereg.dniFrontImage = image;
+    prereg.dniNumeroTramite = cleanDni;
+    prereg.dniApellido = cleanApellido;
+    prereg.dniNombre = cleanNombre;
+    prereg.dniFechaNacimiento = cleanFecha;
+    prereg.dniVerifiedManually = true;
+    prereg.firstName = cleanNombre;
+    prereg.surname = cleanApellido;
+    prereg.step = 'dni';
+    await prereg.save();
+
+    res.status(200).json({
+      message: 'Datos del DNI guardados. Podes completar tu perfil.',
+      manual: true,
+      dni: {
+        apellido: cleanApellido,
+        nombre: cleanNombre,
+        dni: cleanDni,
+        fechaNacimiento: parseDniDate(cleanFecha),
+        age
+      },
+      step: 'dni'
+    });
+  } catch (error) {
+    console.error('DNI manual error:', error);
+    res.status(400).json({ error: 'Error guardando los datos del DNI.' });
+  }
+};
+
 // Step 5: Complete registration -> create User -> return JWT
 exports.complete = async (req, res) => {
   try {

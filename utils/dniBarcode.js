@@ -1,5 +1,57 @@
 const { readBarcodesFromImageFile } = require('zxing-wasm');
 
+// sharp es opcional: si no esta instalado seguimos intentando con la imagen
+// original en vez de romper el endpoint.
+let sharp = null;
+try { sharp = require('sharp'); } catch (e) { sharp = null; }
+
+const READER_OPTIONS = {
+  tryHarder: true,
+  tryRotate: true,
+  tryInvert: true,
+  tryDownscale: true,
+  maxNumberOfSymbols: 5,
+  possibleFormats: [28] // PDF417 = 28 en ZXing
+};
+
+/**
+ * Las fotos de celular suelen fallar por tamaño enorme, bajo contraste o
+ * ruido. Generamos variantes (gris, normalizada, con mas contraste e
+ * invertida) y probamos el lector con cada una antes de rendirnos.
+ */
+async function buildImageVariants(imageBuffer) {
+  const variants = [{ label: 'original', buffer: imageBuffer }];
+  if (!sharp) return variants;
+
+  const jobs = [
+    {
+      label: 'gray-1800',
+      make: () => sharp(imageBuffer).rotate().resize({ width: 1800, withoutEnlargement: false }).grayscale().normalize().sharpen({ sigma: 1 }).png()
+    },
+    {
+      label: 'gray-2400',
+      make: () => sharp(imageBuffer).rotate().resize({ width: 2400, withoutEnlargement: false }).grayscale().normalize().png()
+    },
+    {
+      label: 'contrast',
+      make: () => sharp(imageBuffer).rotate().grayscale().linear(1.5, -40).png()
+    },
+    {
+      label: 'invert',
+      make: () => sharp(imageBuffer).rotate().resize({ width: 2000, withoutEnlargement: false }).grayscale().negate().png()
+    }
+  ];
+
+  for (const job of jobs) {
+    try {
+      variants.push({ label: job.label, buffer: await job.make().toBuffer() });
+    } catch (e) {
+      // variante no valida: seguimos con las demas
+    }
+  }
+  return variants;
+}
+
 /**
  * Decode PDF417 barcode from Argentine DNI image.
  * 
@@ -15,31 +67,39 @@ const { readBarcodesFromImageFile } = require('zxing-wasm');
  * @returns {Object} Extracted DNI data
  */
 async function decodeDniBarcode(imageBuffer) {
-  const { barcodes, error } = await readBarcodesFromImageFile(imageBuffer, {
-    tryHarder: true,
-    tryRotate: true,
-    tryInvert: true,
-    tryDownscale: true,
-    maxNumberOfSymbols: 5,
-    possibleFormats: [28] // PDF417 = 28 in ZXing
-  });
+  const variants = await buildImageVariants(imageBuffer);
+  let lastRaw = '';
+  let readError = '';
 
-  if (error || !barcodes || barcodes.length === 0) {
-    return { success: false, error: 'No se pudo leer el código de barras PDF417 de la imagen' };
-  }
+  for (const variant of variants) {
+    let barcodes = [];
+    try {
+      const result = await readBarcodesFromImageFile(variant.buffer, READER_OPTIONS);
+      if (result && result.error) readError = String(result.error.message || result.error);
+      barcodes = (result && result.barcodes) || [];
+    } catch (e) {
+      readError = e.message;
+      continue;
+    }
 
-  // Try each barcode until we get valid DNI data
-  for (const barcode of barcodes) {
-    const text = barcode.text;
-    if (!text || text.length < 10) continue;
-
-    const parsed = parseDniBarcode(text);
-    if (parsed) {
-      return { success: true, data: parsed, raw: text };
+    for (const barcode of barcodes) {
+      const text = barcode && barcode.text ? String(barcode.text) : '';
+      if (!text || text.length < 10) continue;
+      if (!lastRaw) lastRaw = text;
+      const parsed = parseDniBarcode(text);
+      if (parsed) {
+        return { success: true, data: parsed, raw: text, variant: variant.label };
+      }
     }
   }
 
-  return { success: false, error: 'El código de barras no contiene datos válidos de DNI', raw: barcodes[0]?.text };
+  if (!lastRaw) {
+    return {
+      success: false,
+      error: 'No pudimos leer el código de barras del DNI. Probá con una foto más nítida, sin reflejos y con el código completo, o completá los datos a mano.'
+    };
+  }
+  return { success: false, error: 'El código de barras no contiene datos válidos de DNI', raw: lastRaw };
 }
 
 /**

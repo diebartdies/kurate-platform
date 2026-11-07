@@ -64,6 +64,12 @@ const PreRegistrationSchema = new mongoose.Schema({
   dniFechaEmision: {
     type: String
   },
+  // true si el usuario completo los datos a mano porque el PDF417 no se pudo
+  // leer: la foto queda guardada igual para revision del admin.
+  dniVerifiedManually: {
+    type: Boolean,
+    default: false
+  },
   firstName: {
     type: String
   },

@@ -1118,6 +1118,7 @@ app.post('/api/v1/public/pre-register/verify-email', preRegistrationController.v
 app.post('/api/v1/public/pre-register/verify-email-google', preRegistrationController.verifyEmailViaGoogle);
 app.post('/api/v1/public/pre-register/resend-code', preRegistrationController.resendCode);
 app.post('/api/v1/public/pre-register/scan-dni', preRegistrationController.scanDni);
+app.post('/api/v1/public/pre-register/dni-manual', preRegistrationController.submitDniManual);
 app.post('/api/v1/public/pre-register/complete', preRegistrationController.complete);
 app.get('/api/v1/public/pre-register/status/:id', preRegistrationController.getStatus);
 

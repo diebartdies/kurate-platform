@@ -4,6 +4,42 @@ import { showAlert } from './uiHelpers.js';
 
 let cachedClientId = null;
 
+/**
+ * Google Identity Services no funciona dentro de una WebView embebida (la app
+ * Android): Google bloquea el flujo y el boton termina mostrando una pantalla
+ * en blanco. En la app usamos email + contrasena.
+ */
+export function isNativeWebView() {
+    try {
+        if (window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform()) {
+            return true;
+        }
+    } catch (e) { /* noop */ }
+    const ua = navigator.userAgent || '';
+    return /; wv\)/i.test(ua) || /Capacitor/i.test(ua);
+}
+
+function renderWebViewGoogleNote(host, insertBefore) {
+    const text = 'La verificacion con Google no esta disponible dentro de la app. Ingresa con tu email y contrasena.';
+    const style = 'color:#7e7e7e;font-size:0.78rem;line-height:1.4;margin:0 0 0.75rem;';
+    if (host) {
+        host.classList.remove('hidden');
+        host.innerHTML = '<p style="' + style + '">' + text + '</p>';
+        host.dataset.googleMounted = '0';
+        return;
+    }
+    if (insertBefore) {
+        let note = insertBefore.previousElementSibling;
+        if (!note || !note.classList.contains('google-signin-block')) {
+            note = document.createElement('p');
+            note.className = 'google-signin-block';
+            insertBefore.parentNode.insertBefore(note, insertBefore);
+        }
+        note.setAttribute('style', style);
+        note.textContent = text;
+    }
+}
+
 function readMetaClientId() {
     const meta = document.querySelector('meta[name="google-signin-client_id"]');
     return meta?.content?.trim() || '';
@@ -137,6 +173,11 @@ export async function mountGoogleSignIn({
     const clientId = await resolveGoogleClientId();
     if (!clientId) {
         clearGoogleMount(host);
+        return;
+    }
+
+    if (isNativeWebView()) {
+        renderWebViewGoogleNote(host, insertBefore);
         return;
     }
 

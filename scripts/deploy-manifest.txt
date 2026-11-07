@@ -187,3 +187,24 @@ public/register.html                       # form propio -> mount del wizard
 public/js/profile.js                       # boton Crear aviso -> profDashboard
 controllers/preRegistrationController.js   # complete: password solo sin Google
 models/PreRegistration.js                  # flag emailVerifiedViaGoogle
+
+# DNI sin loop + password siempre + Google en la app - 2026-11-07
+# 1) El escaneo PDF417 rechazaba toda foto: el front borraba el mensaje de
+#    error y volvia a pedir la foto (loop eterno) y nunca llegaba al formulario
+#    final, por eso "jamas pedia la password". Ahora el error queda visible,
+#    hay "probar con otra foto" y ademas "completar los datos del DNI a mano"
+#    (endpoint /dni-manual: guarda la foto, valida 18+ y marca
+#    dniVerifiedManually para revision del admin).
+# 2) La password se pide siempre que el email NO se haya verificado con Google.
+# 3) Google Identity Services no funciona en la WebView de la app (pantalla en
+#    blanco): en la app se muestra una nota y queda el codigo por email.
+# 4) dniBarcode: variantes con sharp (gris/normalizada/contraste/invertida)
+#    antes de rendirse.
+public/js/registerWizard.js                # wizard: DNI manual + password + Google WebView
+public/js/googleAuth.js                    # isNativeWebView + nota en vez de boton en blanco
+public/index.html                          # wizard ?v=2 (cache-bust)
+public/register.html                       # wizard ?v=2 (cache-bust)
+controllers/preRegistrationController.js   # submitDniManual (paso 4 bis)
+models/PreRegistration.js                  # flag dniVerifiedManually
+utils/dniBarcode.js                        # preprocesado sharp + mensaje accionable
+server.js                                  # ruta POST /api/v1/public/pre-register/dni-manual
