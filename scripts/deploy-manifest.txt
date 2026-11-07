@@ -208,3 +208,31 @@ controllers/preRegistrationController.js   # submitDniManual (paso 4 bis)
 models/PreRegistration.js                  # flag dniVerifiedManually
 utils/dniBarcode.js                        # preprocesado sharp + mensaje accionable
 server.js                                  # ruta POST /api/v1/public/pre-register/dni-manual
+
+# Favicon con el arte de la app - 2026-11-07
+# Mismo dibujo que el icono de la APK (public/images/apk_white1.png). Los PNG
+# se generan con scripts/generate-favicons.js (centrado en lienzo cuadrado
+# blanco: el original es 92x76 y el icono Android lo estiraba).
+scripts/generate-favicons.js               # genera favicon-32/192, apple-touch y el .ico
+public/favicon-32.png                      # nuevo
+public/favicon-192.png                     # nuevo
+public/apple-touch-icon.png                # nuevo (180x180)
+public/favicon.ico                         # regenerado 16/32/48 (antes era una copia del .svg)
+public/admin.html                          # link de icono PNG
+public/avisos.html                         # link de icono PNG
+public/captura-dni.html                    # link de icono PNG
+public/dashboard.html                      # link de icono PNG
+public/discover.html                       # link de icono PNG
+public/hogar-detail.html                   # link de icono PNG
+public/hogar.html                          # link de icono PNG
+public/home.html                           # link de icono PNG
+public/index.html                          # agrega los links (no tenia ninguno)
+public/login.html                          # link de icono PNG
+public/precios-aire-acondicionado.html     # link de icono PNG
+public/profDashboard.html                  # link de icono PNG
+public/profile.html                        # link de icono PNG
+public/recover.html                        # link de icono PNG
+public/register.html                       # link de icono PNG
+public/set-password.html                   # link de icono PNG
+public/treasure.html                       # link de icono PNG
+public/verify.html                         # link de icono PNG
