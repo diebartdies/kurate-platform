@@ -1,3 +1,8 @@
+# Proyecto separado a proposito: docker-compose.yml (prod local) y este archivo
+# comparten la carpeta, y ambos tienen un servicio `mongo`. Sin `name`, Compose
+# los mete en el mismo proyecto y al hacer `up` reemplaza el mongo del otro.
+name: kurate-dev
+
 services:
   mongo:
     image: mongo:4.4
