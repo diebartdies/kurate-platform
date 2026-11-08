@@ -10,8 +10,9 @@ const READER_OPTIONS = {
   tryRotate: true,
   tryInvert: true,
   tryDownscale: true,
-  maxNumberOfSymbols: 5,
+  maxNumberOfSymbols: 15, // aumentado de 5 a 15 para códigos PDF417 largos
   possibleFormats: [28] // PDF417 = 28 en ZXing
+  // pureBarcode: true, // Comentar/quitar si las variantes sharp interfieren con una foto ya buena
 };
 
 /**
@@ -39,12 +40,31 @@ async function buildImageVariants(imageBuffer) {
     {
       label: 'invert',
       make: () => sharp(imageBuffer).rotate().resize({ width: 2000, withoutEnlargement: false }).grayscale().negate().png()
+    },
+    {
+      label: 'cropped-bottom',
+      // Recorta la franja inferior donde suele estar el codigo PDF417 del DNI
+      // argentino. sharp.extract pide pixeles (no porcentajes), asi que las
+      // dimensiones se calculan con metadata; si la foto viene rotada por EXIF
+      // y el recorte no cierra, el catch del loop lo saltea.
+      make: async () => {
+        const meta = await sharp(imageBuffer).metadata();
+        const width = meta.width || 0;
+        const height = meta.height || 0;
+        if (!width || !height) throw new Error('sin dimensiones');
+        const top = Math.floor(height * 0.6);
+        return sharp(imageBuffer)
+          .rotate()
+          .extract({ left: 0, top, width, height: height - top })
+          .grayscale().normalize().sharpen({ sigma: 1 }).png();
+      }
     }
   ];
 
   for (const job of jobs) {
     try {
-      variants.push({ label: job.label, buffer: await job.make().toBuffer() });
+      const image = await job.make();
+      variants.push({ label: job.label, buffer: await image.toBuffer() });
     } catch (e) {
       // variante no valida: seguimos con las demas
     }

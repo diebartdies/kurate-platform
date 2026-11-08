@@ -18,6 +18,8 @@ const sendEmail = async (options) => {
 
   const port = Number(process.env.SMTP_PORT) || 587;
 
+  // Timeouts duros: un SMTP colgado no puede colgar el request que lo dispara
+  // (registro, verificacion, notificaciones). Si no contesta, falla rapido.
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port,
@@ -26,6 +28,9 @@ const sendEmail = async (options) => {
       user: process.env.SMTP_EMAIL,
       pass: process.env.SMTP_PASSWORD
     },
+    connectionTimeout: Number(process.env.SMTP_CONNECTION_TIMEOUT_MS) || 10000,
+    greetingTimeout: Number(process.env.SMTP_GREETING_TIMEOUT_MS) || 10000,
+    socketTimeout: Number(process.env.SMTP_SOCKET_TIMEOUT_MS) || 20000,
     tls: {
       rejectUnauthorized: false
     }

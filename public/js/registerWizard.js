@@ -669,8 +669,9 @@ export function mountRegisterWizard(target, options = {}) {
                 ? '<p class="fm-note" style="margin:0 0 0.75rem;">Verificaste el email con Google: no hace falta crear una contrase\u00f1a.</p>'
                 : '';
             const nombreCompleto = [dni.nombre, dni.apellido].filter(Boolean).join(' ');
+            const edadTxt = (dni.age === 0 || dni.age) ? ' &middot; ' + escapeHtml(String(dni.age)) + ' a\u00f1os' : '';
             actions.innerHTML = `
-                <p style="color:#2ecc71;font-size:0.85rem;margin:0 0 0.75rem;">DNI listo${nombreCompleto ? ': ' + escapeHtml(nombreCompleto) : ''}${dni.dni ? ' (DNI ' + escapeHtml(String(dni.dni)) + ')' : ''}. Complet\u00e1 tu perfil.</p>
+                <p style="color:#2ecc71;font-size:0.85rem;margin:0 0 0.75rem;">DNI listo${nombreCompleto ? ': ' + escapeHtml(nombreCompleto) : ''}${dni.dni ? ' (DNI ' + escapeHtml(String(dni.dni)) + ')' : ''}${edadTxt}. Complet\u00e1 tu perfil.</p>
                 ${passwordBlock}
                 ${googleNote}
                 <div class="fm-field">
@@ -717,6 +718,7 @@ export function mountRegisterWizard(target, options = {}) {
                 const { res, data } = await postJson('/api/v1/public/pre-register/complete', {
                     id: preregId,
                     password,
+                    passwordConfirm,
                     role,
                     alias
                 });
@@ -730,7 +732,8 @@ export function mountRegisterWizard(target, options = {}) {
                 localStorage.setItem('user', JSON.stringify(data.user));
                 localStorage.setItem('is18Plus', 'true');
                 sessionStorage.setItem('valid_entry', 'true');
-                window.location.href = role === 'professional' ? '/profDashboard.html' : '/hogar.html';
+                // El cliente va directo a su perfil (no a la busqueda).
+                window.location.href = role === 'professional' ? '/profDashboard.html' : '/profile.html';
             } catch (e) {
                 err.textContent = 'Error de conexi\u00f3n.';
                 err.style.display = 'block';

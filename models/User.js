@@ -157,10 +157,29 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  /** express | guest | full — how the account was created */
+  /** express | guest | full | pre-registration — how the account was created */
   registrationMode: {
     type: String,
     trim: true
+  },
+  /**
+   * Idempotency key del registro transaccional: _id del PreRegistration que
+   * creo esta cuenta. Un reintento del mismo pre-registro devuelve la cuenta
+   * ya creada en vez de duplicarla (y permite rollback exacto si falla).
+   */
+  registrationPreId: {
+    type: mongoose.Schema.Types.ObjectId
+  },
+  /** Como se valido el DNI: barcode = PDF417 leido; manual = lo cargo el usuario. */
+  dniVerificationSource: {
+    type: String,
+    enum: ['barcode', 'manual'],
+    default: 'barcode'
+  },
+  /** true cuando el codigo de barras no se pudo leer: el admin debe mirar la foto. */
+  dniNeedsManualReview: {
+    type: Boolean,
+    default: false
   },
   adminSettings: {
     pricing: {
@@ -553,6 +572,10 @@ UserSchema.methods.getResetPasswordToken = function() {
 // (rol + vivo + estado verificado + servicios). Los de servicios.path / .brands
 // soportan el filtro jerárquico y el match por marca.
 UserSchema.index({ role: 1, accountDeletedAt: 1, verificationStatus: 1 });
+
+// Clave de idempotencia del registro transaccional: sparse para no chocar con
+// las cuentas viejas (que no tienen el campo) y unique para impedir duplicados.
+UserSchema.index({ registrationPreId: 1 }, { unique: true, sparse: true });
 UserSchema.index({ role: 1, accountDeletedAt: 1, 'hogarProfile.services.path': 1 });
 UserSchema.index({ 'hogarProfile.services.path': 1 });
 UserSchema.index({ 'hogarProfile.services.brands': 1 });

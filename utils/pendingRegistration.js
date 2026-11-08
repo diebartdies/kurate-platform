@@ -5,6 +5,18 @@ async function rollbackPendingUser(userId) {
   await User.findByIdAndDelete(userId);
 }
 
+/**
+ * Rollback exacto de un registro transaccional: borra la cuenta creada por un
+ * pre-registro puntual. Es idempotente (si no existe, no hace nada) y sirve
+ * tanto para el fallo sincronico como para el caso "el insert se aplico
+ * despues del timeout".
+ */
+async function rollbackUserByRegistrationPreId(preId) {
+  if (!preId) return 0;
+  const result = await User.deleteOne({ registrationPreId: preId });
+  return result.deletedCount || 0;
+}
+
 async function purgeExpiredUnverifiedUsers(email) {
   const filter = {
     isEmailVerified: false,
@@ -40,6 +52,7 @@ async function hasVerifiedGuestAccount(email) {
 
 module.exports = {
   rollbackPendingUser,
+  rollbackUserByRegistrationPreId,
   purgeExpiredUnverifiedUsers,
   isEmailFullyRegistered,
   hasVerifiedGuestAccount

@@ -3807,6 +3807,18 @@ export async function loadPendingVerifications() {
             data.data.forEach(prof => {
                 const alias = prof.professionalProfile?.alias || 'Unknown';
                 const isExpress = Boolean(prof.professionalProfile?.expressRegistration);
+                // El DNI se cargo a mano porque el codigo de barras no se pudo
+                // leer: el admin TIENE que mirar la foto antes de aprobar.
+                const dniManual = Boolean(prof.dniNeedsManualReview);
+                const dniAge = prof.professionalProfile && prof.professionalProfile.age != null
+                    ? prof.professionalProfile.age
+                    : null;
+                const dniBadge = dniManual
+                    ? `<br><span style="display:inline-block;margin-top:4px;padding:2px 6px;border-radius:4px;background:#7a4b00;color:#ffcc66;font-size:0.72rem;">${t('DNI read manually — check the photo')}</span>`
+                    : '';
+                const ageBadge = dniAge == null
+                    ? ''
+                    : `<br><span style="color:#aaa;font-size:0.75rem;">${escapeHtml(String(dniAge))} ${t('years')}</span>`;
                 const docLabels = ['ID Front', 'ID Back', 'Selfie'];
                 const docs = isExpress
                     ? `<span style="color:#25D366;font-size:0.85rem;">${t('Express registration — complete profile in Admin')}</span><br><span style="color:#888;font-size:0.8rem;">${t('No ID photos yet — request gallery photos on WhatsApp, then upload in Edit Professional.')}</span>`
@@ -3833,8 +3845,8 @@ export async function loadPendingVerifications() {
                 const tr = document.createElement('tr');
                 tr.style.borderBottom = '1px solid #333';
                 tr.innerHTML = `
-                    <td class="col-email" style="padding: 10px;">${prof.email}${isExpress ? `<br><span style="color:#25D366;font-size:0.75rem;">${t('Express registration — complete profile in Admin')}</span>` : ''}</td>
-                    <td class="col-alias" style="padding: 10px;">${alias}</td>
+                    <td class="col-email" style="padding: 10px;">${prof.email}${isExpress ? `<br><span style="color:#25D366;font-size:0.75rem;">${t('Express registration — complete profile in Admin')}</span>` : ''}${dniBadge}</td>
+                    <td class="col-alias" style="padding: 10px;">${alias}${ageBadge}</td>
                     <td class="col-docs" style="padding: 10px;">
                         ${docs}<br>
                         <span style="font-size: 0.8rem; color: #aaa; display: block; margin-top: 6px;">Gesture: ${gestureDisplay}</span>

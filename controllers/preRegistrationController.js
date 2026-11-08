@@ -8,9 +8,97 @@ const { sendSms } = require('../services/smsService');
 const { OAuth2Client } = require('google-auth-library');
 const crypto = require('crypto');
 const { decodeDniBarcode, parseDniDate, calculateAge } = require('../utils/dniBarcode');
+const { rollbackUserByRegistrationPreId } = require('../utils/pendingRegistration');
+const Specialty = require('../models/Specialty');
+const ActivityLog = require('../models/ActivityLog');
+const { getClientIp } = require('../utils/clientIp');
 function normalizeAlias(s){ if(!s) return s; return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim(); }
 const { assignGpsToLocation } = require('../utils/cityCoordinates');
 const jwt = require('jsonwebtoken');
+
+// ---------------------------------------------------------------------------
+// Registro transaccional
+//
+// Toda la cuenta se escribe en UN solo insert (documento completo), asi que no
+// puede quedar a medias. Alrededor:
+//   - idempotencia por registrationPreId (reintentar no duplica)
+//   - timeout duro: si el insert no contesta a tiempo se busca la cuenta por la
+//     clave; si no quedo escrita, no se registro nada y se responde 504
+//   - rollback compensatorio si falla algo despues del insert
+// ---------------------------------------------------------------------------
+const REGISTRATION_TIMEOUT_MS = parseInt(process.env.REGISTRATION_TIMEOUT_MS, 10) || 20000;
+const POST_COMMIT_TIMEOUT_MS = parseInt(process.env.POST_COMMIT_TIMEOUT_MS, 10) || 8000;
+
+function withTimeout(promise, ms, label) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      const err = new Error(`${label} timed out after ${ms}ms`);
+      err.code = 'REGISTRATION_TIMEOUT';
+      reject(err);
+    }, ms);
+  });
+  return Promise.race([Promise.resolve(promise), timeout]).finally(() => clearTimeout(timer));
+}
+
+function isTimeoutError(err) {
+  return Boolean(err && (err.code === 'REGISTRATION_TIMEOUT' || /timed out/i.test(err.message || '')));
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// ---------------------------------------------------------------------------
+// Efectos secundarios del alta (best-effort, con timeout propio). Ninguno de
+// estos puede impedir que la cuenta quede creada: se corren con allSettled.
+// ---------------------------------------------------------------------------
+async function syncSpecialties(user) {
+  if (user.role !== 'professional') return;
+  const services = user.professionalProfile?.services || [];
+  if (!services.length) return;
+  await Specialty.deleteMany({ user: user._id });
+  await Specialty.insertMany(services.map((s) => ({ user: user._id, specialty: s })))
+    .catch((err) => console.error('Failed to sync specialties table:', err.message));
+}
+
+async function logRegistration(user, req) {
+  await ActivityLog.create({
+    professional: user._id,
+    action: 'register',
+    actorType: user.role === 'professional' ? 'professional' : 'user',
+    ipAddress: getClientIp(req),
+    userAgent: req.headers['user-agent'],
+    details: {
+      registrationMode: 'pre-registration',
+      dniVerificationSource: user.dniVerificationSource,
+      dniNeedsManualReview: user.dniNeedsManualReview,
+      age: user.professionalProfile?.age
+    }
+  });
+}
+
+async function notifyAdminNewRegistration(user) {
+  const adminEmail = config.payment?.adminEmail || 'admin@drsrv.net.ar';
+  const prof = user.professionalProfile || {};
+  const lines = [
+    'Nuevo registro verificado (email + SMS + DNI).',
+    `Email: ${user.email}`,
+    `Telefono: ${prof.mobilePhone || '-'}`,
+    `Nombre: ${[prof.firstName, prof.surname].filter(Boolean).join(' ') || '-'}`,
+    `DNI: ${prof.idNumber || '-'}`,
+    `Edad: ${prof.age == null ? '-' : prof.age}`,
+    `DNI leido: ${user.dniVerificationSource === 'barcode' ? 'codigo de barras (PDF417)' : 'MANUAL (revisar foto)'}`
+  ];
+  if (user.dniNeedsManualReview) {
+    lines.push('', 'ATENCION: no se pudo leer el codigo de barras. Revisar la foto del DNI antes de aprobar.');
+  }
+  await sendEmail({
+    email: adminEmail,
+    subject: 'KuraTe - Nuevo profesional registrado',
+    message: lines.join('\n')
+  });
+}
 
 function normalizePhone(phone) {
   return phone.replace(/[\s\-\+\(\)]/g, '').replace(/^0+/, '');
@@ -322,27 +410,70 @@ exports.submitDniManual = async (req, res) => {
 };
 
 // Step 5: Complete registration -> create User -> return JWT
+//
+// TRANSACCIONAL: la cuenta entera se escribe en un unico insert. Si el insert
+// no termina (timeout / caida) no queda nada a medias: se reconcilia por la
+// clave de idempotencia y, si no quedo escrita, se responde 504 sin cuenta.
 exports.complete = async (req, res) => {
   try {
-    let { id, password, role, alias, bio, street, number, floor, apartment, postalCode, province, city, neighborhood, services, height, measurements, originCountry, instagram, facebook } = req.body;
+    let { id, password, passwordConfirm, role, alias, bio, street, number, floor, apartment, postalCode, province, city, neighborhood, services, height, measurements, originCountry, instagram, facebook } = req.body;
     alias = normalizeAlias(alias);
     if (!id) return res.status(400).json({ error: 'Faltan datos requeridos.' });
-    const prereg = await PreRegistration.findById(id).select('+password');
+
+    const prereg = await PreRegistration.findById(id).catch(() => null);
     if (!prereg) return res.status(404).json({ error: 'Sesion no encontrada.' });
+
+    // Idempotencia: un reintento (doble click, timeout del cliente, refresh)
+    // devuelve la cuenta ya creada en vez de duplicarla.
+    const alreadyCreated = await User.findOne({ registrationPreId: prereg._id });
+    if (alreadyCreated) {
+      return sendTokenResponse(alreadyCreated, 200, res);
+    }
+    if (prereg.step === 'complete') {
+      // El draft quedo marcado como completo pero la cuenta ya no existe (por
+      // ejemplo, la borro un admin): se deja seguir y se recrea. Si existiera,
+      // el chequeo de idempotencia de arriba ya habria respondido.
+      prereg.step = 'dni';
+    }
+
     if (prereg.step !== 'dni') return res.status(400).json({ error: 'Escanea tu DNI primero.' });
     if (!prereg.emailVerified || !prereg.phoneVerified) {
       return res.status(400).json({ error: 'Completa la verificacion de email y telefono.' });
     }
+
     // Quien verifico el email con Google no crea contrasena: la cuenta entra
     // con Google (mismo criterio que authController.googleAuth, que guarda un
     // hash aleatorio que el usuario nunca ve).
     const usedGoogle = !!prereg.emailVerifiedViaGoogle;
-    if (password && password.length < 6) return res.status(400).json({ error: 'La password debe tener al menos 6 caracteres.' });
-    if (!usedGoogle && !password) return res.status(400).json({ error: 'Faltan datos requeridos.' });
-    const userRole = role || 'professional';
+    if (!usedGoogle) {
+      if (!password) return res.status(400).json({ error: 'Faltan datos requeridos.' });
+      if (password.length < 6) return res.status(400).json({ error: 'La password debe tener al menos 6 caracteres.' });
+      // La confirmacion se valida tambien aca: el cliente puede estar salteado.
+      if (typeof passwordConfirm !== 'string' || password !== passwordConfirm) {
+        return res.status(400).json({ error: 'Las passwords no coinciden.' });
+      }
+    }
+
+    // Solo professional o user: nunca se acepta un rol arbitrario del body.
+    const userRole = role === 'user' ? 'user' : 'professional';
     const parsedBirthDate = parseDniDate(prereg.dniFechaNacimiento);
-    const user = await User.create({
+    // Edad calculada a partir de la fecha del DNI (barcode o carga manual).
+    const age = parsedBirthDate ? calculateAge(prereg.dniFechaNacimiento) : null;
+    if (age !== null && age < 18) {
+      return res.status(400).json({ error: 'Segun el DNI, sos menor de 18 anios.' });
+    }
+    const manualDni = !!prereg.dniVerifiedManually;
+    const dniNeedsManualReview = manualDni || !prereg.dniFrontImage;
+
+    // Nombre visible de la cuenta (lo usan admin, soporte y notificaciones como
+    // fallback cuando no hay alias).
+    const fullName = [prereg.firstName || prereg.dniNombre, prereg.surname || prereg.dniApellido]
+      .filter(Boolean).join(' ').trim();
+
+    // Documento completo: TODO el alta viaja en este unico insert.
+    const userPayload = {
       email: prereg.email,
+      name: fullName || undefined,
       password: password || crypto.randomBytes(16).toString('hex'),
       role: userRole,
       isEmailVerified: true,
@@ -352,12 +483,16 @@ exports.complete = async (req, res) => {
       verificationDocumentsCount: prereg.dniFrontImage ? 1 : 0,
       phoneVerified: true,
       registrationMode: 'pre-registration',
+      registrationPreId: prereg._id,
+      dniVerificationSource: manualDni ? 'manual' : 'barcode',
+      dniNeedsManualReview,
       professionalProfile: userRole === 'professional' ? {
         firstName: prereg.firstName || prereg.dniNombre,
         surname: prereg.surname || prereg.dniApellido,
         middleName: prereg.middleName || prereg.dniSegundoNombre || '',
         idNumber: prereg.dniNumeroTramite,
         birthDate: parsedBirthDate ? new Date(parsedBirthDate) : undefined,
+        age: age === null ? undefined : age,
         mobilePhone: prereg.phone,
         alias: alias || '',
         bio: bio || '',
@@ -374,10 +509,67 @@ exports.complete = async (req, res) => {
         firstName: prereg.firstName || prereg.dniNombre,
         lastName: prereg.surname || prereg.dniApellido,
         taxId: prereg.dniNumeroTramite,
-        birthDate: parsedBirthDate ? new Date(parsedBirthDate) : undefined
+        birthDate: parsedBirthDate ? new Date(parsedBirthDate) : undefined,
+        // El telefono verificado por SMS se guarda para mostrarlo en el perfil.
+        contact: { mobilePhone: prereg.phone }
       } : undefined
+    };
+
+    let user;
+    try {
+      user = await withTimeout(User.create(userPayload), REGISTRATION_TIMEOUT_MS, 'User.create');
+    } catch (insertError) {
+      // Duplicado por la clave de idempotencia: otro intento ya la creo.
+      if (insertError && insertError.code === 11000) {
+        const existing = await User.findOne({ registrationPreId: prereg._id });
+        if (existing) return sendTokenResponse(existing, 200, res);
+      }
+      if (isTimeoutError(insertError)) {
+        // El insert puede haber quedado en vuelo: esperamos un momento y
+        // buscamos la cuenta. Si no esta, no se registro nada.
+        await sleep(1500);
+        const late = await User.findOne({ registrationPreId: prereg._id });
+        if (late) return sendTokenResponse(late, 200, res);
+        // Reconciliacion final: si aparecio entre el timeout y ahora, se borra.
+        await rollbackUserByRegistrationPreId(prereg._id).catch(() => {});
+        await sleep(500);
+        const ghost = await User.findOne({ registrationPreId: prereg._id });
+        if (ghost) await rollbackUserByRegistrationPreId(prereg._id).catch(() => {});
+        console.error('Pre-registration timeout: no se creo la cuenta', prereg._id);
+        return res.status(504).json({
+          error: 'El registro tardo demasiado y no se creo ninguna cuenta. Reintenta.',
+          retryable: true
+        });
+      }
+      // Cualquier otro fallo del insert: no quedo nada escrito (insert atomico
+      // de un solo documento), se informa y se puede reintentar.
+      console.error('Pre-registration insert error:', insertError);
+      await rollbackUserByRegistrationPreId(prereg._id).catch(() => {});
+      const message = insertError && insertError.code === 11000
+        ? 'Este email ya esta registrado.'
+        : (insertError.message || 'No se pudo crear la cuenta.');
+      return res.status(400).json({ error: message });
+    }
+
+    // A partir de aca la cuenta YA existe. Nada de lo que sigue puede borrarla
+    // por un fallo accesorio: los efectos secundarios son best-effort.
+    try {
+      prereg.step = 'complete';
+      await prereg.save();
+    } catch (e) {
+      console.error('Pre-registration: no se pudo marcar el draft como completo:', e.message);
+    }
+
+    await Promise.allSettled([
+      withTimeout(syncSpecialties(user), POST_COMMIT_TIMEOUT_MS, 'syncSpecialties'),
+      withTimeout(logRegistration(user, req), POST_COMMIT_TIMEOUT_MS, 'logRegistration'),
+      withTimeout(notifyAdminNewRegistration(user), POST_COMMIT_TIMEOUT_MS, 'notifyAdminNewRegistration')
+    ]).then((results) => {
+      results.filter((r) => r.status === 'rejected').forEach((r) => {
+        console.error('Pre-registration post-commit side effect failed:', r.reason && r.reason.message);
+      });
     });
-    await PreRegistration.deleteOne({ _id: prereg._id });
+
     sendTokenResponse(user, 201, res);
   } catch (error) {
     console.error('Pre-registration complete error:', error);
