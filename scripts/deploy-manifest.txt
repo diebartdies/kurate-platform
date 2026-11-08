@@ -236,3 +236,5 @@ public/register.html                       # link de icono PNG
 public/set-password.html                   # link de icono PNG
 public/treasure.html                       # link de icono PNG
 public/verify.html                         # link de icono PNG
+scripts/get-public-ip.sh                   # obtiene IP publica (DDNS, cron cada 15 min)
+scripts/update-dyndns.js                   # fix: IP por argumento ya no pisa el hostname
