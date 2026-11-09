@@ -245,6 +245,7 @@ models/PreRegistration.js                  # draft con dniVerifiedManually y ste
 utils/pendingRegistration.js               # rollbackUserByRegistrationPreId (rollback compensatorio)
 utils/dniBarcode.js                        # variante cropped-bottom con pixeles reales (mejor lectura del PDF417)
 controllers/preRegistrationController.js   # complete transaccional: timeout + reconciliacion + edad + flags DNI manual
+controllers/authController.js              # /auth/register legado transaccional: idempotencia, timeout+reconciliacion, rollback si falla el mail
 sendEmail.js                               # timeouts de conexion/socket para que un SMTP colgado no frene el registro
 public/js/registerWizard.js                # envia passwordConfirm y muestra la edad calculada del DNI
 public/js/admin.js                         # badge "DNI leido manualmente" + edad en verificaciones pendientes

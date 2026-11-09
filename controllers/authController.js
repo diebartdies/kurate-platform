@@ -56,6 +56,52 @@ function resolveProfessionalRegistrationMode(role, registrationMode) {
   return mode === 'full' ? 'full' : 'express';
 }
 
+// ---------------------------------------------------------------------------
+// Registro transaccional (POST /auth/register)
+//
+// La cuenta se escribe en UN solo insert. Alrededor:
+//   - idempotencia: un reintento dentro de la ventana reusa el pendiente y
+//     reenvia el codigo, en vez de borrarlo y crear otro (asi el codigo que el
+//     usuario ya recibio sigue valiendo)
+//   - timeout duro: si el insert no contesta se reconcilia por email; si no
+//     quedo escrita se responde 504 y no se registro nada
+//   - rollback compensatorio si el mail de verificacion no sale
+//   - efectos accesorios best-effort: nunca dejan la cuenta a medias
+// ---------------------------------------------------------------------------
+const REGISTER_TIMEOUT_MS = parseInt(process.env.REGISTER_TIMEOUT_MS, 10) || 20000;
+const REGISTER_POST_COMMIT_TIMEOUT_MS = parseInt(process.env.REGISTER_POST_COMMIT_TIMEOUT_MS, 10) || 8000;
+const REGISTER_IDEMPOTENCY_WINDOW_MS = parseInt(process.env.REGISTER_IDEMPOTENCY_WINDOW_MS, 10) || 120000;
+// Backstop del envio del mail de verificacion (nodemailer ya tiene sus propios
+// timeouts; esto es el ultimo limite para no colgar el request).
+const REGISTER_EMAIL_TIMEOUT_MS = parseInt(process.env.REGISTER_EMAIL_TIMEOUT_MS, 10) || 20000;
+
+function withTimeout(promise, ms, label) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      const err = new Error(`${label} timed out after ${ms}ms`);
+      err.code = 'REGISTER_TIMEOUT';
+      reject(err);
+    }, ms);
+  });
+  return Promise.race([Promise.resolve(promise), timeout]).finally(() => clearTimeout(timer));
+}
+
+function isTimeoutError(err) {
+  return Boolean(err && (err.code === 'REGISTER_TIMEOUT' || /timed out/i.test(err.message || '')));
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Un pendiente creado hace instantes es el mismo alta reintentada. */
+function isRecentPendingUser(user, windowMs = REGISTER_IDEMPOTENCY_WINDOW_MS) {
+  if (!user || user.isEmailVerified) return false;
+  const created = user.createdAt ? new Date(user.createdAt).getTime() : 0;
+  return created > 0 && (Date.now() - created) <= windowMs;
+}
+
 function buildVerificationDocumentsFromUpload(req) {
   const verificationDocuments = [];
   if (!req.files || !req.files.length) return verificationDocuments;
@@ -126,13 +172,21 @@ async function upgradeGuestToProfessional(existingUser, {
   existingUser.isEmailVerified = true;
   existingUser.emailVerificationCode = undefined;
   existingUser.emailVerificationCodeExpire = undefined;
+  // Un solo save: el documento queda entero o no queda (no hay estado medio).
   await existingUser.save();
-  await syncProfessionalSpecialties(existingUser);
-  await logProfessionalRegistered(existingUser, req, {
-    registrationMode: isExpressRegistration ? 'express' : 'full',
-    upgradedFromGuest: true
+  // Accesorios best-effort: si fallan, el upgrade ya esta hecho y no se revierte.
+  await Promise.allSettled([
+    withTimeout(syncProfessionalSpecialties(existingUser), REGISTER_POST_COMMIT_TIMEOUT_MS, 'syncProfessionalSpecialties'),
+    withTimeout(logProfessionalRegistered(existingUser, req, {
+      registrationMode: isExpressRegistration ? 'express' : 'full',
+      upgradedFromGuest: true
+    }), REGISTER_POST_COMMIT_TIMEOUT_MS, 'logProfessionalRegistered'),
+    withTimeout(notifyProfessionalRegistered(existingUser, existingUser.email, { upgradedFromGuest: true }), REGISTER_POST_COMMIT_TIMEOUT_MS, 'notifyProfessionalRegistered')
+  ]).then((results) => {
+    results.filter((r) => r.status === 'rejected').forEach((r) => {
+      console.error('Guest upgrade side effect failed:', r.reason && r.reason.message);
+    });
   });
-  await notifyProfessionalRegistered(existingUser, existingUser.email, { upgradedFromGuest: true });
   return existingUser;
 }
 
@@ -165,13 +219,19 @@ async function upgradeGuestToProfessionalViaGoogle(user, req, name) {
   user.isVerified = false;
   user.isEmailVerified = true;
   await user.save();
-  await logProfessionalRegistered(user, req, {
-    alias,
-    registrationMode: 'express',
-    viaGoogle: true,
-    upgradedFromGuest: true
+  await Promise.allSettled([
+    withTimeout(logProfessionalRegistered(user, req, {
+      alias,
+      registrationMode: 'express',
+      viaGoogle: true,
+      upgradedFromGuest: true
+    }), REGISTER_POST_COMMIT_TIMEOUT_MS, 'logProfessionalRegistered'),
+    withTimeout(notifyProfessionalRegistered(user, email, { upgradedFromGuest: true, viaGoogle: true }), REGISTER_POST_COMMIT_TIMEOUT_MS, 'notifyProfessionalRegistered')
+  ]).then((results) => {
+    results.filter((r) => r.status === 'rejected').forEach((r) => {
+      console.error('Guest->professional (Google) side effect failed:', r.reason && r.reason.message);
+    });
   });
-  await notifyProfessionalRegistered(user, email, { upgradedFromGuest: true, viaGoogle: true });
   return user;
 }
 
@@ -320,8 +380,17 @@ exports.register = async (req, res, next) => {
           : 'This email is already registered. Please sign in.'
       });
     }
+
+    // Pendiente sin verificar: si es un reintento reciente del mismo formulario
+    // se REUSA (el codigo que el usuario ya recibio sigue valiendo); si es viejo
+    // se descarta y se crea de cero.
+    let pendingReuse = null;
     if (existingUser && !existingUser.isEmailVerified) {
-      await rollbackPendingUser(existingUser._id);
+      if (isRecentPendingUser(existingUser) && existingUser.role === role) {
+        pendingReuse = existingUser;
+      } else {
+        await rollbackPendingUser(existingUser._id).catch(() => {});
+      }
     }
 
     // Check if Alias is already taken by a verified professional
@@ -345,8 +414,7 @@ exports.register = async (req, res, next) => {
     const verificationCodeExpire = new Date(Date.now() + codeExpireMs);
 
     // Category chosen at registration (admin pricing table); legacy auto-score removed.
-    // Create user
-    const user = await User.create({
+    const registrationFields = {
       email,
       password,
       role,
@@ -362,7 +430,57 @@ exports.register = async (req, res, next) => {
       isEmailVerified: false,
       emailVerificationCode: verificationCode,
       emailVerificationCodeExpire: verificationCodeExpire
-    });
+    };
+
+    // Un solo insert (o un solo save si se reusa el pendiente): la cuenta queda
+    // entera o no queda. Con timeout: si no contesta se reconcilia por email.
+    let user;
+    try {
+      if (pendingReuse) {
+        Object.assign(pendingReuse, registrationFields);
+        user = await withTimeout(pendingReuse.save(), REGISTER_TIMEOUT_MS, 'register.save');
+      } else {
+        user = await withTimeout(User.create(registrationFields), REGISTER_TIMEOUT_MS, 'User.create');
+      }
+    } catch (insertError) {
+      // Otro request concurrente gano la carrera del email: si su pendiente es
+      // reciente se adopta (misma alta), si no es un duplicado real.
+      if (insertError && insertError.code === 11000) {
+        const raced = await User.findOne({ email });
+        if (raced && isRecentPendingUser(raced) && raced.role === role) {
+          user = raced;
+        } else {
+          return res.status(409).json({
+            success: false,
+            code: 'EMAIL_ALREADY_REGISTERED',
+            error: 'This email is already registered. Please sign in.'
+          });
+        }
+      } else if (isTimeoutError(insertError)) {
+        // El insert pudo haber quedado en vuelo: se espera y se busca la cuenta.
+        await sleep(1500);
+        const late = await User.findOne({ email });
+        if (late && isRecentPendingUser(late) && late.role === role) {
+          user = late;
+        } else {
+          // Reconciliacion final: si aparecio entre el timeout y ahora, se borra.
+          await User.deleteMany({ email, isEmailVerified: false }).catch(() => {});
+          await sleep(500);
+          await User.deleteMany({ email, isEmailVerified: false }).catch(() => {});
+          console.error('Registration timeout: no se creo la cuenta', email);
+          return res.status(504).json({
+            success: false,
+            code: 'REGISTRATION_TIMEOUT',
+            error: 'The registration took too long and no account was created. Please try again.',
+            retryable: true
+          });
+        }
+      } else {
+        console.error('Registration insert error:', insertError);
+        await User.deleteMany({ email, isEmailVerified: false }).catch(() => {});
+        return res.status(400).json({ success: false, error: insertError.message || 'Registration failed.' });
+      }
+    }
 
     // Sync specialties after email is verified (see verifyEmail)
 
@@ -428,14 +546,20 @@ After verification you can browse the collection and participate as a guest.
     }
 
     try {
-      await sendEmail({
-        email: user.email,
-        subject: emailSubject,
-        message: emailMessage
-      });
+      // Backstop propio por si el SMTP se cuelga mas alla de sus timeouts: el
+      // registro no puede quedar esperando. Si no sale, se revierte el alta.
+      await withTimeout(
+        sendEmail({
+          email: user.email,
+          subject: emailSubject,
+          message: emailMessage
+        }),
+        REGISTER_EMAIL_TIMEOUT_MS,
+        'sendEmail'
+      );
     } catch (err) {
       console.error('Email error:', err.message || err);
-      await rollbackPendingUser(user._id);
+      await rollbackPendingUser(user._id).catch(() => {});
       return res.status(503).json({
         success: false,
         code: err.code === 'EMAIL_NOT_CONFIGURED' ? 'EMAIL_NOT_CONFIGURED' : 'EMAIL_SEND_FAILED',
@@ -514,19 +638,23 @@ exports.verifyEmail = async (req, res, next) => {
     user.emailVerificationCodeExpire = undefined;
     await user.save();
 
+    // El email YA quedo verificado: los accesorios corren best-effort para que
+    // un fallo (mail al admin, especialidades, log) no le niegue el token al
+    // usuario ni lo deje sin poder reintentar.
     const clientIp = getClientIp(req);
+    const sideEffects = [];
 
     if (user.role === 'professional' && user.professionalProfile?.services?.length > 0) {
-      await syncProfessionalSpecialties(user);
+      sideEffects.push(withTimeout(syncProfessionalSpecialties(user), REGISTER_POST_COMMIT_TIMEOUT_MS, 'syncProfessionalSpecialties'));
     }
 
     if (user.role === 'professional') {
-      await logProfessionalRegistered(user, req, {
+      sideEffects.push(withTimeout(logProfessionalRegistered(user, req, {
         registrationMode: user.registrationMode || 'full'
-      });
-      await notifyProfessionalRegistered(user, email);
+      }), REGISTER_POST_COMMIT_TIMEOUT_MS, 'logProfessionalRegistered'));
+      sideEffects.push(withTimeout(notifyProfessionalRegistered(user, email), REGISTER_POST_COMMIT_TIMEOUT_MS, 'notifyProfessionalRegistered'));
     } else if (user.role === 'user' && user.registrationMode === 'guest') {
-      await ActivityLog.create({
+      sideEffects.push(ActivityLog.create({
         professional: user._id,
         action: 'register',
         actorType: 'guest',
@@ -534,7 +662,15 @@ exports.verifyEmail = async (req, res, next) => {
         ipAddress: clientIp,
         userAgent: req.headers['user-agent'],
         details: { alias: user.name, registrationMode: 'guest' }
-      }).catch((err) => console.error('Failed to log guest registration:', err.message));
+      }));
+    }
+
+    if (sideEffects.length) {
+      await Promise.allSettled(sideEffects).then((results) => {
+        results.filter((r) => r.status === 'rejected').forEach((r) => {
+          console.error('Email verification side effect failed:', r.reason && r.reason.message);
+        });
+      });
     }
 
     sendTokenResponse(user, 200, res);
