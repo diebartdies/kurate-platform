@@ -9,6 +9,7 @@ const { OAuth2Client } = require('google-auth-library');
 const crypto = require('crypto');
 const { decodeDniBarcode, parseDniDate, calculateAge } = require('../utils/dniBarcode');
 const { rollbackUserByRegistrationPreId } = require('../utils/pendingRegistration');
+const { findUserByPhone } = require('../utils/userIdentity');
 const Specialty = require('../models/Specialty');
 const ActivityLog = require('../models/ActivityLog');
 const { getClientIp } = require('../utils/clientIp');
@@ -141,12 +142,34 @@ exports.startPreRegistration = async (req, res) => {
       return res.status(400).json({ error: 'Email y telefono son requeridos.' });
     }
     const emailLower = email.trim().toLowerCase();
-    const existingUser = await User.findOne({ email: emailLower });
-    if (existingUser) {
-      return res.status(400).json({ error: 'Este email ya esta registrado.' });
-    }
-    await PreRegistration.deleteMany({ email: emailLower, step: { $nin: ['complete'] } });
     const normalizedPhone = normalizePhone(phone);
+
+    // Email unico: lo garantiza el indice unique del schema, pero se avisa aca
+    // antes de mandar el SMS (evita gastar un mensaje en un alta imposible).
+    const existingUser = await User.findOne({ email: emailLower }).select('_id');
+    if (existingUser) {
+      return res.status(409).json({
+        code: 'EMAIL_ALREADY_REGISTERED',
+        error: 'Este email ya esta registrado. Inicia sesion o recupera tu cuenta.'
+      });
+    }
+
+    // Telefono unico: una persona no puede tener dos cuentas con el mismo
+    // numero, sin importar el formato en que se haya guardado.
+    const phoneOwner = await findUserByPhone(normalizedPhone);
+    if (phoneOwner) {
+      return res.status(409).json({
+        code: 'PHONE_ALREADY_REGISTERED',
+        error: 'Este telefono ya esta registrado en otra cuenta. Si es tu cuenta, inicia sesion; si no, usa otro numero.'
+      });
+    }
+
+    // Drafts viejos de este email o telefono: se descartan para que el wizard no
+    // retome una sesion abandonada.
+    await PreRegistration.deleteMany({
+      $or: [{ email: emailLower }, { phone: normalizedPhone }],
+      step: { $nin: ['complete'] }
+    });
     const code = generateCode();
     const expiresAt = getExpireAt();
     const result = await sendSms({
@@ -465,6 +488,27 @@ exports.complete = async (req, res) => {
     const manualDni = !!prereg.dniVerifiedManually;
     const dniNeedsManualReview = manualDni || !prereg.dniFrontImage;
 
+    // Antes del insert: email y telefono tienen que seguir libres. Cubre dos
+    // sesiones de pre-registro en paralelo y el caso de una cuenta creada entre
+    // el paso 1 y este paso.
+    const emailTaken = await User.findOne({
+      email: prereg.email,
+      registrationPreId: { $ne: prereg._id }
+    }).select('_id');
+    if (emailTaken) {
+      return res.status(409).json({
+        code: 'EMAIL_ALREADY_REGISTERED',
+        error: 'Este email ya esta registrado. Inicia sesion o recupera tu cuenta.'
+      });
+    }
+    const phoneTaken = await findUserByPhone(prereg.phone);
+    if (phoneTaken) {
+      return res.status(409).json({
+        code: 'PHONE_ALREADY_REGISTERED',
+        error: 'Este telefono ya esta registrado en otra cuenta. Si es tu cuenta, inicia sesion; si no, usa otro numero.'
+      });
+    }
+
     // Nombre visible de la cuenta (lo usan admin, soporte y notificaciones como
     // fallback cuando no hay alias).
     const fullName = [prereg.firstName || prereg.dniNombre, prereg.surname || prereg.dniApellido]
@@ -553,6 +597,23 @@ exports.complete = async (req, res) => {
 
     // A partir de aca la cuenta YA existe. Nada de lo que sigue puede borrarla
     // por un fallo accesorio: los efectos secundarios son best-effort.
+
+    // Carrera entre dos altas simultaneas: la que quedo segunda detecta a la
+    // primera (los ObjectId ordenan por creacion) y se revierte, para que el
+    // telefono quede asociado a una sola cuenta.
+    try {
+      const phoneConflict = await findUserByPhone(prereg.phone, { excludeUserId: user._id });
+      if (phoneConflict && String(phoneConflict._id) < String(user._id)) {
+        await rollbackUserByRegistrationPreId(prereg._id);
+        return res.status(409).json({
+          code: 'PHONE_ALREADY_REGISTERED',
+          error: 'Este telefono ya esta registrado en otra cuenta. Si es tu cuenta, inicia sesion; si no, usa otro numero.'
+        });
+      }
+    } catch (raceCheckError) {
+      console.error('Pre-registration phone race check failed:', raceCheckError.message);
+    }
+
     try {
       prereg.step = 'complete';
       await prereg.save();

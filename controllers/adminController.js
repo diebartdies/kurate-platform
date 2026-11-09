@@ -1,17 +1,12 @@
-const fs = require('fs');
-const path = require('path');
 const User = require('../models/User');
 const config = require('../config/appConfig');
 const { recordCategoryChange, normalizeQuality } = require('../utils/categoryBilling');
 const ActivityLog = require('../models/ActivityLog');
-const Statistic = require('../models/Statistic');
-const Specialty = require('../models/Specialty');
-const Review = require('../models/Review');
-const Connection = require('../models/Connection');
-const ConnectionRequest = require('../models/ConnectionRequest');
 const sendEmail = require('../sendEmail');
 const { isValidRejectionReason, buildRejectionEmail } = require('../utils/rejectionMessages');
-const { isUploadPath, resolvePhotoForClient, resolvePhotosForClient, resolveFirstPhotoForClient, normalizePhotosForStorage } = require('../utils/photoUtils');
+const { resolvePhotoForClient, resolvePhotosForClient, resolveFirstPhotoForClient, normalizePhotosForStorage } = require('../utils/photoUtils');
+const { purgeUserAccount } = require('../utils/userPurge');
+const { findUserByPhone, userPhones } = require('../utils/userIdentity');
 const { resolveWhatsappNumber } = require('../utils/contactNumber');
 const smsNotifications = require('../services/smsNotifications');
 const { getClientIp, isTrustedAdminIp } = require('../utils/clientIp');
@@ -94,17 +89,6 @@ async function enrichActivityLogs(logs) {
 }
 
 // Best-effort removal of an uploaded asset that lives under /public.
-// Mirrors the cleanup helper used by professionalController.deleteMyProfile.
-function tryDeleteUploadFile(storedPath) {
-  if (!isUploadPath(storedPath)) return;
-  const absolutePath = path.join(config.root, 'public', storedPath.replace(/^\//, ''));
-  try {
-    if (fs.existsSync(absolutePath)) fs.unlinkSync(absolutePath);
-  } catch (err) {
-    console.error('Failed to delete upload file:', err.message);
-  }
-}
-
 // @desc    Get all professionals
 // @route   GET /api/v1/admin/professionals
 // @access  Private/Admin
@@ -849,7 +833,7 @@ exports.setUserPassword = async (req, res, next) => {
 // @access  Private/Admin
 exports.deleteProfessional = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id).select('+verificationDocuments');
+    const user = await User.findById(req.params.id).select('role');
 
     if (!user || user.role !== 'professional') {
       return res.status(404).json({
@@ -858,33 +842,141 @@ exports.deleteProfessional = async (req, res, next) => {
       });
     }
 
-    const prof = user.professionalProfile || {};
+    // Purga total (utils/userPurge.js): cuenta, contenido, logs, drafts de
+    // pre-registro y archivos. Libera el email y el telefono para que la persona
+    // pueda volver a registrarse, a diferencia del soft delete del usuario.
+    const result = await purgeUserAccount(user._id);
 
-    // Clean up uploaded assets that live under /public.
-    (prof.photos || []).forEach(tryDeleteUploadFile);
-    tryDeleteUploadFile(prof.paymentReceiptUrl);
-    (prof.paymentHistory || []).forEach((entry) => tryDeleteUploadFile(entry.receiptUrl));
-
-    // Mirror deleteMyProfile cleanup of related collections.
-    await Promise.all([
-      ActivityLog.deleteMany({ professional: user._id }),
-      Statistic.deleteMany({ professionalId: user._id }),
-      Specialty.deleteMany({ user: user._id }),
-      Review.deleteMany({ $or: [{ professional: user._id }, { author: user._id }] }),
-      Connection.deleteMany({ $or: [{ professional: user._id }, { requester: user._id }] }),
-      ConnectionRequest.deleteMany({ $or: [{ professional: user._id }, { guestUser: user._id }] })
-    ]);
-
-    await User.findByIdAndDelete(user._id);
+    try {
+      await ActivityLog.create({
+        professional: req.user.id,
+        action: 'admin_purged_user',
+        actorType: 'admin',
+        ipAddress: getClientIp(req),
+        userAgent: req.headers['user-agent'],
+        isGuest: false,
+        details: adminLogDetails(req, {
+          targetId: String(user._id),
+          targetEmail: result && result.user ? result.user.email : null,
+          targetRole: 'professional',
+          removed: result ? result.removed : null
+        })
+      });
+    } catch (logErr) {
+      console.error('Failed to log admin purge:', logErr.message);
+    }
 
     res.status(200).json({
       success: true,
-      message: 'Professional account has been permanently deleted.'
+      message: 'Professional account and all its data have been permanently deleted.',
+      data: result
     });
   } catch (error) {
     res.status(400).json({
       success: false,
       error: error.message
     });
+  }
+};
+
+// @desc    Purga total de una cuenta (cualquier rol): borra el usuario y todo lo
+//          que cuelga de el, incluidos los drafts de pre-registro, para que el
+//          email y el telefono queden libres y la persona pueda registrarse otra vez.
+// @route   DELETE /api/v1/admin/users/:id
+// @access  Private/Admin
+exports.purgeUser = async (req, res) => {
+  try {
+    const target = await User.findById(req.params.id).select('email role');
+
+    if (!target) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+    if (target.role === 'admin') {
+      return res.status(400).json({ success: false, error: 'An admin account cannot be purged.' });
+    }
+    if (String(target._id) === String(req.user.id)) {
+      return res.status(400).json({ success: false, error: 'You cannot purge your own account.' });
+    }
+
+    const result = await purgeUserAccount(target._id);
+    if (!result) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    try {
+      await ActivityLog.create({
+        professional: req.user.id,
+        action: 'admin_purged_user',
+        actorType: 'admin',
+        ipAddress: getClientIp(req),
+        userAgent: req.headers['user-agent'],
+        isGuest: false,
+        details: adminLogDetails(req, {
+          targetId: String(target._id),
+          targetEmail: result.user.email,
+          targetRole: result.user.role,
+          removed: result.removed
+        })
+      });
+    } catch (logErr) {
+      console.error('Failed to log admin purge:', logErr.message);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Account and all its data were permanently deleted. The email and phone are free to register again.',
+      data: result
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+};
+
+// @desc    Buscar cuentas por email o telefono (para liberarlas antes de un alta)
+// @route   GET /api/v1/admin/users/lookup?q=...
+// @access  Private/Admin
+exports.lookupUsers = async (req, res) => {
+  try {
+    const q = String(req.query.q || '').trim();
+    if (q.length < 3) {
+      return res.status(400).json({ success: false, error: 'Type at least 3 characters.' });
+    }
+
+    const found = new Map();
+    const addUser = (user) => {
+      if (!user) return;
+      const id = String(user._id);
+      if (found.has(id)) return;
+      found.set(id, {
+        _id: user._id,
+        email: user.email,
+        role: user.role,
+        alias: (user.professionalProfile && user.professionalProfile.alias) || user.name || '',
+        phones: userPhones(user),
+        accountDeletedAt: user.accountDeletedAt || null,
+        createdAt: user.createdAt || null
+      });
+    };
+
+    const SELECT = '_id email role name accountDeletedAt createdAt professionalProfile.alias professionalProfile.mobilePhone professionalProfile.whatsappNumber hogarProfile.contact.mobilePhone';
+
+    if (q.includes('@')) {
+      const escaped = q.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const byEmail = await User.find({ email: { $regex: escaped, $options: 'i' } })
+        .select(SELECT)
+        .limit(20)
+        .lean();
+      byEmail.forEach(addUser);
+    } else if (/\d{6,}/.test(q.replace(/\D/g, ''))) {
+      const byPhone = await findUserByPhone(q);
+      if (byPhone) {
+        const full = await User.findById(byPhone._id).select(SELECT).lean();
+        addUser(full);
+      }
+    }
+
+    res.status(200).json({ success: true, count: found.size, data: Array.from(found.values()) });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
   }
 };

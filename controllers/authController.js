@@ -11,6 +11,7 @@ const Specialty = require('../models/Specialty');
 const { normalizeRegistrationMobilePhone } = require('../utils/professionalInviteMessage');
 const { assignGpsToLocation } = require('../utils/cityCoordinates');
 const { rollbackPendingUser, purgeExpiredUnverifiedUsers, isEmailFullyRegistered, hasVerifiedGuestAccount } = require('../utils/pendingRegistration');
+const { findUserByPhone } = require('../utils/userIdentity');
 const { getCertificateExpiryWarnings } = require('../utils/certExpiry');
 const { OAuth2Client } = require('google-auth-library');
 function normalizeAlias(s){ if(!s) return s; return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim(); }
@@ -362,6 +363,18 @@ exports.register = async (req, res, next) => {
     const existingUser = await User.findOne({ email });
     if (existingUser?.isEmailVerified) {
       if (role === 'professional' && existingUser.role === 'user') {
+        // El upgrade conserva la cuenta: el telefono solo tiene que estar libre
+        // en OTRAS cuentas.
+        if (mobilePhone) {
+          const upgradePhoneOwner = await findUserByPhone(mobilePhone, { excludeUserId: existingUser._id });
+          if (upgradePhoneOwner) {
+            return res.status(409).json({
+              success: false,
+              code: 'PHONE_ALREADY_REGISTERED',
+              error: 'This phone number is already registered to another account. Please sign in or use a different number.'
+            });
+          }
+        }
         const upgraded = await upgradeGuestToProfessional(existingUser, {
           password,
           professionalProfile,
@@ -404,6 +417,22 @@ exports.register = async (req, res, next) => {
         return res.status(400).json({
           success: false,
           error: 'This alias is already in use by another professional. Please choose a different one.'
+        });
+      }
+    }
+
+    // Telefono unico: una persona no puede tener dos cuentas con el mismo
+    // numero. El email ya lo garantiza el indice unique del schema; el telefono
+    // se compara por numero nacional (ver utils/userIdentity.js).
+    if (mobilePhone) {
+      const phoneOwner = await findUserByPhone(mobilePhone, {
+        excludeUserId: pendingReuse ? pendingReuse._id : undefined
+      });
+      if (phoneOwner) {
+        return res.status(409).json({
+          success: false,
+          code: 'PHONE_ALREADY_REGISTERED',
+          error: 'This phone number is already registered to another account. Please sign in or use a different number.'
         });
       }
     }

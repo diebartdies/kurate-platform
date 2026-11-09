@@ -209,10 +209,10 @@ function renderAdminAllGrid(content, items, eagerImages = false) {
 async function handleDeleteProfessional(p, card) {
     const alias = p.professionalProfile?.alias || p.email || '';
     const confirmed = await confirmDialog(
-        `${t('This will permanently delete this professional and all their data. This action cannot be undone.')}${alias ? `\n\n${alias}` : ''}`,
+        `${t('This deletes the account and ALL its data: profile, photos, verification, activity logs and pending registration. The email and phone become free to register again. This cannot be undone.')}${alias ? `\n\n${alias}` : ''}`,
         {
-            title: t('Delete professional'),
-            confirmLabel: t('Delete'),
+            title: t('Delete account permanently'),
+            confirmLabel: t('Delete permanently'),
             cancelLabel: t('Cancel'),
             destructive: true
         }
@@ -233,7 +233,7 @@ async function handleDeleteProfessional(p, card) {
         }
 
         if (card && card.parentNode) card.parentNode.removeChild(card);
-        announceMessage(t('Professional deleted successfully.'), { isError: false });
+        announceMessage(t('Account deleted. The email and phone can be used to register again.'), { isError: false });
     } catch (err) {
         announceMessage(adminConnectionErrorMessage(err));
     }
@@ -4716,6 +4716,95 @@ export async function openEditProfessionalModal(prof = null) {
     }
 }
 
+// Purga total de una cuenta desde el panel (cualquier rol). Borra la cuenta y
+// todo lo que cuelga de ella (perfil, fotos, verificacion, logs, drafts de
+// pre-registro) y libera email/telefono para que la persona se registre de nuevo.
+async function handlePurgeUser(userId, rowEl) {
+    if (!userId) return;
+    const confirmed = await confirmDialog(
+        t('This deletes the account and ALL its data: profile, photos, verification, activity logs and pending registration. The email and phone become free to register again. This cannot be undone.'),
+        {
+            title: t('Delete account permanently'),
+            confirmLabel: t('Delete permanently'),
+            cancelLabel: t('Cancel'),
+            destructive: true
+        }
+    );
+    if (!confirmed) return;
+
+    try {
+        const res = await fetch(`${API_URL}/admin/users/${userId}`, {
+            method: 'DELETE',
+            headers: authHeaders(),
+            credentials: 'include'
+        });
+        const data = await parseAdminApiResponse(res);
+        if (!res.ok || !data.success) {
+            announceMessage(data.error || t('Failed to delete account'));
+            return;
+        }
+        if (rowEl && rowEl.parentNode) rowEl.parentNode.removeChild(rowEl);
+        announceMessage(t('Account deleted. The email and phone can be used to register again.'), { isError: false });
+    } catch (err) {
+        announceMessage(adminConnectionErrorMessage(err));
+    }
+}
+
+// Buscador del panel de purga: encuentra la cuenta por email o telefono.
+function wirePurgeLookupPanel() {
+    const input = document.getElementById('purgeLookupInput');
+    const button = document.getElementById('purgeLookupBtn');
+    const box = document.getElementById('purgeLookupResults');
+    if (!input || !button || !box) return;
+
+    async function runLookup() {
+        const q = input.value.trim();
+        box.innerHTML = '';
+        if (q.length < 3) {
+            box.innerHTML = `<p style="color:#999;font-size:0.85rem;">${t('Type at least 3 characters.')}</p>`;
+            return;
+        }
+        box.innerHTML = `<p style="color:#999;font-size:0.85rem;">${t('Searching...')}</p>`;
+        try {
+            const res = await fetch(`${API_URL}/admin/users/lookup?q=${encodeURIComponent(q)}`, {
+                headers: authHeaders(),
+                credentials: 'include'
+            });
+            const data = await parseAdminApiResponse(res);
+            if (!res.ok || !data.success) {
+                box.innerHTML = `<p style="color:var(--accent-red);font-size:0.85rem;">${escapeHtml(data.error || t('Search failed'))}</p>`;
+                return;
+            }
+            if (!data.data.length) {
+                box.innerHTML = `<p style="color:#999;font-size:0.85rem;">${t('No accounts found.')}</p>`;
+                return;
+            }
+            box.innerHTML = '';
+            data.data.forEach((u) => {
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex;gap:10px;align-items:center;justify-content:space-between;padding:8px;border-bottom:1px solid #333;font-size:0.85rem;flex-wrap:wrap;';
+                const info = document.createElement('div');
+                const phoneText = (u.phones || []).join(' / ') || t('No phone');
+                const meta = `${u.role}${u.alias ? ' · ' + u.alias : ''}${u.accountDeletedAt ? ' · ' + t('user-deleted') : ''}`;
+                info.innerHTML = `<strong>${escapeHtml(u.email)}</strong> <span style="color:#888;">(${escapeHtml(meta)})</span><br><span style="color:#999;">${escapeHtml(phoneText)}</span>`;
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.textContent = t('Delete permanently');
+                btn.style.cssText = 'padding:5px 10px;color:var(--accent-red);border-color:rgba(231,76,60,0.6);';
+                btn.onclick = () => { handlePurgeUser(u._id, row); };
+                row.appendChild(info);
+                row.appendChild(btn);
+                box.appendChild(row);
+            });
+        } catch (err) {
+            box.innerHTML = `<p style="color:var(--accent-red);font-size:0.85rem;">${escapeHtml(err.message || t('Network Error'))}</p>`;
+        }
+    }
+
+    button.onclick = runLookup;
+    input.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); runLookup(); } };
+}
+
 export async function renderProfessionalList(aliasSearch = '') {
     const container = document.getElementById('editProfContainer');
     container.innerHTML = `
@@ -4724,6 +4813,19 @@ export async function renderProfessionalList(aliasSearch = '') {
             <input type="text" id="profSearchInput" placeholder="Search by Alias..." value="${aliasSearch}" style="padding: 8px; border-radius: 4px; border: 1px solid #333; background: #222; color: white; flex: 1;">
             <button id="searchProfBtn">Search</button>
         </div>
+
+        <div class="admin-purge-panel" style="border: 1px solid rgba(231,76,60,0.5); border-radius: 6px; padding: 12px; margin-bottom: 20px;">
+            <h4 style="color: var(--accent-red); margin: 0 0 6px;">${t('Delete account permanently')}</h4>
+            <p style="color: #999; font-size: 0.82rem; margin: 0 0 10px;">
+                ${t('Finds the account by email or phone and deletes it with all its data, so the email and phone can be used to register again.')}
+            </p>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <input type="text" id="purgeLookupInput" placeholder="${t('Email or phone')}" style="padding: 8px; border-radius: 4px; border: 1px solid #333; background: #222; color: white; flex: 1; min-width: 240px;">
+                <button id="purgeLookupBtn" type="button">${t('Search')}</button>
+            </div>
+            <div id="purgeLookupResults" style="margin-top: 10px;"></div>
+        </div>
+
         <div style="overflow-x: auto;">
             <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
                 <thead>
@@ -4746,6 +4848,7 @@ export async function renderProfessionalList(aliasSearch = '') {
     document.getElementById('searchProfBtn').onclick = () => {
         renderProfessionalList(document.getElementById('profSearchInput').value);
     };
+    wirePurgeLookupPanel();
 
     try {
         const token = localStorage.getItem('token');
@@ -4782,6 +4885,7 @@ export async function renderProfessionalList(aliasSearch = '') {
                     <td style="padding: 10px;">${prof.verificationStatus}</td>
                     <td style="padding: 10px;">
                         <button class="edit-prof-btn" data-id="${prof._id}" style="padding: 5px 10px;">Edit</button>
+                        <button class="purge-prof-btn" data-id="${prof._id}" style="padding: 5px 10px; color: var(--accent-red); border-color: rgba(231,76,60,0.6);" title="${t('Delete account permanently')}">${t('Delete')}</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -4792,6 +4896,12 @@ export async function renderProfessionalList(aliasSearch = '') {
                     const profId = btn.getAttribute('data-id');
                     const selectedProf = data.data.find(p => p._id === profId);
                     renderEditForm(selectedProf);
+                };
+            });
+
+            document.querySelectorAll('.purge-prof-btn').forEach(btn => {
+                btn.onclick = () => {
+                    handlePurgeUser(btn.getAttribute('data-id'), btn.closest('tr'));
                 };
             });
             applyStaticTranslations(tbody);
