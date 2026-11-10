@@ -1532,6 +1532,13 @@ const esToEnExtra = {
     'del profesional (lo ves al contactar) desde tu banco o billetera (Modo, Ualá, Naranja X, Cuenta DNI). Luego subí el comprobante.': 'of the professional (shown when you contact them) from your bank or wallet (Modo, Ualá, Naranja X, Cuenta DNI). Then upload the receipt.',
     'Solo en este caso pedimos comprobante. Por la app no hace falta.': 'Only in this case do we ask for a receipt. Not needed through the app.',
     'Marca exacta': 'Exact brand',
+    'Barrios cercanos': 'Nearby neighborhoods',
+    'Ubicación no disponible': 'Location not available',
+    '★ Sin calificar': '★ Not rated',
+    'coincidencia': 'match',
+    'Repara categoría': 'Repairs category',
+    'Se abona anticipadamente para reservar el turno': 'Paid in advance to book the appointment',
+    'Sin cargo — consulta gratuita': 'No charge — free consultation',
     '🔧 Reparo': '🔧 I repair',
     '★ 4.8 Calificación': '★ 4.8 Rating',
     'Promedio de estrellas de clientes anteriores. 5.0 = excelente. Sin estrellas = sin reseñas aún.': 'Average star rating from previous clients. 5.0 = excellent. No stars = no reviews yet.',
@@ -1991,6 +1998,14 @@ export function applyStaticTranslations(rootNode = document.body) {
         return hasOwnKey(dict, value) ? dict[value] : undefined;
     };
 
+    // Contenido del usuario (nombres, bios, descripciones, direcciones): no se
+    // traduce nunca, ni por lookup exacto ni por el fallback regex. En el HTML
+    // se marca con data-i18n-skip en el elemento que lo contiene.
+    const isSkipped = (node) => {
+        const el = node && (node.nodeType === 1 ? node : node.parentElement);
+        return !!(el && el.closest && el.closest('[data-i18n-skip]'));
+    };
+
     let regexList = regexListCache.get(currentLang);
     if (!regexList) {
         const keys = Object.keys(dict)
@@ -2050,6 +2065,7 @@ export function applyStaticTranslations(rootNode = document.body) {
     while (node = walk.nextNode()) {
         let text = node.nodeValue;
         if (!text.trim()) continue;
+        if (isSkipped(node)) continue;
         
         // Normalize all tabs, spaces, and newlines into a single space
         const normalizedText = text.replace(/\s+/g, ' ').trim();
@@ -2072,6 +2088,7 @@ export function applyStaticTranslations(rootNode = document.body) {
     // Translate input values and buttons
     const inputs = rootNode.querySelectorAll ? rootNode.querySelectorAll('input[type="button"], input[type="submit"]') : [];
     inputs.forEach(input => {
+        if (isSkipped(input)) return;
         if (input.value) {
             const norm = input.value.replace(/\s+/g, ' ').trim();
             const exact = lookup(norm) || lookup(input.value.trim());
@@ -2087,6 +2104,7 @@ export function applyStaticTranslations(rootNode = document.body) {
     // Translate placeholders
     const placeholders = rootNode.querySelectorAll ? rootNode.querySelectorAll('input[placeholder]') : [];
     placeholders.forEach(input => {
+        if (isSkipped(input)) return;
         if (input.placeholder) {
             const norm = input.placeholder.replace(/\s+/g, ' ').trim();
             const exact = lookup(norm) || lookup(input.placeholder.trim());
@@ -2100,6 +2118,7 @@ export function applyStaticTranslations(rootNode = document.body) {
     });
 
     const translateAttr = (el, attr) => {
+        if (isSkipped(el)) return;
         const val = el.getAttribute(attr);
         if (!val || !String(val).trim()) return;
         const norm = val.replace(/\s+/g, ' ').trim();

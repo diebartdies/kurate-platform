@@ -417,10 +417,20 @@
       if (btnRow.childElementCount) imgContainer.appendChild(btnRow);
 
       const caption = el('div', 'treasure-caption');
-      caption.appendChild(el('span', 'treasure-caption-alias', tech.name || 'Técnico'));
+      const aliasEl = el('span', 'treasure-caption-alias', tech.name || 'Técnico');
+      aliasEl.setAttribute('data-i18n-skip', '');
+      caption.appendChild(aliasEl);
       const sub = [tech.action, tech.serviceName].filter(Boolean).join(' · ');
-      if (tech.location) caption.appendChild(el('span', 'treasure-caption-location', tech.location));
-      if (sub) caption.appendChild(el('span', 'treasure-caption-specialty', sub));
+      if (tech.location) {
+        const locEl = el('span', 'treasure-caption-location', tech.location);
+        locEl.setAttribute('data-i18n-skip', '');
+        caption.appendChild(locEl);
+      }
+      if (sub) {
+        const subEl = el('span', 'treasure-caption-specialty', sub);
+        subEl.setAttribute('data-i18n-skip', '');
+        caption.appendChild(subEl);
+      }
       imgContainer.appendChild(caption);
 
       card.appendChild(imgContainer);
@@ -624,8 +634,14 @@
       if (btnRow.childElementCount) imgContainer.appendChild(btnRow);
 
       const caption = el('div', 'treasure-caption');
-      caption.appendChild(el('span', 'treasure-caption-alias', p.alias || 'Profesional'));
-      if (p.location) caption.appendChild(el('span', 'treasure-caption-location', p.location));
+      const aliasEl = el('span', 'treasure-caption-alias', p.alias || 'Profesional');
+      aliasEl.setAttribute('data-i18n-skip', '');
+      caption.appendChild(aliasEl);
+      if (p.location) {
+        const locEl = el('span', 'treasure-caption-location', p.location);
+        locEl.setAttribute('data-i18n-skip', '');
+        caption.appendChild(locEl);
+      }
       var badges = [];
       if (p.nearBarrio) badges.push('Barrios cercanos');
       if (p.distance != null) { badges.push(p.distance.toFixed(1) + ' km'); }
@@ -654,6 +670,7 @@
       const matriculados = (Array.isArray(profs) ? profs : []).filter(f => f && f.matriculado);
       if (matriculados.length > 0) {
         const wrap = el('div', '');
+        wrap.setAttribute('data-i18n-skip', '');
         wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;';
         matriculados.slice(0, 3).forEach(f => {
           const b = el('span', '', (f.matriculaVerificada ? '✓ ' : '') + f.name + ' matriculado');

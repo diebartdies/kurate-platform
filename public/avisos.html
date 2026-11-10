@@ -273,14 +273,14 @@
               : `<div class="aviso-avatar-placeholder">${(prof.alias || '?')[0].toUpperCase()}</div>`
             }
             <div class="aviso-card-info">
-              <div class="aviso-card-alias">${prof.alias || 'Sin alias'}</div>
-              <div class="aviso-card-location">${locationStr || 'Argentina'}</div>
+              <div class="aviso-card-alias"${prof.alias ? ' data-i18n-skip' : ''}>${prof.alias || 'Sin alias'}</div>
+              <div class="aviso-card-location"${locationStr ? ' data-i18n-skip' : ''}>${locationStr || 'Argentina'}</div>
             </div>
           </div>
           <div class="aviso-card-body">
             <span class="aviso-card-env aviso-env-${a.environment}">${ENV_LABELS[a.environment] || a.environment}</span>
             ${a.serviceLineName ? `<span style="display:inline-block;padding:3px 8px;border-radius:4px;font-size:0.75rem;font-weight:600;background:rgba(var(--gold-rgb),0.12);color:var(--primary-gold);margin-left:6px;">${a.serviceLineName}</span>` : ''}
-            ${a.text ? `<p class="aviso-card-text">${a.text}</p>` : ''}
+            ${a.text ? `<p class="aviso-card-text" data-i18n-skip>${a.text}</p>` : ''}
           </div>
           <div class="aviso-card-footer">
             <span class="aviso-card-dates">${formatDate(a.startDate)} — ${formatDate(a.endDate)}</span>
@@ -344,8 +344,8 @@
             : `<div class="detail-avatar-placeholder" style="width:64px;height:64px;border-radius:50%;background:rgba(var(--gold-rgb),0.15);display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:var(--primary-gold);border:2px solid rgba(var(--gold-rgb),0.4);">${(prof.alias || '?')[0].toUpperCase()}</div>`
           }
           <div>
-            <h3 style="font-size:1.2rem;font-weight:700;color:#fff;margin:0;">${prof.alias || 'Sin alias'}</h3>
-            <div style="font-size:0.85rem;color:#aaa;">${prof.firstName || ''} ${prof.surname || ''}</div>
+            <h3 style="font-size:1.2rem;font-weight:700;color:#fff;margin:0;"${prof.alias ? ' data-i18n-skip' : ''}>${prof.alias || 'Sin alias'}</h3>
+            <div style="font-size:0.85rem;color:#aaa;" data-i18n-skip>${prof.firstName || ''} ${prof.surname || ''}</div>
             <div style="font-size:0.8rem;color:var(--primary-gold);">${ENV_LABELS[a.environment] || a.environment}${a.serviceLineName ? ' — ' + a.serviceLineName : ''}</div>
           </div>
         </div>
@@ -353,7 +353,7 @@
           <h4>Vigencia</h4>
           <p style="color:#ccc;font-size:0.9rem;">${formatDate(a.startDate)} — ${formatDate(a.endDate)}</p>
         </div>
-        ${a.text ? `<div class="detail-section"><h4>Descripción</h4><p style="color:#ccc;font-size:0.9rem;line-height:1.5;">${a.text}</p></div>` : ''}
+        ${a.text ? `<div class="detail-section"><h4>Descripción</h4><p style="color:#ccc;font-size:0.9rem;line-height:1.5;" data-i18n-skip>${a.text}</p></div>` : ''}
         ${prof.workingHours ? `<div class="detail-section"><h4>Horario</h4><p style="color:#ccc;font-size:0.9rem;">${prof.workingHours.start || '00:00'} — ${prof.workingHours.end || '23:59'}</p></div>` : ''}
         ${prof.workingDays ? `<div class="detail-section"><h4>Días</h4><p style="color:#ccc;font-size:0.9rem;">${prof.workingDays.join(', ')}</p></div>` : ''}
         ${prof.availability ? `<div class="detail-section"><h4>Disponibilidad</h4><p style="color:#ccc;font-size:0.9rem;">${SPEED_LABELS[prof.availability] || prof.availability}</p></div>` : ''}
@@ -370,7 +370,7 @@
               }).join('')}
             </div>
           </div>` : ''}
-        ${prof.location ? `<div class="detail-section"><h4>Ubicación</h4><p style="color:#ccc;font-size:0.9rem;">${[prof.location.neighborhood, prof.location.city, prof.location.province].filter(Boolean).join(', ')}</p></div>` : ''}
+        ${prof.location ? `<div class="detail-section"><h4>Ubicación</h4><p style="color:#ccc;font-size:0.9rem;" data-i18n-skip>${[prof.location.neighborhood, prof.location.city, prof.location.province].filter(Boolean).join(', ')}</p></div>` : ''}
       `;
       $('#detailContent').innerHTML = html;
       $('#detailOverlay').classList.add('show');
