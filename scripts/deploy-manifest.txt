@@ -253,3 +253,15 @@ public/js/admin.js                         # badge "DNI leido manualmente" + eda
 # --- identidad unica (email/telefono) y purga total de cuenta ---
 utils/userIdentity.js                      # phoneKey/findUserByPhone: telefono unico comparando numero nacional (3 campos, sin indice)
 utils/userPurge.js                         # purgeUserAccount: borra cuenta + contenido + logs + drafts de pre-registro + archivos (libera email/telefono)
+
+# --- traduccion ES->EN en paginas que no cargan app.js/bootstrap.js ---
+public/js/i18n.js                          # ES->EN completo: esToEnExtra, lookup EN, limites Unicode y observer de DOM
+public/js/i18nBootstrap.js                 # NUEVO: aplica traducciones + observer en paginas sin app.js
+public/index.html                          # carga i18nBootstrap.js
+public/hogar.html                          # carga i18nBootstrap.js
+public/hogar-detail.html                   # carga i18nBootstrap.js
+public/captura-dni.html                    # carga i18nBootstrap.js
+public/precios-aire-acondicionado.html     # carga i18nBootstrap.js
+public/feedback.html                       # carga i18nBootstrap.js
+public/set-password.html                   # carga i18nBootstrap.js
+public/avisos.html                         # sincroniza documentElement.lang en modo EN

@@ -231,7 +231,8 @@
   </div>
 
   <script type="module">
-    import { applyStaticTranslations } from '/js/i18n.js';
+    import { applyStaticTranslations, currentLang } from '/js/i18n.js';
+    document.documentElement.lang = currentLang === 'es' ? 'es' : 'en';
     applyStaticTranslations();
   </script>
   <script>

@@ -1,4 +1,4 @@
-﻿// Internationalization (i18n)
+// Internationalization (i18n)
 const translations = {
     'es': {
         'Uploading...': 'Subiendo...',
@@ -1272,6 +1272,631 @@ const translations = {
     }
 };
 
+/* -------------------------------------------------------------------------
+ * Traduccion ES -> EN (modo ingles)
+ *
+ * El HTML de KuraTe (y buena parte del texto que generan los modulos JS) esta
+ * escrito en espanol, mientras que el diccionario `translations.es` traduce
+ * ingles -> espanol. Por eso, cambiar el idioma a "en" no tenia efecto: no
+ * existia ningun camino espanol -> ingles.
+ *
+ * `esToEnExtra` completa ese camino. El mapa se construye en dos pasos:
+ *   1. se invierte `translations.es` (asi todo lo que ya estaba traducido se
+ *      traduce tambien de vuelta), y
+ *   2. se aplican estas entradas, que cubren las cadenas del rebranding
+ *      KuraTe y los textos que solo existen en espanol.
+ * ---------------------------------------------------------------------- */
+
+// Textos que quedaron en ingles en el HTML heredado del fork. En espanol
+// tambien tienen que verse traducidos (y su version inglesa se obtiene
+// automaticamente al invertir este diccionario).
+Object.assign(translations.es, {
+    'Logout': 'Cerrar sesión',
+    'Exit': 'Salir',
+    'Close': 'Cerrar',
+    'Cancel': 'Cancelar',
+    'Back': 'Volver',
+    'Password': 'Contraseña',
+    'Email Address': 'Correo electrónico',
+    '6-Digit Code': 'Código de 6 dígitos',
+    'Send new code': 'Enviar código nuevo',
+    'Skip to content': 'Saltar al contenido',
+    'Loading profile...': 'Cargando perfil...',
+    'Loading dashboard...': 'Cargando panel...',
+    'Monthly payment': 'Pago mensual',
+    'When you receive your invoice, upload your bank transfer or Mercado Pago receipt.': 'Cuando recibas tu factura, subí el comprobante de la transferencia bancaria o de Mercado Pago.',
+    'How to pay': 'Cómo pagar',
+    'Action Required: Rate Change': 'Acción requerida: cambio de tarifas',
+    'The platform price rates have been updated. You must acknowledge this change to continue with transactions.': 'Se actualizaron las tarifas de la plataforma. Tenés que aceptar este cambio para seguir operando.',
+    'Acknowledge Change': 'Aceptar el cambio',
+    'Register payment receipt': 'Registrar comprobante de pago',
+    'Upload photo or PDF of receipt': 'Subí una foto o PDF del comprobante',
+    'Submit receipt': 'Enviar comprobante',
+    'Delete profile': 'Eliminar perfil',
+    'This permanently removes your account, photos, statistics, and public profile. This action cannot be undone.': 'Esto elimina de forma permanente tu cuenta, tus fotos, tus estadísticas y tu perfil público. Esta acción no se puede deshacer.',
+    'Enter your password to confirm': 'Ingresá tu contraseña para confirmar',
+    'I understand my profile will be permanently deleted and I will lose access to this account.': 'Entiendo que mi perfil se eliminará de forma permanente y que perderé el acceso a esta cuenta.',
+    'Delete permanently': 'Eliminar definitivamente',
+    'Your password': 'Tu contraseña',
+    'KuraTe - Admin Dashboard': 'KuraTe - Panel de administración',
+    'Unlocking your vault...': 'Desbloqueando tu cuenta...',
+    'KuraTe Home': 'KuraTe Inicio',
+    'Model Entrance': 'Entrada',
+    'Professionals': 'Profesionales',
+    'My Dashboard': 'Mi panel',
+    'Revealed Treasures': 'Perfiles revelados',
+    'Preparing the collection...': 'Preparando la colección...',
+    'Curated Partners': 'Socios seleccionados',
+    'Unveiling the collection...': 'Revelando la colección...',
+    'KuraTe - Professional Registration': 'KuraTe - Registro profesional',
+    'Professional Registration': 'Registro profesional',
+    'Quick signup — only what you need to get started. We will help you complete your profile and photos.': 'Registro rápido: solo lo necesario para empezar. Te ayudamos a completar tu perfil y tus fotos.',
+    'We never ask you to register a payment method — no card, no automatic debit.': 'Nunca te pedimos que registres un método de pago: sin tarjeta y sin débito automático.',
+    'Already registered?': '¿Ya estás registrado?',
+    'Login here': 'Ingresá acá',
+    'KuraTe - Professional Login': 'KuraTe - Ingreso profesional',
+    'Professional Login': 'Ingreso profesional',
+    'Sign in with your email account.': 'Ingresá con tu cuenta de email.',
+    'Enter Sanctuary': 'Ingresar',
+    'Forgot Password?': '¿Olvidaste tu contraseña?',
+    "Don't have an access yet?": '¿Todavía no tenés acceso?',
+    'Register as a professional': 'Registrate como profesional',
+    'Google sign-in': 'Ingresar con Google',
+    'KuraTe - Recover Access': 'KuraTe - Recuperar acceso',
+    'Recover Access': 'Recuperar acceso',
+    'Confirm your email to receive a recovery code.': 'Confirmá tu email para recibir un código de recuperación.',
+    'Send recovery code': 'Enviar código de recuperación',
+    'Recovery code sent to:': 'Código de recuperación enviado a:',
+    'New Password (Min 6 chars)': 'Nueva contraseña (mín. 6 caracteres)',
+    'Confirm Password': 'Confirmar contraseña',
+    'Reset Password': 'Restablecer contraseña',
+    'Back to login': 'Volver al ingreso',
+    'KuraTe - Verification': 'KuraTe - Verificación',
+    'Verify Your Email': 'Verificá tu email',
+    'Please enter the 6-digit code sent to your email. Check spam/junk if you do not see it.': 'Ingresá el código de 6 dígitos que enviamos a tu email. Si no lo ves, revisá spam.',
+    'Verify': 'Verificar'
+});
+
+const esToEnExtra = {
+    // --- Generales / navegacion ---
+    'KuraTe Logo': 'KuraTe Logo',
+    '\u2190 Volver': '\u2190 Back',
+    'Navegacion de la pagina': 'Page navigation',
+    'Idioma y sesion': 'Language and session',
+    'Salir de la app': 'Exit the app',
+    'Salir': 'Exit',
+    'Ingresar': 'Sign in',
+    'Profesional': 'Professional',
+    'Usuario': 'User',
+    'Volver': 'Back',
+    'Cerrar': 'Close',
+    'Cancelar': 'Cancel',
+    'Aplicar': 'Apply',
+    'Limpiar': 'Clear',
+    'Buscar': 'Search',
+    'Filtros': 'Filters',
+    'Mail': 'Email',
+    'Email': 'Email',
+    'Telefono': 'Phone',
+    'Teléfono': 'Phone',
+    'Contrasena': 'Password',
+    'Contraseña': 'Password',
+    'Nueva contrasena': 'New password',
+    'Nueva contraseña': 'New password',
+    'Guardar': 'Save',
+    'Guardar cambios': 'Save changes',
+    'Editar': 'Edit',
+    'Eliminar': 'Delete',
+    'Cargando...': 'Loading...',
+    'Cargando... ': 'Loading... ',
+    'Cerrar sesion': 'Log out',
+    'Español': 'Spanish',
+    'Por que KuraTe': 'Why KuraTe',
+
+    // --- Aviso de la app / descarga ---
+    'KuraTe funciona mejor en la app': 'KuraTe works better in the app',
+    'Descargar': 'Download',
+    'Descargar KuraTe': 'Download KuraTe',
+    'Descargar la app': 'Download the app',
+
+    // --- Acciones del catalogo de servicios ---
+    'Educar': 'Educate',
+    'Reparar / Arreglar': 'Repair / Fix',
+    'Instalar': 'Install',
+    'Mantener': 'Maintain',
+    'Desinstalar': 'Uninstall',
+    'Mejorar': 'Upgrade',
+    'Diseñar': 'Design',
+    'Descartar': 'Dispose of',
+    'Busco': 'Looking for',
+    'Vender': 'Sell',
+    'Comprar': 'Buy',
+    'Donar': 'Donate',
+    'Recibir donaciones': 'Receive donations',
+    'Casa de Campo': 'Country House',
+
+    // --- Landing ---
+    'contrato inpostergable': 'binding contract',
+    'Quiero registrarme': 'I want to sign up',
+    'Marca': 'Brand',
+    'Cumple WCAG 2.1 nivel AA': 'Meets WCAG 2.1 level AA',
+    'Saltar al formulario': 'Skip to form',
+    '¿Que necesitas?,': 'What do you need?,',
+    '¿Qué necesitás?,': 'What do you need?,',
+    'Como pagar - KuraTe': 'How to pay - KuraTe',
+    'Pas\u00f3 1 \u00b7 Eleg\u00ed c\u00f3mo pagar': 'Step 1 \u00b7 Choose how to pay',
+    'Paso 1 · Elegí cómo pagar': 'Step 1 · Choose how to pay',
+    'Podes pagar': 'You can pay',
+    'Podés pagar': 'You can pay',
+    'por la app': 'through the app',
+    '(sin efectivo, contrato inpostergable al contactar) o por': '(no cash, binding contract upon contact) or by',
+    'transferencia/billetera': 'bank transfer/wallet',
+    'fuera de la app.': 'outside the app.',
+    'Transferir por fuera': 'Transfer outside the app',
+    'Paso 2 · Pago por la app': 'Step 2 · Payment through the app',
+    'Registrarme para pagar por la app': 'Sign up to pay through the app',
+    'Paso 3 · Transferencia por fuera': 'Step 3 · Bank transfer outside the app',
+    'Abrir filtros': 'Open filters',
+    'Saltar al contenido': 'Skip to content',
+    'KuraTe - ¿Que necesitas? | Profesionales verificados en Argentina': 'KuraTe - What do you need? | Verified professionals in Argentina',
+    'KuraTe — ¿Qué necesitás? | Profesionales verificados en Argentina': 'KuraTe — What do you need? | Verified professionals in Argentina',
+    'Contanos qué necesitás y te conectamos con el profesional indicado': 'Tell us what you need and we\'ll connect you with the right professional',
+    '1. ¿Qué necesitás hacer?': '1. What do you need to do?',
+    'Seleccioná una acción...': 'Select an action...',
+    '2. ¿Qué artefacto o equipo?': '2. Which appliance or equipment?',
+    'Entorno...': 'Environment...',
+    'Elegí entorno': 'Choose environment',
+    'Elegí categoría': 'Choose category',
+    'Equipo...': 'Equipment...',
+    'Elegí equipo': 'Choose equipment',
+    'Marca...': 'Brand...',
+    'Elegí marca ✓': 'Choose brand ✓',
+    'Primario': 'Primary',
+    'Secundario': 'Secondary',
+    'Universitario': 'University',
+    'Materia': 'Subject',
+    'Primero elegí nivel': 'Choose a level first',
+    'Modalidad': 'Format',
+    'Cualquiera': 'Any',
+    'Presencial': 'In person',
+    'Virtual': 'Virtual',
+    '3. ¿Qué profesión buscás?': '3. Which profession are you looking for?',
+    '(opcional)': '(optional)',
+    'Cualquier profesión...': 'Any profession...',
+    'Matriculado': 'Licensed',
+    'Si pedís matriculación, solo aparecen los profesionales que la acreditan.': 'If you request licensing, only professionals who can prove it will appear.',
+    '4. ¿Dónde lo necesitás?': '4. Where do you need it?',
+    'Usar ubicación del dispositivo': 'Use device location',
+    'Provincia / CABA...': 'Province / CABA...',
+    '5. ¿Cuándo lo necesitás?': '5. When do you need it?',
+    'Sin preferencia': 'No preference',
+    'Urgente — apenas se pueda': 'Urgent — as soon as possible',
+    'Rápido — estos días': 'Fast — in the next few days',
+    'Puedo sobrevivir un par de días': 'I can wait a couple of days',
+    'No tengo apuro': 'No rush',
+    'Buscar profesionales': 'Search professionals',
+    'Ver técnicos registrados': 'See registered technicians',
+    '📋 Ver avisos de servicios': '📋 View service listings',
+    '¿No sabés a quién llamar?': 'Not sure who to call?',
+    'Contale el problema y te orientamos antes de buscar.': 'Tell us the problem and we\'ll guide you before you search.',
+    'Contanos qué está pasando': 'Tell us what\'s happening',
+    'Consultar': 'Ask',
+    '¿Sos profesional y querés recibir consultas?': 'Are you a professional and want to receive requests?',
+    'Registrate gratis — primer mes sin costo.': 'Sign up free — first month at no cost.',
+    'Iniciar sesión': 'Log in',
+    'Explorar profesionales': 'Explore professionals',
+    'KuraTe — Conectamos profesionales con clientes': 'KuraTe — Connecting professionals with clients',
+    'Equipo': 'Equipment',
+    'Ciudad o barrio': 'City or neighborhood',
+    'Ej: se me corta la luz y el disyuntor salta cada ratito': 'E.g.: the power keeps cutting out and the breaker trips every few minutes',
+
+    // --- Busqueda de profesionales (hogar) ---
+    'Técnicos Hogar y Oficina en Argentina | KuraTe': 'Home and Office Technicians in Argentina | KuraTe',
+    'Publicidad': 'Advertising',
+    'Área': 'Area',
+    'Todas': 'All',
+    'Todos': 'All',
+    'Profesional matriculado': 'Licensed professional',
+    'Técnico matriculado': 'Licensed technician',
+    'Técnico no matriculado': 'Unlicensed technician',
+    'Idóneo': 'Qualified',
+    'Inmediata': 'Immediate',
+    'Rápida (<2 días)': 'Fast (<2 days)',
+    'Rápida (&lt;2 días)': 'Fast (<2 days)',
+    '2–4 días': '2–4 days',
+    '2-4 días': '2-4 days',
+    '>4 días': '>4 days',
+    'Todas las ciudades / barrios': 'All cities / neighborhoods',
+    'Servicio / Equipo': 'Service / Equipment',
+    'Profesión': 'Profession',
+    'Solo matriculados': 'Licensed only',
+    '📍 Cerca de mí': '📍 Near me',
+    'Técnicos disponibles': 'Available technicians',
+    'Si me conocés mejor, te voy a ayudar mucho más': 'The better you know me, the more I can help',
+    '💳 Cómo pagar': '💳 How to pay',
+    'Preparando el directorio...': 'Preparing the directory...',
+    'Áreas': 'Areas',
+    'WhatsApp disponible': 'WhatsApp available',
+    'Telegram disponible': 'Telegram available',
+    'Si no muestra ninguno, usá email o teléfono.': 'If none is shown, use email or phone.',
+    'Cómo leer las tarjetas': 'How to read the cards',
+    'Tu respuesta rápida y directa.': 'Your quick, direct answer.',
+    'Pagar por la app (recomendado mayores)': 'Pay through the app (recommended for older adults)',
+    'Si elegís por la app, te guiamos a registrarte (necesitamos tus datos para el contrato). Si es por fuera, te pedimos el comprobante.': 'If you choose the app, we guide you through signing up (we need your details for the contract). For outside payments, we ask for the receipt.',
+    'Registrate / ingresá (guest o profesional)': 'Sign up / log in (guest or professional)',
+    'Confirmá el monto del servicio': 'Confirm the service amount',
+    'Al contactar al profesional se genera el': 'Contacting the professional generates the',
+    'usuario-profesional': 'user-professional',
+    'El pago queda asentado sin mover efectivo': 'The payment is recorded without cash changing hands',
+    'Transferí al': 'Transfer to the',
+    'del profesional (lo ves al contactar) desde tu banco o billetera (Modo, Ualá, Naranja X, Cuenta DNI). Luego subí el comprobante.': 'of the professional (shown when you contact them) from your bank or wallet (Modo, Ualá, Naranja X, Cuenta DNI). Then upload the receipt.',
+    'Solo en este caso pedimos comprobante. Por la app no hace falta.': 'Only in this case do we ask for a receipt. Not needed through the app.',
+    'Marca exacta': 'Exact brand',
+    '🔧 Reparo': '🔧 I repair',
+    '★ 4.8 Calificación': '★ 4.8 Rating',
+    'Promedio de estrellas de clientes anteriores. 5.0 = excelente. Sin estrellas = sin reseñas aún.': 'Average star rating from previous clients. 5.0 = excellent. No stars = no reviews yet.',
+    '92% Coincidencia': '92% Match',
+    'Qué tan bien coincide con tu búsqueda. 100% = servicio exacto + misma marca.': 'How well it matches your search. 100% = exact service + same brand.',
+    '3.2 km Distancia': '3.2 km Distance',
+    'Qué tan cerca está. Menor distancia = llega más rápido.': 'How close it is. Shorter distance = faster arrival.',
+    '🏷️ Marca exacta': '🏷️ Exact brand',
+    'Trabaja con la marca que necesitás. Mejor para garantía.': 'Works with the brand you need. Better for warranty.',
+    '💡 Consejo:': '💡 Tip:',
+    'Los primeros resultados combinan mejor distancia + servicio + calificación.': 'Top results combine the best distance + service + rating.',
+    'reparar heladera, instalar aire...': 'repair a fridge, install an AC...',
+    'Escribí el servicio': 'Type the service',
+    'Escribí la marca': 'Type the brand',
+    'Cerrar filtros': 'Close filters',
+    'Sin resultados': 'No results',
+    'Probá ampliar los filtros.': 'Try broadening the filters.',
+    'Cargar más': 'Load more',
+    'Ver más': 'See more',
+    'Contactar': 'Contact',
+    'Enviar mensaje': 'Send message',
+    'Llamar': 'Call',
+    'Ver perfil': 'View profile',
+    'km': 'km',
+    'Hogar': 'Home',
+    'Oficina': 'Office',
+    'PIME': 'SME',
+    'Industria': 'Industry',
+
+    // --- Perfil (cliente y profesional) ---
+    'KuraTe - Mi Perfil': 'KuraTe - My Profile',
+    'Mi Perfil': 'My Profile',
+    'Cuenta de cliente': 'Client account',
+    'Email verificado': 'Email verified',
+    'Email sin verificar': 'Email not verified',
+    'Teléfono verificado': 'Phone verified',
+    'Teléfono sin verificar': 'Phone not verified',
+    'DNI': 'ID',
+    'Fecha de nacimiento': 'Date of birth',
+    'Miembro desde': 'Member since',
+    'Ver avisos de servicios': 'View service listings',
+    'Sin especialidades configuradas': 'No specialties configured',
+    'Sin descripción': 'No description',
+    'Experto': 'Expert',
+    'Maestro': 'Master',
+    'Inicial': 'Starter',
+    '⚪ Técnico': '⚪ Technician',
+    'Técnico': 'Technician',
+    '📊 Mis Estadísticas': '📊 My Stats',
+    'Cargando estadísticas...': 'Loading stats...',
+    '💳 Datos de cobro': '💳 Payment details',
+    'Si querés que el cliente pueda pagarte vía KuraTe (sin efectivo, ideal mayores), activá esta opción y cargá tu CBU/CVU/Alias. Al contactarte se genera un': 'If you want clients to be able to pay you through KuraTe (no cash, ideal for older adults), enable this option and enter your CBU/CVU/Alias. When they contact you, it generates a',
+    'entre vos y el cliente.': 'between you and the client.',
+    'Quiero facilitar el pago a través de la app': 'I want to make payment through the app easier',
+    'CBU (22 dígitos)': 'CBU (22 digits)',
+    'CVU (22 dígitos)': 'CVU (22 digits)',
+    'Nº cuenta / Banco': 'Account No. / Bank',
+    'Datos encriptados, solo para derivar el pago. Si no completás, cobrás solo por fuera de la app.': 'Encrypted data, used only to route the payment. If you don\'t fill it in, you\'ll only be paid outside the app.',
+    'Guardar datos de cobro': 'Save payment details',
+    'Guardado ✓': 'Saved ✓',
+    'Cuenta / Banco': 'Account / Bank',
+    'Continuá tu registro KuraTe en el celular:': 'Continue your KuraTe registration on your phone:',
+    'Continuá tu registro KuraTe:': 'Continue your KuraTe registration:',
+    'Copiá este link y abrilo en tu celular:': 'Copy this link and open it on your phone:',
+    'Pegalo en tu celular o envialo por WhatsApp/SMS.': 'Paste it on your phone or send it via WhatsApp/SMS.',
+
+    // --- Panel profesional ---
+    'KuraTe - Panel Profesional': 'KuraTe - Professional Dashboard',
+    'Panel Profesional': 'Professional Dashboard',
+    '📋 Mis Avisos': '📋 My Listings',
+    '+ Crear Aviso': '+ Create Listing',
+    'Cargando avisos...': 'Loading listings...',
+    'No tenés avisos creados. ¡Creá tu primer aviso para llegar a más clientes!': 'You haven\'t created any listings. Create your first listing to reach more clients!',
+    'Crear Aviso': 'Create Listing',
+    'Entorno *': 'Environment *',
+    'Seleccionar entorno...': 'Select environment...',
+    'Línea de Servicio *': 'Service Line *',
+    'Primero seleccioná un entorno...': 'Select an environment first...',
+    'Descripción / Aclaraciones (opcional)': 'Description / Notes (optional)',
+    'Resumen del aviso:': 'Listing summary:',
+    'Se publicarán tus datos de perfil (nombre, alias, servicios, disponibilidad, ubicación) junto con esta descripción. El aviso tendrá una vigencia de 30 días.': 'Your profile details (name, alias, services, availability, location) will be published along with this description. The listing will be active for 30 days.',
+    '⚠️ Te falta completar tu perfil': '⚠️ Your profile is incomplete',
+    'Para lanzar un aviso necesitás:': 'To publish a listing you need:',
+    'Estamos buscando el código postal de tu dirección…': 'We\'re looking up the postal code for your address…',
+    'Ir a mi perfil': 'Go to my profile',
+    'Pagar aviso': 'Pay for listing',
+    'Monto a pagar:': 'Amount to pay:',
+    '¿Cómo pagaste?': 'How did you pay?',
+    'Por la app — Mercado Pago': 'Through the app — Mercado Pago',
+    'Pago externo — Transferencia bancaria': 'External payment — Bank transfer',
+    'Cargando datos de pago…': 'Loading payment details…',
+    'Comprobante (foto o PDF)': 'Receipt (photo or PDF)',
+    'Subir comprobante': 'Upload receipt',
+    'Ej: Ofrezco reparación de heladeras con 30 días de garantía. Disponibilidad inmediata.': 'E.g.: I offer fridge repairs with a 30-day warranty. Immediate availability.',
+    'Sin categoría': 'Uncategorized',
+    'Categoría': 'Category',
+    'Dirección': 'Address',
+    'Código Postal': 'Postal code',
+    'Nombre': 'First name',
+    'Apellido': 'Last name',
+    'Número': 'Number',
+    'Matrícula:': 'License:',
+    'Fecha de Nacimiento': 'Date of birth',
+    'Descripción de servicios (bio)': 'Service description (bio)',
+    'Teléfono móvil': 'Mobile phone',
+    'Nombre de la empresa o monotributista': 'Company or sole trader name',
+    'Monto del presupuesto (ARS)': 'Quote amount (ARS)',
+    'Velocidad de respuesta': 'Response speed',
+    'Presupuesto y Tiempo de Respuesta': 'Quote and Response Time',
+    'Solicitar ayuda al admin': 'Request help from admin',
+    'Request help / Solicitar ayuda al admin': 'Request help from admin',
+    'Seleccioná solo las acciones que sepas realizar en este dispositivo.': 'Select only the actions you can perform on this device.',
+    '⚠ Elegí al menos una acción antes de escribir una marca.': '⚠ Choose at least one action before typing a brand.',
+    '⚠ Elegí al menos una acción antes de seleccionar marcas.': '⚠ Choose at least one action before selecting brands.',
+    '⚠ No podés quitar la última acción si hay marcas seleccionadas.': '⚠ You can\'t remove the last action while brands are selected.',
+    'Sin profesiones disponibles.': 'No professions available.',
+    'Foto/PDF del título': 'Photo/PDF of the certificate',
+    'no se pudo adjuntar el título': 'the certificate could not be attached',
+
+    // --- Avisos ---
+    'Avisos de Servicios Técnicos | KuraTe': 'Technical Service Listings | KuraTe',
+    '← Inicio': '← Home',
+    'Inicio': 'Home',
+    '🏠 Hogar': '🏠 Home',
+    '🏢 Oficina': '🏢 Office',
+    '🏬 Pyme': '🏬 SME',
+    '🏭 Industria': '🏭 Industry',
+    '📋 Avisos disponibles': '📋 Available listings',
+    'Preparando avisos...': 'Preparing listings...',
+    'No hay avisos': 'No listings',
+    'No se encontraron avisos para este entorno.': 'No listings found for this environment.',
+    'Sobre los Avisos': 'About Listings',
+    'Los avisos son publicaciones de servicios técnicos creadas por profesionales verificados. Cada aviso incluye los datos del profesional, sus servicios y disponibilidad.': 'Listings are technical service posts created by verified professionals. Each listing includes the professional\'s details, services and availability.',
+    '¿Sos profesional?': 'Are you a professional?',
+    'Creá tu aviso desde tu perfil y llegá a miles de clientes potenciales.': 'Create your listing from your profile and reach thousands of potential clients.',
+    'Servicios Técnicos en Argentina': 'Technical Services in Argentina',
+    'Filtros de búsqueda': 'Search filters',
+    'Alias, servicio, marca...': 'Alias, service, brand...',
+    'No hay líneas disponibles': 'No service lines available',
+    'Seleccionar línea de servicio...': 'Select a service line...',
+    'Cargando líneas de servicio...': 'Loading service lines...',
+    'Estadísticas no disponibles.': 'Stats not available.',
+    'Error al subir comprobante.': 'Error uploading receipt.',
+    'Seleccioná un archivo.': 'Select a file.',
+    'Error de conexión.': 'Connection error.',
+    '⚠️ Por expirar': '⚠️ Expiring soon',
+
+    // --- Detalle del tecnico ---
+    'Detalle del técnico': 'Technician details',
+    'Cargando detalle...': 'Loading details...',
+    'Pagar por la app': 'Pay through the app',
+    'Por la app no pedimos comprobante. Por fuera sí.': 'Through the app we don\'t ask for a receipt. Outside the app we do.',
+    'Registrate / ingresá': 'Sign up / log in',
+    'Confirmá el monto': 'Confirm the amount',
+    'Al contactar se genera el': 'Contacting generates the',
+    'Sin movimiento de efectivo': 'No cash movement',
+    'Transferí al Alias/CBU/CVU del profesional desde tu banco o billetera y subí el comprobante.': 'Transfer to the professional\'s Alias/CBU/CVU from your bank or wallet and upload the receipt.',
+    'Presupuesto sin cargo': 'Free quote',
+    'Reparación programada': 'Scheduled repair',
+
+    // --- Captura de DNI ---
+    'KuraTe - Escanear DNI': 'KuraTe - Scan ID',
+    '📸 Escaneá tu DNI': '📸 Scan your ID',
+    'Solo el': 'Only the',
+    'frente': 'front',
+    'con código de barras. Extraemos tus datos automáticamente.': 'with barcode. We extract your data automatically.',
+    'Usá buena luz, sin reflejos.': 'Use good light, no glare.',
+    'Frente del DNI': 'ID front',
+    '✓ capturado': '✓ captured',
+    '📷 Capturar frente': '📷 Capture front',
+    '✓ Datos extraídos': '✓ Data extracted',
+    'Confirmar y continuar': 'Confirm and continue',
+    'Al confirmar quedás en revisión. Te avisamos cuando seas aprobado.': 'Once confirmed you\'ll be under review. We\'ll let you know when you\'re approved.',
+    'Vista previa del frente del documento': 'Document front preview',
+
+    // --- Registro (wizard) ---
+    'Creá tu cuenta': 'Create your account',
+    'Primero contanos quién sos para registrarte.': 'First, tell us who you are to sign up.',
+    'Enviar código SMS': 'Send SMS code',
+    'Verificá tu teléfono': 'Verify your phone',
+    'Ingresá el código de 6 dígitos que enviamos por SMS.': 'Enter the 6-digit code we sent by SMS.',
+    'Dígito 1 de 6': 'Digit 1 of 6',
+    'Dígito 2 de 6': 'Digit 2 of 6',
+    'Dígito 3 de 6': 'Digit 3 of 6',
+    'Dígito 4 de 6': 'Digit 4 of 6',
+    'Dígito 5 de 6': 'Digit 5 of 6',
+    'Dígito 6 de 6': 'Digit 6 of 6',
+    'Verificar': 'Verify',
+    'Reenviar código': 'Resend code',
+    'Verificá tu email': 'Verify your email',
+    'Elegí cómo verificar tu correo.': 'Choose how to verify your email.',
+    'Verificar con código por email': 'Verify with email code',
+    'Código de email': 'Email code',
+    'Enviamos un código a tu email. Ingresalo abajo.': 'We sent a code to your email. Enter it below.',
+    'Volver y elegir otra opción': 'Back and choose another option',
+    'Ya casi está': 'You\'re almost there',
+    'La verificación con Google no está disponible dentro de la app. Usá el código por email (funciona igual y es más rápido).': 'Google verification isn\'t available inside the app. Use the email code (it works the same and is faster).',
+    'O verificá con Google': 'Or verify with Google',
+    'Analizando la foto del DNI...': 'Analyzing the ID photo...',
+    'La foto quedó guardada. Podés probar con otra foto más nítida o completar los datos a mano.': 'The photo has been saved. You can try another, sharper photo or enter the details manually.',
+    'Escribí los datos tal como figuran en el DNI. La foto que ya subiste queda guardada para revisión.': 'Enter the details exactly as they appear on your ID. The photo you already uploaded is saved for review.',
+    'Número de DNI': 'ID number',
+    'Sin puntos': 'No dots',
+    'Guardar datos del DNI': 'Save ID details',
+    'Completá nombre y apellido.': 'Enter your first and last name.',
+    'El número de DNI debe tener 7 u 8 dígitos.': 'The ID number must have 7 or 8 digits.',
+    'La fecha debe ser DD/MM/AAAA.': 'The date must be DD/MM/YYYY.',
+    'Guardando...': 'Saving...',
+    'No pudimos guardar los datos del DNI.': 'We couldn\'t save the ID details.',
+    'Mínimo 6 caracteres': 'At least 6 characters',
+    'Confirmar contraseña': 'Confirm password',
+    'Repetí la contraseña': 'Repeat the password',
+    'Verificaste el email con Google: no hace falta crear una contraseña.': 'You verified your email with Google: you don\'t need to create a password.',
+    'Alias (se muestra públicamente)': 'Alias (shown publicly)',
+    'Tu nombre de fantasía': 'Your display name',
+    'Tipo de cuenta': 'Account type',
+    'Crear cuenta': 'Create account',
+    'Creando cuenta...': 'Creating account...',
+    'La contraseña debe tener al menos 6 caracteres.': 'The password must be at least 6 characters long.',
+    'Las contraseñas no coinciden.': 'Passwords don\'t match.',
+    'Error al crear la cuenta.': 'Error creating the account.',
+    'Necesitamos el frente de tu DNI. Sacá la foto con el código de barras completo y con buena luz.': 'We need the front of your ID. Take the photo with the full barcode in good light.',
+    'Subí una foto o escaneo del frente de tu DNI (con el código de barras) con buena luz.': 'Upload a photo or scan of the front of your ID (with the barcode) in good light.',
+    'Todavía no cargaste la foto': 'You haven\'t uploaded the photo yet',
+    'Todavía no elegiste una imagen': 'You haven\'t chosen an image yet',
+    'Analizando...': 'Analyzing...',
+    'Tomar foto con la cámara': 'Take a photo with the camera',
+    'Elegir foto del DNI': 'Choose ID photo',
+    'Elegir de la galería': 'Choose from gallery',
+    'Probar con otra foto': 'Try another photo',
+    'Elegir otra imagen': 'Choose another image',
+    'Completar los datos del DNI a mano': 'Enter ID details manually',
+    'El archivo elegido no es una imagen.': 'The selected file is not an image.',
+    'No se pudo leer la imagen': 'The image couldn\'t be read',
+    'No pudimos leer el código de barras del DNI.': 'We couldn\'t read the ID barcode.',
+    'No se pudo leer el código de barras del DNI.': 'The ID barcode couldn\'t be read.',
+    'Ingresá tu email.': 'Enter your email.',
+    'Ingresá tu teléfono.': 'Enter your phone.',
+    'Ingresá los 6 dígitos.': 'Enter the 6 digits.',
+    'Enviando...': 'Sending...',
+    'Verificando...': 'Verifying...',
+    'Error al enviar SMS.': 'Error sending SMS.',
+    'Código incorrecto.': 'Incorrect code.',
+    'Código reenviado.': 'Code resent.',
+    'Error con Google.': 'Google error.',
+    'Error.': 'Error.',
+
+    // --- Contrasena / recuperacion / verificacion ---
+    'KuraTe - Definí tu contraseña': 'KuraTe - Set your password',
+    'Definí tu contraseña': 'Set your password',
+    'Un administrador generó una contraseña temporal para tu cuenta.': 'An administrator created a temporary password for your account.',
+    'Elegí una contraseña propia para continuar.': 'Choose your own password to continue.',
+    'Contraseña temporal': 'Temporary password',
+    'Repetí la nueva contraseña': 'Repeat the new password',
+    'Guardar contraseña': 'Save password',
+    'Salir y entrar con otra cuenta': 'Exit and sign in with another account',
+    '🔑 Creá tu contraseña para ingresar desde el celular': '🔑 Create your password to sign in from your phone',
+    'La usarás para loguearte en el teléfono y completar tu DNI.': 'You\'ll use it to log in on your phone and complete your ID verification.',
+    'Contraseña (mín 6)': 'Password (min 6)',
+    'Repetí contraseña': 'Repeat password',
+    'Guardar y continuar al DNI': 'Save and continue to ID',
+    'Contraseña guardada. Redirigiendo...': 'Password saved. Redirecting...',
+    'Error de conexión': 'Connection error',
+
+    // --- Opinion / feedback ---
+    'KuraTe — Opinión': 'KuraTe — Feedback',
+    '¿Cómo fue tu experiencia?': 'How was your experience?',
+    'Tu opinión nos ayuda a mejorar. Calificá del 1 al 5.': 'Your feedback helps us improve. Rate from 1 to 5.',
+    'Enviar opinión': 'Send feedback',
+    'Comentario (opcional)': 'Comment (optional)',
+    'Cargando perfil...': 'Loading profile...',
+
+    // --- Precios aire acondicionado ---
+    'Precios Referencia Aire Acondicionado 2026 | KuraTe': 'Air Conditioning Reference Prices 2026 | KuraTe',
+    'Precios de Referencia — Aire Acondicionado 2026': 'Reference Prices — Air Conditioning 2026',
+    '⚠️ Estos precios son solo de referencia orientativa.': '⚠️ These prices are for guidance only.',
+    'Los valores pueden variar según la zona, complejidad del trabajo, marca del equipo y cada profesional.': 'Values may vary by area, job complexity, equipment brand and each professional.',
+    'Consultá directamente con el técnico para obtener un presupuesto exacto y personalizado.': 'Ask the technician directly for an exact, personalized quote.',
+    'Servicio': 'Service',
+    'Precio (ARS)': 'Price (ARS)',
+    'Instalación': 'Installation',
+    'Instalación estándar A. Acond de 0 a 3.499 Fg': 'Standard AC installation, 0 to 3,499 Fg',
+    'Instalación estándar A. Acond de 3.500 a 5.499 Fg': 'Standard AC installation, 3,500 to 5,499 Fg',
+    'Instalación estándar A. Acond de 5.500 a 6.299 Fg': 'Standard AC installation, 5,500 to 6,299 Fg',
+    'Instalación estándar A. Acond de 6.300 a 7.999 Fg': 'Standard AC installation, 6,300 to 7,999 Fg',
+    'Instalación estándar A. Acond de 8.000 a 8.999 Fg': 'Standard AC installation, 8,000 to 8,999 Fg',
+    'Instalación estándar A. Acond Roof-Top de 9.000 a 14.999 Fg': 'Standard AC Roof-Top installation, 9,000 to 14,999 Fg',
+    'Instalación estándar A. Acond de 15.000 a 18.000 Fg': 'Standard AC installation, 15,000 to 18,000 Fg',
+    'Pre-instalación estándar (cañerías aisladas, cable y caja embutidas)': 'Standard pre-installation (insulated piping, cable and recessed box)',
+    'Montaje split sobre pre-instalación': 'Split mounting on pre-installation',
+    'Desinstalación': 'Uninstallation',
+    'Desinstalación de A. Acond. hasta 6.000 Fg': 'AC uninstallation up to 6,000 Fg',
+    'Diagnóstico y Mantenimiento': 'Diagnostics and Maintenance',
+    'Visita técnica (diagnóstico / presupuesto)': 'Technical visit (diagnosis / quote)',
+    'Limpieza y mantenimiento A.A. split hasta 6.000 Fg': 'Cleaning and maintenance for split AC up to 6,000 Fg',
+    '(sin desinstalación)': '(without uninstallation)',
+    '(con desinstalación)': '(with uninstallation)',
+    'Reparación': 'Repair',
+    'Detección, reparación de fuga y carga de refrigerante R410a': 'Leak detection and repair, R410a refrigerant recharge',
+    'Detección, reparación de fuga y carga de refrigerante R22': 'Leak detection and repair, R22 refrigerant recharge',
+    'desde $110.000': 'from $110,000',
+    'Recambio de capacitor': 'Capacitor replacement',
+    'Recambio de motocompresor': 'Compressor replacement',
+    'Igual al valor de materiales': 'Same as the cost of materials',
+    'Recambio de placa lógica': 'Control board replacement',
+    'Encontrar técnico de A. Acondicionado': 'Find an air conditioning technician',
+    'Compará presupuestos de técnicos verificados en KuraTe': 'Compare quotes from verified technicians on KuraTe',
+    'Precios de referencia para Argentina — Septiembre 2026 — Solo mano de obra, no incluye materiales ni repuestos.': 'Reference prices for Argentina — September 2026 — Labor only, materials and parts not included.',
+    '© 2026 KuraTe — Tu respuesta rápida y directa.': '© 2026 KuraTe — Your quick, direct answer.',
+    'Tabla de precios de instalación de aire acondicionado': 'Air conditioning installation price table',
+
+    // --- Frases de JS (alertas) que no estan en el HTML ---
+    'Un administrador generó una contraseña temporal para tu cuenta. Elegí una contraseña propia para continuar.': 'An administrator created a temporary password for your account. Choose your own password to continue.',
+    'Tu sesión no está activa. Volvé a entrar con la contraseña temporal.': 'Your session is not active. Sign in again with the temporary password.',
+    'La contraseña temporal no coincide.': 'The temporary password is incorrect.',
+    'No se pudo cambiar la contraseña.': 'The password could not be changed.',
+    'Contraseña actualizada. Redirigiendo...': 'Password updated. Redirecting...',
+
+    // --- Ficha publica del profesional (hogar-detail.html) ---
+    'Qué hace': 'What they do',    'Detalles': 'Details',
+    'Servicios': 'Services',
+    'Empresa': 'Company',
+    'Zona': 'Area',
+    'Sobre mí': 'About me',
+    'Sobre mi trabajo': 'About my work',
+    'Dirección comercial': 'Business address',
+    'Horarios': 'Business hours',
+    'Días': 'Days',
+    'Horario': 'Hours',
+    'Ver en mapa': 'View on map',
+    'Presupuesto': 'Budget',
+    'Sin datos de contacto públicos.': 'No public contact info.',
+    'Falta el id del técnico.': 'Missing technician id.',
+    'Cómo pagar': 'How to pay',
+
+    // --- Enlaces legales (register.html) ---
+    'Políticas legales:': 'Legal policies:',
+    'Política de Privacidad': 'Privacy Policy',
+    'Condiciones del Servicio': 'Terms of Service'
+};
+
+function hasOwnKey(obj, key) {
+    return Object.prototype.hasOwnProperty.call(obj, key);
+}
+
+function buildEnDictionary() {
+    const en = {};
+    const es = translations.es || {};
+    const keys = Object.keys(es);
+    for (let i = 0; i < keys.length; i += 1) {
+        const key = keys[i];
+        const spanish = es[key];
+        if (!spanish || spanish === key) continue;
+        if (!hasOwnKey(en, spanish)) en[spanish] = key;
+    }
+    const extraKeys = Object.keys(esToEnExtra);
+    for (let i = 0; i < extraKeys.length; i += 1) {
+        const key = extraKeys[i];
+        en[key] = esToEnExtra[key];
+    }
+    return en;
+}
+
+const enDictionary = buildEnDictionary();
+
 const currentLang = localStorage.getItem('platform_lang') || 'es';
 
 export { currentLang };
@@ -1322,12 +1947,31 @@ export function formatOpeningDateTime(iso, { withTime = true } = {}) {
     return `${formatted} (${t('Argentina time')})`;
 }
 
+/**
+ * Texto que ya esta en ingles (es una clave del diccionario) se devuelve tal
+ * cual en modo EN: evita que una cadena inglesa que coincide con una
+ * traduccion en espanol se traduzca dos veces.
+ */
+function isEnglishSource(text) {
+    if (currentLang !== 'en' || !hasOwnKey(translations['es'], text)) return false;
+    // translations.es tiene pares identidad ('Disponibilidad': 'Disponibilidad',
+    // 'Fotos': 'Fotos'): son claves en espanol, no texto fuente en ingles. Si se
+    // trataran como fuente inglesa, la ficha del profesional nunca las traducia.
+    return translations['es'][text] !== text;
+}
+
 export function t(text) {
-    if (currentLang === 'en') return text;
+    if (text == null) return text;
+    if (currentLang === 'en') {
+        if (isEnglishSource(text)) return text;
+        return hasOwnKey(enDictionary, text) ? enDictionary[text] : text;
+    }
     return translations['es'][text] || text;
 }
 
-let esRegexList = null;
+// Cache de las listas de regex por idioma (antes habia una sola lista global,
+// construida solo para espanol).
+const regexListCache = new Map();
 
 // Cache del fallback por regex. El admin/grid repiten las mismas cadenas
 // ("Edit", "Delete", estados, emails), y sin cache cada nodo pagaba hasta
@@ -1338,21 +1982,39 @@ const regexFallbackCache = new Map();
 const REGEX_FALLBACK_CACHE_MAX = 8000;
 
 export function applyStaticTranslations(rootNode = document.body) {
-    if (currentLang === 'en') return;
-    
-    const dict = translations[currentLang] || translations['es'];
-    let regexList = esRegexList;
+    const dict = currentLang === 'en' ? enDictionary : (translations[currentLang] || translations['es']);
+
+    const lookup = (value) => {
+        if (!value) return undefined;
+        // Una cadena que ya es fuente en ingles no se vuelve a traducir.
+        if (isEnglishSource(value)) return undefined;
+        return hasOwnKey(dict, value) ? dict[value] : undefined;
+    };
+
+    let regexList = regexListCache.get(currentLang);
     if (!regexList) {
-        const keys = Object.keys(dict).sort((a, b) => b.length - a.length);
+        const keys = Object.keys(dict)
+            // En modo EN, las claves que son fuente en ingles quedan afuera del
+            // fallback por regex para no romper texto que ya esta bien.
+            .filter(key => !isEnglishSource(key))
+            // Las claves de una sola letra ('a' -> 'to', de translations.es) solo
+            // sirven para coincidencias exactas: dentro de una frase rompen
+            // palabras ("created a temporary" -> "created to temporary").
+            .filter(key => key.trim().length >= 2)
+            .sort((a, b) => b.length - a.length);
         regexList = keys.map(key => {
             // Escape regex, then replace any spaces with \s+ to handle weird formatting/newlines
             const pattern = key.split(/\s+/).map(word => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+');
             let finalPattern = pattern;
-            if (/^\w/.test(key)) finalPattern = '\\b' + finalPattern;
-            if (/\w$/.test(key)) finalPattern = finalPattern + '\\b';
-            return { key, regex: new RegExp(finalPattern, 'gi') };
+            // \b de JS solo entiende ASCII: en "Categoría" hay un limite de
+            // palabra entre la "í" y la "a", asi que la clave corta 'a' -> 'to'
+            // convertia "Categoría..." en "Categoríto...". Los limites tienen
+            // que considerar letras acentuadas (\p{L}) y numeros (\p{N}).
+            if (/^[\p{L}\p{N}]/u.test(key)) finalPattern = '(?<![\\p{L}\\p{N}])' + finalPattern;
+            if (/[\p{L}\p{N}]$/u.test(key)) finalPattern = finalPattern + '(?![\\p{L}\\p{N}])';
+            return { key, regex: new RegExp(finalPattern, 'giu') };
         });
-        esRegexList = regexList;
+        regexListCache.set(currentLang, regexList);
     }
 
     // Fallback por regex, memoizado por cadena unica. Reproduce exactamente el
@@ -1366,7 +2028,9 @@ export function applyStaticTranslations(rootNode = document.body) {
         let updatedText = original;
         let changed = false;
         for (const { key, regex } of regexList) {
-            const newText = updatedText.replace(regex, dict[key]);
+            // Funcion de reemplazo: evita que un "$" del texto traducido se
+            // interprete como patron especial de String.replace.
+            const newText = updatedText.replace(regex, () => dict[key]);
             if (newText !== updatedText) {
                 updatedText = newText;
                 changed = true;
@@ -1389,12 +2053,11 @@ export function applyStaticTranslations(rootNode = document.body) {
         
         // Normalize all tabs, spaces, and newlines into a single space
         const normalizedText = text.replace(/\s+/g, ' ').trim();
+        const exact = lookup(normalizedText) || lookup(text.trim());
         
-        if (dict[normalizedText]) {
-            nodesToReplace.push({ node, newText: text.replace(text.trim(), dict[normalizedText]) });
-        } else if (dict[text.trim()]) {
-            nodesToReplace.push({ node, newText: text.replace(text.trim(), dict[text.trim()]) });
-        } else {
+        if (exact !== undefined) {
+            nodesToReplace.push({ node, newText: text.replace(text.trim(), () => exact) });
+        } else if (!isEnglishSource(normalizedText) && !isEnglishSource(text.trim())) {
             const translated = applyRegexFallback(text);
             if (translated !== null) {
                 nodesToReplace.push({ node, newText: translated });
@@ -1411,11 +2074,10 @@ export function applyStaticTranslations(rootNode = document.body) {
     inputs.forEach(input => {
         if (input.value) {
             const norm = input.value.replace(/\s+/g, ' ').trim();
-            if (dict[norm]) {
-                input.value = dict[norm];
-            } else if (dict[input.value.trim()]) {
-                input.value = dict[input.value.trim()];
-            } else {
+            const exact = lookup(norm) || lookup(input.value.trim());
+            if (exact !== undefined) {
+                input.value = exact;
+            } else if (!isEnglishSource(norm) && !isEnglishSource(input.value.trim())) {
                 const translated = applyRegexFallback(input.value);
                 if (translated !== null) input.value = translated;
             }
@@ -1427,11 +2089,10 @@ export function applyStaticTranslations(rootNode = document.body) {
     placeholders.forEach(input => {
         if (input.placeholder) {
             const norm = input.placeholder.replace(/\s+/g, ' ').trim();
-            if (dict[norm]) {
-                input.placeholder = dict[norm];
-            } else if (dict[input.placeholder.trim()]) {
-                input.placeholder = dict[input.placeholder.trim()];
-            } else {
+            const exact = lookup(norm) || lookup(input.placeholder.trim());
+            if (exact !== undefined) {
+                input.placeholder = exact;
+            } else if (!isEnglishSource(norm) && !isEnglishSource(input.placeholder.trim())) {
                 const translated = applyRegexFallback(input.placeholder);
                 if (translated !== null) input.placeholder = translated;
             }
@@ -1442,14 +2103,12 @@ export function applyStaticTranslations(rootNode = document.body) {
         const val = el.getAttribute(attr);
         if (!val || !String(val).trim()) return;
         const norm = val.replace(/\s+/g, ' ').trim();
-        if (dict[norm]) {
-            el.setAttribute(attr, dict[norm]);
+        const exact = lookup(norm) || lookup(val.trim());
+        if (exact !== undefined) {
+            el.setAttribute(attr, exact);
             return;
         }
-        if (dict[val.trim()]) {
-            el.setAttribute(attr, dict[val.trim()]);
-            return;
-        }
+        if (isEnglishSource(norm) || isEnglishSource(val.trim())) return;
         const translated = applyRegexFallback(val);
         if (translated !== null) el.setAttribute(attr, translated);
     };
@@ -1459,12 +2118,54 @@ export function applyStaticTranslations(rootNode = document.body) {
         rootNode.querySelectorAll('[aria-label]').forEach((el) => translateAttr(el, 'aria-label'));
     }
 
-    if (rootNode === document.body && document.title && dict[document.title]) {
-        document.title = dict[document.title];
+    if (rootNode === document.body && document.title) {
+        const translatedTitle = lookup(document.title);
+        if (translatedTitle !== undefined) document.title = translatedTitle;
     }
+}
+
+/**
+ * En modo EN observa el DOM y traduce lo que se inserta despues (wizard,
+ * tarjetas de profesionales, modales, mensajes de error). Los cambios de texto
+ * no generan nuevas mutaciones de tipo childList, asi que no hay bucle.
+ */
+let translationObserverStarted = false;
+
+export function startTranslationObserver() {
+    if (translationObserverStarted || currentLang !== 'en') return;
+    if (typeof MutationObserver === 'undefined' || !document.body) return;
+    translationObserverStarted = true;
+
+    let scheduled = false;
+    const pending = new Set();
+
+    const flush = () => {
+        scheduled = false;
+        pending.forEach((el) => {
+            if (el && el.isConnected) applyStaticTranslations(el);
+        });
+        pending.clear();
+    };
+
+    const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+            if (mutation.type !== 'childList') continue;
+            mutation.addedNodes.forEach((added) => {
+                if (added.nodeType === 1) pending.add(added);
+                else if (added.nodeType === 3 && added.parentNode) pending.add(added.parentNode);
+            });
+        }
+        if (!pending.size || scheduled) return;
+        scheduled = true;
+        Promise.resolve().then(flush);
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
 }
 
 // Expose globals for traditional script usage (if app.js were not loaded as type="module")
 window.translations = translations;
+window.enDictionary = enDictionary;
 window.currentLang = currentLang;
 window.applyStaticTranslations = applyStaticTranslations;
+window.startTranslationObserver = startTranslationObserver;
