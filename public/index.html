@@ -195,6 +195,32 @@
                 <button type="button" class="fm-lang-btn inactive" id="langZh" title="中文" role="switch" aria-checked="false" aria-label="中文" style="display:none">ZH</button>
             </div>
         </div>
+        <script>
+        // Con sesion activa "Registrarse" NO se oculta: pasaba de visible a
+        // display:none a los segundos (cuando el parser llegaba al script del
+        // final) y parecia que el boton desaparecia. Ahora cambia a "Mi cuenta"
+        // en el mismo lugar y se retira "Ingresar".
+        (function () {
+            function sync() {
+                try {
+                    var publish = document.getElementById('publishBtn');
+                    var login = document.getElementById('loginBtnTop');
+                    if (!publish) return;
+                    if (localStorage.getItem('token')) {
+                        publish.textContent = 'Mi cuenta';
+                        publish.setAttribute('data-session', '1');
+                        if (login) login.style.display = 'none';
+                    } else {
+                        publish.textContent = 'Registrarse';
+                        publish.removeAttribute('data-session');
+                        if (login) login.style.display = '';
+                    }
+                } catch (e) {}
+            }
+            window.__syncSessionHeader = sync;
+            sync();
+        })();
+        </script>
         </div>
 
         <main id="main-content">
@@ -477,6 +503,7 @@
         var dict = {
             'Volver': 'Back',
             'Registrarse': 'Sign up',
+            'Mi cuenta': 'My account',
             'Salir': 'Exit',
             'Salir de la app': 'Exit app',
             'Ingresar': 'Log in',
@@ -1209,7 +1236,7 @@
             const token=localStorage.getItem('token');
             const raw=localStorage.getItem('user');
             let user=null; try{user=raw?JSON.parse(raw):null}catch{}
-            if(!token || !user){
+            if(!token){
                 openPrereg(); return;
             }
             // tiene sesión → verificar estado fresco
@@ -1248,14 +1275,18 @@
                 }
             }
             if(user && user.role==='user'){
-                window.location.href='/hogar.html';
+                // Un cliente va a su perfil (no a la busqueda de profesionales).
+                window.location.href='/profile.html';
                 return;
             }
-            openPrereg();
+            // Hay sesión (aunque el rol no se haya podido leer): el perfil
+            // resuelve el rol y muestra la cuenta correcta.
+            window.location.href='/profile.html';
         }
         publishBtn.addEventListener('click', handlePublishClick);
-        // Con sesión activa no se ofrece registrarse (ya hay cuenta).
-        if (localStorage.getItem('token')) publishBtn.style.display = 'none';
+        // Con sesión activa el botón pasa a "Mi cuenta" (ya se aplicó arriba,
+        // al parsear la barra); nunca se oculta para evitar el parpadeo.
+        if (window.__syncSessionHeader) window.__syncSessionHeader();
         registerCTA.addEventListener('click', function(){ window.location.href='/register.html'; });
 
         // Exit the APK (native bridge intercepts kurate://exit and closes the activity)
