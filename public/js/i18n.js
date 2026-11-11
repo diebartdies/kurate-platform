@@ -1366,6 +1366,7 @@ const esToEnExtra = {
     'Salir de la app': 'Exit the app',
     'Salir': 'Exit',
     'Ingresar': 'Sign in',
+    'Mi cuenta': 'My account',
     'Profesional': 'Professional',
     'Usuario': 'User',
     'Volver': 'Back',
