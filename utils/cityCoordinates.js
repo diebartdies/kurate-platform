@@ -81,7 +81,9 @@ const cityCoordinates = {
   // Generic CABA fallback
   'Buenos Aires': { lat: -34.6037, lng: -58.3816 },
   'Ciudad Autónoma de Buenos Aires': { lat: -34.6037, lng: -58.3816 },
-  'CABA': { lat: -34.6037, lng: -58.3816 }
+  'CABA': { lat: -34.6037, lng: -58.3816 },
+  // Centro de la ciudad / km 0 (usado cuando el profesional indica solo "CABA" sin barrio)
+  'Congreso': { lat: -34.6096, lng: -58.3725 }
 };
 
 function getCityCoordinates(city) {
@@ -96,6 +98,15 @@ function getCityCoordinates(city) {
 
 function assignGpsToLocation(location) {
   if (!location || location.lat) return location;
+  // Si es CABA y no hay neighborhood, tomar Congreso (km 0)
+  if (location.province && location.province.trim().toLowerCase() === 'caba' && 
+      !location.neighborhood) {
+    const offsetLat = (Math.random() - 0.5) * 0.005;
+    const offsetLng = (Math.random() - 0.5) * 0.005;
+    location.lat = -34.6096 + offsetLat;
+    location.lng = -58.3725 + offsetLng;
+    return location;
+  }
   const lookup = location.city || location.neighborhood || '';
   if (!lookup) return location;
   const coords = getCityCoordinates(lookup);

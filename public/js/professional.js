@@ -587,6 +587,30 @@ export function bindProfessionalProfileForm() {
     window._cancelBlurSave = () => { if (_blurSaveTimer) { clearTimeout(_blurSaveTimer); _blurSaveTimer = null; } };
     window._resetSaving = () => { isSaving = false; };
     
+    window.geocodeAddress = async function geocodeAddress({ street, number, postalCode, province, city, neighborhood }) {
+        if (!street && !number) return null;
+        const q = [
+            street || '',
+            number || '',
+            postalCode || '',
+            city || '',
+            neighborhood || '',
+            province || '',
+            'Argentina'
+        ].filter(Boolean).join(', ');
+        if (!q.trim()) return null;
+        try {
+            const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&accept-language=es&countrycodes=ar&limit=1`);
+            const data = await resp.json();
+            if (data && data.length > 0) {
+                return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+            }
+        } catch (e) {
+            console.warn('[geocode] error', e);
+        }
+        return null;
+    };
+    
     window.saveProfessionalProfile = async (silent = false) => {
         if (isSaving) return;
         isSaving = true;
@@ -653,6 +677,24 @@ export function bindProfessionalProfileForm() {
                 if (upCity) formData.append('city', upCity.value);
                 if (upNeigh) formData.append('neighborhood', upNeigh.value);
             }
+        }
+
+        // Geocode la direccion a coordenadas lat/lng. En CABA el select "Ciudad"
+        // guarda el barrio: si esta vacio NO se geocodifica y el backend usa
+        // Congreso (km 0) como referencia, que es lo que se le avisa al usuario.
+        const isCaba = (upProv ? upProv.value : '').trim().toLowerCase() === 'caba';
+        const barrio = upCity ? upCity.value.trim() : '';
+        const geo = (isCaba && !barrio) ? null : await geocodeAddress({
+            street: document.getElementById('upStreet')?.value || '',
+            number: document.getElementById('upStreetNumber')?.value || '',
+            postalCode: document.getElementById('upPostCode')?.value || '',
+            province: upProv ? upProv.value : '',
+            city: isCaba ? '' : barrio,
+            neighborhood: isCaba ? barrio : (upNeigh ? upNeigh.value : '')
+        });
+        if (geo) {
+            formData.append('latitude', geo.lat);
+            formData.append('longitude', geo.lng);
         }
 
         {
@@ -1689,6 +1731,7 @@ export async function loadProfDashboard() {
                         <div style="flex: 1; min-width: 150px;"><label for="upCity">${t('Ciudad')}</label><select id="upCity" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></select></div>
                         <div style="flex: 1; min-width: 150px;"><label for="upNeighborhood">${t('Barrio')}</label><input type="text" id="upNeighborhood" value="${prof.location?.neighborhood || ''}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
                     </div>
+                    <p style="font-size: 0.78rem; color: #999; line-height: 1.5; margin: 10px 0 0;">📍 Cuanto más completa sea tu dirección (calle, número y barrio), más exacta es la distancia que le mostramos al cliente. En CABA, si no cargás barrio, tomamos <strong>Congreso (zona centro)</strong> como referencia. Tu <strong>% de coincidencia sube cuanto más cerca estés</strong> del cliente que busca: es uno de los factores del ranking, junto con servicio, marca, modelo y calificaciones.</p>
                 </div>
 
                 <!-- Presupuesto y Respuesta -->

@@ -1616,6 +1616,16 @@ exports.updateProfile = async (req, res, next) => {
 
     if (lastPhotoUpdate) professionalProfile.lastPhotoUpdate = lastPhotoUpdate;
 
+    // Coordenadas geocodificadas en el frontend (Nominatim). Se validan aca
+    // porque un NaN o un string vacio en location.lat rompe el calculo de
+    // distancia del scoring (Haversine) y la tarjeta queda sin km.
+    const geoLat = Number(req.body.latitude);
+    const geoLng = Number(req.body.longitude);
+    const hasGeo = req.body.latitude !== undefined && req.body.longitude !== undefined &&
+      req.body.latitude !== '' && req.body.longitude !== '' &&
+      Number.isFinite(geoLat) && Number.isFinite(geoLng) &&
+      Math.abs(geoLat) <= 90 && Math.abs(geoLng) <= 180;
+
     // Safely update the nested location object if location data is provided
     if (req.body.province || req.body.city || req.body.neighborhood || req.body.street !== undefined || req.body.number !== undefined || req.body.floor !== undefined || req.body.apartment !== undefined || req.body.postalCode !== undefined) {
       const newLoc = {
@@ -1628,8 +1638,33 @@ exports.updateProfile = async (req, res, next) => {
         apartment: req.body.apartment !== undefined ? req.body.apartment : oldProf.location?.apartment,
         postalCode: req.body.postalCode !== undefined ? req.body.postalCode : oldProf.location?.postalCode
       };
+      // Las coords exactas del geocoder pisan la aproximacion por ciudad/barrio.
+      // getProfessionals y getHogarProfessionals leen location.lat/lng, asi que
+      // sin esto la distancia seguiria saliendo del centro del barrio.
+      if (hasGeo) {
+        newLoc.lat = geoLat;
+        newLoc.lng = geoLng;
+      }
+      // Si la direccion no cambio y el geocoder no respondio, conservar las
+      // coords que ya estaban: assignGpsToLocation las degradaria al centro
+      // del barrio y se perderia la precision de la ultima geocodificacion.
+      const addressChanged = ['province', 'city', 'neighborhood', 'street', 'number', 'postalCode'].some(k =>
+        req.body[k] !== undefined && String(req.body[k] || '') !== String(oldProf.location?.[k] || ''));
+      if (!hasGeo && !addressChanged && oldProf.location?.lat && oldProf.location?.lng) {
+        newLoc.lat = oldProf.location.lat;
+        newLoc.lng = oldProf.location.lng;
+      }
       if (!newLoc.lat && !newLoc.lng) assignGpsToLocation(newLoc);
       professionalProfile.location = newLoc;
+    } else if (hasGeo && professionalProfile.location) {
+      professionalProfile.location.lat = geoLat;
+      professionalProfile.location.lng = geoLng;
+    }
+
+    // Se guardan tambien top-level para consultas/reportes sin tocar location.
+    if (hasGeo) {
+      professionalProfile.latitude = geoLat;
+      professionalProfile.longitude = geoLng;
     }
 
     if (req.body.quality) {
