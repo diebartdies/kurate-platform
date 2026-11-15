@@ -1,59 +1,63 @@
-# KuraTe Production MongoDB Daily Backup
-# Dumps KuraTe database from 192.168.1.95 and stores locally
+# KuraTe — Backup diario de produccion (tarea KuraTe-DB-Backup)
+#
+# Antes este script hacia su propio mongodump por SSH y lo copiaba a mano. Ahora
+# el VPS ya genera y valida el dump con su cron (03:00 UTC, daily_backup.sh ->
+# /root/KuraTe-platform/backups/mongo_*.gz). Duplicar el dump era lento y podia
+# dejar dos copias distintas. Este script:
+#   1) verifica que haya un backup reciente (< 26 h) en el VPS y, si no, lo corre
+#   2) delega la descarga/archivo en scripts\pull-backups.ps1 (DB-BACK\YYYY-MM-DD)
 
 $ErrorActionPreference = 'Stop'
-$REMOTE_HOST = 'root@192.168.1.95'
-$SSH_KEY = 'C:\Users\Administrator\.ssh\id_kurate_rsa'
-$LOCAL_BACKUP_DIR = 'D:\FullMinent\DB-BACK'
-$DB_USER = 'kurateApp'
-$DB_PASS = 'Kurate2026Secure!'
-$DB_NAME = 'KuraTe'
-$DATE = Get-Date -Format 'yyyy-MM-dd'
-$REMOTE_DUMP = "/tmp/kurate-backup-$DATE"
-$LOCAL_DUMP = Join-Path $LOCAL_BACKUP_DIR $DATE
 
-# Ensure local backup dir exists
-if (!(Test-Path $LOCAL_BACKUP_DIR)) { New-Item -ItemType Directory -Path $LOCAL_BACKUP_DIR -Force | Out-Null }
+$VpsIp    = '192.168.1.95'
+$User     = 'root'
+$KeyPath  = "$HOME\.ssh\id_kurate_rsa"
+$RemoteDir = '/root/KuraTe-platform/backups'
+$LocalDir = 'D:\FullMinent\DB-BACK'
+$MaxAgeHours = 26
 
-Write-Host "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Starting KuraTe backup..."
+$SshOpts = @(
+  '-i', $KeyPath,
+  '-o', 'BatchMode=yes',
+  '-o', 'ConnectTimeout=20',
+  '-o', 'StrictHostKeyChecking=accept-new'
+)
+$Target = "$User@$VpsIp"
 
-# Step 1: Run mongodump on production (single archive file)
-Write-Host "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Dumping database on remote server..."
-$dumpCmd = "docker exec KuraTe_mongo mongodump --username=$DB_USER --password='$DB_PASS' --authenticationDatabase=admin --archive=/tmp/kurate-backup-$DATE.gz --gzip 2>&1"
-ssh -i $SSH_KEY -o ConnectTimeout=15 -o StrictHostKeyChecking=no $REMOTE_HOST $dumpCmd
-
-if ($LASTEXITCODE -ne 0) { throw "mongodump failed on remote server" }
-
-# Step 2: Copy archive from container to host
-Write-Host "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Copying dump from container..."
-ssh -i $SSH_KEY -o ConnectTimeout=15 -o StrictHostKeyChecking=no $REMOTE_HOST "docker cp KuraTe_mongo:/tmp/kurate-backup-$DATE.gz /tmp/kurate-backup-$DATE.gz"
-
-# Step 3: SCP the archive locally
-Write-Host "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Downloading backup..."
-if (!(Test-Path $LOCAL_DUMP)) { New-Item -ItemType Directory -Path $LOCAL_DUMP -Force | Out-Null }
-scp -i $SSH_KEY -o ConnectTimeout=30 -o StrictHostKeyChecking=no "${REMOTE_HOST}:/tmp/kurate-backup-$DATE.gz" "$LOCAL_DUMP\kurate-backup-$DATE.gz"
-
-if ($LASTEXITCODE -ne 0) { throw "SCP download failed" }
-
-# Step 3: Clean up remote temp files
-Write-Host "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Cleaning up remote temp files..."
-ssh -i $SSH_KEY -o ConnectTimeout=15 -o StrictHostKeyChecking=no $REMOTE_HOST "docker exec KuraTe_mongo rm -f /tmp/kurate-backup-$DATE.gz; rm -f /tmp/kurate-backup-$DATE.gz"
-
-# Step 4: Report
-$archive = Join-Path $LOCAL_DUMP "kurate-backup-$DATE.gz"
-if (Test-Path $archive) {
-    $size = (Get-Item $archive).Length
-    $sizeMB = [math]::Round($size / 1MB, 2)
-    Write-Host "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Backup complete: $archive ($sizeMB MB)"
-} else {
-    Write-Host "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Backup complete: $LOCAL_DUMP"
+function Log($msg, $color = 'Gray') {
+  $line = "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $msg"
+  Write-Host $line -ForegroundColor $color
 }
 
-# Step 8: Cleanup old backups (keep last 30 days)
-$cutoff = (Get-Date).AddDays(-7)
-Get-ChildItem $LOCAL_BACKUP_DIR -Directory | Where-Object {
-    try { [datetime]::ParseExact($_.Name, 'yyyy-MM-dd', $null) -lt $cutoff } catch { $false }
-} | ForEach-Object {
-    Write-Host "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Removing old backup: $($_.Name)"
-    Remove-Item $_.FullName -Recurse -Force
+if (-not (Test-Path $LocalDir)) { New-Item -ItemType Directory -Path $LocalDir -Force | Out-Null }
+
+Log '=== KuraTe backup: verificando el dump del VPS ==='
+
+# La antiguedad se calcula EN el VPS: si el reloj de esta PC esta corrido, la
+# comparacion contra la hora local daria negativa (paso: -3.6 h de desfase).
+$probe = 'f=$(ls -1t /root/KuraTe-platform/backups/mongo_*.gz 2>/dev/null | head -1); if [ -n "$f" ]; then echo $(( $(date +%s) - $(stat -c %Y "$f") )); else echo MISSING; fi'
+$ageSec = "$(& ssh @SshOpts $Target $probe 2>$null | Select-Object -Last 1)".Trim()
+
+$ageHours = $null
+if ($ageSec -match '^-?\d+$') {
+  $ageHours = [math]::Round([int64]$ageSec / 3600.0, 1)
+  Log "ultimo backup en el VPS: hace $ageHours h"
 }
+
+if ($null -eq $ageHours -or $ageHours -gt $MaxAgeHours) {
+  Log 'backup ausente o viejo: corriendo daily_backup.sh en el VPS...' 'Yellow'
+  & ssh @SshOpts $Target "bash /root/KuraTe-platform/daily_backup.sh" 2>&1 | ForEach-Object { Log "  $_" }
+  if ($LASTEXITCODE -ne 0) {
+    Log 'ERROR: daily_backup.sh fallo en el VPS' 'Red'
+    exit 1
+  }
+}
+
+Log 'descargando a DB-BACK...'
+& powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'pull-backups.ps1') `
+  -VpsIp $VpsIp -User $User -KeyPath $KeyPath -LocalDir $LocalDir
+$rc = $LASTEXITCODE
+
+if ($rc -ne 0) { Log 'ERROR: fallo la descarga del backup' 'Red'; exit 1 }
+Log '=== backup OK ===' 'Green'
+exit 0
