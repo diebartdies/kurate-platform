@@ -626,7 +626,8 @@ exports.searchProfessionals = async (req, res, next) => {
       // la cercania (W_LOCATION=15 vs W_MOBILITY=5): un profesional mucho mas
       // cerca siempre gana. Sirve para desempatar y premiar a quien puede
       // llegar a zonas donde no hay transporte.
-      const mobility = ['auto', 'moto', 'utilitario'].includes(pp.mobility) ? pp.mobility : 'ninguna';
+      const mobilitySrc = (p.professionalProfile && p.professionalProfile.mobility) || pp.mobility;
+      const mobility = ['auto', 'moto', 'utilitario'].includes(mobilitySrc) ? mobilitySrc : 'ninguna';
       if (mobility !== 'ninguna') score += W_MOBILITY;
 
       // Rating boost — reduced for distant professionals
@@ -815,7 +816,8 @@ exports.searchProfessionals = async (req, res, next) => {
             }
           }
           // Movilidad propia: mismo criterio que la rama principal
-          const mobility = ['auto', 'moto', 'utilitario'].includes(pp.mobility) ? pp.mobility : 'ninguna';
+          const mobilitySrc = (p.professionalProfile && p.professionalProfile.mobility) || pp.mobility;
+          const mobility = ['auto', 'moto', 'utilitario'].includes(mobilitySrc) ? mobilitySrc : 'ninguna';
           if (mobility !== 'ninguna') score += W_MOBILITY;
       // Rating boost — reduced for distant professionals
       const ratingBoost = Math.round(avgRating * 2);
