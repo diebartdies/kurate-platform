@@ -441,6 +441,7 @@ exports.searchProfessionals = async (req, res, next) => {
         'professionalProfile.alias': 1,
         'professionalProfile.bio': 1,
         'professionalProfile.location': 1,
+        'professionalProfile.mobility': 1,
         'professionalProfile.services': 1,
         'professionalProfile.professions': 1,
         'professionalProfile.photos': 1,
@@ -479,7 +480,10 @@ exports.searchProfessionals = async (req, res, next) => {
     const modelQuery = (relaxModel ? '' : (model || plan.model || '')).toLowerCase().trim();
 
     // Global weights for percentage calculation
-    const W_ACTION = 5, W_URGENCY = 5, W_SERVICE = 30, W_BIO = 10, W_BRAND = 25, W_MODEL = 25, W_LOCATION = 15;
+    // W_MOBILITY=4: sobre el denominador base (69) son ~5.8 puntos de match y
+    // ~3.4 cuando la busqueda incluye marca+modelo: en promedio ~5 puntos, como
+    // se definio. La cercania (W_LOCATION=15) sigue pesando el triple.
+    const W_ACTION = 5, W_URGENCY = 5, W_SERVICE = 30, W_BIO = 10, W_BRAND = 25, W_MODEL = 25, W_LOCATION = 15, W_MOBILITY = 4;
     const usedBrand = !!brandQuery;
     const usedModel = !!modelQuery;
 
@@ -510,7 +514,7 @@ exports.searchProfessionals = async (req, res, next) => {
       let maxPossible = 0;
 
       // Weights for percentage calculation — only count relevant weights
-      maxPossible = W_ACTION + W_URGENCY + W_SERVICE + W_BIO + W_LOCATION + (usedBrand ? W_BRAND : 0) + (usedModel ? W_MODEL : 0);
+      maxPossible = W_ACTION + W_URGENCY + W_SERVICE + W_BIO + W_LOCATION + W_MOBILITY + (usedBrand ? W_BRAND : 0) + (usedModel ? W_MODEL : 0);
 
       if (accion) score += W_ACTION;
       if (urgencia) score += W_URGENCY;
@@ -618,14 +622,21 @@ exports.searchProfessionals = async (req, res, next) => {
         }
       }
 
+      // Movilidad propia (auto / moto / utilitario): plus chico, NO reemplaza a
+      // la cercania (W_LOCATION=15 vs W_MOBILITY=5): un profesional mucho mas
+      // cerca siempre gana. Sirve para desempatar y premiar a quien puede
+      // llegar a zonas donde no hay transporte.
+      const mobility = ['auto', 'moto', 'utilitario'].includes(pp.mobility) ? pp.mobility : 'ninguna';
+      if (mobility !== 'ninguna') score += W_MOBILITY;
+
       // Rating boost — reduced for distant professionals
       const ratingBoost = Math.round(avgRating * 2);
       if (distCalc != null && distCalc > 15) score += Math.floor(ratingBoost / 3);
       else if (distCalc != null && distCalc > 6) score += Math.floor(ratingBoost / 2);
       else score += ratingBoost;
 
-      // Calculate percentage
-      const pct = Math.round((score / maxPossible) * 100);
+      // Calculate percentage (cap 100: el rating boost no esta en maxPossible)
+      const pct = Math.min(100, Math.round((score / maxPossible) * 100));
 
       // If user provided brand or model (and not relaxed), at least one must match
       // "match" means either exact brand/model OR generic equipment match
@@ -655,6 +666,7 @@ exports.searchProfessionals = async (req, res, next) => {
         lng: pLng || null,
         distance,
         services: svcs,
+        mobility,
         professions: pp.professions && pp.professions.length ? pp.professions : (p.hogarProfile && p.hogarProfile.professions) || [],
         photo: firstPhoto,
         email: p.email,
@@ -713,6 +725,7 @@ exports.searchProfessionals = async (req, res, next) => {
       const expandProfessionals = await User.find(expandFilter)
         .select({
           'professionalProfile.alias': 1, 'professionalProfile.bio': 1, 'professionalProfile.location': 1,
+          'professionalProfile.mobility': 1,
           'professionalProfile.services': 1, 'professionalProfile.photos': 1, 'professionalProfile.whatsappNumber': 1,
           'professionalProfile.mobilePhone': 1, 'professionalProfile.usesWhatsApp': 1,
           'hogarProfile.firstName': 1, 'hogarProfile.lastName': 1, 'hogarProfile.bio': 1, 'hogarProfile.area': 1,
@@ -749,7 +762,7 @@ exports.searchProfessionals = async (req, res, next) => {
           const bio = (pp.bio || '').toLowerCase();
           const avgRating = expandRatingMap[p._id.toString()] || 0;
           let score = 0;
-          let maxPossible = W_ACTION + W_URGENCY + W_SERVICE + W_BIO + W_LOCATION + (usedBrand ? W_BRAND : 0) + (usedModel ? W_MODEL : 0);
+          let maxPossible = W_ACTION + W_URGENCY + W_SERVICE + W_BIO + W_LOCATION + W_MOBILITY + (usedBrand ? W_BRAND : 0) + (usedModel ? W_MODEL : 0);
           if (accion) score += W_ACTION;
           if (urgencia) score += W_URGENCY;
           // mismo criterio que el bloque principal: jerarquico primero
@@ -801,12 +814,15 @@ exports.searchProfessionals = async (req, res, next) => {
               else if (dist <= 15) score += Math.floor(W_LOCATION / 2);
             }
           }
+          // Movilidad propia: mismo criterio que la rama principal
+          const mobility = ['auto', 'moto', 'utilitario'].includes(pp.mobility) ? pp.mobility : 'ninguna';
+          if (mobility !== 'ninguna') score += W_MOBILITY;
       // Rating boost — reduced for distant professionals
       const ratingBoost = Math.round(avgRating * 2);
       if (dist != null && dist > 15) score += Math.floor(ratingBoost / 3);
       else if (dist != null && dist > 6) score += Math.floor(ratingBoost / 2);
       else score += ratingBoost;
-          const pct = Math.round((score / maxPossible) * 100);
+          const pct = Math.min(100, Math.round((score / maxPossible) * 100));
           const photos = Array.isArray(pp.photos) ? pp.photos : [];
           return {
             id: p._id, score, pct, nearBarrio: true,
@@ -814,7 +830,7 @@ exports.searchProfessionals = async (req, res, next) => {
             bio: pp.bio || '',
             location: [pp.location?.city || pp.address?.city, pp.location?.province || pp.address?.province].filter(Boolean).join(', '),
             lat: pp.location?.lat || null, lng: pp.location?.lng || null, distance: dist || null,
-            services: svcs, photo: photos[0] || null,
+            services: svcs, mobility, photo: photos[0] || null,
             email: p.email,
             whatsapp: (() => {
               const hc = (p.hogarProfile && p.hogarProfile.contact) || {};
@@ -980,11 +996,11 @@ exports.getProfessionalByAlias = async (req, res, next) => {
     let professional = await User.findOne({ 
       'professionalProfile.alias': aliasRegex,
       ...ALIAS_LOOKUP_FILTER
-    }).select('accountDeletedAt professionalProfile.alias professionalProfile.quality professionalProfile.bio professionalProfile.services professionalProfile.location professionalProfile.pricing professionalProfile.measurements professionalProfile.height professionalProfile.eyeColor professionalProfile.hasTattoos professionalProfile.whatsappNumber professionalProfile.mobilePhone professionalProfile.photos professionalProfile.workingHours professionalProfile.workingDays professionalProfile.vacation professionalProfile.budgetType professionalProfile.budgetAmount professionalProfile.responseSpeed');
+    }).select('accountDeletedAt professionalProfile.alias professionalProfile.quality professionalProfile.bio professionalProfile.services professionalProfile.location professionalProfile.mobility professionalProfile.pricing professionalProfile.measurements professionalProfile.height professionalProfile.eyeColor professionalProfile.hasTattoos professionalProfile.whatsappNumber professionalProfile.mobilePhone professionalProfile.photos professionalProfile.workingHours professionalProfile.workingDays professionalProfile.vacation professionalProfile.budgetType professionalProfile.budgetAmount professionalProfile.responseSpeed');
     // fallback original accent if DB not yet migrated
     if (!professional) {
       const origRegex = new RegExp(`^${req.params.alias}$`, 'i');
-      professional = await User.findOne({ 'professionalProfile.alias': origRegex, ...ALIAS_LOOKUP_FILTER }).select('accountDeletedAt professionalProfile.alias professionalProfile.quality professionalProfile.bio professionalProfile.services professionalProfile.location professionalProfile.pricing professionalProfile.measurements professionalProfile.height professionalProfile.eyeColor professionalProfile.hasTattoos professionalProfile.whatsappNumber professionalProfile.mobilePhone professionalProfile.photos professionalProfile.workingHours professionalProfile.workingDays professionalProfile.vacation professionalProfile.budgetType professionalProfile.budgetAmount professionalProfile.responseSpeed');
+      professional = await User.findOne({ 'professionalProfile.alias': origRegex, ...ALIAS_LOOKUP_FILTER }).select('accountDeletedAt professionalProfile.alias professionalProfile.quality professionalProfile.bio professionalProfile.services professionalProfile.location professionalProfile.mobility professionalProfile.pricing professionalProfile.measurements professionalProfile.height professionalProfile.eyeColor professionalProfile.hasTattoos professionalProfile.whatsappNumber professionalProfile.mobilePhone professionalProfile.photos professionalProfile.workingHours professionalProfile.workingDays professionalProfile.vacation professionalProfile.budgetType professionalProfile.budgetAmount professionalProfile.responseSpeed');
     }
 
     if (!professional || isAccountDeleted(professional)) {
@@ -1599,6 +1615,12 @@ exports.updateProfile = async (req, res, next) => {
       budgetType: ['sin_cargo','con_cargo'].includes(req.body.budgetType) ? req.body.budgetType : (oldProf.budgetType || 'sin_cargo'),
       budgetAmount: req.body.budgetAmount !== undefined && req.body.budgetAmount !== '' ? Number(req.body.budgetAmount) : (oldProf.budgetAmount || undefined),
       responseSpeed: ['inmediata','24hs','48hs','72hs'].includes(req.body.responseSpeed) ? req.body.responseSpeed : (oldProf.responseSpeed || '24hs'),
+      // Movilidad propia (auto / moto / utilitario / ninguna). Suma un plus chico
+      // al score de coincidencia: no reemplaza a la cercania. Si el form no manda
+      // el campo (clientes viejos) se conserva lo que ya estaba guardado.
+      mobility: ['auto','moto','utilitario','ninguna'].includes(req.body.mobility)
+        ? req.body.mobility
+        : (oldProf.mobility || 'ninguna'),
       workingHours: {
         start: req.body.workingHoursStart || '00:00',
         end: req.body.workingHoursEnd || '23:59'

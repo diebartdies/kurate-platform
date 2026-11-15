@@ -474,6 +474,8 @@ export async function loadTreasureDetails() {
                         const amt = prof.budgetAmount ? ` — $${Number(prof.budgetAmount).toLocaleString('es-AR')}` : '';
                         const rs = prof.responseSpeed || '24hs';
                         const rsLabel = rs === 'inmediata' ? 'Inmediata (urgencias)' : rs === '24hs' ? '24 hs' : rs === '48hs' ? '48 hs' : '72 hs';
+                        const mob = ['auto', 'moto', 'utilitario'].includes(prof.mobility) ? prof.mobility : null;
+                        const mobLabel = mob === 'auto' ? 'Auto propio' : mob === 'moto' ? 'Moto propia' : mob === 'utilitario' ? 'Utilitario / camioneta propia' : '';
                         const presupuestoHtml = bt === 'con_cargo'
                             ? `<div style="background: rgba(255,165,0,0.12); border-left: 4px solid #ff9800; padding: 10px 14px; border-radius: 6px; color: #ff9800; font-weight: bold; font-size: 0.95rem;">⚠️ Presupuesto con cargo${amt}</div>`
                             : `<div style="background: rgba(46,160,67,0.12); border-left: 4px solid #2ea043; padding: 10px 14px; border-radius: 6px; color: #2ea043; font-weight: bold; font-size: 0.95rem;">✓ Presupuesto sin cargo</div>`;
@@ -489,6 +491,9 @@ export async function loadTreasureDetails() {
                         <div style="background: rgba(255,255,255,0.04); border: 1px dashed rgba(255,255,255,0.12); padding: 10px 12px; border-radius: 6px; margin-bottom: 14px;">
                             <p style="margin: 0; font-size: 0.78rem; color: #aaa; line-height: 1.5;">ℹ️ El tiempo de respuesta se pacta directamente con el profesional. <strong style="color:#ccc;">KuraTe no tiene responsabilidad</strong> en el cumplimiento de los plazos. Luego del trabajo, tu opinión es muy importante: la encuesta afecta el posicionamiento del profesional en el ranking de forma positiva o negativa según su desempeño.</p>
                         </div>
+                        ${mob ? `<div style="background: rgba(59,130,246,0.10); border-left: 3px solid #3b82f6; padding: 10px 12px; border-radius: 6px; margin-bottom: 14px;">
+                            <p style="margin: 0; font-size: 0.82rem; color: #ddd; line-height: 1.55;">🚗 <strong style="color: #7aa7f0;">${mobLabel}</strong>: puede llegar a zonas a las que no llega el transporte público. La movilidad propia suma un <strong>plus chico</strong> al % de coincidencia; la cercanía sigue siendo el factor más importante.</p>
+                        </div>` : ''}
                         <div style="background: rgba(212,175,55,0.06); border-left: 3px solid var(--primary-gold); padding: 10px 12px; border-radius: 6px; margin-bottom: 18px;">
                             <p style="margin: 0; font-size: 0.82rem; color: #ddd; line-height: 1.55;"><strong style="color: var(--primary-gold);">Consejo:</strong> Cuando pactes con un profesional, dejalo expresado en la plataforma. Así facilitamos el <strong>pago del servicio</strong>, te enviamos el <strong>detalle de trabajos realizados y la garantía</strong> extendida, y luego recibirás la <strong>encuesta de servicio</strong> para evaluar. Tu evaluación será enviada al profesional y afectará su posición en el ranking.</p>
                         </div>`;

@@ -270,3 +270,6 @@ public/avisos.html                         # sincroniza documentElement.lang en 
 public/js/professional.js                  # geocodeAddress (Nominatim) + latitude/longitude en el FormData + nota "mas cerca = mayor %"
 controllers/professionalController.js      # valida coords y las guarda en location.lat/lng (lo que lee el scoring)
 utils/cityCoordinates.js                   # barrio Congreso como referencia para CABA sin barrio
+
+# --- movilidad propia del profesional (suma un plus chico al % de coincidencia) ---
+public/js/discovery.js                     # ficha del profesional: muestra Auto/Moto/Utilitario propio y explica el plus

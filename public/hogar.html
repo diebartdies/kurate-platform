@@ -647,6 +647,10 @@
       if (p.nearBarrio) badges.push('Barrios cercanos');
       if (p.distance != null) { badges.push(p.distance.toFixed(1) + ' km'); }
       else { badges.push('Ubicación no disponible'); }
+      // Movilidad propia: explica por que alguien mas lejos puede rankear bien
+      if (p.mobility && p.mobility !== 'ninguna') {
+        badges.push(p.mobility === 'auto' ? 'Auto propio' : p.mobility === 'moto' ? 'Moto propia' : 'Utilitario propio');
+      }
       if (p.averageRating > 0) { badges.push('★ ' + p.averageRating.toFixed(1)); }
       else { badges.push('★ Sin calificar'); }
       if (p.pct != null) badges.push(p.pct + '% coincidencia');

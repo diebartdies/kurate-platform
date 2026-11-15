@@ -738,6 +738,7 @@ export function bindProfessionalProfileForm() {
         formData.append('budgetType', document.getElementById('upBudgetType')?.value || 'sin_cargo');
         formData.append('budgetAmount', document.getElementById('upBudgetAmount')?.value || '');
         formData.append('responseSpeed', document.getElementById('upResponseSpeed')?.value || '24hs');
+        formData.append('mobility', document.getElementById('upMobility')?.value || 'ninguna');
 
         const existingPhotos = [];
         const photoElements = document.querySelectorAll('#photoGrid .photo-item img');
@@ -1732,6 +1733,23 @@ export async function loadProfDashboard() {
                         <div style="flex: 1; min-width: 150px;"><label for="upNeighborhood">${t('Barrio')}</label><input type="text" id="upNeighborhood" value="${prof.location?.neighborhood || ''}" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;"></div>
                     </div>
                     <p style="font-size: 0.78rem; color: #999; line-height: 1.5; margin: 10px 0 0;">📍 Cuanto más completa sea tu dirección (calle, número y barrio), más exacta es la distancia que le mostramos al cliente. En CABA, si no cargás barrio, tomamos <strong>Congreso (zona centro)</strong> como referencia. Tu <strong>% de coincidencia sube cuanto más cerca estés</strong> del cliente que busca: es uno de los factores del ranking, junto con servicio, marca, modelo y calificaciones.</p>
+                </div>
+
+                <!-- 3b. Movilidad -->
+                <div class="card fileteado-section" style="margin-bottom: 20px; border: 1px solid var(--primary-gold);">
+                    <h3 class="gold-text" style="margin-bottom: 15px;">${t('Movilidad propia')}</h3>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 220px;">
+                            <label for="upMobility">¿Con qué te movés a los trabajos?</label>
+                            <select id="upMobility" style="width: 100%; padding: 8px; background: #222; color: white; border: 1px solid #444; border-radius: 4px;">
+                                <option value="ninguna" ${!prof.mobility || prof.mobility === 'ninguna' ? 'selected' : ''}>Sin movilidad propia (transporte público / a pie)</option>
+                                <option value="moto" ${prof.mobility === 'moto' ? 'selected' : ''}>Moto</option>
+                                <option value="auto" ${prof.mobility === 'auto' ? 'selected' : ''}>Auto</option>
+                                <option value="utilitario" ${prof.mobility === 'utilitario' ? 'selected' : ''}>Utilitario / camioneta (llevo herramientas)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.78rem; color: #999; line-height: 1.5; margin: 10px 0 0;">🚗 Tener movilidad propia suma un <strong>plus chico</strong> al % de coincidencia, porque podés tomar trabajos en zonas a las que no llega el transporte público. La <strong>cercanía al cliente sigue siendo el factor más importante</strong>.</p>
                 </div>
 
                 <!-- Presupuesto y Respuesta -->
