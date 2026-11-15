@@ -265,3 +265,8 @@ public/precios-aire-acondicionado.html     # carga i18nBootstrap.js
 public/feedback.html                       # carga i18nBootstrap.js
 public/set-password.html                   # carga i18nBootstrap.js
 public/avisos.html                         # sincroniza documentElement.lang en modo EN
+
+# --- GPS: geocodificacion de la direccion del profesional y Congreso (km 0) ---
+public/js/professional.js                  # geocodeAddress (Nominatim) + latitude/longitude en el FormData + nota "mas cerca = mayor %"
+controllers/professionalController.js      # valida coords y las guarda en location.lat/lng (lo que lee el scoring)
+utils/cityCoordinates.js                   # barrio Congreso como referencia para CABA sin barrio
