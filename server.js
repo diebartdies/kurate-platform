@@ -221,7 +221,7 @@ app.get('/sitemap-KuraTe.xml', seoController.sitemapKuraTeXml);
 // perfiles. Quedaron indexables ("Acompañantes en CABA | KuraTe") y no tienen
 // nada que ver con KuraTe. 410 Gone para que Google las saque del índice.
 app.get('/acompanantes', (req, res) => res.status(410).send('Gone'));
-app.get('/acompanantes/*', (req, res) => res.status(410).send('Gone'));
+app.get('/acompanantes/*splat', (req, res) => res.status(410).send('Gone'));
 
 app.get('/perfil/:alias', seoController.renderProfilePage);
 app.get('/sitemap-services.xml', seoController.getServiceSitemap);
