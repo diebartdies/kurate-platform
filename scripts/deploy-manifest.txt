@@ -35,8 +35,9 @@ utils/matriculaRules.js                    # reglas por oficio/provincia/ente em
 utils/otraBrand.js                         # entrada "otra": prefijo, formato y saneo de marcas
 utils/publishRequirements.js               # requisitos para publicar: telefono, email y direccion
 utils/cpaLookup.js                         # lookup de CPA reutilizado por el endpoint y la regla de publicar
-utils/seoServicePages.js                    # landings /servicios/: 159 dispositivos x 9 acciones + SEO local CABA/Bs.As. (4293 URLs)
+utils/seoServicePages.js                    # landings /servicios/: combinaciones curadas + SEO local CABA/Bs.As.
 utils/seoSitemap.js                         # sitemap unico, lastmod real, robots.txt sin el sitemap de plantillas
+utils/seoMeta.js                            # SEO de perfiles: filtro QA/seed, JSON-LD ProfilePage+Person, contenido SSR
 utils/seoLandingPages.js                    # landings /acciones/, /entornos/, /categorias/ + accion "educar" y sus 3 niveles
 
 # --- datos ---
