@@ -73,15 +73,6 @@ exports.sitemapKuraTeXml = async (req, res, next) => {
   }
 };
 
-exports.sitemapKuraTeXml = async (req, res, next) => {
-  try {
-    const { xml } = await buildSitemapForBase(baseUrlForNamedSite('KuraTe'));
-    sendSitemapXml(res, xml);
-  } catch (error) {
-    next(error);
-  }
-};
-
 exports.renderLocationPage = async (req, res, next) => {
   try {
     const provinceSlug = String(req.params.provinceSlug || '').trim();
@@ -135,7 +126,8 @@ exports.renderProfilePage = async (req, res, next) => {
       role: 'professional',
       accountDeletedAt: null
     }).select(
-      'role isVerified verificationStatus accountDeletedAt professionalProfile.alias professionalProfile.quality '
+      'role email isVerified verificationStatus accountDeletedAt updatedAt '
+      + 'professionalProfile.alias professionalProfile.quality '
       + 'professionalProfile.bio professionalProfile.services professionalProfile.location '
       + 'professionalProfile.photos professionalProfile.subscriptionStatus professionalProfile.isExposed'
     );
@@ -161,7 +153,7 @@ exports.renderProfilePage = async (req, res, next) => {
       status: { $in: ['active', 'expiring'] }
     });
 
-    if (!hasActiveAviso || !isProfileIndexable(professional)) {
+    if (!hasActiveAviso) {
       res.status(404);
       const html = applySeoToHtml(template, {
         title: 'Perfil no encontrado | KuraTe',
@@ -170,6 +162,22 @@ exports.renderProfilePage = async (req, res, next) => {
         robots: 'noindex, nofollow'
       });
       res.type('html');
+      return res.send(html);
+    }
+
+    // Perfil existe y es público. Si además tiene contenido propio se indexa;
+    // si es un perfil de prueba/QA o está vacío, se sirve igual (para poder
+    // probarlo) pero con noindex: no queremos "Perfil QA KuraTe" en Google.
+    if (!isProfileIndexable(professional)) {
+      const seo = buildProfileSeo(professional);
+      const html = applySeoToHtml(template, {
+        ...seo,
+        robots: 'noindex, follow',
+        jsonLd: null,
+        bodyHtml: null
+      });
+      res.type('html');
+      res.setHeader('Cache-Control', 'public, max-age=300');
       return res.send(html);
     }
 
@@ -296,11 +304,13 @@ exports.getServiceSitemap = async (req, res) => {
       const { getAllServiceUrls } = require('../utils/seoServicePages');
       const pages = getAllServiceUrls();
       const baseUrl = 'https://kurate.drsrv.net.ar';
-      const today = new Date().toISOString().slice(0, 10);
       let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
       xml += '  <url><loc>' + baseUrl + '/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>\n';
       for (const page of pages) {
-        xml += '  <url><loc>' + baseUrl + page.loc + '</loc><lastmod>' + (page.lastmod || today) + '</lastmod>';
+        // Sin <lastmod>: estas páginas se generan desde el árbol de servicios y
+        // no tienen fecha propia. Poner la fecha del día en todas (como antes)
+        // hace que Google descarte el lastmod por poco confiable.
+        xml += '  <url><loc>' + baseUrl + page.loc + '</loc>';
         xml += '<changefreq>' + (page.changefreq || 'monthly') + '</changefreq>';
         xml += '<priority>' + (page.priority || 0.6) + '</priority></url>\n';
       }

@@ -216,13 +216,18 @@ const { buildServiceLandingPage, getAllServiceUrls } = require('./utils/seoServi
 app.get('/robots.txt', seoController.robotsTxt);
 app.get('/sitemap.xml', seoController.sitemapXml);
 app.get('/sitemap-KuraTe.xml', seoController.sitemapKuraTeXml);
-app.get('/sitemap-KuraTe.xml', seoController.sitemapKuraTeXml);
-app.get('/acompanantes/:provinceSlug/:areaSlug', seoController.renderLocationPage);
-app.get('/acompanantes/:provinceSlug', seoController.renderLocationPage);
+
+// Rutas del fork original (sex-appeal): "acompañantes" era el directorio de
+// perfiles. Quedaron indexables ("Acompañantes en CABA | KuraTe") y no tienen
+// nada que ver con KuraTe. 410 Gone para que Google las saque del índice.
+app.get('/acompanantes', (req, res) => res.status(410).send('Gone'));
+app.get('/acompanantes/*', (req, res) => res.status(410).send('Gone'));
+
 app.get('/perfil/:alias', seoController.renderProfilePage);
 app.get('/sitemap-services.xml', seoController.getServiceSitemap);
 
 // Redirect bogus paths Google is crawling (410 Gone or 301)
+app.get('/home.html', (req, res) => res.redirect(301, '/hogar.html'));
 app.get('/hogar/professionals', (req, res) => res.redirect(301, '/hogar.html'));
 app.get('/professionals/search', (req, res) => res.redirect(301, '/hogar.html'));
 app.get('/precios-aire-acondicionado', (req, res) => res.redirect(301, '/precios-aire-acondicionado.html'));
@@ -541,7 +546,7 @@ function resolveServiceSlugRedirect(rawSlug) {
 
 // Landing nacional: /servicios/reparar-heladera
 app.get('/servicios/:slug', (req, res) => {
-  const { parseServiceSlug, buildServiceLandingPage, LOCATIONS } = require('./utils/seoServicePages');
+  const { parseServiceSlug, buildServiceLandingPage, LOCATIONS, deviceUrlSlug, getDevices } = require('./utils/seoServicePages');
   const normalizedSlug = normalizeActionSlug(req.params.slug);
   const { actionSlug, deviceSlug, locationSlug } = parseServiceSlug(normalizedSlug);
   if (!actionSlug || !deviceSlug) {
@@ -552,9 +557,11 @@ app.get('/servicios/:slug', (req, res) => {
     return res.status(404).send('Not found');
   }
 
+  const urlDevice = deviceUrlSlug(getDevices().get(deviceSlug));
+
   // El canonical de las locales va con path ("/caba"), no con sufijo ("-caba").
   if (locationSlug && LOCATIONS[locationSlug]) {
-    return res.redirect(301, `https://kurate.drsrv.net.ar/servicios/${actionSlug}-${deviceSlug}/${locationSlug}`);
+    return res.redirect(301, `https://kurate.drsrv.net.ar/servicios/${actionSlug}-${urlDevice}/${locationSlug}`);
   }
 
   const page = buildServiceLandingPage(actionSlug, deviceSlug);
@@ -564,10 +571,11 @@ app.get('/servicios/:slug', (req, res) => {
     return res.status(404).send('Not found');
   }
 
-  // Si el slug pedido no era el canónico, redirigir 301 al canónico para SEO
-  if (normalizedSlug !== req.params.slug) {
-    const canonicalUrl = `https://kurate.drsrv.net.ar/servicios/${normalizedSlug}`;
-    return res.redirect(301, canonicalUrl);
+  // Si el slug pedido no era el canónico (sinónimo de acción o id con acento),
+  // redirigir 301 al canónico para no partir la señal SEO entre dos URLs.
+  const canonicalSlug = `${actionSlug}-${urlDevice}`;
+  if (req.params.slug !== canonicalSlug) {
+    return res.redirect(301, `https://kurate.drsrv.net.ar/servicios/${canonicalSlug}`);
   }
   res.setHeader('Cache-Control', 'public, max-age=86400');
   res.type('html').send(page.html);
@@ -590,8 +598,9 @@ app.get('/servicios/:slug/:location', (req, res) => {
   const page = buildServiceLocationLandingPage(actionSlug, deviceSlug, locationSlug);
   if (!page) return res.status(404).send('Not found');
 
-  // 301 si el slug no era canónico (sinónimos o localidad embebida con "-").
-  const canonicalSlug = `${actionSlug}-${deviceSlug}`;
+  // 301 si el slug no era canónico (sinónimos o id con acento).
+  const { deviceUrlSlug, getDevices } = require('./utils/seoServicePages');
+  const canonicalSlug = `${actionSlug}-${deviceUrlSlug(getDevices().get(deviceSlug))}`;
   if (req.params.slug !== canonicalSlug) {
     return res.redirect(301, `https://kurate.drsrv.net.ar/servicios/${canonicalSlug}/${locationSlug}`);
   }

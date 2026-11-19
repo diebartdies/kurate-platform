@@ -21,24 +21,148 @@ function buildSeoHeadTags(seo) {
 function isProfileIndexable(professional) {
   if (!professional) return false;
   const prof = professional.professionalProfile || {};
-  const status = professional.verificationStatus;
-  const isExposed = prof.isExposed;
-  return status === 'approved' && isExposed !== false;
+  if (professional.verificationStatus !== 'approved') return false;
+  if (prof.isExposed === false) return false;
+
+  // Cuentas de prueba/seed: nunca al índice. El catálogo actual es 100% seed
+  // (@kurate.seed / @test.com) y perfiles QA; indexarlos es una señal de
+  // calidad negativa y además muestra bios "Perfil QA KuraTe" a los usuarios.
+  const email = String(professional.email || '');
+  if (/@(kurate\.seed|test\.com|example\.(com|org))$/i.test(email)) return false;
+
+  const alias = String(prof.alias || '').trim();
+  if (!alias) return false;
+
+  // Un perfil sin bio (o con menos de 40 caracteres) es una página vacía: no
+  // aporta nada al índice y Google la trata como thin content.
+  const bio = String(prof.bio || '').trim();
+  if (bio.length < 40) return false;
+  if (/^perfil\s+qa\b/i.test(bio)) return false;
+
+  return true;
 }
 
 function buildProfileSeo(professional) {
   const prof = professional.professionalProfile || {};
   const hp = professional.hogarProfile || {};
-  const name = prof.alias || (hp.firstName ? `${hp.firstName} ${hp.lastName || ''}`.trim() : 'Profesional');
-  const bio = prof.bio || '';
-  const desc = bio ? `${name} — ${bio.substring(0, 120)}` : `${name} — Profesional verificado en KuraTe.`;
+  const alias = prof.alias || (hp.firstName ? `${hp.firstName} ${hp.lastName || ''}`.trim() : 'Profesional');
+  const bio = String(prof.bio || '').trim();
+  const services = serviceLabels(prof);
+  const place = profileLocation(prof);
+  const primary = services[0] ? `${services[0]} en ${place.city || place.region || 'Argentina'}` : null;
+
+  const title = primary
+    ? `${alias} — ${primary} | KuraTe`
+    : `${alias} — Profesional verificado | KuraTe`;
+  const desc = bio
+    ? `${bio.substring(0, 150)}${bio.length > 150 ? '…' : ''}`
+    : `${alias}, profesional verificado en KuraTe. Presupuesto sin cargo y contacto directo.`;
+
+  const photo = Array.isArray(prof.photos) && prof.photos.length ? prof.photos[0] : null;
+  const url = absoluteUrl(`/perfil/${encodeURIComponent(prof.alias || '')}`);
+
   return {
-    title: `${name} | KuraTe`,
+    title,
     description: desc,
-    url: absoluteUrl(`/perfil/${encodeURIComponent(prof.alias || '')}`),
-    image: absoluteUrl('/og-image.png'),
-    robots: 'index, follow'
+    url,
+    image: photo && /^https?:/i.test(photo) ? photo : absoluteUrl(photo || '/og-image.png'),
+    robots: 'index, follow, max-image-preview:large',
+    jsonLd: buildProfileJsonLd({ alias, bio, services, place, photo, url }),
+    bodyHtml: buildProfileBodyHtml({ alias, bio, services, place, photo })
   };
+}
+
+/** Nombres de los servicios del perfil, sea array de strings u objetos. */
+function serviceLabels(prof) {
+  const raw = prof.services || (prof.hogarProfile && prof.hogarProfile.services) || [];
+  const out = [];
+  for (const item of Array.isArray(raw) ? raw : []) {
+    if (typeof item === 'string') {
+      if (item.trim()) out.push(item.trim());
+    } else if (item && typeof item === 'object') {
+      if (item.name && String(item.name).trim()) out.push(String(item.name).trim());
+      if (Array.isArray(item.brands)) {
+        for (const brand of item.brands) {
+          const name = typeof brand === 'string' ? brand : (brand && brand.name);
+          if (name && String(name).trim()) out.push(String(name).trim());
+        }
+      }
+    }
+  }
+  return [...new Set(out)].slice(0, 12);
+}
+
+/** Ubicación legible del perfil: {city, region, label}. */
+function profileLocation(prof) {
+  const loc = prof.location || {};
+  const city = String(loc.city || loc.ciudad || '').trim();
+  const region = String(loc.province || loc.provincia || '').trim();
+  const neighborhood = String(loc.neighborhood || loc.barrio || loc.area || '').trim();
+  const label = [neighborhood, city, region].filter(Boolean).join(', ');
+  return { city, region, neighborhood, label };
+}
+
+function buildProfileJsonLd({ alias, bio, services, place, photo, url }) {
+  const person = {
+    '@type': 'Person',
+    '@id': url + '#person',
+    name: alias,
+    url
+  };
+  if (bio) person.description = bio.substring(0, 300);
+  if (photo) person.image = photo;
+  if (services.length) {
+    person.jobTitle = services[0];
+    person.knowsAbout = services.slice(0, 8);
+  }
+  if (place.city || place.region) {
+    person.address = {
+      '@type': 'PostalAddress',
+      addressLocality: place.city || undefined,
+      addressRegion: place.region || undefined,
+      addressCountry: 'AR'
+    };
+  }
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    url,
+    mainEntity: person,
+    breadcrumb: {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: PUBLIC_URL + '/' },
+        { '@type': 'ListItem', position: 2, name: 'Profesionales', item: PUBLIC_URL + '/hogar.html' },
+        { '@type': 'ListItem', position: 3, name: alias, item: url }
+      ]
+    }
+  };
+}
+
+/**
+ * Contenido del perfil renderizado en el servidor.
+ *
+ * treasure.html entrega un <div id="treasureContent"></div> vacío y lo llena
+ * por JS: el HTML que veía Google eran 1.7 KB sin <h1>, sin bio y sin servicios.
+ * Este bloque es el contenido real de la página; el JS lo reemplaza al cargar,
+ * así que no cambia la experiencia, pero Google ya lo ve en el HTML inicial.
+ */
+function buildProfileBodyHtml({ alias, bio, services, place, photo }) {
+  const parts = [];
+  parts.push('<div class="seo-profile">');
+  if (photo) {
+    parts.push(`<img src="${escapeHtml(photo)}" alt="${escapeHtml(alias)}" width="160" height="160" loading="eager" style="float:right;margin:0 0 16px 16px;border-radius:50%;object-fit:cover">`);
+  }
+  parts.push(`<h1>${escapeHtml(alias)}</h1>`);
+  if (place.label) parts.push(`<p class="seo-profile-location">${escapeHtml(place.label)}</p>`);
+  if (bio) parts.push(`<p>${escapeHtml(bio)}</p>`);
+  if (services.length) {
+    parts.push('<h2>Servicios</h2>');
+    parts.push('<ul>' + services.map(s => `<li>${escapeHtml(s)}</li>`).join('') + '</ul>');
+  }
+  parts.push(`<p><a href="/hogar.html">Buscar profesionales en KuraTe</a></p>`);
+  parts.push('</div>');
+  return parts.join('\n');
 }
 
 function applySeoToHtml(template, seo) {
@@ -108,7 +232,33 @@ function applySeoToHtml(template, seo) {
       html = html.replace('</head>', `<meta property="og:url" content="${escapeHtml(seo.url)}">\n</head>`);
     }
   }
+  // Inject JSON-LD (ProfilePage/Person, etc.)
+  if (seo.jsonLd) {
+    const json = JSON.stringify(seo.jsonLd).replace(/</g, '\\u003c');
+    html = html.replace('</head>', `<script type="application/ld+json">${json}</script>\n</head>`);
+  }
+  // Inject server-rendered content into the empty placeholder.
+  if (seo.bodyHtml) {
+    if (html.includes('<div id="treasureContent"></div>')) {
+      html = html.replace('<div id="treasureContent"></div>', `<div id="treasureContent">\n${seo.bodyHtml}\n</div>`);
+    } else {
+      html = html.replace('</body>', `<div class="seo-fallback">\n${seo.bodyHtml}\n</div>\n</body>`);
+    }
+  }
   return html;
 }
 
-module.exports = { PUBLIC_URL, RESERVED_PROFILE_ALIASES, escapeHtml, absoluteUrl, buildSeoHeadTags, isProfileIndexable, buildProfileSeo, applySeoToHtml };
+module.exports = {
+  PUBLIC_URL,
+  RESERVED_PROFILE_ALIASES,
+  escapeHtml,
+  absoluteUrl,
+  buildSeoHeadTags,
+  isProfileIndexable,
+  buildProfileSeo,
+  buildProfileJsonLd,
+  buildProfileBodyHtml,
+  serviceLabels,
+  profileLocation,
+  applySeoToHtml
+};

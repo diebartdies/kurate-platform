@@ -97,8 +97,152 @@ const SERVICE_ACTIONS = new Set(['instalar', 'mantener', 'revisar', 'certificar'
 const COMMERCIAL_ACTIONS = new Set(['comprar']);
 
 /**
+ * Acciones que tienen sentido para cada categoría del árbol.
+ *
+ * El árbol de servicios incluye cosas que no son dispositivos: "demoliciones",
+ * "obras y reformas", "fumigación". Generar la matriz completa de acciones
+ * sobre ellos producía URLs sin sentido ("instalar demoliciones", "mantener
+ * fumigación doméstica") que Google lee como doorway pages. Cada categoría
+ * declara acá las acciones que un cliente realmente buscaría.
+ *
+ * Las categorías que no figuran usan DEFAULT_ACTIONS.
+ */
+const CATEGORY_ACTIONS = {
+  // Estructura y obra: se instala, se mantiene y se repara; no se "revisa".
+  'obra-construccion': ['reparar', 'instalar', 'mantener'],
+  'durlock-cielorrasos': ['instalar', 'reparar', 'mantener'],
+  'pintura-revestimientos': ['instalar', 'reparar', 'mantener'],
+  'carpinteria': ['reparar', 'instalar', 'mantener'],
+  'herreria': ['reparar', 'instalar', 'mantener'],
+  'vidrieria': ['reparar', 'instalar', 'mantener'],
+  'tapiceria': ['reparar', 'instalar', 'mantener'],
+  'cubiertas-toldos': ['reparar', 'instalar', 'mantener'],
+  'plomeria': ['reparar', 'instalar', 'mantener'],
+  'gas-cocinas': ['reparar', 'instalar', 'mantener', 'certificar'],
+  // Sanitarios: se instalan y se mantienen; "reparar un inodoro" se dice, pero
+  // la búsqueda real es "destapar / arreglar". Se deja reparar solo en hogar.
+  'bano-sanitarios': ['reparar', 'instalar', 'mantener'],
+  'bano-sanidad-oficina': ['instalar', 'mantener'],
+  'bano-sanidad-campo': ['instalar', 'mantener'],
+  'sanidad-planta': ['instalar', 'mantener', 'certificar'],
+  'jardin-piscinas-campo': ['reparar', 'instalar', 'mantener'],
+  'cerrajeria': ['reparar', 'instalar', 'revisar'],
+  'fumigacion-saneamiento': ['mantener', 'revisar'],
+  // Instalaciones que se certifican / habilitan.
+  'instalaciones-electricas-oficina': ['reparar', 'instalar', 'mantener', 'certificar', 'revisar'],
+  'instalaciones-electricas-industrial': ['reparar', 'instalar', 'mantener', 'certificar', 'revisar'],
+  'calentamiento-agua': ['reparar', 'instalar', 'mantener', 'certificar', 'revisar'],
+  'calentamiento-agua-oficina': ['reparar', 'instalar', 'mantener', 'certificar', 'revisar'],
+  'calentamiento-agua-campo': ['reparar', 'instalar', 'mantener', 'certificar', 'revisar'],
+  'vapor-industrial': ['instalar', 'mantener', 'certificar', 'revisar'],
+  'generadores': ['reparar', 'instalar', 'mantener', 'certificar', 'revisar'],
+  'climatizacion': ['reparar', 'instalar', 'mantener', 'certificar', 'revisar'],
+  'climatizacion-oficina': ['reparar', 'instalar', 'mantener', 'certificar', 'revisar'],
+  'climatizacion-campo': ['reparar', 'instalar', 'mantener', 'certificar', 'revisar'],
+  'climatizacion-industrial': ['reparar', 'instalar', 'mantener', 'certificar', 'revisar']
+};
+
+const DEFAULT_ACTIONS = ['reparar', 'instalar', 'mantener', 'revisar'];
+
+/**
+ * De las categorías del árbol (/data/serviceTree.js) a las landings de
+ * categoría que existen de verdad (/categorias/<slug>, las 9 de
+ * utils/seoLandingPages.js). Antes se linkeaba /categorias/<id-del-árbol>, y
+ * para 20 de las 40 categorías esa URL devuelve 301: un link muerto en cada
+ * página. Solo se enlaza lo que existe.
+ */
+const CATEGORY_LANDING_MAP = {
+  'linea-blanca': 'linea-blanca',
+  'linea-blanca-oficina': 'linea-blanca',
+  'linea-blanca-campo': 'linea-blanca',
+  'linea-blanca-industrial': 'linea-blanca',
+  'refrigeracion-comercial-oficina': 'linea-blanca',
+  'climatizacion': 'clima',
+  'climatizacion-oficina': 'clima',
+  'climatizacion-campo': 'clima',
+  'climatizacion-industrial': 'clima',
+  'instalaciones-electricas-oficina': 'electricidad',
+  'instalaciones-electricas-industrial': 'electricidad',
+  'vapor-industrial': 'electricidad',
+  'gas-cocinas': 'gas',
+  'calentamiento-agua': 'gas',
+  'calentamiento-agua-oficina': 'gas',
+  'calentamiento-agua-campo': 'gas',
+  'linea-gris': 'informatica',
+  'linea-gris-oficina': 'informatica',
+  'linea-gris-campo': 'informatica',
+  'linea-gris-industrial': 'informatica',
+  'redes-pime-telefonia': 'informatica',
+  'redes-industriales': 'informatica',
+  'maquinaria-oficina': 'informatica',
+  'maquinaria-industrial': 'informatica',
+  'cameras-seguridad': 'seguridad',
+  'cerrajeria': 'seguridad',
+  'plomeria': 'plomeria',
+  'bano-sanitarios': 'plomeria',
+  'bano-sanidad-oficina': 'plomeria',
+  'bano-sanidad-campo': 'plomeria',
+  'herreria': 'soldadura'
+};
+
+const CATEGORY_LABELS = {
+  'linea-blanca': 'Línea blanca',
+  'clima': 'Climatización',
+  'electricidad': 'Electricidad',
+  'gas': 'Gas',
+  'informatica': 'Informática',
+  'seguridad': 'Seguridad',
+  'automatizacion': 'Automatización',
+  'plomeria': 'Plomería',
+  'soldadura': 'Soldadura'
+};
+
+/** Landings de categoría que corresponden a un dispositivo (sin repetir). */
+function landingCategoriesFor(device) {
+  if (!device) return [];
+  const out = [];
+  for (const catId of device.categoryIds) {
+    const slug = CATEGORY_LANDING_MAP[catId];
+    if (slug && !out.includes(slug)) out.push(slug);
+  }
+  return out;
+}
+
+/**
+ * Áreas que no son servicio técnico: son clases particulares. "Reparar
+ * geografía" o "certificar formación ética" no existen; esas páginas entraban
+ * al sitemap y son el ejemplo más claro de contenido sin valor.
+ */
+const NON_SERVICE_AREAS = new Set(['educacion']);
+
+/** Dispositivos que no son un bien reparable/instalable (son la obra en sí). */
+const EXCLUDED_DEVICE_IDS = new Set(['demoliciones', 'obras-y-reformas']);
+
+/**
+ * Dispositivos con demanda local suficiente para justificar las variantes
+ * /servicios/<accion>-<dispositivo>/caba y /buenos-aires. Sin esta lista se
+ * publicaban 2 variantes locales por cada combinación nacional (incluida
+ * "revisar balanzas en CABA"), que no aportan nada y multiplican el índice.
+ */
+const LOCAL_DEVICE_IDS = new Set([
+  'heladera', 'freezer', 'lavarropas', 'secarropa', 'microondas', 'cocina-horno',
+  'aire-acondicionado', 'calefactores-estufas', 'termotanque-calefon',
+  'smart-tv', 'pcs-notebooks', 'impresoras-domesticas', 'routers-wifi',
+  'inodoros-bidets', 'duchas-termostaticos', 'extractores-bano',
+  'detapaciones', 'instalacion-tuberias', 'llaves-griferas', 'cambio-tanques',
+  'apertura-cerraduras', 'cambio-cerraduras', 'puertas-blindadas',
+  'pintura-interior', 'pintura-exterior',
+  'muebles-a-medida', 'placards-closets', 'tabiqueria', 'cielorrasos',
+  'toldos-retráctiles', 'mosquiteros',
+  'camaras-ip', 'control-acceso', 'portones-rejas',
+  'vidrios-templados', 'espejos',
+  'fumigacion-domestica', 'control-plagas',
+  'generadores', 'motores-electricos'
+]);
+
+/**
  * Dispositivos del árbol, aplanados y deduplicados por id.
- * @returns {Map<string, {id:string,name:string,plural:string,categories:string[],areas:string[],brands:string[]}>}
+ * @returns {Map<string, {id:string,name:string,plural:string,categories:string[],categoryIds:string[],areas:string[],brands:string[]}>}
  */
 function collectDevices() {
   const byId = new Map();
@@ -114,12 +258,14 @@ function collectDevices() {
             // usa tal cual; si no, se agrega la s.
             plural: /s$/i.test(device.name) ? device.name : `${device.name}s`,
             categories: [],
+            categoryIds: [],
             areas: [],
             brands: []
           });
         }
         const entry = byId.get(device.id);
         if (!entry.categories.includes(cat.name)) entry.categories.push(cat.name);
+        if (!entry.categoryIds.includes(cat.id)) entry.categoryIds.push(cat.id);
         if (!entry.areas.includes(area.id)) entry.areas.push(area.id);
         for (const b of device.brands || []) {
           if (!entry.brands.includes(b)) entry.brands.push(b);
@@ -135,6 +281,43 @@ let devicesCache = null;
 function getDevices() {
   if (!devicesCache) devicesCache = collectDevices();
   return devicesCache;
+}
+
+/**
+ * Acciones que tienen sentido sobre un dispositivo concreto, según las
+ * categorías del árbol en las que aparece. Un mismo dispositivo puede estar en
+ * varias categorías (heladera está en hogar y oficina): se unen las acciones.
+ */
+function actionsFor(device) {
+  if (!device) return [];
+  const allowed = new Set();
+  for (const catId of device.categoryIds) {
+    for (const action of (CATEGORY_ACTIONS[catId] || DEFAULT_ACTIONS)) allowed.add(action);
+  }
+  return [...allowed];
+}
+
+/**
+ * ¿Esta combinación acción+dispositivo merece estar en el índice de Google?
+ * Las que no, se siguen sirviendo por URL directa pero con noindex,follow.
+ */
+function isIndexableServicePage(actionSlug, deviceId) {
+  const device = getDevices().get(deviceId);
+  if (!device) return false;
+  if (EXCLUDED_DEVICE_IDS.has(device.id)) return false;
+  if (device.areas.some(areaId => NON_SERVICE_AREAS.has(areaId))) return false;
+  if (COMMERCIAL_ACTIONS.has(actionSlug)) return false;
+  return actionsFor(device).includes(actionSlug);
+}
+
+/** ¿Tiene sentido la variante local (/caba, /buenos-aires) de esta página? */
+function hasLocationPage(actionSlug, deviceId) {
+  return LOCAL_DEVICE_IDS.has(deviceId) && isIndexableServicePage(actionSlug, deviceId);
+}
+
+/** Slug de URL de un dispositivo: sin acentos (toldos-retráctiles → toldos-retractiles). */
+function deviceUrlSlug(device) {
+  return slugify(device.id);
 }
 
 /** slug de URL: sin acentos, con guiones. */
@@ -173,11 +356,32 @@ function buildServiceLandingPage(actionSlug, deviceSlug) {
   const device = getDevices().get(deviceSlug);
   if (!action || !device) return null;
 
+  const indexable = isIndexableServicePage(actionSlug, device.id);
+  const robots = indexable ? 'index, follow, max-image-preview:large' : 'noindex, follow';
+  const urlDevice = deviceUrlSlug(device);
   const title = `${action.label} ${device.name} en Argentina | KuraTe`;
   const description = `${action.label} ${device.plural.toLowerCase()} en Argentina con técnicos verificados en KuraTe. Presupuesto sin cargo y atención en todo el país.`;
-  const canonical = `${KURATE_BASE}/servicios/${actionSlug}-${deviceSlug}`;
+  const canonical = `${KURATE_BASE}/servicios/${actionSlug}-${urlDevice}`;
   const ogImage = `${KURATE_BASE}/images/reparacion.png`;
   const searchUrl = `${KURATE_BASE}/hogar.html`;
+
+  // Enlazado interno: antes cada landing tenía un único link (el CTA) y quedaba
+  // huérfana salvo por el sitemap. Google necesita un camino de links real para
+  // asignarles autoridad, así que cada página enlaza sus acciones hermanas, las
+  // variantes locales y las categorías relacionadas.
+  const siblingActions = actionsFor(device)
+    .filter(a => a !== actionSlug && ACTION_ALIASES[a])
+    .map(a => ({ slug: a, label: ACTION_ALIASES[a].label }));
+  const siblingLinks = siblingActions
+    .map(a => `<li><a href="/servicios/${a.slug}-${urlDevice}">${esc(a.label)} ${esc(device.name.toLowerCase())}</a></li>`)
+    .join('');
+  const locationLinks = Object.values(LOCATIONS)
+    .filter(loc => hasLocationPage(actionSlug, device.id))
+    .map(loc => `<li><a href="/servicios/${actionSlug}-${urlDevice}/${loc.slug}">${esc(action.label)} ${esc(device.name.toLowerCase())} en ${esc(loc.name)}</a></li>`)
+    .join('');
+  const categoryLinks = landingCategoriesFor(device)
+    .map(slug => `<li><a href="/categorias/${slug}">${esc(CATEGORY_LABELS[slug])}</a></li>`)
+    .join('');
 
   // Frases largas con sinónimos: es lo que hace que la página responda a
   // "reparo heladera" y no solo a "reparar heladera".
@@ -200,7 +404,7 @@ function buildServiceLandingPage(actionSlug, deviceSlug) {
   <title>${esc(title)}</title>
   <meta name="description" content="${esc(description)}">
   <meta name="keywords" content="${esc(action.synonyms.join(', ') + ', ' + device.name + ', ' + device.plural + ', técnico, servicio técnico, Argentina')}">
-  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="robots" content="${robots}">
   <link rel="canonical" href="${esc(canonical)}">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="es_AR">
@@ -266,6 +470,13 @@ function buildServiceLandingPage(actionSlug, deviceSlug) {
 
     <a href="${esc(searchUrl)}" class="cta">Encontrar técnico ahora</a>
 
+    ${siblingLinks || locationLinks || categoryLinks ? `<h2>Seguir buscando</h2>
+    <div class="nav-lists">
+      ${siblingLinks ? `<ul>${siblingLinks}</ul>` : ''}
+      ${locationLinks ? `<ul>${locationLinks}</ul>` : ''}
+      ${categoryLinks ? `<ul>${categoryLinks}</ul>` : ''}
+    </div>` : ''}
+
     <div class="meta">
       <p>También buscado como: ${esc(action.synonyms.map(s => `${s} ${device.name.toLowerCase()}`).join(', '))}.</p>
       <p>Categoría: ${esc(categorias)}.</p>
@@ -287,9 +498,12 @@ function buildServiceLocationLandingPage(actionSlug, deviceSlug, locationSlug) {
   const location = LOCATIONS[locationSlug];
   if (!action || !device || !location) return null;
 
+  const indexable = hasLocationPage(actionSlug, device.id);
+  const robots = indexable ? 'index, follow, max-image-preview:large' : 'noindex, follow';
+  const urlDevice = deviceUrlSlug(device);
   const title = `${action.label} ${device.name} en ${location.name} | KuraTe`;
   const description = `${action.label} ${device.plural.toLowerCase()} en ${location.name} con técnicos verificados en KuraTe. Presupuesto sin cargo, atención en ${location.name} y alrededores.`;
-  const canonical = `${KURATE_BASE}/servicios/${actionSlug}-${device.id}/${locationSlug}`;
+  const canonical = `${KURATE_BASE}/servicios/${actionSlug}-${urlDevice}/${locationSlug}`;
   const ogImage = `${KURATE_BASE}/images/reparacion.png`;
   const searchUrl = `${KURATE_BASE}/hogar.html?province=${encodeURIComponent(location.provinces.join(','))}`;
 
@@ -320,7 +534,7 @@ function buildServiceLocationLandingPage(actionSlug, deviceSlug, locationSlug) {
   <title>${esc(title)}</title>
   <meta name="description" content="${esc(description)}">
   <meta name="keywords" content="${esc(action.synonyms.join(', ') + ', ' + device.name + ', ' + device.plural + ', ' + location.name + ', técnico, servicio técnico, Argentina')}">
-  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="robots" content="${robots}">
   <link rel="canonical" href="${esc(canonical)}">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="es_AR">
@@ -383,6 +597,12 @@ function buildServiceLocationLandingPage(actionSlug, deviceSlug, locationSlug) {
 
     <a href="${esc(searchUrl)}" class="cta">Encontrar técnico en ${esc(location.name)}</a>
 
+    <h2>Seguir buscando</h2>
+    <div class="nav-lists">
+      <ul><li><a href="/servicios/${actionSlug}-${urlDevice}">${esc(action.label)} ${esc(device.name.toLowerCase())} en toda Argentina</a></li></ul>
+      <ul>${Object.values(LOCATIONS).filter(l => l.slug !== location.slug).map(l => `<li><a href="/servicios/${actionSlug}-${urlDevice}/${l.slug}">${esc(action.label)} ${esc(device.name.toLowerCase())} en ${esc(l.name)}</a></li>`).join('')}</ul>
+    </div>
+
     <div class="meta">
       <p>También buscado como: ${esc(action.synonyms.map(s => `${s} ${device.name.toLowerCase()} en ${location.name.toLowerCase()}`).join(', '))}.</p>
       <p>Zona: ${esc(location.fullName)}.</p>
@@ -394,7 +614,18 @@ function buildServiceLocationLandingPage(actionSlug, deviceSlug, locationSlug) {
 }
 
 /**
- * Todas las URLs de /servicios/ para el sitemap (nacionales + locales CABA + Bs.As.).
+ * Todas las URLs de /servicios/ que van al sitemap.
+ *
+ * Solo se anuncian las combinaciones que un cliente buscaría de verdad:
+ * - las áreas de educación (clases) no generan páginas de servicio técnico;
+ * - cada categoría del árbol limita las acciones que tienen sentido;
+ * - las variantes locales (/caba, /buenos-aires) solo para los dispositivos
+ *   con demanda local real (LOCAL_DEVICE_IDS).
+ *
+ * El resto de las combinaciones se sigue sirviendo por URL directa, pero con
+ * noindex,follow: 2610 páginas plantilla con 370 palabras casi idénticas es
+ * exactamente el patrón que Google castiga como doorway / scaled content.
+ *
  * @returns {{loc:string, priority:number, changefreq:string}[]}
  */
 function getAllServiceUrls() {
@@ -407,15 +638,17 @@ function getAllServiceUrls() {
     // Las acciones de reparación son las que más se buscan, van arriba.
     const priority = REPAIR_ACTIONS.has(actionSlug) ? 0.8 : 0.6;
     for (const device of devices.values()) {
+      if (!isIndexableServicePage(actionSlug, device.id)) continue;
       urls.push({
-        loc: `/servicios/${actionSlug}-${device.id}`,
+        loc: `/servicios/${actionSlug}-${deviceUrlSlug(device)}`,
         priority,
         changefreq: 'monthly',
         lastmod: null
       });
+      if (!hasLocationPage(actionSlug, device.id)) continue;
       for (const locationSlug of locationSlugs) {
         urls.push({
-          loc: `/servicios/${actionSlug}-${device.id}/${locationSlug}`,
+          loc: `/servicios/${actionSlug}-${deviceUrlSlug(device)}/${locationSlug}`,
           priority: Math.round((priority - 0.1) * 100) / 100,
           changefreq: 'monthly',
           lastmod: null
@@ -428,22 +661,25 @@ function getAllServiceUrls() {
 
 /** Resuelve "action-device" o "action-device-location" a sus partes. */
 function parseServiceSlug(slug) {
-  const devices = getDevices();
+  // Se normaliza a slug ASCII: el id del árbol "toldos-retráctiles" se publica
+  // como "toldos-retractiles" (una URL con acento se percent-encodea y rompe
+  // el canonical). Así las dos formas resuelven al mismo dispositivo.
+  const slugStr = slugify(slug);
   const locationSlugs = Object.keys(LOCATIONS);
-  const slugStr = String(slug);
+  const deviceEntries = [...getDevices().entries()]
+    .map(([deviceId, device]) => ({ deviceId, urlSlug: deviceUrlSlug(device) }))
+    .sort((a, b) => b.urlSlug.length - a.urlSlug.length);
 
   // Primero intentar matchear con location al final
   for (const locSlug of locationSlugs) {
     const suffix = `-${locSlug}`;
     if (slugStr.endsWith(suffix)) {
       const withoutLoc = slugStr.slice(0, slugStr.length - suffix.length);
-      // Ahora parsear action-device del resto
-      const ids = [...getDevices().keys()].sort((a, b) => b.length - a.length);
-      for (const deviceId of ids) {
-        const suffix = `-${deviceId}`;
-        if (withoutLoc.endsWith(suffix)) {
+      for (const { deviceId, urlSlug } of deviceEntries) {
+        const deviceSuffix = `-${urlSlug}`;
+        if (withoutLoc.endsWith(deviceSuffix)) {
           return {
-            actionSlug: withoutLoc.slice(0, withoutLoc.length - suffix.length),
+            actionSlug: withoutLoc.slice(0, withoutLoc.length - deviceSuffix.length),
             deviceSlug: deviceId,
             locationSlug: locSlug
           };
@@ -453,12 +689,11 @@ function parseServiceSlug(slug) {
   }
 
   // Sin location: parseo original action-device
-  const ids = [...getDevices().keys()].sort((a, b) => b.length - a.length);
-  for (const deviceId of ids) {
-    const suffix = `-${deviceId}`;
-    if (String(slug).endsWith(suffix)) {
+  for (const { deviceId, urlSlug } of deviceEntries) {
+    const suffix = `-${urlSlug}`;
+    if (slugStr.endsWith(suffix)) {
       return {
-        actionSlug: String(slug).slice(0, String(slug).length - suffix.length),
+        actionSlug: slugStr.slice(0, slugStr.length - suffix.length),
         deviceSlug: deviceId,
         locationSlug: null
       };
@@ -476,5 +711,9 @@ module.exports = {
   getAllServiceUrls,
   getDevices,
   parseServiceSlug,
-  slugify
+  slugify,
+  deviceUrlSlug,
+  isIndexableServicePage,
+  hasLocationPage,
+  actionsFor
 };

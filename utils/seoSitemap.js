@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const KURATE_BASE = 'https://kurate.drsrv.net.ar';
 
 function resolveRequestBaseUrl(req) {
@@ -14,6 +16,7 @@ function baseUrlForNamedSite(site) {
 
 const { getAllSeoUrls } = require('./seoLandingPages');
 const { getAllServiceUrls } = require('./seoServicePages');
+const { isProfileIndexable } = require('./seoMeta');
 const serviceTree = require('../data/serviceTree');
 
 const ENV_NAMES = { hogar: 'Hogar', oficina: 'Oficina', 'casa-campo': 'Casa de Campo', industria: 'Industria' };
@@ -30,24 +33,57 @@ function getAllServicePages() {
   return [];
 }
 
+/**
+ * Páginas estáticas que sí queremos en el índice.
+ *
+ * /home.html quedó afuera: es una página residual del fork original (título
+ * "Professionals — Colección exclusiva", nav "Model Entrance", acentos rotos) y
+ * ahora redirige 301 a /hogar.html. Anunciarla en el sitemap era enviarle a
+ * Google una página fuera de marca.
+ *
+ * /precios-aire-acondicionado (sin .html) redirige 301 a la versión .html: en el
+ * sitemap tiene que ir la URL final, no la que redirige.
+ */
 const STATIC_URLS = [
   { loc: '/', priority: 1.0, changefreq: 'weekly' },
-  { loc: '/home.html', priority: 0.8, changefreq: 'daily' },
-  { loc: '/hogar.html', priority: 0.7, changefreq: 'daily' },
+  { loc: '/hogar.html', priority: 0.9, changefreq: 'daily' },
   { loc: '/avisos.html', priority: 0.7, changefreq: 'daily' },
-  { loc: '/precios-aire-acondicionado', priority: 0.8, changefreq: 'monthly' },
-  { loc: '/conciencia-vih.html', priority: 0.5, changefreq: 'yearly' },
-  { loc: '/conciencia-cancer-mama.html', priority: 0.5, changefreq: 'yearly' }
+  { loc: '/precios-aire-acondicionado.html', priority: 0.8, changefreq: 'monthly' },
+  { loc: '/condiciones-servicio.html', priority: 0.3, changefreq: 'yearly' },
+  { loc: '/conciencia-vih.html', priority: 0.4, changefreq: 'yearly' },
+  { loc: '/conciencia-cancer-mama.html', priority: 0.4, changefreq: 'yearly' }
 ];
 
-/** Fecha de hoy en ISO, para <lastmod>. Google lo usa como señal de frescura. */
-function today() {
-  return new Date().toISOString().slice(0, 10);
+/**
+ * Fecha real de última modificación del archivo servido. Antes todas las URLs
+ * del sitemap llevaban la fecha del día: Google detecta que el lastmod no es
+ * confiable y lo ignora por completo (peor que no ponerlo).
+ * @returns {string|null} YYYY-MM-DD
+ */
+function staticLastmod(loc) {
+  const file = loc === '/' ? 'index.html' : loc.replace(/^\//, '');
+  try {
+    const stat = fs.statSync(path.join(__dirname, '..', 'public', file));
+    return stat.mtime.toISOString().slice(0, 10);
+  } catch {
+    return null;
+  }
+}
+
+function isoDate(value) {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
 }
 
 function urlXml(baseUrl, entry) {
-  const lastmod = entry.lastmod || today();
-  return `  <url>\n    <loc>${baseUrl}${entry.loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>${entry.changefreq}</changefreq>\n    <priority>${entry.priority}</priority>\n  </url>`;
+  const lastmod = entry.lastmod || null;
+  const parts = [`  <url>`, `    <loc>${baseUrl}${entry.loc}</loc>`];
+  if (lastmod) parts.push(`    <lastmod>${lastmod}</lastmod>`);
+  parts.push(`    <changefreq>${entry.changefreq}</changefreq>`);
+  parts.push(`    <priority>${entry.priority}</priority>`);
+  parts.push(`  </url>`);
+  return parts.join('\n');
 }
 
 async function buildSitemapForBase(baseUrl) {
@@ -55,7 +91,8 @@ async function buildSitemapForBase(baseUrl) {
   const serviceUrls = getAllServiceUrls();
   const dynamicServicePages = getAllServicePages();
 
-  // Add profile pages for approved professionals with an active/expiring aviso
+  // Perfiles: solo profesionales reales, verificados, con aviso activo y con
+  // contenido propio (bio). Los perfiles QA y las cuentas seed quedan afuera.
   let profileUrls = [];
   try {
     const User = require('../models/User');
@@ -66,41 +103,57 @@ async function buildSitemapForBase(baseUrl) {
       role: 'professional',
       verificationStatus: 'approved',
       accountDeletedAt: null,
-      'professionalProfile.alias': { $exists: true, $ne: '' },
-      'professionalProfile.isExposed': { $ne: false }
-    }).select('professionalProfile.alias').lean();
+      'professionalProfile.alias': { $exists: true, $ne: '' }
+    }).select(
+      'email verificationStatus updatedAt professionalProfile.alias professionalProfile.bio '
+      + 'professionalProfile.isExposed'
+    ).lean();
     profileUrls = profiles
-      .map(p => p.professionalProfile?.alias)
-      .filter(Boolean)
-      .map(alias => ({
-        loc: '/perfil/' + encodeURIComponent(alias),
+      .filter(isProfileIndexable)
+      .map(p => ({
+        loc: '/perfil/' + encodeURIComponent(p.professionalProfile.alias),
         priority: 0.6,
-        changefreq: 'weekly'
+        changefreq: 'weekly',
+        lastmod: isoDate(p.updatedAt)
       }));
   } catch (err) {
     console.error('Failed to load profiles for sitemap:', err.message);
   }
 
-  const allUrls = [...STATIC_URLS, ...seoUrls, ...serviceUrls, ...dynamicServicePages, ...profileUrls];
+  const staticUrls = STATIC_URLS.map(entry => ({
+    ...entry,
+    lastmod: staticLastmod(entry.loc)
+  }));
+
+  const allUrls = [...staticUrls, ...seoUrls, ...serviceUrls, ...dynamicServicePages, ...profileUrls];
   const inner = allUrls.map(e => urlXml(baseUrl, e)).join('\n');
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${inner}\n</urlset>`;
   return { xml, urls: allUrls.map(e => ({ loc: baseUrl + e.loc })) };
 }
 
 function buildSitemapXml() {
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${STATIC_URLS.map(e => urlXml(KURATE_BASE, e)).join('\n')}\n</urlset>`;
+  const staticUrls = STATIC_URLS.map(entry => ({ ...entry, lastmod: staticLastmod(entry.loc) }));
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${staticUrls.map(e => urlXml(KURATE_BASE, e)).join('\n')}\n</urlset>`;
 }
 
+/**
+ * robots.txt.
+ *
+ * Se sacaron los `Allow:` de /home.html y /precios-aire-acondicionado: el
+ * primero redirige 301 y el segundo también, así que anunciarlos acá solo
+ * mandaba a Google a URLs que redirigen. Los Disallow de páginas privadas se
+ * mantienen. Los dos sitemaps se declaran (el general y el de /servicios/).
+ */
 function buildRobotsTxt(baseUrl) {
   return `User-agent: *
 Allow: /
-Allow: /index.html
-Allow: /home.html
 Allow: /hogar.html
 Allow: /servicios/
-Allow: /precios-aire-acondicionado
-Allow: /conciencia-vih.html
-Allow: /conciencia-cancer-mama.html
+Allow: /categorias/
+Allow: /acciones/
+Allow: /entornos/
+Allow: /niveles/
+Allow: /perfil/
 Disallow: /api/
 Disallow: /dashboard.html
 Disallow: /profDashboard.html
@@ -113,8 +166,11 @@ Disallow: /forgot.html
 Disallow: /feedback.html
 Disallow: /discover.html
 Disallow: /hogar-detail.html
+Disallow: /captura-dni.html
+Disallow: /set-password.html
 
 Sitemap: ${baseUrl}/sitemap.xml
+Sitemap: ${baseUrl}/sitemap-services.xml
 `;
 }
 

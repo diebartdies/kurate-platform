@@ -5,9 +5,10 @@
  *   node scripts/test-seo-service-pages.js
  *
  * Lo que se verifica acá es lo que rompería el posicionamiento en Google:
- * que exista una URL por cada palabra que la gente busca, que haya páginas para
- * todos los dispositivos del árbol y no solo una lista a mano, y que cada
- * página tenga los metadatos que Google necesita para indexarla.
+ * - que exista una URL por cada combinación acción+dispositivo que tenga sentido;
+ * - que las combinaciones sin sentido NO se anuncien en el sitemap (doorway);
+ * - que cada página indexable tenga los metadatos que Google necesita;
+ * - que cada página enlace a otras (antes eran huérfanas con un solo link).
  */
 
 const assert = require('assert');
@@ -18,7 +19,10 @@ const {
   buildServiceLocationLandingPage,
   getAllServiceUrls,
   getDevices,
-  parseServiceSlug
+  parseServiceSlug,
+  isIndexableServicePage,
+  hasLocationPage,
+  deviceUrlSlug
 } = require('../utils/seoServicePages');
 const { buildRobotsTxt } = require('../utils/seoSitemap');
 
@@ -44,67 +48,49 @@ const urls = getAllServiceUrls();
 // --- cobertura de dispositivos --------------------------------------------------
 
 check('los dispositivos salen del arbol, no de una lista a mano', () => {
-  // Antes el módulo tenía 18 dispositivos escritos a mano sobre 159 del árbol.
   ok(devices.size >= 150, `solo ${devices.size} dispositivos`);
 });
 
-check('cada dispositivo del arbol tiene al menos una página de reparación', () => {
-  const faltantes = [...devices.keys()].filter(
-    d => !urls.some(u => u.loc === `/servicios/reparar-${d}`)
-  );
-  ok(faltantes.length === 0, `sin página: ${faltantes.slice(0, 5).join(', ')}`);
+check('los dispositivos técnicos tienen página de reparación', () => {
+  const tecnicos = ['heladera', 'lavarropas', 'aire-acondicionado', 'termotanque-calefon',
+    'pcs-notebooks', 'routers-wifi', 'duchas-termostaticos', 'generadores', 'portones-rejas'];
+  const faltantes = tecnicos.filter(d => !urls.some(u => u.loc === `/servicios/reparar-${d}`));
+  ok(faltantes.length === 0, `sin página: ${faltantes.join(', ')}`);
 });
 
-check('dispositivos que antes no tenían página ahora existen', () => {
-  for (const d of ['duchas-termostaticos', 'routers-wifi', 'obras-y-reformas']) {
-    ok(devices.has(d), `${d} no está en el árbol`);
-    ok(urls.some(u => u.loc === `/servicios/reparar-${d}`), `falta /servicios/reparar-${d}`);
-  }
+check('las acciones inválidas no generan URL', () => {
+  // "reparar geografía" era el caso más obvio de contenido sin valor.
+  ok(!urls.some(u => u.loc.includes('geografia')), 'hay una URL de geografía');
+  ok(!urls.some(u => u.loc.includes('formacion-etica')), 'hay una URL de formación ética');
+  ok(!urls.some(u => u.loc.includes('demoliciones')), 'hay una URL de demoliciones');
+  ok(!urls.some(u => u.loc.includes('obras-y-reformas')), 'hay una URL de obras y reformas');
 });
 
-// --- las palabras que la gente busca --------------------------------------------
-
-check('las cinco palabras de reparación tienen URL para heladera', () => {
-  for (const accion of ['arreglar', 'reparar', 'reparo', 'service', 'reparacion']) {
-    const loc = `/servicios/${accion}-heladera`;
-    ok(urls.some(u => u.loc === loc), `falta ${loc}`);
-  }
+check('las acciones sin sentido no se generan para cada categoría', () => {
+  // "instalar demoliciones" / "certificar inodoros" no son servicios reales.
+  ok(!isIndexableServicePage('instalar', 'demoliciones'), 'instalar demoliciones');
+  ok(!isIndexableServicePage('certificar', 'inodoros-bidets'), 'certificar inodoros');
+  ok(!isIndexableServicePage('reparar', 'fumigacion-domestica'), 'reparar fumigación');
+  ok(isIndexableServicePage('certificar', 'termotanque-calefon'), 'certificar termotanque debería valer');
+  ok(isIndexableServicePage('reparar', 'heladera'), 'reparar heladera debería valer');
 });
 
-check('"reparo" es una acción propia y no solo un sinónimo', () => {
-  ok(ACTION_ALIASES.reparo, 'no existe la acción reparo');
-  ok(
-    ACTION_ALIASES.reparo.synonyms.includes('reparar'),
-    'reparo no lista "reparar" entre sus sinónimos'
-  );
-});
-
-check('las acciones de reparación se menjorean entre sí', () => {
-  const reparar = ACTION_ALIASES.reparar.synonyms.map(s => s.toLowerCase());
-  for (const palabra of ['arreglar', 'reparo', 'service']) {
-    ok(reparar.includes(palabra), `"reparar" no cubre "${palabra}"`);
-  }
-});
-
-check('las cinco páginas de heladera responden contenido real', () => {
-  for (const accion of ['arreglar', 'reparar', 'reparo', 'service', 'reparacion']) {
-    const page = buildServiceLandingPage(accion, 'heladera');
-    ok(page, `/servicios/${accion}-heladera no se puede construir`);
-    ok(page.html.length > 1500, `${accion}: html muy corto (${page.html.length})`);
-  }
+check('las páginas descartadas se siguen sirviendo, pero con noindex', () => {
+  // No se rompen los links viejos, pero no compiten en el índice.
+  const page = buildServiceLandingPage('reparar', 'geografia');
+  ok(page, 'la página no se sirve');
+  ok(/name="robots" content="noindex, follow"/.test(page.html), 'debería ser noindex');
 });
 
 // --- metadatos que Google necesita ----------------------------------------------
 
-check('cada página tiene title, description y canonical propios', () => {
-  for (const accion of ['reparar', 'arreglar', 'reparo', 'service']) {
-    const page = buildServiceLandingPage(accion, 'heladera');
-    ok(page.title.includes('KuraTe'), `${accion}: title sin marca`);
-    ok(page.canonical.endsWith(`/servicios/${accion}-heladera`), `${accion}: canonical mal`);
-    ok(page.description.length > 80, `${accion}: description corta`);
-    ok(page.html.includes('<link rel="canonical"'), `${accion}: sin link canonical en el html`);
-    ok(/name="robots" content="index, follow/.test(page.html), `${accion}: no indexable`);
-  }
+check('cada página indexable tiene title, description y canonical propios', () => {
+  const page = buildServiceLandingPage('reparar', 'heladera');
+  ok(page.title.includes('KuraTe'), 'title sin marca');
+  ok(page.canonical === 'https://kurate.drsrv.net.ar/servicios/reparar-heladera', `canonical mal: ${page.canonical}`);
+  ok(page.description.length > 80, 'description corta');
+  ok(page.html.includes('<link rel="canonical"'), 'sin link canonical en el html');
+  ok(/name="robots" content="index, follow/.test(page.html), 'no indexable');
 });
 
 check('cada página tiene JSON-LD de Service válido', () => {
@@ -117,16 +103,26 @@ check('cada página tiene JSON-LD de Service válido', () => {
   ok(data.areaServed && data.areaServed.name === 'Argentina', 'areaServed incorrecto');
 });
 
-check('el título de cada acción usa su propia etiqueta', () => {
-  ok(buildServiceLandingPage('reparar', 'heladera').title.startsWith('Reparar'), 'reparar');
-  ok(buildServiceLandingPage('arreglar', 'heladera').title.startsWith('Arreglar'), 'arreglar');
-  ok(buildServiceLandingPage('reparo', 'heladera').title.startsWith('Reparo'), 'reparo');
-  ok(buildServiceLandingPage('service', 'heladera').title.startsWith('Service'), 'service');
+check('cada página enlaza a otras páginas (no es huérfana)', () => {
+  const page = buildServiceLandingPage('reparar', 'heladera');
+  const links = (page.html.match(/href="\//g) || []).length;
+  ok(links >= 4, `solo ${links} links internos`);
+  ok(page.html.includes('/servicios/instalar-heladera'), 'no enlaza la acción hermana');
+  ok(page.html.includes('/servicios/reparar-heladera/caba'), 'no enlaza la variante local');
+});
+
+check('los enlaces a categorías apuntan a categorías que existen', () => {
+  // /categorias/<id-del-árbol> devuelve 301 para 20 de las 40 categorías.
+  const validas = new Set(['linea-blanca', 'clima', 'electricidad', 'gas', 'informatica',
+    'seguridad', 'automatizacion', 'plomeria', 'soldadura']);
+  const page = buildServiceLandingPage('reparar', 'heladera');
+  const links = [...page.html.matchAll(/href="\/categorias\/([^"]+)"/g)].map(m => m[1]);
+  const invalidas = links.filter(l => !validas.has(l));
+  ok(invalidas.length === 0, `categorías inexistentes: ${invalidas.join(', ')}`);
 });
 
 check('no se escapan caracteres que rompen el HTML', () => {
   const page = buildServiceLandingPage('reparar', 'heladera');
-  // Las comillas del JSON-LD van escapadas, si no romperían el script.
   const m = page.html.match(/<script type="application\/ld\+json">\s*([\s\S]*?)\s*<\/script>/);
   ok(m, 'no se pudo extraer el JSON-LD');
   JSON.parse(m[1]);
@@ -137,8 +133,7 @@ check('no se escapan caracteres que rompen el HTML', () => {
 check('el parser resuelve acción y dispositivo', () => {
   const casos = [
     ['reparar-heladera', 'reparar', 'heladera'],
-    ['reparo-heladera', 'reparo', 'heladera'],
-    ['arreglar-aire-acondicionado', 'arreglar', 'aire-acondicionado'],
+    ['instalar-aire-acondicionado', 'instalar', 'aire-acondicionado'],
     ['reparar-duchas-termostaticos', 'reparar', 'duchas-termostaticos'],
     ['instalar-smart-tv', 'instalar', 'smart-tv']
   ];
@@ -150,9 +145,18 @@ check('el parser resuelve acción y dispositivo', () => {
 });
 
 check('el parser no confunde un dispositivo compuesto con la acción', () => {
-  // "termostaticos" es parte del dispositivo, no una acción.
   const r = parseServiceSlug('reparar-duchas-termostaticos');
   ok(r.deviceSlug === 'duchas-termostaticos', `se partió mal: ${r.deviceSlug}`);
+});
+
+check('el parser acepta el id con acento y el slug limpio', () => {
+  // toldos-retráctiles se publica como toldos-retractiles: una URL con acento
+  // se percent-encodea y rompe el canonical.
+  const limpio = parseServiceSlug('instalar-toldos-retractiles');
+  const acento = parseServiceSlug('instalar-toldos-retráctiles');
+  ok(limpio.deviceSlug === 'toldos-retráctiles', `limpio: ${limpio.deviceSlug}`);
+  ok(acento.deviceSlug === 'toldos-retráctiles', `acento: ${acento.deviceSlug}`);
+  ok(deviceUrlSlug(devices.get('toldos-retráctiles')) === 'toldos-retractiles', 'slug con acento');
 });
 
 check('un slug inválido devuelve null y no explota', () => {
@@ -169,11 +173,13 @@ check('acción o dispositivo inexistente no construye página', () => {
 
 // --- sitemap --------------------------------------------------------------------
 
-check('el sitemap de servicios tiene más de mil URLs', () => {
-  ok(urls.length > 1000, `solo ${urls.length}`);
+check('el sitemap no publica una explosión de páginas plantilla', () => {
+  // 2610 páginas casi idénticas es el patrón de doorway que Google penaliza.
+  ok(urls.length > 300, `muy pocas URLs: ${urls.length}`);
+  ok(urls.length <= 1200, `demasiadas URLs: ${urls.length}`);
 });
 
-check('cada URL del sitemap es una página que existe', () => {
+check('cada URL del sitemap es una página indexable que existe', () => {
   const invalidas = [];
   for (const u of urls) {
     const rest = u.loc.replace('/servicios/', '');
@@ -185,14 +191,17 @@ check('cada URL del sitemap es una página que existe', () => {
       : buildServiceLandingPage(actionSlug, deviceSlug);
     if (!actionSlug || !deviceSlug || !page) {
       invalidas.push(u.loc);
+    } else if (/content="noindex/.test(page.html)) {
+      invalidas.push(`${u.loc} (noindex)`);
     }
   }
-  ok(invalidas.length === 0, `${invalidas.length} URLs rotas, ej: ${invalidas.slice(0, 3).join(', ')}`);
+  ok(invalidas.length === 0, `${invalidas.length} URLs inválidas, ej: ${invalidas.slice(0, 3).join(', ')}`);
 });
 
 check('las acciones de reparación tienen prioridad más alta', () => {
   const reparar = urls.find(u => u.loc === '/servicios/reparar-heladera');
   const instalar = urls.find(u => u.loc === '/servicios/instalar-heladera');
+  ok(reparar && instalar, 'faltan las URLs base');
   ok(reparar.priority > instalar.priority, 'reparar debería pesar más que instalar');
 });
 
@@ -203,13 +212,16 @@ check('no se anuncian las páginas comerciales', () => {
 
 // --- SEO local (CABA / Provincia de Buenos Aires) ------------------------------
 
-check('el sitemap incluye las URLs locales de CABA y Buenos Aires', () => {
+check('el sitemap incluye las variantes locales de los dispositivos con demanda local', () => {
   for (const loc of Object.keys(LOCATIONS)) {
     ok(urls.some(u => u.loc === `/servicios/reparar-heladera/${loc}`), `falta /servicios/reparar-heladera/${loc}`);
   }
-  const locales = urls.filter(u => Object.keys(LOCATIONS).some(l => u.loc.endsWith(`/${l}`)));
-  const nacionales = urls.length - locales.length;
-  ok(locales.length === nacionales * 2, `esperaba ${nacionales * 2} URLs locales, hay ${locales.length}`);
+});
+
+check('las variantes locales solo existen para dispositivos con demanda local', () => {
+  ok(hasLocationPage('reparar', 'heladera'), 'heladera debería tener variante local');
+  ok(!hasLocationPage('revisar', 'balanzas'), 'balanzas no debería tener variante local');
+  ok(!urls.some(u => u.loc.endsWith('/caba') && u.loc.includes('balanzas')), 'hay local de balanzas');
 });
 
 check('la landing local construye página con el canonical correcto', () => {
@@ -218,6 +230,7 @@ check('la landing local construye página con el canonical correcto', () => {
   ok(page.canonical === 'https://kurate.drsrv.net.ar/servicios/reparar-heladera/caba', `canonical mal: ${page.canonical}`);
   ok(page.html.includes('CABA'), 'no menciona CABA en el cuerpo');
   ok(page.html.includes('Ciudad Autónoma de Buenos Aires'), 'no usa el nombre completo de la localidad');
+  ok(page.html.includes('/servicios/reparar-heladera'), 'no enlaza la página nacional');
 });
 
 check('la landing local usa areaServed propio y no el de la nacional', () => {
@@ -226,7 +239,6 @@ check('la landing local usa areaServed propio y no el de la nacional', () => {
   assert.ok(local && nacional);
   ok(local.canonical !== nacional.canonical, 'el canonical local coincide con el nacional');
   ok(local.html.includes('Provincia de Buenos Aires'), 'falta areaServed de provincia');
-  ok(local.html.includes('/servicios/reparar-heladera/buenos-aires'), 'falta el canonical interno');
 });
 
 check('localidad o acción inválida no construye página', () => {
@@ -237,20 +249,22 @@ check('localidad o acción inválida no construye página', () => {
 
 // --- robots.txt -----------------------------------------------------------------
 
-check('robots.txt permite /servicios/', () => {
+check('robots.txt permite /servicios/ y /perfil/', () => {
   const txt = buildRobotsTxt('https://kurate.drsrv.net.ar');
   ok(txt.includes('Allow: /servicios/'), 'falta Allow: /servicios/');
+  ok(txt.includes('Allow: /perfil/'), 'falta Allow: /perfil/');
 });
 
-check('robots.txt declara el sitemap principal', () => {
+check('robots.txt declara los dos sitemaps', () => {
   const txt = buildRobotsTxt('https://kurate.drsrv.net.ar');
-  ok(txt.includes('Sitemap: https://kurate.drsrv.net.ar/sitemap.xml'), 'falta el sitemap');
+  ok(txt.includes('Sitemap: https://kurate.drsrv.net.ar/sitemap.xml'), 'falta el sitemap general');
+  ok(txt.includes('Sitemap: https://kurate.drsrv.net.ar/sitemap-services.xml'), 'falta el sitemap de servicios');
 });
 
-check('robots.txt no declara el sitemap de plantillas', () => {
-  // Se sacaron las 728 landings por área del índice: son duplicados.
+check('robots.txt no anuncia URLs que redirigen', () => {
   const txt = buildRobotsTxt('https://kurate.drsrv.net.ar');
-  ok(!txt.includes('sitemap-services.xml'), 'todavía declara el sitemap viejo');
+  ok(!txt.includes('Allow: /home.html'), 'anuncia /home.html (301 a /hogar.html)');
+  ok(!txt.includes('Allow: /precios-aire-acondicionado'), 'anuncia la URL que redirige');
 });
 
 // --- resumen --------------------------------------------------------------------
